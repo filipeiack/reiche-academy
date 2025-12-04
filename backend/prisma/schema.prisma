@@ -1,0 +1,238 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ===== ENUMS =====
+
+enum PerfilUsuario {
+  CONSULTOR
+  GESTOR
+  COLABORADOR
+  LEITURA
+}
+
+enum Criticidade {
+  ALTO
+  MEDIO
+  BAIXO
+}
+
+enum StatusAcao {
+  PENDENTE
+  EM_ANDAMENTO
+  CONCLUIDA
+  CANCELADA
+}
+
+// ===== MODELS =====
+
+model Usuario {
+  id        String   @id @default(uuid())
+  email     String   @unique
+  nome      String
+  senha     String
+  perfil    PerfilUsuario
+  ativo     Boolean  @default(true)
+  
+  empresaId String?
+  empresa   Empresa? @relation(fields: [empresaId], references: [id])
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  createdBy String?
+  updatedBy String?
+  
+  // Relations
+  diagnosticosCriados Diagnostico[] @relation("DiagnosticoCriador")
+  auditLogs          AuditLog[]
+
+  @@map("usuarios")
+}
+
+model Empresa {
+  id            String   @id @default(uuid())
+  nome          String
+  cnpj          String   @unique
+  razaoSocial   String
+  ativo         Boolean  @default(true)
+  
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  createdBy     String?
+  updatedBy     String?
+  
+  // Relations
+  usuarios      Usuario[]
+  diagnosticos  Diagnostico[]
+  pilares       PilarEmpresa[]
+  
+  @@map("empresas")
+}
+
+model Pilar {
+  id          String   @id @default(uuid())
+  nome        String   @unique
+  descricao   String?
+  ordem       Int
+  ativo       Boolean  @default(true)
+  
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  createdBy   String?
+  updatedBy   String?
+  
+  // Relations
+  rotinas     Rotina[]
+  empresas    PilarEmpresa[]
+  
+  @@map("pilares")
+}
+
+model Rotina {
+  id          String   @id @default(uuid())
+  nome        String
+  descricao   String?
+  ordem       Int
+  ativo       Boolean  @default(true)
+  
+  pilarId     String
+  pilar       Pilar    @relation(fields: [pilarId], references: [id])
+  
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  createdBy   String?
+  updatedBy   String?
+  
+  // Relations
+  diagnosticoRotinas DiagnosticoRotina[]
+  
+  @@map("rotinas")
+}
+
+model PilarEmpresa {
+  id          String   @id @default(uuid())
+  
+  empresaId   String
+  empresa     Empresa  @relation(fields: [empresaId], references: [id])
+  
+  pilarId     String
+  pilar       Pilar    @relation(fields: [pilarId], references: [id])
+  
+  ativo       Boolean  @default(true)
+  
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  createdBy   String?
+  updatedBy   String?
+  
+  @@unique([empresaId, pilarId])
+  @@map("pilares_empresa")
+}
+
+model Diagnostico {
+  id          String   @id @default(uuid())
+  
+  empresaId   String
+  empresa     Empresa  @relation(fields: [empresaId], references: [id])
+  
+  criadoPorId String
+  criadoPor   Usuario  @relation("DiagnosticoCriador", fields: [criadoPorId], references: [id])
+  
+  dataInicio  DateTime @default(now())
+  dataFim     DateTime?
+  finalizado  Boolean  @default(false)
+  
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  createdBy   String?
+  updatedBy   String?
+  
+  // Relations
+  pilares     DiagnosticoPilar[]
+  rotinas     DiagnosticoRotina[]
+  
+  @@map("diagnosticos")
+}
+
+model DiagnosticoPilar {
+  id            String      @id @default(uuid())
+  
+  diagnosticoId String
+  diagnostico   Diagnostico @relation(fields: [diagnosticoId], references: [id], onDelete: Cascade)
+  
+  pilarId       String
+  nota          Float?      // 0-10
+  criticidade   Criticidade?
+  observacao    String?
+  
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  createdBy     String?
+  updatedBy     String?
+  
+  @@unique([diagnosticoId, pilarId])
+  @@map("diagnostico_pilares")
+}
+
+model DiagnosticoRotina {
+  id            String      @id @default(uuid())
+  
+  diagnosticoId String
+  diagnostico   Diagnostico @relation(fields: [diagnosticoId], references: [id], onDelete: Cascade)
+  
+  rotinaId      String
+  rotina        Rotina      @relation(fields: [rotinaId], references: [id])
+  
+  nota          Float?      // 0-10
+  criticidade   Criticidade?
+  observacao    String?
+  
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  createdBy     String?
+  updatedBy     String?
+  
+  @@unique([diagnosticoId, rotinaId])
+  @@map("diagnostico_rotinas")
+}
+
+model AgendaReuniao {
+  id          String   @id @default(uuid())
+  titulo      String
+  descricao   String?
+  dataHora    DateTime
+  duracao     Int?     // em minutos
+  local       String?
+  link        String?
+  
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  createdBy   String?
+  updatedBy   String?
+  
+  @@map("agenda_reunioes")
+}
+
+model AuditLog {
+  id          String   @id @default(uuid())
+  
+  usuarioId   String
+  usuario     Usuario  @relation(fields: [usuarioId], references: [id])
+  
+  entidade    String   // Nome da tabela
+  entidadeId  String   // ID do registro
+  acao        String   // CREATE, UPDATE, DELETE
+  dadosAntes  Json?    // Estado anterior
+  dadosDepois Json?    // Estado posterior
+  
+  createdAt   DateTime @default(now())
+  
+  @@index([entidade, entidadeId])
+  @@index([usuarioId])
+  @@map("audit_logs")
+}

@@ -1,0 +1,143 @@
+%% Reiche Academy ERD (Mermaid)
+erDiagram
+  Usuario {
+    String id PK
+    String email UK
+    String nome
+    String senha
+    Enum   perfil
+    Boolean ativo
+    String empresaId FK
+    DateTime createdAt
+    DateTime updatedAt
+    String createdBy
+    String updatedBy
+  }
+
+  Empresa {
+    String id PK
+    String nome
+    String cnpj UK
+    String razaoSocial
+    Boolean ativo
+    DateTime createdAt
+    DateTime updatedAt
+    String createdBy
+    String updatedBy
+  }
+
+  Pilar {
+    String id PK
+    String nome UK
+    String descricao
+    Int    ordem
+    Boolean ativo
+    DateTime createdAt
+    DateTime updatedAt
+    String createdBy
+    String updatedBy
+  }
+
+  Rotina {
+    String id PK
+    String nome
+    String descricao
+    Int    ordem
+    Boolean ativo
+    String pilarId FK
+    DateTime createdAt
+    DateTime updatedAt
+    String createdBy
+    String updatedBy
+  }
+
+  PilarEmpresa {
+    String id PK
+    String empresaId FK
+    String pilarId   FK
+    Boolean ativo
+    DateTime createdAt
+    DateTime updatedAt
+    String createdBy
+    String updatedBy
+  }
+
+  Diagnostico {
+    String id PK
+    String empresaId FK
+    String criadoPorId FK
+    DateTime dataInicio
+    DateTime dataFim
+    Boolean  finalizado
+    DateTime createdAt
+    DateTime updatedAt
+    String createdBy
+    String updatedBy
+  }
+
+  DiagnosticoPilar {
+    String id PK
+    String diagnosticoId FK
+    String pilarId FK
+    Float  nota
+    Enum   criticidade
+    String observacao
+    DateTime createdAt
+    DateTime updatedAt
+    String createdBy
+    String updatedBy
+  }
+
+  DiagnosticoRotina {
+    String id PK
+    String diagnosticoId FK
+    String rotinaId FK
+    Float  nota
+    Enum   criticidade
+    String observacao
+    DateTime createdAt
+    DateTime updatedAt
+    String createdBy
+    String updatedBy
+  }
+
+  AgendaReuniao {
+    String id PK
+    String titulo
+    String descricao
+    DateTime dataHora
+    Int duracao
+    String local
+    String link
+    DateTime createdAt
+    DateTime updatedAt
+    String createdBy
+    String updatedBy
+  }
+
+  AuditLog {
+    String id PK
+    String usuarioId FK
+    String entidade
+    String entidadeId
+    String acao
+    Json   dadosAntes
+    Json   dadosDepois
+    DateTime createdAt
+  }
+
+  Empresa ||--o{ Usuario : "empresa (optional)"
+  Usuario ||--o{ Diagnostico : "criadoPor"
+  Empresa ||--o{ Diagnostico : "empresa"
+
+  Pilar ||--o{ Rotina : "pilar"
+  Empresa ||--o{ PilarEmpresa : "empresa"
+  Pilar ||--o{ PilarEmpresa : "pilar"
+
+  Diagnostico ||--o{ DiagnosticoPilar : "pilares"
+  Pilar ||--o{ DiagnosticoPilar : "pilar"
+
+  Diagnostico ||--o{ DiagnosticoRotina : "rotinas"
+  Rotina ||--o{ DiagnosticoRotina : "rotina"
+
+  Usuario ||--o{ AuditLog : "autor"
