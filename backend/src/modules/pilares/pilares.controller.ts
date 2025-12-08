@@ -9,6 +9,7 @@ import {
   UseGuards,
   Request,
 } from '@nestjs/common';
+import { Request as ExpressRequest } from 'express';
 import { ApiTags, ApiOperation, ApiBearerAuth, ApiResponse } from '@nestjs/swagger';
 import { PilaresService } from './pilares.service';
 import { CreatePilarDto } from './dto/create-pilar.dto';
@@ -25,8 +26,7 @@ export class PilaresController {
   @Post()
   @ApiOperation({ summary: 'Criar novo pilar' })
   @ApiResponse({ status: 201, description: 'Pilar criado com sucesso' })
-  @ApiResponse({ status: 409, description: 'Pilar com este nome já existe' })
-  create(@Body() createPilarDto: CreatePilarDto, @Request() req) {
+  create(@Body() createPilarDto: CreatePilarDto, @Request() req: ExpressRequest & { user: { id: string } }) {
     return this.pilaresService.create(createPilarDto, req.user.id);
   }
 
@@ -48,11 +48,10 @@ export class PilaresController {
   @Patch(':id')
   @ApiOperation({ summary: 'Atualizar pilar' })
   @ApiResponse({ status: 200, description: 'Pilar atualizado' })
-  @ApiResponse({ status: 404, description: 'Pilar não encontrado' })
   update(
     @Param('id') id: string,
     @Body() updatePilarDto: UpdatePilarDto,
-    @Request() req,
+    @Request() req: ExpressRequest & { user: { id: string } },
   ) {
     return this.pilaresService.update(id, updatePilarDto, req.user.id);
   }
@@ -61,17 +60,15 @@ export class PilaresController {
   @ApiOperation({ summary: 'Desativar pilar' })
   @ApiResponse({ status: 200, description: 'Pilar desativado' })
   @ApiResponse({ status: 404, description: 'Pilar não encontrado' })
-  @ApiResponse({ status: 409, description: 'Pilar possui rotinas ativas' })
-  remove(@Param('id') id: string, @Request() req) {
+  remove(@Param('id') id: string, @Request() req: ExpressRequest & { user: { id: string } }) {
     return this.pilaresService.remove(id, req.user.id);
   }
 
   @Post('reordenar')
   @ApiOperation({ summary: 'Reordenar pilares' })
-  @ApiResponse({ status: 200, description: 'Pilares reordenados' })
   reordenar(
     @Body('ordens') ordens: { id: string; ordem: number }[],
-    @Request() req,
+    @Request() req: ExpressRequest & { user: { id: string } },
   ) {
     return this.pilaresService.reordenar(ordens, req.user.id);
   }

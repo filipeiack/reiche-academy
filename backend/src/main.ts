@@ -55,15 +55,41 @@ async function bootstrap() {
   SwaggerModule.setup('api/docs', app, document);
 
   const port = configService.get('PORT', 3000);
-  await app.listen(port);
-
-  console.log(`
+  const host = configService.get('HOST', '0.0.0.0');
+  
+  console.log(`🔧 Attempting to bind to ${host}:${port}...`);
+  
+  try {
+    await app.listen(port, host);
+    
+    console.log(`✅ Server is now listening on ${host}:${port}`);
+    console.log(`
   🚀 Reiche Academy API is running!
   
   📝 API: http://localhost:${port}/${apiPrefix}
   📚 Swagger: http://localhost:${port}/${apiPrefix}/docs
   🌍 Environment: ${configService.get('NODE_ENV')}
-  `);
+  🔗 Listening on: ${host}:${port}
+    `);
+    
+    // Keep process alive
+    process.on('SIGINT', () => {
+      console.log('\n🛑 Received SIGINT, shutting down gracefully...');
+      app.close().then(() => process.exit(0));
+    });
+    
+    process.on('SIGTERM', () => {
+      console.log('\n🛑 Received SIGTERM, shutting down gracefully...');
+      app.close().then(() => process.exit(0));
+    });
+    
+  } catch (error) {
+    console.error('❌ Failed to start server:', error);
+    process.exit(1);
+  }
 }
 
-bootstrap();
+bootstrap().catch((error) => {
+  console.error('❌ Bootstrap failed:', error);
+  process.exit(1);
+});

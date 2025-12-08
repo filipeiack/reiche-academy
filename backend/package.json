@@ -1,5 +1,5 @@
 {
-  "name": "@reiche/backend",
+  "name": "@reiche-academy/backend",
   "version": "1.0.0",
   "description": "Reiche Academy Backend API",
   "author": "Reiche Consultoria",
@@ -43,6 +43,7 @@
     "passport": "^0.7.0",
     "passport-jwt": "^4.0.1",
     "passport-local": "^1.0.0",
+    "pg": "^8.16.3",
     "reflect-metadata": "^0.1.14",
     "rxjs": "^7.8.1",
     "winston": "^3.11.0"

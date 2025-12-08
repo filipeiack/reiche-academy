@@ -10,6 +10,7 @@ import {
   Request,
   Query,
 } from '@nestjs/common';
+import { Request as ExpressRequest } from 'express';
 import { ApiTags, ApiOperation, ApiBearerAuth, ApiResponse, ApiQuery } from '@nestjs/swagger';
 import { RotinasService } from './rotinas.service';
 import { CreateRotinaDto } from './dto/create-rotina.dto';
@@ -26,8 +27,7 @@ export class RotinasController {
   @Post()
   @ApiOperation({ summary: 'Criar nova rotina' })
   @ApiResponse({ status: 201, description: 'Rotina criada com sucesso' })
-  @ApiResponse({ status: 404, description: 'Pilar não encontrado' })
-  create(@Body() createRotinaDto: CreateRotinaDto, @Request() req) {
+  create(@Body() createRotinaDto: CreateRotinaDto, @Request() req: ExpressRequest & { user: { id: string } }) {
     return this.rotinasService.create(createRotinaDto, req.user.id);
   }
 
@@ -50,11 +50,10 @@ export class RotinasController {
   @Patch(':id')
   @ApiOperation({ summary: 'Atualizar rotina' })
   @ApiResponse({ status: 200, description: 'Rotina atualizada' })
-  @ApiResponse({ status: 404, description: 'Rotina não encontrada' })
   update(
     @Param('id') id: string,
     @Body() updateRotinaDto: UpdateRotinaDto,
-    @Request() req,
+    @Request() req: ExpressRequest & { user: { id: string } },
   ) {
     return this.rotinasService.update(id, updateRotinaDto, req.user.id);
   }
@@ -62,18 +61,16 @@ export class RotinasController {
   @Delete(':id')
   @ApiOperation({ summary: 'Desativar rotina' })
   @ApiResponse({ status: 200, description: 'Rotina desativada' })
-  @ApiResponse({ status: 404, description: 'Rotina não encontrada' })
-  remove(@Param('id') id: string, @Request() req) {
+  remove(@Param('id') id: string, @Request() req: ExpressRequest & { user: { id: string } }) {
     return this.rotinasService.remove(id, req.user.id);
   }
 
   @Post('pilar/:pilarId/reordenar')
   @ApiOperation({ summary: 'Reordenar rotinas de um pilar' })
-  @ApiResponse({ status: 200, description: 'Rotinas reordenadas' })
   reordenar(
     @Param('pilarId') pilarId: string,
     @Body('ordens') ordens: { id: string; ordem: number }[],
-    @Request() req,
+    @Request() req: ExpressRequest & { user: { id: string } },
   ) {
     return this.rotinasService.reordenarPorPilar(pilarId, ordens, req.user.id);
   }

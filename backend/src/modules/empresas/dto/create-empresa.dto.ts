@@ -21,4 +21,10 @@ export class CreateEmpresaDto {
   @IsNotEmpty()
   @Length(2, 200)
   razaoSocial: string;
+
+  @ApiProperty({ example: 'Consultoria Empresarial' })
+  @IsString()
+  @IsNotEmpty()
+  @Length(2, 100)
+  tipoNegocio: string;
 }

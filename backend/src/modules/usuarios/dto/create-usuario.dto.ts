@@ -26,6 +26,12 @@ export class CreateUsuarioDto {
   @MinLength(6)
   senha: string;
 
+  @ApiProperty({ example: 'Diretor de Operações' })
+  @IsString()
+  @IsNotEmpty()
+  @Length(2, 100)
+  cargo: string;
+
   @ApiProperty({ example: 'GESTOR', enum: PerfilUsuario })
   @IsEnum(PerfilUsuario)
   perfil: PerfilUsuario;

@@ -36,6 +36,7 @@ model Usuario {
   email     String   @unique
   nome      String
   senha     String
+  cargo     String
   perfil    PerfilUsuario
   ativo     Boolean  @default(true)
   
@@ -48,8 +49,7 @@ model Usuario {
   updatedBy String?
   
   // Relations
-  diagnosticosCriados Diagnostico[] @relation("DiagnosticoCriador")
-  auditLogs          AuditLog[]
+  reunioes      AgendaReuniao[]
 
   @@map("usuarios")
 }
@@ -59,7 +59,14 @@ model Empresa {
   nome          String
   cnpj          String   @unique
   razaoSocial   String
+  tipoNegocio   String
   ativo         Boolean  @default(true)
+  
+  // Personalização
+  logoUrl       String?
+  backgroundUrl String?
+  corPrimaria   String?
+  corSecundaria String?
   
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
@@ -68,7 +75,6 @@ model Empresa {
   
   // Relations
   usuarios      Usuario[]
-  diagnosticos  Diagnostico[]
   pilares       PilarEmpresa[]
   
   @@map("empresas")
@@ -79,6 +85,7 @@ model Pilar {
   nome        String   @unique
   descricao   String?
   ordem       Int
+  modelo      Boolean  @default(false)
   ativo       Boolean  @default(true)
   
   createdAt   DateTime @default(now())
@@ -98,6 +105,7 @@ model Rotina {
   nome        String
   descricao   String?
   ordem       Int
+  modelo      Boolean  @default(false)
   ativo       Boolean  @default(true)
   
   pilarId     String
@@ -109,7 +117,7 @@ model Rotina {
   updatedBy   String?
   
   // Relations
-  diagnosticoRotinas DiagnosticoRotina[]
+  rotinaEmpresas RotinaEmpresa[]
   
   @@map("rotinas")
 }
@@ -130,75 +138,71 @@ model PilarEmpresa {
   createdBy   String?
   updatedBy   String?
   
+  // Relations
+  rotinasEmpresa RotinaEmpresa[]
+  evolucao       PilarEvolucao[]
+  
   @@unique([empresaId, pilarId])
   @@map("pilares_empresa")
 }
 
-model Diagnostico {
-  id          String   @id @default(uuid())
+model RotinaEmpresa {
+  id            String      @id @default(uuid())
   
-  empresaId   String
-  empresa     Empresa  @relation(fields: [empresaId], references: [id])
+  pilarEmpresaId String
+  pilarEmpresa   PilarEmpresa @relation(fields: [pilarEmpresaId], references: [id], onDelete: Cascade)
   
-  criadoPorId String
-  criadoPor   Usuario  @relation("DiagnosticoCriador", fields: [criadoPorId], references: [id])
+  rotinaId      String
+  rotina        Rotina      @relation(fields: [rotinaId], references: [id])
   
-  dataInicio  DateTime @default(now())
-  dataFim     DateTime?
-  finalizado  Boolean  @default(false)
+  observacao    String?
   
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  createdBy     String?
+  updatedBy     String?
+  
+  // Relations
+  notas         NotaRotina[]
+  
+  @@index([pilarEmpresaId])
+  @@index([rotinaId])
+  @@unique([pilarEmpresaId, rotinaId])
+  @@map("rotinas_empresa")
+}
+
+model NotaRotina {
+  id            String      @id @default(uuid())
+
+  rotinaEmpresaId String
+  rotinaEmpresa   RotinaEmpresa @relation(fields: [rotinaEmpresaId], references: [id], onDelete: Cascade)
+
+  nota          Float?      // 0-10
+  criticidade   Criticidade?
+
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
   createdBy   String?
   updatedBy   String?
   
-  // Relations
-  pilares     DiagnosticoPilar[]
-  rotinas     DiagnosticoRotina[]
-  
-  @@map("diagnosticos")
+  @@index([rotinaEmpresaId])
+  @@map("nota_rotinas")
 }
 
-model DiagnosticoPilar {
+model PilarEvolucao {
   id            String      @id @default(uuid())
-  
-  diagnosticoId String
-  diagnostico   Diagnostico @relation(fields: [diagnosticoId], references: [id], onDelete: Cascade)
-  
-  pilarId       String
-  nota          Float?      // 0-10
-  criticidade   Criticidade?
-  observacao    String?
-  
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
-  createdBy     String?
-  updatedBy     String?
-  
-  @@unique([diagnosticoId, pilarId])
-  @@map("diagnostico_pilares")
-}
 
-model DiagnosticoRotina {
-  id            String      @id @default(uuid())
+  pilarEmpresaId String
+  pilarEmpresa   PilarEmpresa @relation(fields: [pilarEmpresaId], references: [id], onDelete: Cascade)
+
+  mediaNotas          Float?      // 0-10
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  createdBy   String?
+  updatedBy   String?
   
-  diagnosticoId String
-  diagnostico   Diagnostico @relation(fields: [diagnosticoId], references: [id], onDelete: Cascade)
-  
-  rotinaId      String
-  rotina        Rotina      @relation(fields: [rotinaId], references: [id])
-  
-  nota          Float?      // 0-10
-  criticidade   Criticidade?
-  observacao    String?
-  
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
-  createdBy     String?
-  updatedBy     String?
-  
-  @@unique([diagnosticoId, rotinaId])
-  @@map("diagnostico_rotinas")
+  @@map("pilares_evolucao")
 }
 
 model AgendaReuniao {
@@ -209,20 +213,25 @@ model AgendaReuniao {
   duracao     Int?     // em minutos
   local       String?
   link        String?
+
+  usuarioId   String
+  usuario     Usuario  @relation(fields: [usuarioId], references: [id])
   
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
   createdBy   String?
   updatedBy   String?
   
+  @@index([usuarioId])
   @@map("agenda_reunioes")
 }
 
 model AuditLog {
   id          String   @id @default(uuid())
   
-  usuarioId   String
-  usuario     Usuario  @relation(fields: [usuarioId], references: [id])
+  usuarioId   String   // ID para referência (se precisar)
+  usuarioNome String   // Nome no momento da ação
+  usuarioEmail String  // Email no momento da ação
   
   entidade    String   // Nome da tabela
   entidadeId  String   // ID do registro

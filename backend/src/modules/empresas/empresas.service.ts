@@ -31,7 +31,6 @@ export class EmpresasService {
         _count: {
           select: {
             usuarios: true,
-            diagnosticos: true,
             pilares: true,
           },
         },
@@ -60,9 +59,31 @@ export class EmpresasService {
         },
         _count: {
           select: {
-            diagnosticos: true,
+            usuarios: true,
+            pilares: true,
           },
         },
+      },
+    });
+
+    if (!empresa) {
+      throw new NotFoundException('Empresa não encontrada');
+    }
+
+    return empresa;
+  }
+
+  async findByCnpj(cnpj: string) {
+    const empresa = await this.prisma.empresa.findUnique({
+      where: { cnpj },
+      select: {
+        id: true,
+        nome: true,
+        razaoSocial: true,
+        logoUrl: true,
+        backgroundUrl: true,
+        corPrimaria: true,
+        corSecundaria: true,
       },
     });
 
