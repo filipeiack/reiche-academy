@@ -23,6 +23,7 @@ export interface Usuario {
   perfil: 'CONSULTOR' | 'GESTOR' | 'COLABORADOR' | 'LEITURA';
   ativo: boolean;
   empresaId?: string;
+  fotoUrl?: string | null;
   createdAt: Date;
   updatedAt: Date;
 }

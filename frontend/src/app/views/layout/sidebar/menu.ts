@@ -15,31 +15,7 @@ export const MENU: MenuItem[] = [
     isTitle: true
   },
   {
-    label: 'Authentication',
-    icon: 'unlock',
-    subItems: [
-      {
-        label: 'Login',
-        link: '/auth/login',
-      },
-      {
-        label: 'Register',
-        link: '/auth/register',
-      },
-    ]
-  },
-  {
-    label: 'Error',
-    icon: 'cloud-off',
-    subItems: [
-      {
-        label: '404',
-        link: '/error/404',
-      },
-      {
-        label: '500',
-        link: '/error/500',
-      },
-    ]
-  },
+    label: 'User',
+    icon: 'unlock'
+  }
 ];

@@ -1,0 +1,70 @@
+{
+  "APP": {
+    "TITLE": "Reiche Academy",
+    "BRAND": "REICHE",
+    "BRAND_SUFFIX": "CONSULT"
+  },
+  "AUTH": {
+    "LOGIN": {
+      "TITLE": "Bem-vindo! Faça login na sua conta.",
+      "EMAIL_LABEL": "Email",
+      "EMAIL_PLACEHOLDER": "Email",
+      "PASSWORD_LABEL": "Senha",
+      "PASSWORD_PLACEHOLDER": "Senha",
+      "REMEMBER_ME": "Lembrar-me",
+      "LOGIN_BUTTON": "Login",
+      "REGISTER_LINK": "Não é um usuário? Cadastre-se"
+    }
+  },
+  "MENU": {
+    "MAIN": "Principal",
+    "DASHBOARD": "Dashboard",
+    "WEB_APPS": "Cadastros",
+    "USER": "Usuários",
+    "DOCS": "Documentação",
+    "DOCUMENTATION": "Documentação"
+  },
+  "NAVBAR": {
+    "LANGUAGE": {
+      "PORTUGUESE": "Português",
+      "ENGLISH": "Inglês"
+    },
+    "PROFILE": {
+      "USER": "Usuário",
+      "LOGOUT": "Sair"
+    },
+    "NOTIFICATIONS": {
+      "TITLE": "Notificações",
+      "CLEAR_ALL": "Limpar todas",
+      "VIEW_ALL": "Ver todas"
+    }
+  },
+  "COMMON": {
+    "SEARCH_PLACEHOLDER": "Procurar aqui...",
+    "LOADING": "Carregando..."
+  },
+  "BUTTONS": {
+    "PRINT": "Imprimir",
+    "DOWNLOAD_REPORT": "Baixar Relatório",
+    "SAVE": "Salvar",
+    "CANCEL": "Cancelar",
+    "DELETE": "Deletar",
+    "EDIT": "Editar",
+    "VIEW": "Visualizar",
+    "DOWNLOAD": "Baixar"
+  },
+  "DASHBOARD": {
+    "NEW_CUSTOMERS": "Novos Clientes",
+    "NEW_ORDERS": "Novos Pedidos",
+    "GROWTH": "Crescimento",
+    "REVENUE": "Receita",
+    "MONTHLY_SALES": "Vendas Mensais",
+    "CLOUD_STORAGE": "Armazenamento em Nuvem",
+    "INBOX": "Caixa de Entrada",
+    "PROJECTS": "Projetos",
+    "TODAY": "Hoje",
+    "WEEK": "Semana",
+    "MONTH": "Mês",
+    "YEAR": "Ano"
+  }
+}

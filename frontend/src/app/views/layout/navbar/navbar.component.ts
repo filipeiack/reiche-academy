@@ -1,14 +1,23 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, inject } from '@angular/core';
+import { CommonModule } from '@angular/common';
 import { Router, RouterLink } from '@angular/router';
 import { NgbDropdownModule } from '@ng-bootstrap/ng-bootstrap';
 import { ThemeModeService } from '../../../core/services/theme-mode.service';
+import { TranslateService, LanguageOption } from '../../../core/services/translate.service';
+import { AuthService } from '../../../core/services/auth.service';
+import { TranslatePipe } from '../../../core/pipes/translate.pipe';
+import { UserAvatarComponent } from '../../../shared/components/user-avatar/user-avatar.component';
+import { Usuario } from '../../../core/models/auth.model';
 
 @Component({
   selector: 'app-navbar',
   standalone: true,
   imports: [
+    CommonModule,
     NgbDropdownModule,
-    RouterLink
+    RouterLink,
+    TranslatePipe,
+    UserAvatarComponent
   ],
   templateUrl: './navbar.component.html',
   styleUrl: './navbar.component.scss'
@@ -16,6 +25,11 @@ import { ThemeModeService } from '../../../core/services/theme-mode.service';
 export class NavbarComponent implements OnInit {
 
   currentTheme: string = 'dark';
+  translateService = inject(TranslateService);
+  authService = inject(AuthService);
+  languages: LanguageOption[] = [];
+  currentLanguage: LanguageOption | undefined;
+  currentUser: Usuario | null = null;
 
   constructor(private router: Router, private themeModeService: ThemeModeService) {}
 
@@ -23,6 +37,17 @@ export class NavbarComponent implements OnInit {
     this.themeModeService.currentTheme.subscribe( (theme) => {
       this.currentTheme = theme;
       this.showActiveTheme(this.currentTheme);
+    });
+
+    // Initialize language
+    this.languages = this.translateService.languages;
+    this.translateService.currentLang$.subscribe(lang => {
+      this.currentLanguage = this.languages.find(l => l.code === lang);
+    });
+
+    // Subscribe to current user
+    this.authService.currentUser$.subscribe(user => {
+      this.currentUser = user;
     });
   }
 
@@ -66,15 +91,20 @@ export class NavbarComponent implements OnInit {
   }
 
   /**
+   * Change language
+   */
+  changeLanguage(lang: LanguageOption, e: Event) {
+    e.preventDefault();
+    this.translateService.use(lang.code);
+  }
+
+  /**
    * Logout
    */
   onLogout(e: Event) {
     e.preventDefault();
-
-    localStorage.setItem('isLoggedin', 'false');
-    if (localStorage.getItem('isLoggedin') === 'false') {
-      this.router.navigate(['/auth/login']);
-    }
+    this.authService.logout();
+    this.router.navigate(['/auth/login']);
   }
 
 }

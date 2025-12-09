@@ -1,0 +1,73 @@
+{
+  "APP": {
+    "TITLE": "Reiche Academy",
+    "BRAND": "REICHE",
+    "BRAND_SUFFIX": "CONSULT"
+  },
+  "AUTH": {
+    "LOGIN": {
+      "TITLE": "Welcome! Log in to your account.",
+      "EMAIL_LABEL": "Email",
+      "EMAIL_PLACEHOLDER": "Email",
+      "PASSWORD_LABEL": "Password",
+      "PASSWORD_PLACEHOLDER": "Password",
+      "REMEMBER_ME": "Remember me",
+      "LOGIN_BUTTON": "Login",
+      "REGISTER_LINK": "Not a user? Sign up"
+    }
+  },
+  "MENU": {
+    "MAIN": "Main",
+    "DASHBOARD": "Dashboard",
+    "WEB_APPS": "Web Apps",
+    "AUTHENTICATION": "Authentication",
+    "LOGIN": "Login",
+    "REGISTER": "Register",
+    "ERROR": "Error",
+    "DOCS": "Docs",
+    "DOCUMENTATION": "Documentation"
+  },
+  "NAVBAR": {
+    "LANGUAGE": {
+      "PORTUGUESE": "Portuguese",
+      "ENGLISH": "English"
+    },
+    "PROFILE": {
+      "USER": "User",
+      "LOGOUT": "Logout"
+    },
+    "NOTIFICATIONS": {
+      "TITLE": "Notifications",
+      "CLEAR_ALL": "Clear all",
+      "VIEW_ALL": "View all"
+    }
+  },
+  "COMMON": {
+    "SEARCH_PLACEHOLDER": "Search here...",
+    "LOADING": "Loading..."
+  },
+  "BUTTONS": {
+    "PRINT": "Print",
+    "DOWNLOAD_REPORT": "Download Report",
+    "SAVE": "Save",
+    "CANCEL": "Cancel",
+    "DELETE": "Delete",
+    "EDIT": "Edit",
+    "VIEW": "View",
+    "DOWNLOAD": "Download"
+  },
+  "DASHBOARD": {
+    "NEW_CUSTOMERS": "New Customers",
+    "NEW_ORDERS": "New Orders",
+    "GROWTH": "Growth",
+    "REVENUE": "Revenue",
+    "MONTHLY_SALES": "Monthly sales",
+    "CLOUD_STORAGE": "Cloud storage",
+    "INBOX": "Inbox",
+    "PROJECTS": "Projects",
+    "TODAY": "Today",
+    "WEEK": "Week",
+    "MONTH": "Month",
+    "YEAR": "Year"
+  }
+}

@@ -6,14 +6,14 @@
       <img src="assets/images/logo-mini-dark.png" class="logo-mini logo-mini-dark" alt="logo">
     </div>
 
-    <form class="search-form">
+    <!-- <form class="search-form">
       <div class="input-group">
         <div class="input-group-text">
           <i class="feather icon-search"></i>
         </div>
         <input type="text" class="form-control" id="navbarForm" placeholder="Procurar aqui...">
       </div>
-    </form>
+    </form> -->
 
     <ul class="navbar-nav">
       <li class="theme-switcher-wrapper nav-item">
@@ -30,11 +30,18 @@
       </li>
       <li class="nav-item" ngbDropdown>
         <a class="nav-link" ngbDropdownToggle id="languageDropdown" role="button">
-          <img src="assets/images/flags/br.svg" class="w-20px" title="br" alt="br">
-          <span class="ms-2 d-none d-md-inline-block">Português</span>
+          <img [src]="currentLanguage?.flag" class="w-20px" [title]="currentLanguage?.code" [alt]="currentLanguage?.code">
+          <span class="ms-2 d-none d-md-inline-block">{{ currentLanguage?.name }}</span>
         </a>
         <div ngbDropdownMenu aria-labelledby="languageDropdown">
-          <a ngbDropdownItem class="py-2 d-flex"> <img src="assets/images/flags/us.svg" class="w-20px me-1" title="us" alt="us"> <span class="ms-2"> Inglês </span></a>
+          @for (lang of languages; track lang.code) {
+            @if (lang.code !== currentLanguage?.code) {
+              <a ngbDropdownItem class="py-2 d-flex" (click)="changeLanguage(lang, $event)"> 
+                <img [src]="lang.flag" class="w-20px me-1" [title]="lang.code" [alt]="lang.code"> 
+                <span class="ms-2">{{ lang.name }}</span>
+              </a>
+            }
+          }
         </div>
       </li>
       <!-- <li class="nav-item nav-apps" ngbDropdown>
@@ -207,29 +214,37 @@
       </li>
       <li class="nav-item nav-profile" ngbDropdown>
         <a class="nav-link" ngbDropdownToggle id="profileDropdown">
-          <img class="w-30px h-30px ms-1 rounded-circle" src="https://placehold.co/30x30" alt="profile">
+          <app-user-avatar 
+            [nome]="currentUser?.nome" 
+            [fotoUrl]="currentUser?.fotoUrl"
+            size="small">
+          </app-user-avatar>
         </a>
         <div ngbDropdownMenu class="px-0" aria-labelledby="profileDropdown">
           <div class="d-flex flex-column align-items-center border-bottom px-5 py-3">
             <div class="mb-3">
-              <img class="w-80px h-80px rounded-circle" src="https://placehold.co/80x80" alt="">
+              <app-user-avatar 
+                [nome]="currentUser?.nome" 
+                [fotoUrl]="currentUser?.fotoUrl"
+                size="large">
+              </app-user-avatar>
             </div>
             <div class="text-center">
-              <p class="tx-16 fw-bolder">Amiah Burton</p>
-              <p class="fs-12px text-secondary">amiahburton&#64;gmail.com</p>
+              <p class="tx-16 fw-bolder">{{ currentUser?.nome || 'Usuário' }}</p>
+              <p class="fs-12px text-secondary">{{ currentUser?.email }}</p>
             </div>
           </div>
           <ul class="list-unstyled p-1">
             <li>
               <a routerLink="/general/profile" class="dropdown-item py-2 d-flex ms-0">
                 <i class="feather icon-user me-2 icon-md"></i>
-                <span>Usuário</span>
+                <span>{{ 'NAVBAR.PROFILE.USER' | translate }}</span>
               </a>
             </li>
             <li>
               <a href="" (click)="onLogout($event)" class="dropdown-item py-2 d-flex ms-0">
                 <i class="feather icon-log-out me-2 icon-md"></i>
-                <span>Sair</span>
+                <span>{{ 'NAVBAR.PROFILE.LOGOUT' | translate }}</span>
               </a>
             </li>
           </ul>

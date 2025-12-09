@@ -5,8 +5,9 @@ import { NavigationEnd, Router, RouterLink, RouterLinkActive } from '@angular/ro
 import { NgScrollbar } from 'ngx-scrollbar';
 import MetisMenu from 'metismenujs';
 
-import { MENU } from './menu';
 import { MenuItem } from './menu.model';
+import { MenuService } from '../../../core/services/menu.service';
+import { TranslatePipe } from '../../../core/pipes/translate.pipe';
 
 import { FeatherIconDirective } from '../../../core/feather-icon/feather-icon.directive';
 
@@ -18,7 +19,8 @@ import { FeatherIconDirective } from '../../../core/feather-icon/feather-icon.di
     RouterLinkActive, 
     NgScrollbar, 
     NgClass, 
-    FeatherIconDirective, 
+    FeatherIconDirective,
+    TranslatePipe
   ],
   templateUrl: './sidebar.component.html',
   styleUrl: './sidebar.component.scss'
@@ -30,7 +32,12 @@ export class SidebarComponent implements OnInit, AfterViewInit {
   menuItems: MenuItem[] = [];
   @ViewChild('sidebarMenu') sidebarMenu!: ElementRef;
 
-  constructor(@Inject(DOCUMENT) private document: Document, private renderer: Renderer2, router: Router) { 
+  constructor(
+    @Inject(DOCUMENT) private document: Document, 
+    private renderer: Renderer2, 
+    router: Router,
+    private menuService: MenuService
+  ) { 
     router.events.forEach((event) => {
       if (event instanceof NavigationEnd) {
 
@@ -51,7 +58,10 @@ export class SidebarComponent implements OnInit, AfterViewInit {
   }
 
   ngOnInit(): void {
-    this.menuItems = MENU;
+    // Subscribe to translated menu items
+    this.menuService.getMenuItems().subscribe(items => {
+      this.menuItems = items;
+    });
 
     /**
      * Sidebar-folded on desktop (min-width:992px and max-width: 1199px)

@@ -1,4 +1,4 @@
-import { ApplicationConfig, importProvidersFrom, provideZoneChangeDetection } from '@angular/core';
+import { APP_INITIALIZER, ApplicationConfig, importProvidersFrom, provideZoneChangeDetection } from '@angular/core';
 import { provideRouter, withInMemoryScrolling } from '@angular/router';
 import { provideHttpClient, withInterceptorsFromDi } from '@angular/common/http';
 
@@ -7,6 +7,7 @@ import { provideAnimationsAsync } from '@angular/platform-browser/animations/asy
 
 import { SweetAlert2Module } from '@sweetalert2/ngx-sweetalert2';
 import { provideHighlightOptions } from 'ngx-highlightjs';
+import { TranslateService } from './core/services/translate.service';
 
 const highlightOptions = {
   coreLibraryLoader: () => import('highlight.js/lib/core'),
@@ -17,6 +18,17 @@ const highlightOptions = {
   },
 };
 
+export function initializeApp(translateService: TranslateService) {
+  return () => {
+    // The translation service will automatically load the stored language or default to pt-BR
+    return new Promise<void>((resolve) => {
+      translateService.translations$.subscribe(() => {
+        resolve();
+      });
+    });
+  };
+}
+
 export const appConfig: ApplicationConfig = {
   providers: [
     provideZoneChangeDetection({ eventCoalescing: true }), 
@@ -25,5 +37,11 @@ export const appConfig: ApplicationConfig = {
     provideAnimationsAsync(),
     importProvidersFrom([SweetAlert2Module.forRoot()]), // ngx-sweetalert2: https://github.com/sweetalert2/ngx-sweetalert2
     provideHighlightOptions(highlightOptions), // ngx-highlightjs: https://github.com/murhafsousli/ngx-highlightjs
+    {
+      provide: APP_INITIALIZER,
+      useFactory: initializeApp,
+      deps: [TranslateService],
+      multi: true
+    }
   ],
 };

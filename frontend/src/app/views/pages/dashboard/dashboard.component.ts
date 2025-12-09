@@ -4,6 +4,7 @@ import { NgbCalendar, NgbDatepickerModule, NgbDateStruct, NgbDropdownModule } fr
 import { ApexOptions, NgApexchartsModule } from "ng-apexcharts";
 import { FeatherIconDirective } from '../../../core/feather-icon/feather-icon.directive';
 import { ThemeCssVariableService, ThemeCssVariablesType } from '../../../core/services/theme-css-variable.service';
+import { TranslatePipe } from '../../../core/pipes/translate.pipe';
 
 @Component({
   selector: 'app-dashboard',
@@ -13,7 +14,8 @@ import { ThemeCssVariableService, ThemeCssVariablesType } from '../../../core/se
     FormsModule, 
     NgbDatepickerModule, 
     NgApexchartsModule,
-    FeatherIconDirective
+    FeatherIconDirective,
+    TranslatePipe
   ],
   templateUrl: './dashboard.component.html',
   styleUrl: './dashboard.component.scss'
