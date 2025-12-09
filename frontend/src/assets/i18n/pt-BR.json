@@ -14,13 +14,14 @@
       "REMEMBER_ME": "Lembrar-me",
       "LOGIN_BUTTON": "Login",
       "REGISTER_LINK": "Não é um usuário? Cadastre-se"
-    }
+    },
+    "PASSWORD": "Senha"
   },
   "MENU": {
     "MAIN": "Principal",
     "DASHBOARD": "Dashboard",
     "WEB_APPS": "Cadastros",
-    "USER": "Usuários",
+    "USUARIOS": "Usuários",
     "DOCS": "Documentação",
     "DOCUMENTATION": "Documentação"
   },
@@ -40,8 +41,19 @@
     }
   },
   "COMMON": {
+    "SEARCH": "Procurar",
     "SEARCH_PLACEHOLDER": "Procurar aqui...",
-    "LOADING": "Carregando..."
+    "LOADING": "Carregando...",
+    "ITEMS": "itens",
+    "ACTIONS": "Ações",
+    "INFO": "Informações",
+    "ACTIVE": "Ativo",
+    "INACTIVE": "Inativo",
+    "NO_DATA": "Nenhum registro encontrado",
+    "PAGE": "Página",
+    "OF": "de",
+    "PREV": "Anterior",
+    "NEXT": "Próximo"
   },
   "BUTTONS": {
     "PRINT": "Imprimir",
@@ -51,7 +63,22 @@
     "DELETE": "Deletar",
     "EDIT": "Editar",
     "VIEW": "Visualizar",
-    "DOWNLOAD": "Baixar"
+    "DOWNLOAD": "Baixar",
+    "CREATE": "Criar",
+    "UPDATE": "Atualizar",
+    "CONFIRM": "Confirmar",
+    "UPLOAD": "Fazer Upload"
+  },
+  "USERS": {
+    "AVATAR": "Avatar",
+    "NAME": "Nome",
+    "EMAIL": "Email",
+    "ROLE": "Perfil",
+    "POSITION": "Cargo",
+    "STATUS": "Status",
+    "ACTIVE": "Usuário Ativo",
+    "CREATE": "Criar Usuário",
+    "EDIT": "Editar Usuário"
   },
   "DASHBOARD": {
     "NEW_CUSTOMERS": "Novos Clientes",

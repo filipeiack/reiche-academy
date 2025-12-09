@@ -38,6 +38,7 @@ model Usuario {
   senha     String
   cargo     String
   perfil    PerfilUsuario
+  fotoUrl   String?
   ativo     Boolean  @default(true)
   
   empresaId String?

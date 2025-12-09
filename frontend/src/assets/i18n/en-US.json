@@ -14,12 +14,14 @@
       "REMEMBER_ME": "Remember me",
       "LOGIN_BUTTON": "Login",
       "REGISTER_LINK": "Not a user? Sign up"
-    }
+    },
+    "PASSWORD": "Password"
   },
   "MENU": {
     "MAIN": "Main",
     "DASHBOARD": "Dashboard",
-    "WEB_APPS": "Web Apps",
+    "WEB_APPS": "Registrations",
+    "USUARIOS": "Users",
     "AUTHENTICATION": "Authentication",
     "LOGIN": "Login",
     "REGISTER": "Register",
@@ -43,8 +45,19 @@
     }
   },
   "COMMON": {
+    "SEARCH": "Search",
     "SEARCH_PLACEHOLDER": "Search here...",
-    "LOADING": "Loading..."
+    "LOADING": "Loading...",
+    "ITEMS": "items",
+    "ACTIONS": "Actions",
+    "INFO": "Information",
+    "ACTIVE": "Active",
+    "INACTIVE": "Inactive",
+    "NO_DATA": "No records found",
+    "PAGE": "Page",
+    "OF": "of",
+    "PREV": "Previous",
+    "NEXT": "Next"
   },
   "BUTTONS": {
     "PRINT": "Print",
@@ -54,7 +67,22 @@
     "DELETE": "Delete",
     "EDIT": "Edit",
     "VIEW": "View",
-    "DOWNLOAD": "Download"
+    "DOWNLOAD": "Download",
+    "CREATE": "Create",
+    "UPDATE": "Update",
+    "CONFIRM": "Confirm",
+    "UPLOAD": "Upload"
+  },
+  "USERS": {
+    "AVATAR": "Avatar",
+    "NAME": "Name",
+    "EMAIL": "Email",
+    "ROLE": "Role",
+    "POSITION": "Position",
+    "STATUS": "Status",
+    "ACTIVE": "Active User",
+    "CREATE": "Create User",
+    "EDIT": "Edit User"
   },
   "DASHBOARD": {
     "NEW_CUSTOMERS": "New Customers",

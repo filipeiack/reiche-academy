@@ -10,8 +10,10 @@ export interface LoginResponse {
     id: string;
     email: string;
     nome: string;
-    tipo: string;
+    cargo?: string;
+    perfil: string;
     empresaId: string;
+    fotoUrl?: string | null;
   };
 }
 

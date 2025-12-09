@@ -1,6 +1,6 @@
 import { APP_INITIALIZER, ApplicationConfig, importProvidersFrom, provideZoneChangeDetection } from '@angular/core';
 import { provideRouter, withInMemoryScrolling } from '@angular/router';
-import { provideHttpClient, withInterceptorsFromDi } from '@angular/common/http';
+import { provideHttpClient, withInterceptorsFromDi, HTTP_INTERCEPTORS } from '@angular/common/http';
 
 import { routes } from './app.routes';
 import { provideAnimationsAsync } from '@angular/platform-browser/animations/async';
@@ -8,6 +8,7 @@ import { provideAnimationsAsync } from '@angular/platform-browser/animations/asy
 import { SweetAlert2Module } from '@sweetalert2/ngx-sweetalert2';
 import { provideHighlightOptions } from 'ngx-highlightjs';
 import { TranslateService } from './core/services/translate.service';
+import { AuthInterceptor } from './core/interceptors/auth.interceptor';
 
 const highlightOptions = {
   coreLibraryLoader: () => import('highlight.js/lib/core'),
@@ -37,6 +38,11 @@ export const appConfig: ApplicationConfig = {
     provideAnimationsAsync(),
     importProvidersFrom([SweetAlert2Module.forRoot()]), // ngx-sweetalert2: https://github.com/sweetalert2/ngx-sweetalert2
     provideHighlightOptions(highlightOptions), // ngx-highlightjs: https://github.com/murhafsousli/ngx-highlightjs
+    {
+      provide: HTTP_INTERCEPTORS,
+      useClass: AuthInterceptor,
+      multi: true
+    },
     {
       provide: APP_INITIALIZER,
       useFactory: initializeApp,

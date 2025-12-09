@@ -50,8 +50,10 @@ export class AuthService {
         id: usuario.id,
         email: usuario.email,
         nome: usuario.nome,
+        cargo: usuario.cargo,
         perfil: usuario.perfil,
         empresaId: usuario.empresaId,
+        fotoUrl: usuario.fotoUrl,
       },
     };
   }

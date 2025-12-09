@@ -4,20 +4,38 @@ import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
 import { ConfigService } from '@nestjs/config';
 import helmet from 'helmet';
 import compression from 'compression';
+import { join } from 'path';
+import { NestExpressApplication } from '@nestjs/platform-express';
 import { AppModule } from './app.module';
 
 async function bootstrap() {
-  const app = await NestFactory.create(AppModule);
+  const app = await NestFactory.create<NestExpressApplication>(AppModule);
   const configService = app.get(ConfigService);
 
-  // Security
-  app.use(helmet());
-  app.use(compression());
-
-  // CORS
+  // CORS - Configurar ANTES de outros middlewares
   app.enableCors({
     origin: configService.get('CORS_ORIGIN', 'http://localhost:4200'),
     credentials: true,
+    methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization', 'Accept'],
+  });
+
+  // Security - Helmet com configurações relaxadas para imagens
+  app.use(
+    helmet({
+      crossOriginResourcePolicy: { policy: 'cross-origin' },
+      contentSecurityPolicy: false,
+    })
+  );
+  app.use(compression());
+
+  // Serve static files from public folder
+  app.useStaticAssets(join(__dirname, '..', 'public'), {
+    prefix: '/',
+    setHeaders: (res) => {
+      res.setHeader('Access-Control-Allow-Origin', '*');
+      res.setHeader('Cross-Origin-Resource-Policy', 'cross-origin');
+    },
   });
 
   // Global prefix

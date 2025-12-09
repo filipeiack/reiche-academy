@@ -1,6 +1,7 @@
 import { Component, Input } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { InitialsPipe } from '../../../core/pipes/initials.pipe';
+import { environment } from '../../../../environments/environment';
 
 @Component({
   selector: 'app-user-avatar',
@@ -8,9 +9,9 @@ import { InitialsPipe } from '../../../core/pipes/initials.pipe';
   imports: [CommonModule, InitialsPipe],
   template: `
     <div [class]="'user-avatar ' + sizeClass" [style.background-color]="backgroundColor">
-      @if (fotoUrl) {
+      @if (imageUrl) {
         <img 
-          [src]="fotoUrl" 
+          [src]="imageUrl" 
           [alt]="nome || 'Avatar'"
           class="avatar-image"
           (error)="onImageError()"
@@ -74,6 +75,19 @@ export class UserAvatarComponent {
   ];
 
   backgroundColor: string;
+  
+  get imageUrl(): string | null {
+    if (!this.fotoUrl) return null;
+    
+    // Se já é uma URL completa, retorna como está
+    if (this.fotoUrl.startsWith('http://') || this.fotoUrl.startsWith('https://')) {
+      return this.fotoUrl;
+    }
+    
+    // Caso contrário, adiciona o backendUrl
+    return `${environment.backendUrl}${this.fotoUrl}`;
+  }
+  
   get sizeClass(): string {
     return this.size;
   }
@@ -97,6 +111,7 @@ export class UserAvatarComponent {
 
   onImageError(): void {
     // Se a imagem falhar ao carregar, limpa a fotoUrl para mostrar iniciais
+    console.warn('Erro ao carregar imagem:', this.imageUrl);
     this.fotoUrl = null;
   }
 }

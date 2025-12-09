@@ -1,0 +1,158 @@
+<nav aria-label="breadcrumb" class="mb-3">
+<ol class="breadcrumb breadcrumb-dot mb-1">
+    <li class="breadcrumb-item"><a routerLink="/usuarios">{{ 'MENU.WEB_APPS' | translate }}</a></li>
+    <li class="breadcrumb-item active" aria-current="page">{{ 'MENU.USUARIOS' | translate }}</li>
+</ol>
+</nav>
+
+<!-- Error Alert -->
+@if (error) {
+<div class="alert alert-danger alert-dismissible fade show" role="alert">
+    <div class="d-flex">
+    <div>
+        <i class="feather icon-alert-circle me-2"></i>
+        {{ error }}
+    </div>
+    </div>
+    <a class="btn-close" (click)="error = ''"></a>
+</div>
+}
+
+<div class="row">
+  <div class="col-12 stretch-card">
+    <div class="card">
+      <div class="card-body">
+        <div class="d-flex justify-content-between align-items-baseline mb-2">
+            <h6 class="card-title mb-0">{{ 'MENU.USUARIOS' | translate }}</h6>
+            <div class="d-flex flex-wrap align-items-center gap-2">
+                <div class="input-icon search-inline">
+                <span class="input-icon-addon">
+                    <i class="feather icon-search"></i>
+                </span>
+                <input 
+                    type="text" 
+                    class="form-control" 
+                    placeholder="{{ 'COMMON.SEARCH' | translate }}"
+                    [value]="searchQuery"
+                    (input)="onSearchInput($event)"
+                />
+                </div>
+                <a [routerLink]="['/usuarios/novo']" class="btn btn-primary btn-sm">
+                <i class="feather icon-plus"></i>
+                <span class="d-none d-sm-inline ms-1">{{ 'BUTTONS.CREATE' | translate }}</span>
+                </a>
+            </div>
+        </div>
+
+        @if (loading) {
+            <div class="text-center py-5">
+              <div class="spinner-border text-primary" role="status">
+                <span class="visually-hidden">{{ 'COMMON.LOADING' | translate }}...</span>
+              </div>
+            </div>
+          } @else {
+            <div class="table-responsive">
+            <table class="table table-hover mb-0">
+                <thead>
+                  <tr>
+                    <th>{{ 'USERS.AVATAR' | translate }}</th>
+                    <th>{{ 'USERS.NAME' | translate }}</th>
+                    <th>{{ 'USERS.EMAIL' | translate }}</th>
+                    <th>{{ 'USERS.ROLE' | translate }}</th>
+                    <th>{{ 'USERS.STATUS' | translate }}</th>
+                    <th>{{ 'COMMON.ACTIONS' | translate }}</th>
+                  </tr>
+                </thead>
+                <tbody>
+                @for (usuario of paginatedUsuarios; track usuario.id) {
+                    <tr>
+                        <td>
+                            <app-user-avatar 
+                          [nome]="usuario.nome" 
+                          [fotoUrl]="usuario.fotoUrl"
+                          size="small">
+                        </app-user-avatar>
+                        </td>
+                        <td>{{ usuario.nome }}</td>
+                        <td>{{ usuario.email }}</td>
+                        <td>{{ getPerfilLabel(usuario.perfil) }}</td>
+                        <td><span class="badge" [ngClass]="{'bg-success': usuario.ativo, 'bg-danger': !usuario.ativo}">
+                            {{ usuario.ativo ? ('COMMON.ACTIVE' | translate) : ('COMMON.INACTIVE' | translate) }}</span></td>
+                        <td class="text-nowrap">
+                            <div class="btn-group btn-group-sm" role="group">
+                                <a [routerLink]="['/usuarios', usuario.id, 'editar']" 
+                                class="btn btn-icon text-primary"
+                                title="{{ 'BUTTONS.EDIT' | translate }}">
+                                <i class="feather icon-edit"></i>
+                                </a>
+                                @if (selectedUserIdToDelete === usuario.id) {
+                                    <button 
+                                    class="btn btn-icon text-danger"
+                                    (click)="deleteUsuario(usuario.id)"
+                                    title="{{ 'BUTTONS.CONFIRM' | translate }}">
+                                    <i class="feather icon-check"></i>
+                                    </button>
+                                    <button 
+                                    class="btn btn-icon text-secondary"
+                                    (click)="cancelDelete()"
+                                    title="{{ 'BUTTONS.CANCEL' | translate }}">
+                                    <i class="feather icon-x"></i>
+                                    </button>
+                                } @else {
+                                    <button 
+                                    class="btn btn-icon text-danger"
+                                    (click)="confirmDelete(usuario.id)"
+                                    title="{{ 'BUTTONS.DELETE' | translate }}">
+                                    <i class="feather icon-trash-2"></i>
+                                    </button>
+                                }
+                            </div>
+                        </td>
+                    </tr>
+                    
+                } @empty {
+                    <tr>
+                      <td colspan="7" class="border-bottom text-center text-muted py-4">
+                        {{ 'COMMON.NO_DATA' | translate }}
+                      </td>
+                    </tr>
+                  }
+                
+                </tbody>
+            </table>
+            </div>
+
+            <span class="text-muted fs-12">{{ filteredUsuarios.length }} {{ 'COMMON.ITEMS' | translate }}</span>
+
+            <!-- Pagination -->
+            @if (totalPages > 1) {
+              <div class="card-footer d-flex align-items-center px-0">
+                <p class="text-muted me-3 mb-0">
+                  {{ 'COMMON.PAGE' | translate }} {{ currentPage }} {{ 'COMMON.OF' | translate }} {{ totalPages }}
+                </p>
+                <ul class="pagination m-0 ms-auto">
+                  <li class="page-item" [class.disabled]="currentPage === 1">
+                    <a class="page-link" (click)="prevPage()" href="javascript:void(0);">
+                      <i class="feather icon-chevron-left"></i> {{ 'COMMON.PREV' | translate }}
+                    </a>
+                  </li>
+                  @for (page of [].constructor(totalPages); let i = $index; track i) {
+                    <li class="page-item" [class.active]="i + 1 === currentPage">
+                      <a class="page-link" (click)="goToPage(i + 1)" href="javascript:void(0);">
+                        {{ i + 1 }}
+                      </a>
+                    </li>
+                  }
+                  <li class="page-item" [class.disabled]="currentPage === totalPages">
+                    <a class="page-link" (click)="nextPage()" href="javascript:void(0);">
+                      {{ 'COMMON.NEXT' | translate }} <i class="feather icon-chevron-right"></i>
+                    </a>
+                  </li>
+                </ul>
+              </div>
+            }
+          }
+      </div> 
+    </div>
+  </div>
+</div>

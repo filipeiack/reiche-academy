@@ -1,6 +1,8 @@
 import { Injectable, NotFoundException, ConflictException } from '@nestjs/common';
 import { PrismaService } from '../../common/prisma/prisma.service';
 import * as argon2 from 'argon2';
+import * as fs from 'fs';
+import * as path from 'path';
 
 @Injectable()
 export class UsuariosService {
@@ -12,7 +14,9 @@ export class UsuariosService {
         id: true,
         email: true,
         nome: true,
+        cargo: true,
         perfil: true,
+        fotoUrl: true,
         ativo: true,
         empresaId: true,
         createdAt: true,
@@ -28,7 +32,9 @@ export class UsuariosService {
         id: true,
         email: true,
         nome: true,
+        cargo: true,
         perfil: true,
+        fotoUrl: true,
         ativo: true,
         empresaId: true,
         empresa: true,
@@ -68,7 +74,9 @@ export class UsuariosService {
         id: true,
         email: true,
         nome: true,
+        cargo: true,
         perfil: true,
+        fotoUrl: true,
         ativo: true,
         empresaId: true,
         createdAt: true,
@@ -90,7 +98,9 @@ export class UsuariosService {
         id: true,
         email: true,
         nome: true,
+        cargo: true,
         perfil: true,
+        fotoUrl: true,
         ativo: true,
         empresaId: true,
         updatedAt: true,
@@ -104,6 +114,52 @@ export class UsuariosService {
     return this.prisma.usuario.update({
       where: { id },
       data: { ativo: false },
+    });
+  }
+
+  async updateProfilePhoto(id: string, fotoUrl: string) {
+    await this.findById(id);
+
+    return this.prisma.usuario.update({
+      where: { id },
+      data: { fotoUrl },
+      select: {
+        id: true,
+        email: true,
+        nome: true,
+        cargo: true,
+        perfil: true,
+        fotoUrl: true,
+        ativo: true,
+        updatedAt: true,
+      },
+    });
+  }
+
+  async deleteProfilePhoto(id: string) {
+    const usuario = await this.findById(id);
+
+    // Delete file from filesystem if it exists
+    if (usuario.fotoUrl) {
+      const filePath = path.join(process.cwd(), 'public', usuario.fotoUrl);
+      if (fs.existsSync(filePath)) {
+        fs.unlinkSync(filePath);
+      }
+    }
+
+    return this.prisma.usuario.update({
+      where: { id },
+      data: { fotoUrl: null },
+      select: {
+        id: true,
+        email: true,
+        nome: true,
+        cargo: true,
+        perfil: true,
+        fotoUrl: true,
+        ativo: true,
+        updatedAt: true,
+      },
     });
   }
 }

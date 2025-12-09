@@ -25,8 +25,9 @@ export class MenuService {
       isTitle: true
     },
     {
-      label: 'MENU.USER',
-      icon: 'user'
+      label: 'MENU.USUARIOS',
+      icon: 'users',
+      link: '/usuarios'
     }
   ];
 

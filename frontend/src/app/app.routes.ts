@@ -22,6 +22,17 @@ export const routes: Routes = [
         loadComponent: () => import('./views/pages/dashboard/dashboard.component').then(m => m.DashboardComponent)
       }
     ]
+  },
+  {
+    path: 'usuarios',
+    component: BaseComponent,
+    canActivate: [authGuard],
+    children: [
+      {
+        path: '',
+        loadChildren: () => import('./views/pages/usuarios/usuarios.routes').then(m => m.usuariosRoutes)
+      }
+    ]
   }
 ];
 
