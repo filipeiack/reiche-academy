@@ -80,10 +80,10 @@ export class EmpresasService {
         id: true,
         nome: true,
         razaoSocial: true,
+        tipoNegocio: true,
         logoUrl: true,
-        backgroundUrl: true,
-        corPrimaria: true,
-        corSecundaria: true,
+        loginUrl: true,
+        ativo: true,
       },
     });
 

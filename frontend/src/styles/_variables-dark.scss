@@ -1,0 +1,19 @@
+$body-color-dark:                   #EFEFEF !default; // Branco Off (Reiche Academy)
+$body-bg-dark:                      #000 !default;
+
+$body-tertiary-bg-dark:             mix($gray-700, $gray-900, 50%) !default;
+
+$body-secondary-color-dark:         #7987a1 !default; // Texto secundário
+$link-color-dark:                   #D1B689 !default; // Dourado 02 (Reiche Academy)
+
+$border-color-dark:                 #172340 !default;
+
+// $box-shadow-dark:                   0 0 10px 0 rgb(6, 11, 21) !default;
+
+$box-shadow-dark:                  0 .5rem 1rem rgba($black, .35) !default;
+$box-shadow-sm-dark:               0 .125rem .25rem rgba($black, .15) !default;
+$box-shadow-lg-dark:               0 1rem 3rem rgba($black, .5) !default;
+
+// Card
+$card-box-shadow-dark:              3px 0 10px 0 #060b15 !default;
+$card-border-color-dark:            #172340;

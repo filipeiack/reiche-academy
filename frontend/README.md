@@ -1,20 +1,32 @@
 # Frontend - Reiche Academy
 
-Aplicação web SPA desenvolvida com Angular 18+ para o sistema Reiche Academy.
+Aplicação web SPA desenvolvida com **Angular 18+** para o sistema **Reiche Academy**. Sistema de gestão empresarial PDCA com autenticação JWT, personalização por empresa e design system oficial.
 
-## 🚀 Tecnologias
+## 🚀 Stack Tecnológico
 
-- Angular 18+
-- Angular Material
-- RxJS
-- TypeScript
-- SCSS
+- **Framework**: Angular 18+ (standalone components)
+- **Template Base**: NobleUI Angular v3.0 - demo1
+- **Estilização**: Bootstrap 5 + SCSS
+- **Estado**: RxJS (reactive programming)
+- **Autenticação**: JWT (access + refresh tokens)
+- **Validação**: Reactive Forms com class-validator
+- **HTTP Client**: HttpClient com interceptors
+- **TypeScript**: Tipagem rigorosa
+
+## 🎨 Design System
+
+- **Paleta Oficial**: 
+  - Dourado 01 (Primário): `#B6915D`
+  - Dourado 02 (Apoio): `#D1B689`
+  - Azul Grafite (Neutro): `#242B2E`
+  - Branco (Claro): `#EFEFEF`
+- **Referência**: `DESIGN_SYSTEM_COLORS.md`
 
 ## 📋 Pré-requisitos
 
 ```bash
-node --version  # v20.x
-npm --version   # v10.x
+node --version  # v20+ LTS
+npm --version   # v10+
 ```
 
 ## 🔧 Instalação
@@ -27,58 +39,251 @@ npm install
 ## 🏃 Executar
 
 ```bash
-# Desenvolvimento
-npm start
-# ou
+# Desenvolvimento (hot reload)
 ng serve
 
+# Abrir no navegador automaticamente
+ng serve --open
+
 # Build produção
-npm run build
+ng build --configuration production
 ```
 
-Acesse: http://localhost:4200
+Acesse: **http://localhost:4200**
 
-## 📁 Estrutura
+## 📁 Estrutura de Diretórios
 
 ```
 src/
 ├── app/
-│   ├── core/           # Serviços core (auth, http, etc)
-│   ├── shared/         # Componentes compartilhados
-│   ├── features/       # Módulos de features
-│   │   ├── auth/      # Autenticação
-│   │   ├── dashboard/ # Dashboard
-│   │   ├── empresas/  # Gestão de empresas
-│   │   ├── usuarios/  # Gestão de usuários
-│   │   └── diagnosticos/ # Diagnósticos
+│   ├── core/                          # Serviços centrais
+│   │   ├── dummy-datas/             # Dados fictícios
+│   │   ├── feather-icon/            # Ícones Feather
+│   │   ├── guards/                  # Guards de autenticação
+│   │   └── services/                # Serviços (theme, auth, etc)
+│   │
+│   ├── views/                        # Páginas e layouts
+│   │   ├── layout/                  # Layouts principais
+│   │   │   ├── base/               # Layout base (com navbar/sidebar)
+│   │   │   ├── navbar/             # Componente navbar
+│   │   │   ├── sidebar/            # Componente sidebar
+│   │   │   └── footer/             # Componente footer
+│   │   │
+│   │   ├── pages/                  # Páginas da aplicação
+│   │   │   ├── auth/              # Autenticação
+│   │   │   │   ├── login/        # Tela de login (NobleUI)
+│   │   │   │   │   ├── login.component.ts
+│   │   │   │   │   ├── login.component.html
+│   │   │   │   │   └── login.component.scss
+│   │   │   │   └── auth.routes.ts
+│   │   │   └── dashboard/         # Dashboard
+│   │   │
+│   │   └── partials/              # Componentes compartilhados
+│   │
 │   ├── app.component.ts
-│   ├── app.config.ts
-│   └── app.routes.ts
-├── assets/            # Recursos estáticos
-├── environments/      # Configurações de ambiente
-└── styles.scss       # Estilos globais
+│   ├── app.config.ts              # Providers e configurações globais
+│   ├── app.routes.ts              # Routing principal
+│   └── app.module.ts              # Root module (se necessário)
+│
+├── assets/
+│   ├── images/                    # Imagens
+│   └── scss/                      # SCSS compartilhados (se houver)
+│
+├── environments/
+│   ├── environment.ts             # Desenvolvimento
+│   └── environment.prod.ts        # Produção
+│
+├── styles/                        # Estilos NobleUI globais
+│   ├── components/               # Estilos de componentes
+│   ├── mixins/                   # Mixins SCSS
+│   ├── plugin-overrides/         # Overrides de plugins
+│   ├── rtl-css/                  # Estilos RTL
+│   ├── _variables.scss
+│   ├── _root.scss
+│   ├── styles.scss               # Arquivo principal
+│   └── ... (40+ arquivos SCSS)
+│
+└── styles.scss                   # Importador principal
+```
+│   ├── styles.scss                  # Estilos globais
+│   └── variables.scss               # CSS Variables (cores, fontes)
+│
+└── index.html                       # HTML raiz
 ```
 
-## 🎨 Template Base
+## 🎯 Features Implementadas (Fase 1)
 
-O projeto utiliza o template NobleUI Angular localizado em `../templates/nobleui-angular/`.
+- ✅ **Template NobleUI v3.0**
+  - Layout completo (base, navbar, sidebar, footer)
+  - Componentes prontos
+  - SCSS globais e estilos
+  - Fontes Feather icons
+
+- ✅ **Autenticação**
+  - Tela de login (NobleUI)
+  - localStorage (isLoggedin)
+  - Estrutura pronta para JWT
+
+- ⏳ **Dashboard** (em progresso)
+- ⏳ **Integrações com backend** (JWT, API calls)
+
+## 🔌 Integração com Backend
+
+### Endpoints Prontos para Implementação
+```http
+# Autenticação
+POST /api/auth/login
+POST /api/auth/refresh
+
+# Dados
+GET /api/dashboard
+GET /api/empresas
+GET /api/usuarios
+```
+
+**Status**: Estrutura pronta, aguardando integração com NestJS backend
+
+## 📚 Padrões de Código
+
+### Componentes Standalone
+```typescript
+@Component({
+  selector: 'app-login',
+  standalone: true,
+  imports: [CommonModule, RouterLink],
+  templateUrl: './login.component.html',
+  styleUrl: './login.component.scss'
+})
+```
+
+### Rotas com Lazy Loading
+```typescript
+export default [
+  { path: '', redirectTo: 'login', pathMatch: 'full' },
+  {
+    path: 'login',
+    loadComponent: () => import('./login/login.component').then(c => c.LoginComponent)
+  }
+] as Routes;
+```
+
+### Services com Injeção de Dependência
+```typescript
+@Injectable({ providedIn: 'root' })
+export class ThemeModeService {
+  constructor() {}
+}
+```
+
+## 🎨 Template NobleUI Angular v3.0
+
+O projeto utiliza **100% do template NobleUI Angular v3.0 (demo1)**:
+
+**Localização**: `../templates/nobleui-angular/template/demo1/`
+
+**O que foi migrado:**
+- ✅ Componentes de layout (base, navbar, sidebar, footer)
+- ✅ Sistema de estilos SCSS completo (`src/styles/`)
+- ✅ Core services (theme-mode, theme-css-variable, feather-icon)
+- ✅ Estrutura de rotas e lazy loading
+- ✅ Partials compartilhados
+
+**Estrutura preservada:**
+- ✅ Classes Bootstrap 5 originais
+- ✅ Ícones Feather
+- ✅ Responsividade nativa
+- ✅ Dark mode support
+
+**Sem modificações:**
+- ❌ Tailwind CSS
+- ❌ Bootstrap customizado
+- ❌ CSS utilitários fora do NobleUI
 
 ## 🧪 Testes
 
 ```bash
 # Unit tests
-npm test
+ng test
 
 # E2E tests
-npm run e2e
+ng e2e
 ```
 
 ## 📦 Build
 
 ```bash
-# Produção
-npm run build
+# Build para produção (otimizado)
+ng build --configuration production
 
-# Desenvolvimento
-npm run watch
+# Análise de bundle
+ng build --stats-json
+webpack-bundle-analyzer dist/reiche-academy/stats.json
 ```
+
+## 🔒 Variáveis de Ambiente
+
+```typescript
+// src/environments/environment.ts (desenvolvimento)
+export const environment = {
+  production: false,
+  apiUrl: 'http://localhost:3000/api'
+};
+
+// src/environments/environment.prod.ts (produção)
+export const environment = {
+  production: true,
+  apiUrl: 'https://api.reiche-academy.com/api'
+};
+```
+
+## 🚨 Troubleshooting
+
+### Erro: `TS5103: Invalid value for '--ignoreDeprecations'`
+**Solução**: Remover `ignoreDeprecations` do `tsconfig.json`
+
+### Login não funciona
+**Verificar:**
+1. Backend rodando em `http://localhost:3000`
+2. CORS habilitado no backend
+3. Credenciais corretas (admin@reiche.com:123456)
+4. JWT token sendo retornado
+
+### Logo não carrega
+**Verificar:**
+1. Logo em `src/assets/images/logo_reiche_academy.png`
+2. Background em `src/assets/images/login-bg.jpg` (se customizado)
+3. Permissões do arquivo
+4. Fallback acionado via `onLogoError()`
+
+## 📖 Referências
+
+- **Angular**: https://angular.io
+- **Bootstrap 5**: https://getbootstrap.com
+- **RxJS**: https://rxjs.dev
+- **NobleUI**: https://nobleui.com
+- **TypeScript**: https://www.typescriptlang.org
+- **Design System**: `DESIGN_SYSTEM_COLORS.md`
+- **Customização**: `LOGIN_CUSTOMIZATION.md`
+- **Contexto Geral**: `CONTEXT.md`
+
+## 📝 Commits
+
+Padrão de commits:
+```bash
+git commit -m "feat(auth): implementar login com JWT"
+git commit -m "fix(login): corrigir validação de email"
+git commit -m "docs(README): atualizar documentação"
+git commit -m "refactor(styles): organizar SCSS"
+```
+
+## 👨‍💻 Desenvolvedor
+
+**Reiche Academy Development Team**
+Desenvolvido com ❤️ para gestão empresarial PDCA
+
+---
+
+**Última atualização**: 08/12/2024  
+**Versão**: 1.0.0-alpha  
+**Status**: Desenvolvimento Fase 1
+
