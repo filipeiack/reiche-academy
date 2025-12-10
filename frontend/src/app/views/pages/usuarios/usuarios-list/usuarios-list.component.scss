@@ -30,22 +30,22 @@
 
 /* Badge styles */
 .badge-primary {
-  background-color: #4c63d2;
+  background-color: var(--bs-primary);
   color: white;
 }
 
 .badge-success {
-  background-color: #2fb344;
+  background-color: var(--bs-success);
   color: white;
 }
 
 .badge-info {
-  background-color: #269af5;
+  background-color: var(--bs-info);
   color: white;
 }
 
 .badge-secondary {
-  background-color: #6c757d;
+  background-color: var(--bs-secondary);
   color: white;
 }
 
@@ -65,32 +65,32 @@
 }
 
 .btn-ghost-primary {
-  color: #4c63d2;
-  border-color: #4c63d2;
+  color: var(--bs-primary);
+  border-color: var(--bs-primary);
 }
 
 .btn-ghost-primary:hover {
-  background-color: #4c63d2;
+  background-color: var(--bs-primary);
   color: white;
 }
 
 .btn-ghost-danger {
-  color: #dc3545;
-  border-color: #dc3545;
+  color: var(--bs-danger);
+  border-color: var(--bs-danger);
 }
 
 .btn-ghost-danger:hover {
-  background-color: #dc3545;
+  background-color: var(--bs-danger);
   color: white;
 }
 
 .btn-ghost-secondary {
-  color: #6c757d;
-  border-color: #6c757d;
+  color: var(--bs-secondary);
+  border-color: var(--bs-secondary);
 }
 
 .btn-ghost-secondary:hover {
-  background-color: #6c757d;
+  background-color: var(--bs-secondary);
   color: white;
 }
 
@@ -110,17 +110,17 @@
 
 .page-link {
   cursor: pointer;
-  color: #4c63d2;
+  color: var(--bs-primary);
 }
 
 .page-link:hover {
   background-color: #f5f7fb;
-  color: #4c63d2;
+  color: var(--bs-primary);
 }
 
 .page-item.active .page-link {
-  background-color: #4c63d2;
-  border-color: #4c63d2;
+  background-color: var(--bs-primary);
+  border-color: var(--bs-primary);
   color: white;
 }
 

@@ -33,8 +33,8 @@ $cyan:    #0dcaf0 !default;
 
 // --- Bootstrap Theme Colors --- //
 //
-$primary:         #B6915D !default; //#6571ff
-$secondary:       $gray-600 !default; //$gray-600
+$primary:         #A67C00 !default; // 8C6A00
+$secondary:       $gray-700 !default; //$gray-600
 $success:         #05a34a !default;
 $info:            #66d1d1 !default;
 $warning:         #fbbc06 !default;
@@ -173,9 +173,9 @@ $prefix:                      bs- !default;
 //
 // Settings for the `<body>` element.
 $body-bg:                      #fff !default;
-$body-color:                   #242B2E !default; // Azul Grafite (Reiche Academy)
+$body-color:                   $black !default;
 
-$body-secondary-color:      #7987a1 !default; // Texto secundário
+$body-secondary-color:      rgba($body-color, .75) !default;
 $body-secondary-bg:         $gray-200 !default;
 
 $body-tertiary-color:       rgba($body-color, .5) !default;

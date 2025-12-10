@@ -54,8 +54,14 @@ export class UsuariosController {
   }
 
   @Delete(':id')
-  @ApiOperation({ summary: 'Desativar usuário' })
+  @ApiOperation({ summary: 'Deletar usuário permanentemente' })
   remove(@Param('id') id: string) {
+    return this.usuariosService.hardDelete(id);
+  }
+
+  @Patch(':id/inativar')
+  @ApiOperation({ summary: 'Inativar usuário' })
+  inactivate(@Param('id') id: string) {
     return this.usuariosService.remove(id);
   }
 

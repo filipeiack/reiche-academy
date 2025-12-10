@@ -54,23 +54,23 @@
 
 .form-control:focus,
 .form-select:focus {
-  border-color: #4c63d2;
-  box-shadow: 0 0 0 0.2rem rgba(76, 99, 210, 0.25);
+  border-color: var(--bs-primary);
+  box-shadow: 0 0 0 0.2rem rgba(var(--bs-primary-rgb), 0.25);
 }
 
 .form-control.is-invalid,
 .form-select.is-invalid {
-  border-color: #dc3545;
+  border-color: var(--bs-danger);
 }
 
 .form-control.is-invalid:focus,
 .form-select.is-invalid:focus {
-  border-color: #dc3545;
-  box-shadow: 0 0 0 0.2rem rgba(220, 53, 69, 0.25);
+  border-color: var(--bs-danger);
+  box-shadow: 0 0 0 0.2rem rgba(var(--bs-danger-rgb), 0.25);
 }
 
 .invalid-feedback {
-  color: #dc3545;
+  color: var(--bs-danger);
   font-size: 0.875rem;
   margin-top: 0.25rem;
 }
@@ -92,11 +92,11 @@
 
 /* Text danger */
 .text-danger {
-  color: #dc3545;
+  color: var(--bs-danger);
 }
 
 .text-muted {
-  color: #6c757d;
+  color: var(--bs-secondary);
 }
 
 .text-sm {
@@ -105,6 +105,23 @@
 
 .font-semibold {
   font-weight: 600;
+}
+
+/* Input group - password toggle button */
+.input-group .btn-outline-primary {
+  color: var(--bs-primary);
+  border-color: var(--bs-border-color);
+  
+  i {
+    color: var(--bs-primary);
+  }
+}
+
+.input-group .btn-outline-primary:hover {
+  background-color: transparent;
+  color: var(--bs-primary);
+  border-color: var(--bs-primary);
+  opacity: 0.8;
 }
 
 /* Form footer */
@@ -128,32 +145,35 @@
 }
 
 .btn-primary {
-  background-color: #4c63d2;
-  border-color: #4c63d2;
+  background-color: var(--bs-primary);
+  border-color: var(--bs-primary);
   color: white;
 }
 
 .btn-primary:hover:not(:disabled) {
-  background-color: #3d4fa1;
-  border-color: #3d4fa1;
+  background-color: var(--bs-primary);
+  border-color: var(--bs-primary);
+  opacity: 0.9;
 }
 
 .btn-primary:disabled {
-  background-color: #a3addb;
-  border-color: #a3addb;
+  background-color: var(--bs-primary);
+  border-color: var(--bs-primary);
+  opacity: 0.5;
   cursor: not-allowed;
 }
 
 .btn-link {
   background-color: transparent;
   border-color: transparent;
-  color: #4c63d2;
+  color: var(--bs-primary);
   text-decoration: none;
 }
 
 .btn-link:hover {
   text-decoration: underline;
-  color: #3d4fa1;
+  color: var(--bs-primary);
+  opacity: 0.8;
 }
 
 /* Alert styles */

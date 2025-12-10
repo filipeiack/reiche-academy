@@ -22,32 +22,6 @@
 
     <div class="row">
         <div class="col-md-8">
-            <!-- Error Alert -->
-            @if (error) {
-            <div class="alert alert-danger alert-dismissible fade show" role="alert">
-                <div class="d-flex">
-                <div>
-                    <i class="feather icon-alert-circle me-2"></i>
-                    {{ error }}
-                </div>
-                </div>
-                <a class="btn-close" (click)="error = ''"></a>
-            </div>
-            }
-
-            <!-- Success Alert -->
-            @if (success) {
-            <div class="alert alert-success alert-dismissible fade show" role="alert">
-                <div class="d-flex">
-                <div>
-                    <i class="feather icon-check-circle me-2"></i>
-                    {{ success }}
-                </div>
-                </div>
-                <a class="btn-close" (click)="success = ''"></a>
-            </div>
-            }
-
             <!-- Form Card -->
             <div class="card">
             <div class="card-body">
@@ -153,13 +127,50 @@
                     </div>
                     }
 
+                    <!-- Senha (modo edição - opcional) -->
+                    @if (isEditMode) {
+                    <div class="mb-3">
+                        <label class="form-label" for="senhaEdit">{{ 'AUTH.PASSWORD' | translate }} <span class="text-muted">({{ 'COMMON.OPTIONAL' | translate }})</span></label>
+                        <div class="input-group">
+                        <input 
+                            [type]="showPassword ? 'text' : 'password'" 
+                            class="form-control"
+                            [class.is-invalid]="isFieldInvalid('senha')"
+                            id="senhaEdit"
+                            formControlName="senha"
+                            placeholder="Deixe em branco para manter a senha atual"
+                        />
+                        <!-- <button 
+                            type="button" 
+                            class="btn btn-outline-primary"
+                            (click)="togglePasswordVisibility()"
+                            tabindex="-1"
+                        >
+                            @if (showPassword) {
+                                <i data-feather="eye-off" appFeatherIcon></i>
+                            } @else {
+                                <i data-feather="eye" appFeatherIcon></i>
+                            }
+                        </button> -->
+                        </div>
+                        <small class="form-text text-muted d-block mt-1">
+                        Deixe em branco para manter a senha atual. Mínimo 6 caracteres.
+                        </small>
+                        @if (isFieldInvalid('senha')) {
+                        <div class="invalid-feedback d-block">
+                            {{ getFieldError('senha') }}
+                        </div>
+                        }
+                    </div>
+                    }
+
                     <!-- Status -->
                     <div class="mb-3">
                     <div class="form-check">
                         <input 
                         type="checkbox" 
                         class="form-check-input"
-                        id="ativo"
+                        id="ckativo"
                         formControlName="ativo"
                         />
                         <label class="form-check-label" for="ativo">
@@ -227,7 +238,7 @@
                     (change)="onAvatarSelected($event)"
                 />
                 <button 
-                    type="button"
+                    type="button" id="btnUpAvatar"
                     class="btn btn-sm btn-primary w-100"
                     (click)="avatarInput.click()"
                     [disabled]="uploadingAvatar"

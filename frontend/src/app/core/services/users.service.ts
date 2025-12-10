@@ -69,10 +69,24 @@ export class UsersService {
   }
 
   /**
-   * Deletar/Desativar usuário
+   * Deletar/Remover usuário permanentemente
    */
   delete(id: string): Observable<any> {
     return this.http.delete(`${this.API_URL}/${id}`);
+  }
+
+  /**
+   * Inativar usuário
+   */
+  inactivate(id: string): Observable<any> {
+    return this.http.patch(`${this.API_URL}/${id}/inativar`, {});
+  }
+
+  /**
+   * Ativar usuário
+   */
+  activate(id: string): Observable<any> {
+    return this.http.patch(`${this.API_URL}/${id}`, { ativo: true });
   }
 
   /**

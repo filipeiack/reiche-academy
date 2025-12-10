@@ -21,6 +21,11 @@
       margin-bottom: 0;
     }
 
+    &.swal2-toast .swal2-title {
+      font-size: 14px;
+      margin-top: 11px;
+    }
+
     .swal2-html-container {
       font-size: $font-size-base;
       color: $secondary;
@@ -33,14 +38,13 @@
       button {
         @extend .btn;
         &.swal2-confirm {
-          @extend .btn-primary;
+          @extend .btn-outline-primary;
           &:focus {
             box-shadow: none;
           }
         }
         &.swal2-cancel {
-          @extend .btn-danger;
-          @extend .border-danger;
+          @extend .btn-outline-secondary;
         }
         svg {
           width: 16px;

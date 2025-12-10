@@ -2,6 +2,7 @@ import { Component, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
+import Swal from 'sweetalert2';
 import { UsersService, Usuario } from '../../../../core/services/users.service';
 import { TranslatePipe } from '../../../../core/pipes/translate.pipe';
 import { UserAvatarComponent } from '../../../../shared/components/user-avatar/user-avatar.component';
@@ -21,7 +22,6 @@ export class UsuariosListComponent implements OnInit {
   searchQuery = '';
   loading = false;
   error = '';
-  selectedUserIdToDelete: string | null = null;
 
   // Paginação
   pageSize = 10;
@@ -38,6 +38,18 @@ export class UsuariosListComponent implements OnInit {
 
   ngOnInit(): void {
     this.loadUsuarios();
+  }
+
+  private showToast(title: string, icon: 'success' | 'error' | 'info' | 'warning', timer: number = 3000): void {
+    Swal.fire({
+      toast: true,
+      position: 'top-end',
+      showConfirmButton: false,
+      timer,
+      timerProgressBar: true,
+      title,
+      icon,
+    });
   }
 
   loadUsuarios(): void {
@@ -101,27 +113,119 @@ export class UsuariosListComponent implements OnInit {
     return classes[perfil] || 'badge-secondary';
   }
 
-  confirmDelete(usuarioId: string): void {
-    this.selectedUserIdToDelete = usuarioId;
+  toggleStatusUsuario(usuarioId: string, nome: string, ativoAtual: boolean): void {
+    if (ativoAtual) {
+      this.inactivateUsuario(usuarioId, nome);
+    } else {
+      this.activateUsuario(usuarioId, nome);
+    }
   }
 
-  cancelDelete(): void {
-    this.selectedUserIdToDelete = null;
+  inactivateUsuario(usuarioId: string, nome: string): void {
+    Swal.fire({
+      title: '<strong>Inativar Usuário</strong>',
+      icon: 'warning',
+      html: `Tem certeza que deseja inativar <strong>${nome}</strong>?<br>O usuário não poderá mais acessar o sistema.`,
+      showCloseButton: true,
+      showCancelButton: true,
+      focusConfirm: false,
+      confirmButtonText: '<i class="feather icon-check"></i> Inativar',
+      confirmButtonAriaLabel: 'Inativar usuário',
+      cancelButtonText: '<i class="feather icon-x"></i> Cancelar',
+      cancelButtonAriaLabel: 'Cancelar inativação',
+      allowOutsideClick: false
+    }).then((result) => {
+      if (!result.isConfirmed) return;
+      this.confirmInactivate(usuarioId);
+    });
   }
 
-  deleteUsuario(usuarioId: string): void {
+  activateUsuario(usuarioId: string, nome: string): void {
+    Swal.fire({
+      title: '<strong>Ativar Usuário</strong>',
+      icon: 'info',
+      html: `Tem certeza que deseja ativar <strong>${nome}</strong>?<br>O usuário poderá acessar o sistema novamente.`,
+      showCloseButton: true,
+      showCancelButton: true,
+      focusConfirm: false,
+      confirmButtonText: '<i class="feather icon-check"></i> Ativar',
+      confirmButtonAriaLabel: 'Ativar usuário',
+      cancelButtonText: '<i class="feather icon-x"></i> Cancelar',
+      cancelButtonAriaLabel: 'Cancelar ativação',
+      allowOutsideClick: false
+    }).then((result) => {
+      if (!result.isConfirmed) return;
+      this.confirmActivate(usuarioId);
+    });
+  }
+
+  private confirmActivate(usuarioId: string): void {
+    this.loading = true;
+    this.usersService.activate(usuarioId).subscribe({
+      next: () => {
+        this.usuarios = this.usuarios.map(u => 
+          u.id === usuarioId ? { ...u, ativo: true } : u
+        );
+        this.filterUsuarios();
+        this.showToast('Usuário ativado com sucesso!', 'success');
+        this.loading = false;
+      },
+      error: (err) => {
+        this.showToast(err?.error?.message || 'Erro ao ativar usuário', 'error');
+        this.loading = false;
+      }
+    });
+  }
+
+  private confirmInactivate(usuarioId: string): void {
+    this.loading = true;
+    this.usersService.inactivate(usuarioId).subscribe({
+      next: () => {
+        this.usuarios = this.usuarios.map(u => 
+          u.id === usuarioId ? { ...u, ativo: false } : u
+        );
+        this.filterUsuarios();
+        this.showToast('Usuário inativado com sucesso!', 'success');
+        this.loading = false;
+      },
+      error: (err) => {
+        this.showToast(err?.error?.message || 'Erro ao inativar usuário', 'error');
+        this.loading = false;
+      }
+    });
+  }
+
+  deleteUsuario(usuarioId: string, nome: string): void {
+    Swal.fire({
+      title: '<strong>Deletar Usuário</strong>',
+      icon: 'error',
+      html: `Tem certeza que deseja deletar <strong>${nome}</strong> permanentemente?<br><strong class="text-danger">Esta ação não pode ser desfeita!</strong>`,
+      showCloseButton: true,
+      showCancelButton: true,
+      focusConfirm: false,
+      confirmButtonText: '<i class="feather icon-trash-2"></i> Deletar',
+      confirmButtonAriaLabel: 'Deletar usuário',
+      cancelButtonText: '<i class="feather icon-x"></i> Cancelar',
+      cancelButtonAriaLabel: 'Cancelar exclusão',
+      allowOutsideClick: false
+    }).then((result) => {
+      if (!result.isConfirmed) return;
+      this.confirmDelete(usuarioId);
+    });
+  }
+
+  private confirmDelete(usuarioId: string): void {
     this.loading = true;
     this.usersService.delete(usuarioId).subscribe({
       next: () => {
         this.usuarios = this.usuarios.filter(u => u.id !== usuarioId);
         this.filterUsuarios();
-        this.selectedUserIdToDelete = null;
+        this.showToast('Usuário deletado com sucesso!', 'success');
         this.loading = false;
       },
       error: (err) => {
-        this.error = err?.error?.message || 'Erro ao deletar usuário';
+        this.showToast(err?.error?.message || 'Erro ao deletar usuário', 'error');
         this.loading = false;
-        this.selectedUserIdToDelete = null;
       }
     });
   }

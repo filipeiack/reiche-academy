@@ -8,6 +8,10 @@
 @include color-mode(light) {
   --#{$prefix}app-bg: #{$app-bg};
 
+  --#{$prefix}primary: #{$primary};
+  --#{$prefix}primary-rgb: #{to-rgb($primary)};
+  --#{$prefix}secondary: #{$secondary};
+  --#{$prefix}secondary-rgb: #{to-rgb($secondary)};
   --#{$prefix}box-shadow: #{$box-shadow};
   --#{$prefix}box-shadow-sm: #{$box-shadow-sm};
   --#{$prefix}box-shadow-lg: #{$box-shadow-lg};
@@ -26,6 +30,10 @@
 @include color-mode(dark) {
   --#{$prefix}app-bg: #{$app-bg-dark};
 
+  --#{$prefix}primary: #{$primary-dark};
+  --#{$prefix}primary-rgb: #{to-rgb($primary-dark)};
+  --#{$prefix}secondary: #{$secondary-dark};
+  --#{$prefix}secondary-rgb: #{to-rgb($secondary-dark)};
   --#{$prefix}box-shadow: #{$box-shadow-dark};
   --#{$prefix}box-shadow-sm: #{$box-shadow-sm-dark};
   --#{$prefix}box-shadow-lg: #{$box-shadow-lg-dark};

@@ -1,1 +1,59 @@
-// Write your custom css/scss here
+// Global button theming using CSS variables so light/dark swap correctly
+.btn-primary {
+	background-color: var(--bs-primary);
+	border-color: var(--bs-primary);
+	color: #fff;
+}
+
+.btn-primary:hover,
+.btn-primary:focus {
+	background-color: var(--bs-primary);
+	border-color: var(--bs-primary);
+	color: #fff;
+	opacity: .92;
+}
+
+.btn-primary:disabled,
+.btn-primary.disabled {
+	background-color: var(--bs-primary);
+	border-color: var(--bs-primary);
+	opacity: .55;
+}
+
+.btn-outline-primary {
+	color: var(--bs-primary);
+	border-color: var(--bs-primary);
+}
+
+.btn-outline-primary:hover,
+.btn-outline-primary:focus {
+	background-color: var(--bs-primary);
+	border-color: var(--bs-primary);
+	color: #fff;
+}
+
+.btn-secondary {
+	background-color: var(--bs-secondary);
+	border-color: var(--bs-secondary);
+	color: #fff;
+}
+
+.btn-secondary:hover,
+.btn-secondary:focus {
+	background-color: var(--bs-secondary);
+	border-color: var(--bs-secondary);
+	color: #fff;
+	opacity: .92;
+}
+
+.btn-outline-secondary {
+	color: var(--bs-secondary);
+	border-color: var(--bs-secondary);
+}
+
+.btn-outline-secondary:hover,
+.btn-outline-secondary:focus {
+	background-color: var(--bs-secondary);
+	border-color: var(--bs-secondary);
+	color: #fff;
+}

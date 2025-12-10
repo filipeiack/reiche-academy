@@ -8,6 +8,16 @@ import * as path from 'path';
 export class UsuariosService {
   constructor(private prisma: PrismaService) {}
 
+  private getAbsolutePublicPath(relativePath: string): string {
+    return path.join(process.cwd(), 'public', relativePath.replace(/^[/\\]+/, ''));
+  }
+
+  private deleteFileIfExists(filePath: string) {
+    if (fs.existsSync(filePath)) {
+      fs.unlinkSync(filePath);
+    }
+  }
+
   async findAll() {
     return this.prisma.usuario.findMany({
       select: {
@@ -117,8 +127,28 @@ export class UsuariosService {
     });
   }
 
+  async hardDelete(id: string) {
+    const usuario = await this.findById(id);
+
+    // Delete profile photo if exists
+    if (usuario.fotoUrl) {
+      const filePath = this.getAbsolutePublicPath(usuario.fotoUrl);
+      this.deleteFileIfExists(filePath);
+    }
+
+    return this.prisma.usuario.delete({
+      where: { id },
+    });
+  }
+
   async updateProfilePhoto(id: string, fotoUrl: string) {
-    await this.findById(id);
+    const usuario = await this.findById(id);
+
+    // Remove o arquivo anterior para evitar acúmulo de imagens
+    if (usuario.fotoUrl && usuario.fotoUrl !== fotoUrl) {
+      const oldFilePath = this.getAbsolutePublicPath(usuario.fotoUrl);
+      this.deleteFileIfExists(oldFilePath);
+    }
 
     return this.prisma.usuario.update({
       where: { id },
@@ -141,10 +171,8 @@ export class UsuariosService {
 
     // Delete file from filesystem if it exists
     if (usuario.fotoUrl) {
-      const filePath = path.join(process.cwd(), 'public', usuario.fotoUrl);
-      if (fs.existsSync(filePath)) {
-        fs.unlinkSync(filePath);
-      }
+      const filePath = this.getAbsolutePublicPath(usuario.fotoUrl);
+      this.deleteFileIfExists(filePath);
     }
 
     return this.prisma.usuario.update({

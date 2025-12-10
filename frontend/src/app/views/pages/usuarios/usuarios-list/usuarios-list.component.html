@@ -5,18 +5,7 @@
 </ol>
 </nav>
 
-<!-- Error Alert -->
-@if (error) {
-<div class="alert alert-danger alert-dismissible fade show" role="alert">
-    <div class="d-flex">
-    <div>
-        <i class="feather icon-alert-circle me-2"></i>
-        {{ error }}
-    </div>
-    </div>
-    <a class="btn-close" (click)="error = ''"></a>
-</div>
-}
+
 
 <div class="row">
   <div class="col-12 stretch-card">
@@ -85,27 +74,18 @@
                                 title="{{ 'BUTTONS.EDIT' | translate }}">
                                 <i class="feather icon-edit"></i>
                                 </a>
-                                @if (selectedUserIdToDelete === usuario.id) {
-                                    <button 
-                                    class="btn btn-icon text-danger"
-                                    (click)="deleteUsuario(usuario.id)"
-                                    title="{{ 'BUTTONS.CONFIRM' | translate }}">
-                                    <i class="feather icon-check"></i>
-                                    </button>
-                                    <button 
-                                    class="btn btn-icon text-secondary"
-                                    (click)="cancelDelete()"
-                                    title="{{ 'BUTTONS.CANCEL' | translate }}">
-                                    <i class="feather icon-x"></i>
-                                    </button>
-                                } @else {
-                                    <button 
-                                    class="btn btn-icon text-danger"
-                                    (click)="confirmDelete(usuario.id)"
-                                    title="{{ 'BUTTONS.DELETE' | translate }}">
-                                    <i class="feather icon-trash-2"></i>
-                                    </button>
-                                }
+                                <button 
+                                class="btn btn-icon text-primary" 
+                                (click)="toggleStatusUsuario(usuario.id, usuario.nome, usuario.ativo)"
+                                [title]="usuario.ativo ? 'Inativar usuário' : 'Ativar usuário'">
+                                <i class="feather" [ngClass]="{'icon-eye-off': usuario.ativo, 'icon-eye': !usuario.ativo}"></i>
+                                </button>
+                                <button 
+                                class="btn btn-icon text-danger"
+                                (click)="deleteUsuario(usuario.id, usuario.nome)"
+                                title="{{ 'BUTTONS.DELETE' | translate }}">
+                                <i class="feather icon-trash-2"></i>
+                                </button>
                             </div>
                         </td>
                     </tr>
