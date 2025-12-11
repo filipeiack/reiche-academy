@@ -1,138 +1,152 @@
-<nav aria-label="breadcrumb" class="mb-3">
-<ol class="breadcrumb breadcrumb-dot mb-1">
-    <li class="breadcrumb-item"><a routerLink="/usuarios">{{ 'MENU.WEB_APPS' | translate }}</a></li>
-    <li class="breadcrumb-item active" aria-current="page">{{ 'MENU.USUARIOS' | translate }}</li>
-</ol>
-</nav>
+<div class="mb-2 align-items-center gap-2 d-flex justify-content-between flex-wrap">
+  <nav aria-label="breadcrumb">
+    <ol class="breadcrumb breadcrumb-line mb-1">
+      <li class="breadcrumb-item">
+        <i class="input-icon" data-feather="user" style="width: 16px; height: 16px"></i>
+      </li>
+      <li class="breadcrumb-item active" aria-current="page">
+        <a routerLink="/usuarios">{{ "MENU.USUARIOS" | translate }}</a>
+      </li>
+    </ol>
+  </nav>
 
-
+  <button id="btnNovo" type="button" class="btn btn-primary btn-icon-text btn-xs" [routerLink]="['/usuarios/novo']">
+    <i class="feather icon-plus btn-icon-prepend"></i>
+    {{ 'BUTTONS.CREATE' | translate }}
+  </button>
+</div>
 
 <div class="row">
   <div class="col-12 stretch-card">
     <div class="card">
       <div class="card-body">
         <div class="d-flex justify-content-between align-items-baseline mb-2">
-            <h6 class="card-title mb-0">{{ 'MENU.USUARIOS' | translate }}</h6>
-            <div class="d-flex flex-wrap align-items-center gap-2">
-                <div class="input-icon search-inline">
-                <span class="input-icon-addon">
-                    <i class="feather icon-search"></i>
-                </span>
-                <input 
-                    type="text" 
-                    class="form-control" 
-                    placeholder="{{ 'COMMON.SEARCH' | translate }}"
-                    [value]="searchQuery"
-                    (input)="onSearchInput($event)"
-                />
-                </div>
-                <a [routerLink]="['/usuarios/novo']" class="btn btn-primary btn-sm">
-                <i class="feather icon-plus"></i>
-                <span class="d-none d-sm-inline ms-1">{{ 'BUTTONS.CREATE' | translate }}</span>
-                </a>
+          <div class="d-flex flex-wrap align-items-center gap-2">
+            <div class="input-icon search-inline">
+              <span class="input-icon-addon">
+                <i class="feather icon-search"></i>
+              </span>
+              <input type="text" class="form-control" placeholder="{{ 'COMMON.SEARCH' | translate }}"
+                [value]="searchQuery" (input)="onSearchInput($event)" />
             </div>
+          </div>
         </div>
 
-        @if (loading) {
-            <div class="text-center py-5">
-              <div class="spinner-border text-primary" role="status">
-                <span class="visually-hidden">{{ 'COMMON.LOADING' | translate }}...</span>
-              </div>
-            </div>
-          } @else {
-            <div class="table-responsive">
-            <table class="table table-hover mb-0">
-                <thead>
-                  <tr>
-                    <th>{{ 'USERS.AVATAR' | translate }}</th>
-                    <th>{{ 'USERS.NAME' | translate }}</th>
-                    <th>{{ 'USERS.EMAIL' | translate }}</th>
-                    <th>{{ 'USERS.ROLE' | translate }}</th>
-                    <th>{{ 'USERS.STATUS' | translate }}</th>
-                    <th>{{ 'COMMON.ACTIONS' | translate }}</th>
-                  </tr>
-                </thead>
-                <tbody>
-                @for (usuario of paginatedUsuarios; track usuario.id) {
-                    <tr>
-                        <td>
-                            <app-user-avatar 
-                          [nome]="usuario.nome" 
-                          [fotoUrl]="usuario.fotoUrl"
-                          size="small">
-                        </app-user-avatar>
-                        </td>
-                        <td>{{ usuario.nome }}</td>
-                        <td>{{ usuario.email }}</td>
-                        <td>{{ getPerfilLabel(usuario.perfil) }}</td>
-                        <td><span class="badge" [ngClass]="{'bg-success': usuario.ativo, 'bg-danger': !usuario.ativo}">
-                            {{ usuario.ativo ? ('COMMON.ACTIVE' | translate) : ('COMMON.INACTIVE' | translate) }}</span></td>
-                        <td class="text-nowrap">
-                            <div class="btn-group btn-group-sm" role="group">
-                                <a [routerLink]="['/usuarios', usuario.id, 'editar']" 
-                                class="btn btn-icon text-primary"
-                                title="{{ 'BUTTONS.EDIT' | translate }}">
-                                <i class="feather icon-edit"></i>
-                                </a>
-                                <button 
-                                class="btn btn-icon text-primary" 
-                                (click)="toggleStatusUsuario(usuario.id, usuario.nome, usuario.ativo)"
-                                [title]="usuario.ativo ? 'Inativar usuário' : 'Ativar usuário'">
-                                <i class="feather" [ngClass]="{'icon-eye-off': usuario.ativo, 'icon-eye': !usuario.ativo}"></i>
-                                </button>
-                                <button 
-                                class="btn btn-icon text-danger"
-                                (click)="deleteUsuario(usuario.id, usuario.nome)"
-                                title="{{ 'BUTTONS.DELETE' | translate }}">
-                                <i class="feather icon-trash-2"></i>
-                                </button>
-                            </div>
-                        </td>
-                    </tr>
-                    
-                } @empty {
-                    <tr>
-                      <td colspan="7" class="border-bottom text-center text-muted py-4">
-                        {{ 'COMMON.NO_DATA' | translate }}
-                      </td>
-                    </tr>
-                  }
-                
-                </tbody>
-            </table>
-            </div>
+        <div class="table-responsive">
+          <ngx-datatable
+            #table
+            class="bootstrap"
+            [rows]="filteredUsuarios"
+            [loadingIndicator]="loading"
+            [columnMode]="ColumnMode.force"
+            [footerHeight]="50"
+            [rowHeight]="'auto'"
+            [limit]="pageSize"
+            [messages]="{
+              emptyMessage: ('COMMON.NO_DATA' | translate),
+              totalMessage: ('COMMON.ITEMS' | translate)
+            }"
+          >
+            <!-- Coluna Avatar -->
+            <ngx-datatable-column
+              name="#"
+              [width]="80"
+              [sortable]="false"
+              [canAutoResize]="false"
+            >
+              <ng-template let-row="row" ngx-datatable-cell-template>
+                <app-user-avatar 
+                  [nome]="row.nome" 
+                  [fotoUrl]="row.fotoUrl" 
+                  size="small">
+                </app-user-avatar>
+              </ng-template>
+            </ngx-datatable-column>
 
-            <span class="text-muted fs-12">{{ filteredUsuarios.length }} {{ 'COMMON.ITEMS' | translate }}</span>
+            <!-- Coluna Nome -->
+            <ngx-datatable-column
+              [name]="'USERS.NAME' | translate"
+              prop="nome"
+              [flexGrow]="2"
+            >
+            </ngx-datatable-column>
 
-            <!-- Pagination -->
-            @if (totalPages > 1) {
-              <div class="card-footer d-flex align-items-center px-0">
-                <p class="text-muted me-3 mb-0">
-                  {{ 'COMMON.PAGE' | translate }} {{ currentPage }} {{ 'COMMON.OF' | translate }} {{ totalPages }}
-                </p>
-                <ul class="pagination m-0 ms-auto">
-                  <li class="page-item" [class.disabled]="currentPage === 1">
-                    <a class="page-link" (click)="prevPage()" href="javascript:void(0);">
-                      <i class="feather icon-chevron-left"></i> {{ 'COMMON.PREV' | translate }}
-                    </a>
-                  </li>
-                  @for (page of [].constructor(totalPages); let i = $index; track i) {
-                    <li class="page-item" [class.active]="i + 1 === currentPage">
-                      <a class="page-link" (click)="goToPage(i + 1)" href="javascript:void(0);">
-                        {{ i + 1 }}
-                      </a>
-                    </li>
-                  }
-                  <li class="page-item" [class.disabled]="currentPage === totalPages">
-                    <a class="page-link" (click)="nextPage()" href="javascript:void(0);">
-                      {{ 'COMMON.NEXT' | translate }} <i class="feather icon-chevron-right"></i>
-                    </a>
-                  </li>
-                </ul>
-              </div>
-            }
-          }
-      </div> 
+            <!-- Coluna Email -->
+            <ngx-datatable-column
+              [name]="'USERS.EMAIL' | translate"
+              prop="email"
+              [flexGrow]="2"
+            >
+            </ngx-datatable-column>
+
+            <!-- Coluna Perfil -->
+            <ngx-datatable-column
+              [name]="'USERS.ROLE' | translate"
+              prop="perfil"
+              [width]="90"
+              [flexGrow]="0.5"
+            >
+              <ng-template let-row="row" ngx-datatable-cell-template>
+                {{ getPerfilLabel(row.perfil) }}
+              </ng-template>
+            </ngx-datatable-column>
+
+            <!-- Coluna Status -->
+            <ngx-datatable-column
+              [name]="'USERS.STATUS' | translate"
+              prop="ativo"
+              [width]="90"
+            >
+              <ng-template let-row="row" ngx-datatable-cell-template>
+                <!-- <span class="badge" [ngClass]="{
+                  'bg-success': row.ativo,
+                  'bg-danger': !row.ativo
+                }">
+                  {{ row.ativo ? ('COMMON.ACTIVE' | translate) : ('COMMON.INACTIVE' | translate) }}
+                </span> -->
+                {{ row.ativo ? ('COMMON.ACTIVE' | translate) : ('COMMON.INACTIVE' | translate) }}
+              </ng-template>
+            </ngx-datatable-column>
+
+            <!-- Coluna Ações -->
+            <ngx-datatable-column
+              [name]="'COMMON.ACTIONS' | translate"
+              [sortable]="false"
+              [width]="140"
+              [canAutoResize]="false"
+            >
+              <ng-template let-row="row" ngx-datatable-cell-template>
+                <div class="btn-group btn-group-sm" role="group">
+                  <a 
+                    [routerLink]="['/usuarios', row.id, 'editar']" 
+                    class="btn btn-icon text-primary"
+                    [title]="'BUTTONS.EDIT' | translate"
+                  >
+                    <i class="feather icon-edit"></i>
+                  </a>
+                  <button 
+                    class="btn btn-icon text-primary" 
+                    (click)="toggleStatusUsuario(row.id, row.nome, row.ativo)"
+                    [title]="row.ativo ? 'Inativar usuário' : 'Ativar usuário'"
+                  >
+                    <i class="feather" [ngClass]="{
+                      'icon-eye-off': row.ativo,
+                      'icon-eye': !row.ativo
+                    }"></i>
+                  </button>
+                  <button 
+                    class="btn btn-icon text-danger" 
+                    (click)="deleteUsuario(row.id, row.nome)"
+                    [title]="'BUTTONS.DELETE' | translate"
+                  >
+                    <i class="feather icon-trash-2"></i>
+                  </button>
+                </div>
+              </ng-template>
+            </ngx-datatable-column>
+          </ngx-datatable>
+        </div>
+      </div>
     </div>
   </div>
 </div>

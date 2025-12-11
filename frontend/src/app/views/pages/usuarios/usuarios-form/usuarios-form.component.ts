@@ -7,13 +7,12 @@ import { UsersService, Usuario, CreateUsuarioRequest, UpdateUsuarioRequest } fro
 import { UserProfileService } from '../../../../core/services/user-profile.service';
 import { AuthService } from '../../../../core/services/auth.service';
 import { TranslatePipe } from '../../../../core/pipes/translate.pipe';
-import { FeatherIconDirective } from '../../../../core/feather-icon/feather-icon.directive';
 import { UserAvatarComponent } from '../../../../shared/components/user-avatar/user-avatar.component';
 
 @Component({
   selector: 'app-usuarios-form',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, RouterLink, TranslatePipe, FeatherIconDirective, UserAvatarComponent],
+  imports: [CommonModule, ReactiveFormsModule, RouterLink, TranslatePipe, UserAvatarComponent],
   templateUrl: './usuarios-form.component.html',
   styleUrl: './usuarios-form.component.scss'
 })

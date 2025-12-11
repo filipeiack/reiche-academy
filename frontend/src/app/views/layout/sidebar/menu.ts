@@ -1,21 +1,24 @@
 import { MenuItem } from './menu.model';
 
+// Single source of truth for raw menu definitions (translation keys)
+// The MenuService will import this and apply translations dynamically.
 export const MENU: MenuItem[] = [
   {
-    label: 'Main',
+    label: 'MENU.MAIN',
     isTitle: true
   },
   {
-    label: 'Dashboard',
+    label: 'MENU.DASHBOARD',
     icon: 'home',
     link: '/dashboard'
   },
   {
-    label: 'Web Apps',
+    label: 'MENU.WEB_APPS',
     isTitle: true
   },
   {
-    label: 'User',
-    icon: 'unlock'
+    label: 'MENU.USUARIOS',
+    icon: 'users',
+    link: '/usuarios'
   }
 ];
