@@ -1,6 +1,6 @@
 <div class="mb-2 align-items-center gap-2 d-flex justify-content-between flex-wrap">
   <nav aria-label="breadcrumb">
-    <ol class="breadcrumb breadcrumb-line mb-1">
+    <ol class="breadcrumb breadcrumb-arrow mb-1">
       <li class="breadcrumb-item">
         <i class="input-icon" data-feather="user" style="width: 16px; height: 16px"></i>
       </li>
@@ -12,91 +12,57 @@
 
   <button id="btnNovo" type="button" class="btn btn-primary btn-icon-text btn-xs" [routerLink]="['/usuarios/novo']">
     <i class="feather icon-plus btn-icon-prepend"></i>
-    {{ 'BUTTONS.CREATE' | translate }}
+    {{ 'USERS.ADD' | translate }}
   </button>
 </div>
 
 <div class="row">
-  <div class="col-12 stretch-card">
+  <div class="col-md-12 stretch-card">
     <div class="card">
       <div class="card-body">
-        <div class="d-flex justify-content-between align-items-baseline mb-2">
-          <div class="d-flex flex-wrap align-items-center gap-2">
+        <div class="row">
+          <div class="col-xl-3 col-md-4">
             <div class="input-icon search-inline">
-              <span class="input-icon-addon">
-                <i class="feather icon-search"></i>
-              </span>
-              <input type="text" class="form-control" placeholder="{{ 'COMMON.SEARCH' | translate }}"
-                [value]="searchQuery" (input)="onSearchInput($event)" />
+                          <span class="input-icon-addon">
+              <i class="feather icon-search"></i>
+            </span>
+            <input type="text" class="form-control" placeholder="{{ 'COMMON.SEARCH' | translate }}"
+              [value]="searchQuery" (input)="onSearchInput($event)" />
             </div>
           </div>
         </div>
 
         <div class="table-responsive">
-          <ngx-datatable
-            #table
-            class="bootstrap"
-            [rows]="filteredUsuarios"
-            [loadingIndicator]="loading"
-            [columnMode]="ColumnMode.force"
-            [footerHeight]="50"
-            [rowHeight]="'auto'"
-            [limit]="pageSize"
-            [messages]="{
+          <ngx-datatable #table class="bootstrap" [rows]="filteredUsuarios" [loadingIndicator]="loading"
+            [columnMode]="ColumnMode.force" [footerHeight]="50" [rowHeight]="60" [limit]="pageSize" [messages]="{
               emptyMessage: ('COMMON.NO_DATA' | translate),
               totalMessage: ('COMMON.ITEMS' | translate)
-            }"
-          >
+            }">
             <!-- Coluna Avatar -->
-            <ngx-datatable-column
-              name="#"
-              [width]="80"
-              [sortable]="false"
-              [canAutoResize]="false"
-            >
+            <ngx-datatable-column name="#" [width]="80" [sortable]="false" [canAutoResize]="false">
               <ng-template let-row="row" ngx-datatable-cell-template>
-                <app-user-avatar 
-                  [nome]="row.nome" 
-                  [fotoUrl]="row.fotoUrl" 
-                  size="small">
+                <app-user-avatar [nome]="row.nome" [fotoUrl]="row.fotoUrl" size="small">
                 </app-user-avatar>
               </ng-template>
             </ngx-datatable-column>
 
             <!-- Coluna Nome -->
-            <ngx-datatable-column
-              [name]="'USERS.NAME' | translate"
-              prop="nome"
-              [flexGrow]="2"
-            >
+            <ngx-datatable-column [name]="'USERS.NAME' | translate" prop="nome" [flexGrow]="2">
             </ngx-datatable-column>
 
             <!-- Coluna Email -->
-            <ngx-datatable-column
-              [name]="'USERS.EMAIL' | translate"
-              prop="email"
-              [flexGrow]="2"
-            >
+            <ngx-datatable-column [name]="'USERS.EMAIL' | translate" prop="email" [flexGrow]="2">
             </ngx-datatable-column>
 
             <!-- Coluna Perfil -->
-            <ngx-datatable-column
-              [name]="'USERS.ROLE' | translate"
-              prop="perfil"
-              [width]="90"
-              [flexGrow]="0.5"
-            >
+            <ngx-datatable-column [name]="'USERS.ROLE' | translate" prop="perfil" [width]="90" [flexGrow]="0.5">
               <ng-template let-row="row" ngx-datatable-cell-template>
                 {{ getPerfilLabel(row.perfil) }}
               </ng-template>
             </ngx-datatable-column>
 
             <!-- Coluna Status -->
-            <ngx-datatable-column
-              [name]="'USERS.STATUS' | translate"
-              prop="ativo"
-              [width]="90"
-            >
+            <ngx-datatable-column [name]="'USERS.STATUS' | translate" prop="ativo" [width]="90">
               <ng-template let-row="row" ngx-datatable-cell-template>
                 <!-- <span class="badge" [ngClass]="{
                   'bg-success': row.ativo,
@@ -109,36 +75,23 @@
             </ngx-datatable-column>
 
             <!-- Coluna Ações -->
-            <ngx-datatable-column
-              [name]="'COMMON.ACTIONS' | translate"
-              [sortable]="false"
-              [width]="140"
-              [canAutoResize]="false"
-            >
+            <ngx-datatable-column [name]="'COMMON.ACTIONS' | translate" [sortable]="false" [width]="140"
+              [canAutoResize]="false">
               <ng-template let-row="row" ngx-datatable-cell-template>
                 <div class="btn-group btn-group-sm" role="group">
-                  <a 
-                    [routerLink]="['/usuarios', row.id, 'editar']" 
-                    class="btn btn-icon text-primary"
-                    [title]="'BUTTONS.EDIT' | translate"
-                  >
+                  <a [routerLink]="['/usuarios', row.id, 'editar']" class="btn btn-icon text-primary"
+                    [title]="'BUTTONS.EDIT' | translate">
                     <i class="feather icon-edit"></i>
                   </a>
-                  <button 
-                    class="btn btn-icon text-primary" 
-                    (click)="toggleStatusUsuario(row.id, row.nome, row.ativo)"
-                    [title]="row.ativo ? 'Inativar usuário' : 'Ativar usuário'"
-                  >
+                  <button class="btn btn-icon text-primary" (click)="toggleStatusUsuario(row.id, row.nome, row.ativo)"
+                    [title]="row.ativo ? 'Inativar usuário' : 'Ativar usuário'">
                     <i class="feather" [ngClass]="{
                       'icon-eye-off': row.ativo,
                       'icon-eye': !row.ativo
                     }"></i>
                   </button>
-                  <button 
-                    class="btn btn-icon text-danger" 
-                    (click)="deleteUsuario(row.id, row.nome)"
-                    [title]="'BUTTONS.DELETE' | translate"
-                  >
+                  <button class="btn btn-icon text-danger" (click)="deleteUsuario(row.id, row.nome)"
+                    [title]="'BUTTONS.DELETE' | translate">
                     <i class="feather icon-trash-2"></i>
                   </button>
                 </div>

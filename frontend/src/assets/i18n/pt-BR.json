@@ -65,7 +65,7 @@
     "EDIT": "Editar",
     "VIEW": "Visualizar",
     "DOWNLOAD": "Baixar",
-    "CREATE": "Novo",
+    "CREATE": "Criar",
     "UPDATE": "Atualizar",
     "CONFIRM": "Confirmar",
     "UPLOAD": "Fazer Upload"
@@ -79,7 +79,8 @@
     "STATUS": "Status",
     "ACTIVE": "Usuário Ativo",
     "CREATE": "Criar Usuário",
-    "EDIT": "Editar Usuário"
+    "EDIT": "Editar Usuário",
+    "ADD": "Adicionar Usuário"
   },
   "DASHBOARD": {
     "NEW_CUSTOMERS": "Novos Clientes",
