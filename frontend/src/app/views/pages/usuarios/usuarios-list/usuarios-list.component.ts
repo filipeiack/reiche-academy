@@ -7,22 +7,27 @@ import { ColumnMode, DatatableComponent, NgxDatatableModule } from '@siemens/ngx
 import { UsersService, Usuario } from '../../../../core/services/users.service';
 import { TranslatePipe } from '../../../../core/pipes/translate.pipe';
 import { UserAvatarComponent } from '../../../../shared/components/user-avatar/user-avatar.component';
+import { NgbPaginationModule, NgbTypeaheadModule } from '@ng-bootstrap/ng-bootstrap';
 
 @Component({
   selector: 'app-usuarios-list',
   standalone: true,
   imports: [
-    CommonModule, 
-    FormsModule, 
-    RouterLink, 
-    TranslatePipe, 
+    CommonModule,
+    FormsModule,
+    RouterLink,
+    TranslatePipe,
     UserAvatarComponent,
-    NgxDatatableModule
-  ],
+    NgxDatatableModule,
+    NgbTypeaheadModule, NgbPaginationModule
+],
   templateUrl: './usuarios-list.component.html',
   styleUrl: './usuarios-list.component.scss'
 })
 export class UsuariosListComponent implements OnInit {
+onSort($event: Event) {
+throw new Error('Method not implemented.');
+}
   private usersService = inject(UsersService);
 
   @ViewChild('table') table!: DatatableComponent;
@@ -35,7 +40,7 @@ export class UsuariosListComponent implements OnInit {
   
   // Configurações do Ngx-Datatable
   ColumnMode = ColumnMode;
-  pageSize = 10;
+  pageSize = 5;
 
   ngOnInit(): void {
     this.loadUsuarios();
@@ -233,4 +238,33 @@ export class UsuariosListComponent implements OnInit {
       }
     });
   }
+
+  // Paginação
+  currentPage = 1;
+  get totalPages(): number {
+    return Math.ceil(this.filteredUsuarios.length / this.pageSize);
+  }
+
+  get paginatedUsuarios(): Usuario[] {
+    const start = (this.currentPage - 1) * this.pageSize;
+    const end = start + this.pageSize;
+    return this.filteredUsuarios.slice(start, end);
+  }
+
+  goToPage(page: number): void {
+    if (page >= 1 && page <= this.totalPages) {
+      this.currentPage = page;
+    }
+  }
+
+  nextPage(): void {
+    this.goToPage(this.currentPage + 1);
+  }
+
+  prevPage(): void {
+    this.goToPage(this.currentPage - 1);
+  }
+
+
+  //Sortable
 }

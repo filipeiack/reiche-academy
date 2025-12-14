@@ -23,22 +23,22 @@
         <div class="row">
           <div class="col-xl-3 col-md-4">
             <div class="input-icon search-inline">
-                          <span class="input-icon-addon">
-              <i class="feather icon-search"></i>
-            </span>
-            <input type="text" class="form-control" placeholder="{{ 'COMMON.SEARCH' | translate }}"
-              [value]="searchQuery" (input)="onSearchInput($event)" />
+              <span class="input-icon-addon">
+                <i class="feather icon-search"></i>
+              </span>
+              <input type="text" class="form-control" placeholder="{{ 'COMMON.SEARCH' | translate }}"
+                [value]="searchQuery" (input)="onSearchInput($event)" />
             </div>
           </div>
         </div>
 
         <div class="table-responsive">
-          <ngx-datatable #table class="bootstrap" [rows]="filteredUsuarios" [loadingIndicator]="loading"
+          <!-- <ngx-datatable #table class="bootstrap table-hover" [rows]="filteredUsuarios" [loadingIndicator]="loading"
             [columnMode]="ColumnMode.force" [footerHeight]="50" [rowHeight]="60" [limit]="pageSize" [messages]="{
               emptyMessage: ('COMMON.NO_DATA' | translate),
               totalMessage: ('COMMON.ITEMS' | translate)
             }">
-            <!-- Coluna Avatar -->
+            
             <ngx-datatable-column name="#" [width]="80" [sortable]="false" [canAutoResize]="false">
               <ng-template let-row="row" ngx-datatable-cell-template>
                 <app-user-avatar [nome]="row.nome" [fotoUrl]="row.fotoUrl" size="small">
@@ -46,35 +46,34 @@
               </ng-template>
             </ngx-datatable-column>
 
-            <!-- Coluna Nome -->
+            
             <ngx-datatable-column [name]="'USERS.NAME' | translate" prop="nome" [flexGrow]="2">
             </ngx-datatable-column>
 
-            <!-- Coluna Email -->
+            
             <ngx-datatable-column [name]="'USERS.EMAIL' | translate" prop="email" [flexGrow]="2">
             </ngx-datatable-column>
 
-            <!-- Coluna Perfil -->
+            
             <ngx-datatable-column [name]="'USERS.ROLE' | translate" prop="perfil" [width]="90" [flexGrow]="0.5">
               <ng-template let-row="row" ngx-datatable-cell-template>
                 {{ getPerfilLabel(row.perfil) }}
               </ng-template>
             </ngx-datatable-column>
 
-            <!-- Coluna Status -->
+            
             <ngx-datatable-column [name]="'USERS.STATUS' | translate" prop="ativo" [width]="90">
               <ng-template let-row="row" ngx-datatable-cell-template>
-                <!-- <span class="badge" [ngClass]="{
+                <span class="badge" [ngClass]="{
                   'bg-success': row.ativo,
                   'bg-danger': !row.ativo
                 }">
                   {{ row.ativo ? ('COMMON.ACTIVE' | translate) : ('COMMON.INACTIVE' | translate) }}
-                </span> -->
+                </span>
                 {{ row.ativo ? ('COMMON.ACTIVE' | translate) : ('COMMON.INACTIVE' | translate) }}
               </ng-template>
             </ngx-datatable-column>
-
-            <!-- Coluna Ações -->
+            
             <ngx-datatable-column [name]="'COMMON.ACTIONS' | translate" [sortable]="false" [width]="140"
               [canAutoResize]="false">
               <ng-template let-row="row" ngx-datatable-cell-template>
@@ -98,6 +97,111 @@
               </ng-template>
             </ngx-datatable-column>
           </ngx-datatable>
+          -->
+
+          @if (loading) {
+          <div class="text-center py-5">
+            <div class="spinner-border text-primary" role="status">
+              <span class="visually-hidden">{{ 'COMMON.LOADING' | translate }}...</span>
+            </div>
+          </div>
+          } @else {
+          <div class="table-responsive">
+            <table class="table table-hover table-striped mb-2">
+              <thead>
+                <tr>
+                  <th><input class="form-check-input me-1" type="checkbox" value=""></th>
+                  <th scope="col" sortable="name" (sort)="onSort($event)">{{ 'USERS.NAME' | translate }}</th>
+                  <th scope="col" sortable="email" (sort)="onSort($event)">{{ 'USERS.EMAIL' | translate }}</th>
+                  <th>{{ 'USERS.ROLE' | translate }}</th>
+                  <th>{{ 'USERS.STATUS' | translate }}</th>
+                  <th>{{ 'COMMON.ACTIONS' | translate }}</th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (usuario of paginatedUsuarios; track usuario.id) {
+                <tr>
+                  <td>
+                    <input class="form-check-input me-1" type="checkbox" value="">
+                  </td>
+                  <td>{{ usuario.nome }}</td>
+                  <td>{{ usuario.email }}</td>
+                  <td>{{ getPerfilLabel(usuario.perfil) }}</td>
+                  <td><span class="badge" [ngClass]="{'bg-success': usuario.ativo, 'bg-danger': !usuario.ativo}">
+                      {{ usuario.ativo ? ('COMMON.ACTIVE' | translate) : ('COMMON.INACTIVE' | translate) }}</span></td>
+                  <td class="text-nowrap">
+                    <div class="btn-group btn-group-sm" role="group">
+                      <a [routerLink]="['/usuarios', usuario.id, 'editar']" class="btn btn-icon text-primary"
+                        title="{{ 'BUTTONS.EDIT' | translate }}">
+                        <i class="feather icon-edit"></i>
+                      </a>
+                      <button class="btn btn-icon text-primary"
+                        (click)="toggleStatusUsuario(usuario.id, usuario.nome, usuario.ativo)"
+                        [title]="usuario.ativo ? 'Inativar usuário' : 'Ativar usuário'">
+                        <i class="feather" [ngClass]="{'icon-eye-off': usuario.ativo, 'icon-eye': !usuario.ativo}"></i>
+                      </button>
+                      <button class="btn btn-icon text-danger" (click)="deleteUsuario(usuario.id, usuario.nome)"
+                        title="{{ 'BUTTONS.DELETE' | translate }}">
+                        <i class="feather icon-trash-2"></i>
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+
+                } @empty {
+                <tr>
+                  <td colspan="7" class="border-bottom text-center text-muted py-4">
+                    {{ 'COMMON.NO_DATA' | translate }}
+                  </td>
+                </tr>
+                }
+
+              </tbody>
+            </table>
+          </div>
+
+          <span class="text-muted fs-12">{{ filteredUsuarios.length }} {{ 'COMMON.ITEMS' | translate }}</span>
+
+          <!-- Pagination -->
+          <!-- @if (totalPages > 1) {
+              <div class="card-footer d-flex align-items-center px-0">
+                <p class="text-muted me-3 mb-0">
+                  {{ 'COMMON.PAGE' | translate }} {{ currentPage }} {{ 'COMMON.OF' | translate }} {{ totalPages }}
+                </p>
+                <ul class="pagination m-0 ms-auto">
+                  <li class="page-item" [class.disabled]="currentPage === 1">
+                    <a class="page-link" (click)="prevPage()" href="javascript:void(0);">
+                      <i class="feather icon-chevron-left"></i> {{ 'COMMON.PREV' | translate }}
+                    </a>
+                  </li>
+                  @for (page of [].constructor(totalPages); let i = $index; track i) {
+                    <li class="page-item" [class.active]="i + 1 === currentPage">
+                      <a class="page-link" (click)="goToPage(i + 1)" href="javascript:void(0);">
+                        {{ i + 1 }}
+                      </a>
+                    </li>
+                  }
+                  <li class="page-item" [class.disabled]="currentPage === totalPages">
+                    <a class="page-link" (click)="nextPage()" href="javascript:void(0);">
+                      {{ 'COMMON.NEXT' | translate }} <i class="feather icon-chevron-right"></i>
+                    </a>
+                  </li>
+                </ul>
+              </div>
+            } -->
+
+          <div class="d-flex justify-content-between p-2">
+            <select class="form-select" style="width: auto" [(ngModel)]="pageSize" (ngModelChange)="paginatedUsuarios">
+              <option [ngValue]="2">2 items per page</option>
+              <option [ngValue]="4">4 items per page</option>
+              <option [ngValue]="6">6 items per page</option>
+            </select>
+
+            <ngb-pagination [collectionSize]="filteredUsuarios.length" [(page)]="currentPage" size="sm"
+              [pageSize]="pageSize" (pageChange)="paginatedUsuarios">
+            </ngb-pagination>
+          </div>
+          }
         </div>
       </div>
     </div>
