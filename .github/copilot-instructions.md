@@ -7,7 +7,7 @@ Sistema web SPA para gestão empresarial PDCA, substituindo planilhas Excel de D
 
 ### Frontend
 - **Framework**: Angular 18+ com Angular Material
-- **Template Base**: NobleUI Angular (em `templates/nobleui-angular/`)
+- **Template Base**: NobleUI Angular (em `C:\Users\filip\source\repos\templates\nobleui-angular\`)
 - **Estado**: RxJS + NgRx (quando necessário)
 - **Estrutura**: Componentes e módulos isolados, arquitetura modular
 
@@ -126,7 +126,7 @@ model Diagnostico {
 ## Referências Importantes
 
 - **Planilhas Originais**: `planilhas/DIAGNOSTICO.xlsx` e `planilhas/COCKPIT.xlsx`
-- **Template Frontend**: `templates/nobleui-angular/`
+- **Template Frontend**: `C:\Users\filip\source\repos\templates\nobleui-angular\`
 - **Contexto Completo**: `CONTEXT.md`
 
 ## Comandos Essenciais

@@ -1,26 +1,46 @@
-$primary-dark:                      rgb(198, 122, 61) !default; //B6915D, A67C00
-$secondary-dark:                    $gray-500 !default;
+// ========================================
+// PALETA UIBakery Dark Theme - TESTE
+// Backup das cores originais comentadas no final do arquivo
+// ========================================
 
-$body-color-dark:                   #d0d6e1 !default;
-$body-bg-dark:                      #000000 !default;
+$app-bg-dark:                       #0A0A0A !default; // Fundo geral do app
+$primary-dark:                      #C67A3D !default; // Orange/Copper da paleta UIBakery
+$secondary-dark:                    #4E4E4E !default; // Gray Scale
 
-$body-tertiary-bg-dark:             mix($gray-700, $gray-900, 50%) !default;
+$body-color-dark:                   #FFFFFF !default; // Texto principal branco
+$body-bg-dark:                      #1A1A1A !default; // Background escuro profundo
+//$body-emphasis-color-dark:          #A66532 !default;
 
-$body-secondary-color-dark:         #7987a1 !default; // Texto secundário
-//$link-color-dark:                   #D1B689 !default; // Dourado 02 (Reiche Academy)
-$link-color-dark:                   $primary !default;
+$body-tertiary-bg-dark:             #1A1A1A !default; // Cards e componentes
 
-$border-color-dark:                 #172340 !default;
+$body-secondary-color-dark:         #A0A0A0 !default; // Texto secundário
+$link-color-dark:                   #C67A3D !default; // Links usando primary
 
-// $box-shadow-dark:                   0 0 10px 0 rgb(6, 11, 21) !default;
+$border-color-dark:                 #2A2A2A !default; // Bordas sutis
 
-$box-shadow-dark:                  0 .5rem 1rem rgba($black, .35) !default;
-$box-shadow-sm-dark:               0 .125rem .25rem rgba($black, .15) !default;
-$box-shadow-lg-dark:               0 1rem 3rem rgba($black, .5) !default;
+// Shadows
+$box-shadow-dark:                   0 2px 8px rgba(0, 0, 0, 0.3) !default;
+$box-shadow-sm-dark:                0 1px 4px rgba(0, 0, 0, 0.2) !default;
+$box-shadow-lg-dark:                0 4px 16px rgba(0, 0, 0, 0.4) !default;
 
 // Card
-$card-box-shadow-dark:              3px 0 10px 0 #060b15 !default;
-$card-border-color-dark:            #172340;
+$card-box-shadow-dark:              0 2px 8px rgba(0, 0, 0, 0.3) !default;
+$card-border-color-dark:            #2A2A2A !default;
+
+
+// ========================================
+// CORES ORIGINAIS (BACKUP)
+// ========================================
+// $primary-dark:                      rgb(198, 122, 61) !default; //B6915D, A67C00
+// $secondary-dark:                    $gray-500 !default;
+// $body-color-dark:                   #d0d6e1 !default;
+// $body-bg-dark:                      #000000 !default;
+// $body-tertiary-bg-dark:             mix($gray-700, $gray-900, 50%) !default;
+// $body-secondary-color-dark:         #7987a1 !default;
+// $link-color-dark:                   $primary !default;
+// $border-color-dark:                 #172340 !default;
+// $card-border-color-dark:            #172340;
+// ========================================
 
 
 @media (min-width: 1400px) {

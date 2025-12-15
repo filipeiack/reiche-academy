@@ -1,18 +1,2 @@
 /* Estilos específicos do formulário de usuários */
 
-/* Personalização do botão de toggle de senha (específico desta tela) */
-.input-group .btn-outline-primary {
-  color: var(--bs-primary);
-  border-color: var(--bs-border-color);
-  
-  i {
-    color: var(--bs-primary);
-  }
-
-  &:hover {
-    background-color: transparent;
-    color: var(--bs-primary);
-    border-color: var(--bs-primary);
-    opacity: 0.8;
-  }
-}

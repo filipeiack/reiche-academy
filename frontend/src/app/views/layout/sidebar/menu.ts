@@ -13,6 +13,11 @@ export const MENU: MenuItem[] = [
     link: '/dashboard'
   },
   {
+    label: 'MENU.CALENDAR',
+    icon: 'calendar',
+    link: '/calendario'
+  },
+  {
     label: 'MENU.WEB_APPS',
     isTitle: true
   },
@@ -20,5 +25,40 @@ export const MENU: MenuItem[] = [
     label: 'MENU.USUARIOS',
     icon: 'users',
     link: '/usuarios'
+  },
+  {
+    label: 'MENU.EMPRESAS',
+    icon: 'codesandbox',
+    link: '/empresas'
+  },
+  {
+    label: 'MENU.PILARES',
+    icon: 'anchor',
+    link: '/pilares'
+  },
+  {
+    label: 'MENU.ROTINAS',
+    icon: 'activity',
+    link: '/rotinas'
+  },
+  {
+    label: 'MENU.DIAGNOSTICOS',
+    isTitle: true
+  },
+  {
+    label: 'MENU.NOTAS',
+    icon: 'folder-plus',
+    link: '/notas'
+  },
+
+  
+  {
+    label: 'MENU.DOCS',
+    isTitle: true
+  },
+  {
+    label: 'MENU.DOCUMENTATION',
+    icon: 'hash',
+    link: '/documentos'
   }
 ];

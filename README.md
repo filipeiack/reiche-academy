@@ -75,7 +75,6 @@ reiche-academy/
 │   │   ├── app/        # Componentes e módulos
 │   │   ├── assets/     # Recursos estáticos
 │   │   └── environments/
-├── templates/           # Template NobleUI
 ├── planilhas/          # Planilhas de referência
 └── docker-compose.yml  # Serviços Docker
 

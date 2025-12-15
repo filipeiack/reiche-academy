@@ -46,8 +46,7 @@ Reiche/
 ├── docker-compose.yml              # PostgreSQL + Redis
 ├── README.md
 ├── CONTEXT.md
-├── planilhas/
-└── templates/
+└── planilhas/
 ```
 
 ## 🚀 Próximos Passos:

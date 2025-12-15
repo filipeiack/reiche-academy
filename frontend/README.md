@@ -179,7 +179,7 @@ export class ThemeModeService {
 
 O projeto utiliza **100% do template NobleUI Angular v3.0 (demo1)**:
 
-**Localização**: `../templates/nobleui-angular/template/demo1/`
+**Localização**: `C:\Users\filip\source\repos\templates\nobleui-angular\template\demo1\`
 
 **O que foi migrado:**
 - ✅ Componentes de layout (base, navbar, sidebar, footer)

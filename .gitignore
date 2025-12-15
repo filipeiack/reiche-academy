@@ -44,3 +44,5 @@ backend/public/
 # Angular
 .angular/
 
+
+templates/

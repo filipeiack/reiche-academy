@@ -2,7 +2,7 @@
   <nav aria-label="breadcrumb">
     <ol class="breadcrumb breadcrumb-arrow mb-1">
       <li class="breadcrumb-item">
-        <i class="input-icon" data-feather="user" style="width: 16px; height: 16px"></i>
+        <i class="input-icon" data-feather="users" style="width: 16px; height: 16px"></i>
       </li>
       <li class="breadcrumb-item active" aria-current="page">
         <a routerLink="/usuarios">{{ "MENU.USUARIOS" | translate }}</a>
@@ -21,7 +21,7 @@
     <div class="card">
       <div class="card-body">
         <div class="row">
-          <div class="col-xl-3 col-md-4">
+          <div class="col-md-6">
             <div class="input-icon search-inline">
               <span class="input-icon-addon">
                 <i class="feather icon-search"></i>
@@ -30,74 +30,20 @@
                 [value]="searchQuery" (input)="onSearchInput($event)" />
             </div>
           </div>
+
+          <div class="col-md-6 text-end">
+            
+          @if (selectedCount > 0) {
+          <ngb-alert id="usuarioBarBtn" class="alert-custom-primary" [dismissible]="false">
+            <button type="button" class="btn btn-xs btn-outline-danger" (click)="deleteSelectedUsuarios()">
+                        {{ "BUTTONS.DELETE_SELECTED" | translate }} ({{ selectedCount }})
+                    </button>
+          </ngb-alert>
+          }
+          </div>
         </div>
 
         <div class="table-responsive">
-          <!-- <ngx-datatable #table class="bootstrap table-hover" [rows]="filteredUsuarios" [loadingIndicator]="loading"
-            [columnMode]="ColumnMode.force" [footerHeight]="50" [rowHeight]="60" [limit]="pageSize" [messages]="{
-              emptyMessage: ('COMMON.NO_DATA' | translate),
-              totalMessage: ('COMMON.ITEMS' | translate)
-            }">
-            
-            <ngx-datatable-column name="#" [width]="80" [sortable]="false" [canAutoResize]="false">
-              <ng-template let-row="row" ngx-datatable-cell-template>
-                <app-user-avatar [nome]="row.nome" [fotoUrl]="row.fotoUrl" size="small">
-                </app-user-avatar>
-              </ng-template>
-            </ngx-datatable-column>
-
-            
-            <ngx-datatable-column [name]="'USERS.NAME' | translate" prop="nome" [flexGrow]="2">
-            </ngx-datatable-column>
-
-            
-            <ngx-datatable-column [name]="'USERS.EMAIL' | translate" prop="email" [flexGrow]="2">
-            </ngx-datatable-column>
-
-            
-            <ngx-datatable-column [name]="'USERS.ROLE' | translate" prop="perfil" [width]="90" [flexGrow]="0.5">
-              <ng-template let-row="row" ngx-datatable-cell-template>
-                {{ getPerfilLabel(row.perfil) }}
-              </ng-template>
-            </ngx-datatable-column>
-
-            
-            <ngx-datatable-column [name]="'USERS.STATUS' | translate" prop="ativo" [width]="90">
-              <ng-template let-row="row" ngx-datatable-cell-template>
-                <span class="badge" [ngClass]="{
-                  'bg-success': row.ativo,
-                  'bg-danger': !row.ativo
-                }">
-                  {{ row.ativo ? ('COMMON.ACTIVE' | translate) : ('COMMON.INACTIVE' | translate) }}
-                </span>
-                {{ row.ativo ? ('COMMON.ACTIVE' | translate) : ('COMMON.INACTIVE' | translate) }}
-              </ng-template>
-            </ngx-datatable-column>
-            
-            <ngx-datatable-column [name]="'COMMON.ACTIONS' | translate" [sortable]="false" [width]="140"
-              [canAutoResize]="false">
-              <ng-template let-row="row" ngx-datatable-cell-template>
-                <div class="btn-group btn-group-sm" role="group">
-                  <a [routerLink]="['/usuarios', row.id, 'editar']" class="btn btn-icon text-primary"
-                    [title]="'BUTTONS.EDIT' | translate">
-                    <i class="feather icon-edit"></i>
-                  </a>
-                  <button class="btn btn-icon text-primary" (click)="toggleStatusUsuario(row.id, row.nome, row.ativo)"
-                    [title]="row.ativo ? 'Inativar usuário' : 'Ativar usuário'">
-                    <i class="feather" [ngClass]="{
-                      'icon-eye-off': row.ativo,
-                      'icon-eye': !row.ativo
-                    }"></i>
-                  </button>
-                  <button class="btn btn-icon text-danger" (click)="deleteUsuario(row.id, row.nome)"
-                    [title]="'BUTTONS.DELETE' | translate">
-                    <i class="feather icon-trash-2"></i>
-                  </button>
-                </div>
-              </ng-template>
-            </ngx-datatable-column>
-          </ngx-datatable>
-          -->
 
           @if (loading) {
           <div class="text-center py-5">
@@ -110,7 +56,7 @@
             <table class="table table-hover table-striped mb-2">
               <thead>
                 <tr>
-                  <th><input class="form-check-input me-1" type="checkbox" value=""></th>
+                  <th><input class="form-check-input" type="checkbox" [(ngModel)]="headerCheckboxChecked" (change)="toggleHeaderCheckbox()"></th>
                   <th scope="col" sortable="name" (sort)="onSort($event)">{{ 'USERS.NAME' | translate }}</th>
                   <th scope="col" sortable="email" (sort)="onSort($event)">{{ 'USERS.EMAIL' | translate }}</th>
                   <th>{{ 'USERS.ROLE' | translate }}</th>
@@ -122,13 +68,18 @@
                 @for (usuario of paginatedUsuarios; track usuario.id) {
                 <tr>
                   <td>
-                    <input class="form-check-input me-1" type="checkbox" value="">
+                    <input class="form-check-input" type="checkbox" 
+                      [checked]="isUsuarioSelected(usuario.id)" 
+                      (change)="toggleUsuarioSelection(usuario.id)">
                   </td>
                   <td>{{ usuario.nome }}</td>
-                  <td>{{ usuario.email }}</td>
+                  <td class="text-muted">{{ usuario.email }}</td>
                   <td>{{ getPerfilLabel(usuario.perfil) }}</td>
-                  <td><span class="badge" [ngClass]="{'bg-success': usuario.ativo, 'bg-danger': !usuario.ativo}">
-                      {{ usuario.ativo ? ('COMMON.ACTIVE' | translate) : ('COMMON.INACTIVE' | translate) }}</span></td>
+                  <td class="text-muted">
+                    <!-- <span class="badge" [ngClass]="{'bg-success': usuario.ativo, 'bg-danger': !usuario.ativo}"> -->
+                      {{ usuario.ativo ? ('COMMON.ACTIVE' | translate) : ('COMMON.INACTIVE' | translate) }}
+                    <!-- </span> -->
+                  </td>
                   <td class="text-nowrap">
                     <div class="btn-group btn-group-sm" role="group">
                       <a [routerLink]="['/usuarios', usuario.id, 'editar']" class="btn btn-icon text-primary"
@@ -160,8 +111,6 @@
             </table>
           </div>
 
-          <span class="text-muted fs-12">{{ filteredUsuarios.length }} {{ 'COMMON.ITEMS' | translate }}</span>
-
           <!-- Pagination -->
           <!-- @if (totalPages > 1) {
               <div class="card-footer d-flex align-items-center px-0">
@@ -191,11 +140,13 @@
             } -->
 
           <div class="d-flex justify-content-between p-2">
-            <select class="form-select" style="width: auto" [(ngModel)]="pageSize" (ngModelChange)="paginatedUsuarios">
+            <!-- <select class="form-select" style="width: auto" [(ngModel)]="pageSize" (ngModelChange)="paginatedUsuarios">
               <option [ngValue]="2">2 items per page</option>
               <option [ngValue]="4">4 items per page</option>
               <option [ngValue]="6">6 items per page</option>
-            </select>
+            </select> -->
+
+            <span class="text-muted fs-12">{{ filteredUsuarios.length }} {{ 'COMMON.ITEMS' | translate }}</span>
 
             <ngb-pagination [collectionSize]="filteredUsuarios.length" [(page)]="currentPage" size="sm"
               [pageSize]="pageSize" (pageChange)="paginatedUsuarios">

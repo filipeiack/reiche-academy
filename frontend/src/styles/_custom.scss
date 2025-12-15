@@ -57,3 +57,60 @@
 	border-color: var(--bs-secondary);
 	color: #fff;
 }
+
+.table-hover tbody tr:hover > * {
+		background-color: rgba(198, 122, 61, 0.1) !important;
+	}
+
+// Checkbox border com cor UIBakery
+.form-check-input {
+	border-color: #C67A3D;
+}
+
+// Custom alert style para UIBakery theme
+.alert-custom-primary {
+  padding: 3px;
+  margin-bottom: 2px;
+  background-color: rgba(198, 122, 61, 0.1);
+  border-color: rgba(198, 122, 61, 0.3);
+  //border-radius: 8px;
+  border-style: solid;
+  border-width: 1px;
+  color: #FFFFFF;
+}
+
+// ========================================
+// CUSTOMIZAÇÕES PARA TEMA DARK - UIBakery
+// ========================================
+
+// Tema Dark específico
+[data-bs-theme="dark"] {
+	.form-control:focus {
+		border-color: #C67A3D;
+		box-shadow: 0 0 0 0.1rem rgba(198, 122, 61, 0.25);
+	}
+
+	.form-control {
+		border-color: #2A2A2A;
+		background-color: #0A0A0A;
+		color: #FFFFFF;
+
+		&::placeholder {
+			color: #6F6F6F;
+		}
+	}
+
+	.table {
+		border-color: #2A2A2A;
+		color: #FFFFFF;
+	}
+
+	.table th,
+	.table td {
+		border-color: #2A2A2A;
+	}
+
+	
+
+
+}

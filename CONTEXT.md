@@ -50,9 +50,7 @@ O sistema utiliza a seguinte paleta de cores baseada em design system moderno e 
 }
 ```
 
-**Assets Padrão:**
-- Logo: `templates/logo_reiche_academy_fundo.PNG` (deve ser copiado para `frontend/src/assets/images/`)
-- Cores e fontes: Definidas no design_system_byGPT.md
+
 
 **Personalização por Empresa:**
 O sistema deve permitir personalização visual e funcional por empresa:

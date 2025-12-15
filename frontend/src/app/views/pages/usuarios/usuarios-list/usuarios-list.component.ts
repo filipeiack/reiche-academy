@@ -6,8 +6,8 @@ import Swal from 'sweetalert2';
 import { ColumnMode, DatatableComponent, NgxDatatableModule } from '@siemens/ngx-datatable';
 import { UsersService, Usuario } from '../../../../core/services/users.service';
 import { TranslatePipe } from '../../../../core/pipes/translate.pipe';
-import { UserAvatarComponent } from '../../../../shared/components/user-avatar/user-avatar.component';
-import { NgbPaginationModule, NgbTypeaheadModule } from '@ng-bootstrap/ng-bootstrap';
+import { NgbAlertModule, NgbPaginationModule, NgbTypeaheadModule } from '@ng-bootstrap/ng-bootstrap';
+import { SortableDirective, SortEvent } from '../../../../shared/directives/sortable.directive';
 
 @Component({
   selector: 'app-usuarios-list',
@@ -17,17 +17,14 @@ import { NgbPaginationModule, NgbTypeaheadModule } from '@ng-bootstrap/ng-bootst
     FormsModule,
     RouterLink,
     TranslatePipe,
-    UserAvatarComponent,
     NgxDatatableModule,
-    NgbTypeaheadModule, NgbPaginationModule
+    NgbTypeaheadModule, NgbPaginationModule, NgbAlertModule,
+    SortableDirective
 ],
   templateUrl: './usuarios-list.component.html',
   styleUrl: './usuarios-list.component.scss'
 })
 export class UsuariosListComponent implements OnInit {
-onSort($event: Event) {
-throw new Error('Method not implemented.');
-}
   private usersService = inject(UsersService);
 
   @ViewChild('table') table!: DatatableComponent;
@@ -41,6 +38,14 @@ throw new Error('Method not implemented.');
   // Configurações do Ngx-Datatable
   ColumnMode = ColumnMode;
   pageSize = 5;
+
+  // Seleção de usuários para delete em lote
+  selectedUsuariosIds: Set<string> = new Set();
+  headerCheckboxChecked = false;
+
+  // Ordenação de colunas
+  sortColumn: string = '';
+  sortDirection: 'asc' | 'desc' = 'asc';
 
   ngOnInit(): void {
     this.loadUsuarios();
@@ -96,10 +101,59 @@ throw new Error('Method not implemented.');
       );
     }
     
+    // Aplicar ordenação se houver
+    if (this.sortColumn) {
+      this.applySorting();
+    }
+    
     // Resetar para primeira página do datatable
     if (this.table) {
       this.table.offset = 0;
     }
+  }
+
+  onSort(event: SortEvent): void {
+    const column = event.column;
+    
+    // Toggle direção se for a mesma coluna
+    if (this.sortColumn === column) {
+      this.sortDirection = this.sortDirection === 'asc' ? 'desc' : 'asc';
+    } else {
+      this.sortColumn = column;
+      this.sortDirection = event.direction as 'asc' | 'desc';
+    }
+    
+    this.applySorting();
+  }
+
+  private applySorting(): void {
+    if (!this.sortColumn) return;
+
+    this.filteredUsuarios.sort((a, b) => {
+      let valueA: any;
+      let valueB: any;
+
+      switch (this.sortColumn) {
+        case 'name':
+          valueA = a.nome?.toLowerCase() || '';
+          valueB = b.nome?.toLowerCase() || '';
+          break;
+        case 'email':
+          valueA = a.email?.toLowerCase() || '';
+          valueB = b.email?.toLowerCase() || '';
+          break;
+        default:
+          return 0;
+      }
+
+      if (valueA < valueB) {
+        return this.sortDirection === 'asc' ? -1 : 1;
+      }
+      if (valueA > valueB) {
+        return this.sortDirection === 'asc' ? 1 : -1;
+      }
+      return 0;
+    });
   }
 
   getPerfilLabel(perfil: string): string {
@@ -263,6 +317,115 @@ throw new Error('Method not implemented.');
 
   prevPage(): void {
     this.goToPage(this.currentPage - 1);
+  }
+
+  // ========================================
+  // SELEÇÃO DE USUÁRIOS PARA DELETE EM LOTE
+  // ========================================
+
+  get selectedCount(): number {
+    return this.selectedUsuariosIds.size;
+  }
+
+  toggleHeaderCheckbox(): void {
+    if (this.headerCheckboxChecked) {
+      // Marcar todos da página atual
+      this.paginatedUsuarios.forEach(u => this.selectedUsuariosIds.add(u.id));
+    } else {
+      // Desmarcar todos da página atual
+      this.paginatedUsuarios.forEach(u => this.selectedUsuariosIds.delete(u.id));
+    }
+  }
+
+  toggleUsuarioSelection(usuarioId: string): void {
+    if (this.selectedUsuariosIds.has(usuarioId)) {
+      this.selectedUsuariosIds.delete(usuarioId);
+    } else {
+      this.selectedUsuariosIds.add(usuarioId);
+    }
+    
+    // Sincronizar estado do checkbox do header
+    this.updateHeaderCheckboxState();
+  }
+
+  isUsuarioSelected(usuarioId: string): boolean {
+    return this.selectedUsuariosIds.has(usuarioId);
+  }
+
+  private updateHeaderCheckboxState(): void {
+    const totalPaginatedUsuarios = this.paginatedUsuarios.length;
+    const selectedPaginatedCount = this.paginatedUsuarios.filter(u => 
+      this.selectedUsuariosIds.has(u.id)
+    ).length;
+    
+    this.headerCheckboxChecked = totalPaginatedUsuarios > 0 && 
+      selectedPaginatedCount === totalPaginatedUsuarios;
+  }
+
+  deleteSelectedUsuarios(): void {
+    if (this.selectedUsuariosIds.size === 0) return;
+
+    const count = this.selectedUsuariosIds.size;
+    Swal.fire({
+      title: '<strong>Deletar Usuários</strong>',
+      icon: 'error',
+      html: `Tem certeza que deseja deletar <strong>${count} usuário(s)</strong> permanentemente?<br><strong class="text-danger">Esta ação não pode ser desfeita!</strong>`,
+      showCloseButton: true,
+      showCancelButton: true,
+      focusConfirm: false,
+      confirmButtonText: '<i class="feather icon-trash-2"></i> Deletar',
+      confirmButtonAriaLabel: 'Deletar usuários',
+      cancelButtonText: '<i class="feather icon-x"></i> Cancelar',
+      cancelButtonAriaLabel: 'Cancelar exclusão',
+      allowOutsideClick: false
+    }).then((result) => {
+      if (!result.isConfirmed) return;
+      this.confirmDeleteSelected();
+    });
+  }
+
+  private confirmDeleteSelected(): void {
+    this.loading = true;
+    const idsToDelete = Array.from(this.selectedUsuariosIds);
+    let deletedCount = 0;
+    let errorCount = 0;
+
+    // Deletar cada usuário
+    const deleteRequests = idsToDelete.map(id =>
+      new Promise<void>((resolve) => {
+        this.usersService.delete(id).subscribe({
+          next: () => {
+            deletedCount++;
+            resolve();
+          },
+          error: () => {
+            errorCount++;
+            resolve();
+          }
+        });
+      })
+    );
+
+    Promise.all(deleteRequests).then(() => {
+      // Remover do array de usuários
+      this.usuarios = this.usuarios.filter(u => 
+        !this.selectedUsuariosIds.has(u.id)
+      );
+      
+      // Limpar seleção
+      this.selectedUsuariosIds.clear();
+      this.headerCheckboxChecked = false;
+      
+      // Recarregar filtro
+      this.filterUsuarios();
+      this.loading = false;
+
+      if (errorCount === 0) {
+        this.showToast(`${deletedCount} usuário(s) deletado(s) com sucesso!`, 'success');
+      } else {
+        this.showToast(`${deletedCount} deletados, ${errorCount} com erro`, 'warning');
+      }
+    });
   }
 
 

@@ -4,15 +4,15 @@
 
 // Bootstrap base colors
 $white:        #fff !default;
-$gray-100:     #f8f9fa !default;
-$gray-200:     #e9ecef !default;
-$gray-300:     #dee2e6 !default;
-$gray-400:     #cbd1db !default;
-$gray-500:     #aeb7c5 !default;
-$gray-600:     #7987a1 !default;
-$gray-700:     #41516c !default;
-$gray-800:     #212a3a !default;
-$gray-900:     #060c17 !default;
+$gray-100: #F7F7F7 !default;
+$gray-200: #EEEEEE !default;
+$gray-300: #E0E0E0 !default;
+$gray-400: #CCCCCC !default;
+$gray-500: #B0B0B0 !default;
+$gray-600: #8A8A8A !default;
+$gray-700:     #4E4E4E !default;
+$gray-800: #333333  !default;
+$gray-900: #1A1A1A !default;
 $black:        #000 !default;
 $text-muted:   $gray-600 !default; // Deprecated in 5.3.0
 
@@ -32,15 +32,26 @@ $cyan:    #0dcaf0 !default;
 
 
 // --- Bootstrap Theme Colors --- //
+// PALETA UIBakery Dark Theme - TESTE
 //
-$primary:         rgb(198, 122, 61)!default; //#A67C00 !default; // 8C6A00
-$secondary:       $gray-700 !default; //$gray-600
-$success:         #05a34a !default;
-$info:            #66d1d1 !default;
-$warning:         #fbbc06 !default;
-$danger:          #C34D38 !default;
-$light:           $gray-200 !default;
-$dark:            $gray-900 !default;
+$primary:         #C67A3D !default; // Orange/Copper
+$secondary:       #4E4E4E !default; // Gray Scale
+$success:         #5CB870 !default; // Green
+$info:            #C67A3D !default; // Usando primary
+$warning:         #D6A655 !default; // Yellow/Gold
+$danger:          #C34D38 !default; // Red
+$light:           #FAFAFA !default;
+$dark:            #1A1A1A !default;
+//
+// CORES ORIGINAIS (BACKUP):
+// $primary:         rgb(198, 122, 61)!default;
+// $secondary:       $gray-700 !default;
+// $success:         #05a34a !default;
+// $info:            #66d1d1 !default;
+// $warning:         #fbbc06 !default;
+// $danger:          #C34D38 !default;
+// $light:           $gray-200 !default;
+// $dark:            $gray-900 !default;
 //
 // --- Bootstrap Theme Colors --- //
 
@@ -231,11 +242,11 @@ $component-hover-bg:          rgba($secondary, .2);         // custom variable
 // Font, line-height, and color for body text, headings, and more.
 
 // Font family
-$font-family-sans-serif:           "Roboto", Helvetica, sans-serif !default;
+$font-family-sans-serif:           system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif !default;
 
 $font-size-base:              		 0.875rem !default;   // 14px
 $font-size-lg:               	 		 1rem !default;       // 16px
-$font-size-sm:                		 0.812rem !default;   // 13px
+$font-size-sm:                		 0.8125rem !default;  // 13px
 
 $font-weight-lighter:              lighter !default;
 $font-weight-light:                300 !default;
@@ -461,7 +472,6 @@ $btn-close-color:            $black !default;
 
 // App
 $app-bg:                #f9fafb;
-$app-bg-dark:           #070d19;
 
 // Sidebar
 $sidebar-width-lg:      240px;
@@ -477,8 +487,8 @@ $sidebar-nav-link-active-color:     $primary;
 $sidebar-nav-link-hover-color:      $primary;
 
 // sidebar-dark in light theme
-$sidebar-dark-bg:               #0c1427;
-$sidebar-dark-color:            $secondary;
+// $sidebar-dark-bg:               #14270c;
+// $sidebar-dark-color:            $secondary;
 
 // Navbar
 $navbar-height:                 60px;
