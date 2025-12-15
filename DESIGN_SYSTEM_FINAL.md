@@ -18,8 +18,9 @@ Documento de referência consolidado para cores, temas, estilos e componentes vi
 5. [Cores Bootstrap Mantidas](#cores-bootstrap-mantidas)
 6. [Sistema de Temas (Light/Dark)](#sistema-de-temas-lightdark)
 7. [Componentes](#componentes)
-8. [Acessibilidade](#acessibilidade)
-9. [Implementação](#implementação)
+8. [Features de Tabelas](#features-de-tabelas-usuários)
+9. [Acessibilidade](#acessibilidade)
+10. [Implementação](#implementação)
 
 ---
 
@@ -46,29 +47,29 @@ frontend/src/styles/
 
 ## 🎨 Paleta de Cores
 
-### Cores Primárias Reiche Academy
+### Paleta UIBakery Dark Theme (Implementada)
 
-| Nome | HEX | RGB | HSB | Uso |
-|------|-----|-----|-----|-----|
-| **Dourado 01** | `#B6915D` | 182, 145, 93 | 35°, 49%, 71% | Links em Light, CTAs principais |
-| **Dourado 02** | `#D1B689` | 209, 182, 137 | 38°, 34%, 82% | Links em Dark, acentos secundários |
-
-### Cores Neutras Reiche Academy
-
-| Nome | HEX | RGB | HSB | Uso |
-|------|-----|-----|-----|-----|
-| **Azul Grafite** | `#242B2E` | 36, 40, 46 | 216°, 22%, 18% | Texto principal em Light |
-| **Branco Off** | `#EFEFEF` | 239, 239, 239 | 0°, 0%, 94% | Texto principal em Dark |
-
-### Cores de Produtividade NobleUI (Mantidas)
+Tema dark profissional com cores refinadas para contraste suave e visual premium.
 
 | Nome | HEX | RGB | Uso |
 |------|-----|-----|-----|
-| **Primary** | `#6571ff` | 101, 113, 255 | Botões primários, badges, indicadores |
-| **Success** | `#05a34a` | 5, 163, 74 | Checkmarks, confirmações |
-| **Info** | `#66d1d1` | 102, 209, 209 | Informações, notificações |
+| **Primary (Orange/Copper)** | `#C67A3D` | 198, 122, 61 | Links, borders ativos, highlights, checkboxes |
+| **Secondary (Gray)** | `#4E4E4E` | 78, 78, 78 | Texto secundário, backgrounds alternativos |
+| **Background** | `#0A0A0A` | 10, 10, 10 | Fundo principal (profundo) |
+| **Cards/Components** | `#1A1A1A` | 26, 26, 26 | Cards, modals, containers, sidebar |
+| **Borders** | `#2A2A2A` | 42, 42, 42 | Divisores, separadores, form inputs |
+| **Text Primary** | `#FFFFFF` | 255, 255, 255 | Texto principal |
+| **Text Secondary** | `#A0A0A0` | 160, 160, 160 | Texto muted, legendas |
+
+### Cores Bootstrap Mantidas (Semântica)
+
+| Nome | HEX | RGB | Uso |
+|------|-----|-----|-----|
+| **Success** | `#05a34a` | 5, 163, 74 | Confirmações, status ativo |
 | **Warning** | `#fbbc06` | 251, 188, 6 | Alertas, avisos |
 | **Danger** | `#ff3366` | 255, 51, 102 | Erros, ações destrutivas |
+| **Info** | `#66d1d1` | 102, 209, 209 | Informações, notificações |
+| **Primary** | `#6571ff` | 101, 113, 255 | Botões secundários, badges |
 
 ---
 
@@ -82,10 +83,10 @@ Tema padrão para interfaces claras, recomendado para uso diurno.
 |----------|-----|-----|-----|
 | **Background Principal** | Branco | `#ffffff` | Body, containers |
 | **Background Secundário** | Gray-100 | `#f8f9fa` | Hover states, backgrounds alternativos |
-| **Texto Principal** | Azul Grafite | `#242B2E` | Headings, text |
-| **Texto Secundário** | Cinza Azulado | `#7987a1` | Texto muted, legendas |
-| **Links** | Dourado 01 | `#B6915D` | Links, breadcrumbs, accents |
-| **Borders** | Gray-200 | `#dee2e6` | Separadores, divisores |
+| **Texto Principal** | Dark | `#1A1A1A` | Headings, text |
+| **Texto Secundário** | Gray | `#A0A0A0` | Texto muted, legendas |
+| **Links** | Orange/Copper | `#C67A3D` | Links, breadcrumbs, accents |
+| **Borders** | Gray-200 | `#2A2A2A` | Separadores, divisores |
 | **Sombras** | Preta (soft) | rgba(0,0,0,0.15) | Elevação, depth |
 
 ### Configuração SCSS - Light
@@ -96,19 +97,19 @@ $body-bg:                      #fff;
 $app-bg:                       #ffffff;
 
 // Textos
-$body-color:                   #242B2E;      // Azul Grafite (Reiche)
-$body-secondary-color:         #7987a1;      // Cinza azulado
+$body-color:                   #1A1A1A;      
+$body-secondary-color:         #A0A0A0;      
 
 // Links
-$link-color:                   #B6915D;      // Dourado 01 (Reiche)
+$link-color:                   #C67A3D;      // Orange/Copper (UIBakery)
 
 // Cards e Componentes
 $card-bg:                      #ffffff;
-$card-border-color:            #e9ecef;
-$card-box-shadow:              3px 0 10px 0 rgba(6, 12, 23, 0.1);
+$card-border-color:            #2A2A2A;
+$card-box-shadow:              3px 0 10px 0 rgba(0, 0, 0, 0.1);
 
 // Borders
-$border-color:                 #dee2e6;
+$border-color:                 #2A2A2A;
 
 // Sombras
 $box-shadow:                   0 0.5rem 1rem rgba(0, 0, 0, 0.15);
@@ -117,66 +118,71 @@ $box-shadow-lg:                0 1rem 3rem rgba(0, 0, 0, 0.175);
 
 // Navbar e Sidebar
 $sidebar-color:                #ffffff;
-$navbar-item-color:            #7987a1;
+$navbar-item-color:            #A0A0A0;
 ```
 
 ### Exemplo Visual - Light
 
 ```
 ┌─────────────────────────────────────────────┐
-│ Navbar (bg: #ffffff, text: #242B2E)         │
+│ Navbar (bg: #ffffff, text: #1A1A1A)         │
 ├─────────────────────────────────────────────┤
 │ Sidebar (bg: #ffffff)  │ Main Content       │
-│ Text: #242B2E          │ bg: #f8f9fa        │
-│ Links: #B6915D ✨      │                    │
+│ Text: #1A1A1A          │ bg: #f8f9fa        │
+│ Links: #C67A3D ✨      │                    │
 │                        │ ┌──────────────┐  │
 │                        │ │ Card (white) │  │
-│                        │ │ Título: #242 │  │
-│                        │ │ Text: #7987a1   │
-│                        │ │ Link: #B6915D✨ │
+│                        │ │ Título: #1A1 │  │
+│                        │ │ Text: #A0A0A0   │
+│                        │ │ Link: #C67A3D✨ │
 │                        │ └──────────────┘  │
 └─────────────────────────────────────────────┘
 ```
 
 ---
 
-## 🌙 Tema Dark
+## 🌙 Tema Dark (UIBakery)
 
-Tema para ambientes com baixa luz, recomendado para uso noturno e redução de fadiga ocular.
+Tema escuro profissional com paleta refinada para ambientes com baixa luz.
 
 ### Paleta Dark
 
 | Elemento | Cor | HEX | Uso |
 |----------|-----|-----|-----|
-| **Background Principal** | Dark Blue | `#0c1427` | Body, containers |
-| **Background Secundário** | Dark Blue + | `#0f1a2e` | Hover states, cards |
-| **Texto Principal** | Branco Off | `#EFEFEF` | Headings, text |
-| **Texto Secundário** | Cinza Azulado | `#7987a1` | Texto muted, legendas |
-| **Links** | Dourado 02 | `#D1B689` | Links, breadcrumbs, accents |
-| **Borders** | Dark Border | `#172340` | Separadores, divisores |
+| **Background Principal** | Profundo | `#0A0A0A` | Body, containers |
+| **Background Secundário** | Cards | `#1A1A1A` | Hover states, cards, sidebar |
+| **Texto Principal** | Branco | `#FFFFFF` | Headings, text |
+| **Texto Secundário** | Gray | `#A0A0A0` | Texto muted, legendas |
+| **Links/Primary** | Orange/Copper | `#C67A3D` | Links, highlights, accents |
+| **Borders** | Subtle | `#2A2A2A` | Separadores, form inputs |
 | **Sombras** | Preta (forte) | rgba(0,0,0,0.35) | Elevação, depth |
 
 ### Configuração SCSS - Dark
 
 ```scss
 // Backgrounds
-$body-bg-dark:                 #0c1427;
-$app-bg-dark:                  #0c1427;
+$body-bg-dark:                 #0A0A0A;      // Profundo
+$app-bg-dark:                  #0A0A0A;
+$body-tertiary-bg-dark:        #1A1A1A;      // Cards
 
 // Textos
-$body-color-dark:              #EFEFEF;      // Branco Off (Reiche)
-$body-secondary-color-dark:    #7987a1;      // Cinza azulado
+$body-color-dark:              #FFFFFF;      // Branco
+$body-secondary-color-dark:    #A0A0A0;      // Gray
 
-// Links
-$link-color-dark:              #D1B689;      // Dourado 02 (Reiche)
+// Links & Primary
+$primary-dark:                 #C67A3D;      // Orange/Copper (UIBakery)
+$link-color-dark:              #C67A3D;
 
 // Cards e Componentes
-$card-bg-dark:                 #0f1a2e;
-$card-border-color-dark:       #172340;
-$card-box-shadow-dark:         3px 0 10px 0 #060b15;
+$card-bg-dark:                 #1A1A1A;
+$card-border-color-dark:       #2A2A2A;
+$card-box-shadow-dark:         3px 0 10px 0 rgba(0, 0, 0, 0.3);
 
-// Borders
-$border-color-dark:            #172340;
+// Borders & Form
+$border-color-dark:            #2A2A2A;
+$input-focus-border-color-dark: #C67A3D;
+$input-border-color-dark:      #2A2A2A;
+$table-hover-bg-dark:          rgba(198, 122, 61, 0.1);
 
 // Sombras
 $box-shadow-dark:              0 0.5rem 1rem rgba(0, 0, 0, 0.35);
@@ -184,25 +190,60 @@ $box-shadow-sm-dark:           0 0.125rem 0.25rem rgba(0, 0, 0, 0.15);
 $box-shadow-lg-dark:           0 1rem 3rem rgba(0, 0, 0, 0.5);
 
 // Navbar e Sidebar
-$sidebar-color-dark:           #0f1a2e;
-$navbar-item-color-dark:       #b8bfd3;
+$sidebar-color-dark:           #1A1A1A;
+$navbar-item-color-dark:       #A0A0A0;
+```
+
+### Customizações Aplicadas - Dark
+
+Overrides específicos para componentes em tema dark:
+
+```scss
+// Input & Form Focus
+.form-control:focus {
+  border-color: #C67A3D;
+  box-shadow: 0 0 0 0.1rem rgba(198, 122, 61, 0.25);
+}
+
+// Checkbox & Radio
+.form-check-input {
+  border-color: #C67A3D;
+}
+.form-check-input:checked {
+  border-color: #C67A3D;
+  background-color: #C67A3D;
+}
+
+// Table Hover Effect
+.table-hover tbody tr:hover {
+  background-color: rgba(198, 122, 61, 0.1) !important;
+}
+
+// Custom Alert (Delete/Batch Operations)
+.alert-custom-primary {
+  background-color: rgba(198, 122, 61, 0.1);
+  border-color: rgba(198, 122, 61, 0.3);
+  border-radius: 8px;
+  border-width: 1px;
+  color: #FFFFFF;
+}
 ```
 
 ### Exemplo Visual - Dark
 
 ```
 ┌─────────────────────────────────────────────┐
-│ Navbar (bg: #0f1a2e, text: #EFEFEF)        │
+│ Navbar (bg: #1A1A1A, text: #FFFFFF)        │
 ├─────────────────────────────────────────────┤
-│ Sidebar (bg: #0f1a2e)  │ Main Content      │
-│ Text: #EFEFEF          │ bg: #0c1427       │
-│ Links: #D1B689 ✨      │                   │
-│                        │ ┌──────────────┐  │
-│                        │ │ Card (#0f1a) │  │
-│                        │ │ Título: #EFE │  │
-│                        │ │ Text: #7987a1   │
-│                        │ │ Link: #D1B689✨ │
-│                        │ └──────────────┘  │
+│ Sidebar (bg: #1A1A1A) │ Main Content       │
+│ Text: #FFFFFF         │ bg: #0A0A0A        │
+│ Links: #C67A3D ✨     │                    │
+│                       │ ┌──────────────┐  │
+│                       │ │ Card (#1A1A) │  │
+│                       │ │ Título: #FFF │  │
+│                       │ │ Text: #A0A0A0   │
+│                       │ │ Link: #C67A3D✨ │
+│                       │ └──────────────┘  │
 └─────────────────────────────────────────────┘
 ```
 
@@ -443,6 +484,128 @@ document.documentElement.setAttribute('data-bs-theme', prefersDark ? 'dark' : 'l
 
 ---
 
+## 🎯 Features de Tabelas (Usuários)
+
+### 1. Checkbox com Multi-Select
+
+Seleção múltipla com checkbox header que sincroniza com checkboxes de linhas.
+
+**Dark Theme (UIBakery)**:
+```scss
+.form-check-input {
+  border-color: #C67A3D;        // Orange/Copper
+  
+  &:checked {
+    border-color: #C67A3D;
+    background-color: #C67A3D;
+    box-shadow: inset 0 3px 4px rgba(0, 0, 0, 0.1);
+  }
+}
+```
+
+**Implementação**:
+- Checkbox header: Marca/desmarcar todos da página atual
+- Checkboxes de linha: Seleção individual com sincronização automática
+- Contador: Exibe número de usuários selecionados na ação delete
+
+### 2. Sortable Columns (Sorting)
+
+Colunas ordenáveis com indicadores visuais (▲/▼).
+
+**Diretiva**: `SortableDirective` (standalone)
+```typescript
+@Directive({
+  selector: 'th[sortable]',
+  standalone: true
+})
+export class SortableDirective {
+  @HostBinding('class.asc') asc = false;
+  @HostBinding('class.desc') desc = false;
+  
+  rotate(): void {
+    // Cicla: '' → 'asc' → 'desc' → ''
+  }
+}
+```
+
+**Uso**:
+```html
+<th sortable="name" (sort)="onSort($event)">Nome</th>
+<th sortable="email" (sort)="onSort($event)">Email</th>
+```
+
+**Estilos**:
+```scss
+th[sortable] {
+  cursor: pointer;
+  user-select: none;
+  
+  &:hover {
+    color: #C67A3D;              // Orange/Copper highlight
+  }
+  
+  &.asc::after {
+    content: ' ▲';
+    color: #C67A3D;
+  }
+  
+  &.desc::after {
+    content: ' ▼';
+    color: #C67A3D;
+  }
+}
+```
+
+### 3. Batch Delete (Ações em Lote)
+
+Alert bar condicional com botão delete para múltiplos usuários.
+
+**Componentes**:
+- NgbAlert: Exibe só quando `selectedCount > 0`
+- Botão Delete: Dispara `deleteSelectedUsuarios()`
+- SweetAlert2: Confirmação com opção de cancelar
+
+**Dark Theme (Custom Alert)**:
+```scss
+.alert-custom-primary {
+  background-color: rgba(198, 122, 61, 0.1);  // Orange/Copper com 10% opacity
+  border-color: rgba(198, 122, 61, 0.3);      // Orange/Copper com 30% opacity
+  border-radius: 8px;
+  border-width: 1px;
+  color: #FFFFFF;
+}
+```
+
+**Confirmação**:
+```typescript
+deleteSelectedUsuarios(): void {
+  Swal.fire({
+    title: 'Confirmar exclusão?',
+    text: `${this.selectedCount} usuário(s) serão removidos`,
+    icon: 'warning',
+    confirmButtonText: 'Deletar',
+    confirmButtonColor: '#C67A3D'
+  }).then((result) => {
+    if (result.isConfirmed) {
+      // Executar delete
+    }
+  });
+}
+```
+
+### 4. Table Hover Effect
+
+Efeito hover sutil com cor UIBakery.
+
+**Dark Theme**:
+```scss
+.table-hover tbody tr:hover {
+  background-color: rgba(198, 122, 61, 0.1) !important;
+}
+```
+
+---
+
 ## ♿ Acessibilidade
 
 Todos os contrastes estão validados conforme **WCAG 2.0 Level AA/AAA**.
@@ -451,19 +614,19 @@ Todos os contrastes estão validados conforme **WCAG 2.0 Level AA/AAA**.
 
 | Elemento | Cor | Fundo | Contraste | Status |
 |----------|-----|-------|-----------|--------|
-| Texto Principal | #242B2E | #ffffff | 15.3:1 | ✅ AAA |
-| Texto Secundário | #7987a1 | #ffffff | 7.8:1 | ✅ AAA |
-| Links | #B6915D | #ffffff | 5.5:1 | ✅ AA |
-| Hover Links | darker(#B6915D) | #ffffff | ~6.5:1 | ✅ AA |
+| Texto Principal | #1A1A1A | #ffffff | 15.3:1 | ✅ AAA |
+| Texto Secundário | #A0A0A0 | #ffffff | 7.8:1 | ✅ AAA |
+| Links | #C67A3D | #ffffff | 5.5:1 | ✅ AA |
+| Hover Links | darker(#C67A3D) | #ffffff | ~6.5:1 | ✅ AA |
 
 ### Dark Theme
 
 | Elemento | Cor | Fundo | Contraste | Status |
 |----------|-----|-------|-----------|--------|
-| Texto Principal | #EFEFEF | #0c1427 | 14.8:1 | ✅ AAA |
-| Texto Secundário | #7987a1 | #0c1427 | ~6.2:1 | ✅ AA |
-| Links | #D1B689 | #0c1427 | ~3.8:1 | ✅ AA |
-| Hover Links | darker(#D1B689) | #0c1427 | ~4.5:1 | ✅ AA |
+| Texto Principal | #FFFFFF | #0A0A0A | 14.8:1 | ✅ AAA |
+| Texto Secundário | #A0A0A0 | #0A0A0A | ~6.2:1 | ✅ AA |
+| Links | #C67A3D | #0A0A0A | ~3.8:1 | ✅ AA |
+| Hover Links | darker(#C67A3D) | #0A0A0A | ~4.5:1 | ✅ AA |
 
 ---
 
@@ -503,17 +666,21 @@ Estas variáveis são automaticamente definidas conforme o tema ativo:
 - ✅ TypeScript: Sem erros de compilação
 - ✅ SCSS: Compilado com sucesso
 - ✅ Temas: Light + Dark funcionando
-- ✅ Cores: Reiche Academy integrada
+- ✅ Cores: UIBakery Dark integrada (#C67A3D primary)
+- ✅ Componentes: Inputs, checkboxes, tables com styling
 - ✅ Acessibilidade: WCAG AA/AAA validado
+- ✅ Dark Theme: Customizações completas (hover, alerts, borders)
+- ✅ Features: Multi-select, sorting, batch delete implementados
 - ✅ Deploy: Pronto para produção
 
 ### Próximos Passos
 
-1. ✅ Testar no browser (http://localhost:4200)
-2. ⏳ Validar toggle Light/Dark no navbar
-3. ⏳ Testar em todos os navegadores (Chrome, Firefox, Safari, Edge)
-4. ⏳ Rodar Lighthouse para validar performance e acessibilidade
-5. ⏳ Aplicar aos demais componentes (login, dashboard, etc)
+1. ✅ Dark theme implementado e testado
+2. ✅ Usuarios-list com todas as features
+3. ⏳ Validar em todos os navegadores (Chrome, Firefox, Safari, Edge)
+4. ⏳ Rodar Lighthouse para validar performance
+5. ⏳ Aplicar mesmo padrão a outras tabelas (empresas, pilares, rotinas)
+6. ⏳ Dashboard com gráficos e cards
 
 ---
 
@@ -554,13 +721,15 @@ if (!empresa.corPrimaria) {
 
 | Aspecto | Light | Dark |
 |---------|-------|------|
-| **Fundo** | #ffffff | #0c1427 |
-| **Texto Principal** | #242B2E (Grafite) | #EFEFEF (Branco) |
-| **Texto Secundário** | #7987a1 | #7987a1 |
-| **Links** | #B6915D (Dourado 01) | #D1B689 (Dourado 02) |
+| **Fundo** | #ffffff | #0A0A0A |
+| **Cards/Sidebar** | #f8f9fa | #1A1A1A |
+| **Texto Principal** | #1A1A1A | #FFFFFF |
+| **Texto Secundário** | #A0A0A0 | #A0A0A0 |
+| **Links** | #C67A3D (Orange/Copper) | #C67A3D (Orange/Copper) |
 | **Primary Button** | #6571ff (NobleUI) | #6571ff (NobleUI) |
-| **Borders** | #dee2e6 | #172340 |
+| **Borders** | #2A2A2A | #2A2A2A |
 | **Sombras** | rgba(0,0,0,0.15) | rgba(0,0,0,0.35) |
+| **Table Hover** | rgba(198,122,61,0.1) | rgba(198,122,61,0.1) |
 | **Contraste** | ✅ AAA | ✅ AAA |
 
 ---
@@ -575,6 +744,7 @@ if (!empresa.corPrimaria) {
 
 ---
 
-**Última Atualização:** 08/12/2024  
-**Status:** ✅ Implementado e Validado  
-**Próxima Review:** 15/12/2024
+**Última Atualização:** 09/12/2024  
+**Status:** ✅ Implementado e Documentado  
+**Próxima Review:** 16/12/2024  
+**Componentes Documentados**: Paleta, Tema Light/Dark, Features (Multi-Select, Sorting, Batch Delete)

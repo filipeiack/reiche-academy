@@ -15,12 +15,16 @@ Aplicação web SPA desenvolvida com **Angular 18+** para o sistema **Reiche Aca
 
 ## 🎨 Design System
 
-- **Paleta Oficial**: 
-  - Dourado 01 (Primário): `#B6915D`
-  - Dourado 02 (Apoio): `#D1B689`
-  - Azul Grafite (Neutro): `#242B2E`
-  - Branco (Claro): `#EFEFEF`
-- **Referência**: `DESIGN_SYSTEM_COLORS.md`
+- **Paleta Oficial (UIBakery Dark Theme)**:
+  - Primary: `#C67A3D` (Orange/Copper)
+  - Secondary: `#4E4E4E` (Gray)
+  - Background: `#0A0A0A` (Deep)
+  - Cards: `#1A1A1A`
+  - Borders: `#2A2A2A`
+  - Text: `#FFFFFF` (Primary), `#A0A0A0` (Secondary)
+- **Tema Light**: Suporte completo com cores light theme
+- **Bootstrap 5**: Dark mode nativo + custom overrides
+- **Referência**: `DESIGN_SYSTEM_FINAL.md`
 
 ## 📋 Pré-requisitos
 
@@ -124,8 +128,208 @@ src/
   - localStorage (isLoggedin)
   - Estrutura pronta para JWT
 
+- ✅ **Tema Dark (UIBakery)**
+  - Paleta UIBakery (#C67A3D, #4E4E4E, #0A0A0A, #1A1A1A, #2A2A2A)
+  - Dark theme completo com Bootstrap 5
+  - Custom styling para inputs, checkboxes, tables
+
+- ✅ **Lista de Usuários (Usuarios-List)**
+  - Multi-select com checkbox header
+  - Sortable columns (nome, email)
+  - Batch delete com confirmação SweetAlert2
+  - Selection counter com ng-bootstrap alert
+  - Dark theme styling com UIBakery colors
+
 - ⏳ **Dashboard** (em progresso)
 - ⏳ **Integrações com backend** (JWT, API calls)
+
+## 🎯 Features Detalhadas
+
+### Usuarios-List Component
+
+Componente de listagem de usuários com recursos avançados de seleção e manipulação em lote.
+
+**Localização**: `src/app/views/pages/usuarios/usuarios-list/`
+
+**Features**:
+
+#### 1. Multi-Select Checkboxes
+```html
+<!-- Header checkbox - marca/desmarcar todos -->
+<input type="checkbox" [(ngModel)]="headerCheckboxChecked" (change)="toggleHeaderCheckbox()">
+
+<!-- Row checkboxes - seleção individual -->
+<input type="checkbox" [checked]="isUsuarioSelected(usuario.id)" (change)="toggleUsuarioSelection(usuario.id)">
+```
+
+**Dados**:
+```typescript
+selectedUsuariosIds: Set<string> = new Set();
+
+toggleUsuarioSelection(id: string): void {
+  if (this.selectedUsuariosIds.has(id)) {
+    this.selectedUsuariosIds.delete(id);
+  } else {
+    this.selectedUsuariosIds.add(id);
+  }
+}
+
+toggleHeaderCheckbox(): void {
+  if (this.headerCheckboxChecked) {
+    this.filteredUsuarios.forEach(u => this.selectedUsuariosIds.add(u.id));
+  } else {
+    this.selectedUsuariosIds.clear();
+  }
+}
+
+get selectedCount(): number {
+  return this.selectedUsuariosIds.size;
+}
+```
+
+#### 2. Sortable Columns
+```html
+<th sortable="name" (sort)="onSort($event)">Nome</th>
+<th sortable="email" (sort)="onSort($event)">Email</th>
+```
+
+**Diretiva** (`sortable.directive.ts`):
+```typescript
+@Directive({
+  selector: 'th[sortable]',
+  standalone: true
+})
+export class SortableDirective {
+  @HostBinding('class.asc') asc = false;
+  @HostBinding('class.desc') desc = false;
+  
+  @Output() sort = new EventEmitter<SortEvent>();
+  
+  rotate(): void {
+    // Cicla entre: '' → 'asc' → 'desc' → ''
+  }
+}
+```
+
+**Lógica de Sorting**:
+```typescript
+sortColumn: string = '';
+sortDirection: 'asc' | 'desc' = 'asc';
+
+onSort(event: SortEvent): void {
+  this.sortColumn = event.column;
+  this.sortDirection = event.direction || 'asc';
+  this.applySorting();
+}
+
+applySorting(): void {
+  if (!this.sortColumn) return;
+  
+  this.filteredUsuarios.sort((a, b) => {
+    const aVal = a[this.sortColumn];
+    const bVal = b[this.sortColumn];
+    const comparison = aVal.localeCompare(bVal);
+    return this.sortDirection === 'asc' ? comparison : -comparison;
+  });
+}
+```
+
+**Estilos**:
+```scss
+th[sortable] {
+  cursor: pointer;
+  user-select: none;
+  
+  &:hover {
+    color: #C67A3D;
+  }
+  
+  &.asc::after {
+    content: ' ▲';
+    color: #C67A3D;
+  }
+  
+  &.desc::after {
+    content: ' ▼';
+    color: #C67A3D;
+  }
+}
+```
+
+#### 3. Batch Delete with Confirmation
+```html
+<!-- Alert bar condicional -->
+<ngb-alert *ngIf="selectedCount > 0" type="warning">
+  {{ selectedCount }} usuário(s) selecionado(s)
+  <button (click)="deleteSelectedUsuarios()">Deletar</button>
+</ngb-alert>
+```
+
+**Lógica**:
+```typescript
+deleteSelectedUsuarios(): void {
+  Swal.fire({
+    title: 'Confirmar exclusão?',
+    text: `${this.selectedCount} usuário(s) serão removidos`,
+    icon: 'warning',
+    confirmButtonText: 'Deletar',
+    confirmButtonColor: '#C67A3D',
+    showCancelButton: true
+  }).then((result) => {
+    if (result.isConfirmed) {
+      const idsToDelete = Array.from(this.selectedUsuariosIds);
+      this.usersService.deleteMultiple(idsToDelete).subscribe({
+        next: () => {
+          this.selectedUsuariosIds.clear();
+          this.loadUsuarios();
+          Swal.fire('Sucesso!', 'Usuários deletados', 'success');
+        },
+        error: (err) => {
+          Swal.fire('Erro!', err.error.message, 'error');
+        }
+      });
+    }
+  });
+}
+```
+
+#### 4. Selection Counter & Alert
+```html
+<ngb-alert *ngIf="selectedCount > 0" type="info" class="alert-custom-primary">
+  <strong>{{ selectedCount }}</strong> usuário(s) selecionado(s)
+  <button class="btn btn-sm btn-danger" (click)="deleteSelectedUsuarios()">
+    Deletar Selecionados
+  </button>
+</ngb-alert>
+```
+
+**Estilo Custom Alert (Dark Theme)**:
+```scss
+.alert-custom-primary {
+  background-color: rgba(198, 122, 61, 0.1);  // Orange 10%
+  border-color: rgba(198, 122, 61, 0.3);      // Orange 30%
+  color: #FFFFFF;
+  border-radius: 8px;
+}
+```
+
+#### 5. Table Hover Effect
+```scss
+.table-hover tbody tr:hover {
+  background-color: rgba(198, 122, 61, 0.1) !important;  // UIBakery hover
+}
+```
+
+### Design System Integration
+
+**Cores Utilizadas**:
+- Primary: `#C67A3D` (Orange/Copper) - Links, highlights, borders ativos
+- Text: `#FFFFFF` - Texto principal em dark theme
+- Borders: `#2A2A2A` - Separadores, inputs
+- BG: `#0A0A0A` - Fundo principal
+- Cards: `#1A1A1A` - Cards, sidebar
+
+**Referência**: `DESIGN_SYSTEM_FINAL.md`
 
 ## 🔌 Integração com Backend
 
