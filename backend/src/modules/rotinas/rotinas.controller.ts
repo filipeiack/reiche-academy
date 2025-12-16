@@ -16,15 +16,18 @@ import { RotinasService } from './rotinas.service';
 import { CreateRotinaDto } from './dto/create-rotina.dto';
 import { UpdateRotinaDto } from './dto/update-rotina.dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import { RolesGuard } from '../auth/guards/roles.guard';
+import { Roles } from '../auth/decorators/roles.decorator';
 
 @ApiTags('rotinas')
 @ApiBearerAuth()
-@UseGuards(JwtAuthGuard)
+@UseGuards(JwtAuthGuard, RolesGuard)
 @Controller('rotinas')
 export class RotinasController {
   constructor(private readonly rotinasService: RotinasService) {}
 
   @Post()
+  @Roles('ADMINISTRADOR', 'CONSULTOR')
   @ApiOperation({ summary: 'Criar nova rotina' })
   @ApiResponse({ status: 201, description: 'Rotina criada com sucesso' })
   create(@Body() createRotinaDto: CreateRotinaDto, @Request() req: ExpressRequest & { user: { id: string } }) {
@@ -32,6 +35,7 @@ export class RotinasController {
   }
 
   @Get()
+  @Roles('ADMINISTRADOR', 'CONSULTOR', 'GESTOR', 'COLABORADOR', 'LEITURA')
   @ApiOperation({ summary: 'Listar todas as rotinas ativas' })
   @ApiQuery({ name: 'pilarId', required: false, description: 'Filtrar por pilar' })
   @ApiResponse({ status: 200, description: 'Lista de rotinas ordenada' })
@@ -40,6 +44,7 @@ export class RotinasController {
   }
 
   @Get(':id')
+  @Roles('ADMINISTRADOR', 'CONSULTOR', 'GESTOR', 'COLABORADOR', 'LEITURA')
   @ApiOperation({ summary: 'Buscar rotina por ID' })
   @ApiResponse({ status: 200, description: 'Rotina encontrada' })
   @ApiResponse({ status: 404, description: 'Rotina não encontrada' })
@@ -48,6 +53,7 @@ export class RotinasController {
   }
 
   @Patch(':id')
+  @Roles('ADMINISTRADOR', 'CONSULTOR')
   @ApiOperation({ summary: 'Atualizar rotina' })
   @ApiResponse({ status: 200, description: 'Rotina atualizada' })
   update(
@@ -59,6 +65,7 @@ export class RotinasController {
   }
 
   @Delete(':id')
+  @Roles('ADMINISTRADOR', 'CONSULTOR')
   @ApiOperation({ summary: 'Desativar rotina' })
   @ApiResponse({ status: 200, description: 'Rotina desativada' })
   remove(@Param('id') id: string, @Request() req: ExpressRequest & { user: { id: string } }) {
@@ -66,6 +73,7 @@ export class RotinasController {
   }
 
   @Post('pilar/:pilarId/reordenar')
+  @Roles('ADMINISTRADOR', 'CONSULTOR')
   @ApiOperation({ summary: 'Reordenar rotinas de um pilar' })
   reordenar(
     @Param('pilarId') pilarId: string,

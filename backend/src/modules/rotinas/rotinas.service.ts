@@ -2,10 +2,11 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../../common/prisma/prisma.service';
 import { CreateRotinaDto } from './dto/create-rotina.dto';
 import { UpdateRotinaDto } from './dto/update-rotina.dto';
+import { AuditService } from '../audit/audit.service';
 
 @Injectable()
 export class RotinasService {
-  constructor(private prisma: PrismaService) {}
+  constructor(private prisma: PrismaService, private audit: AuditService) {}
 
   async create(createRotinaDto: CreateRotinaDto, userId: string) {
     // Verifica se o pilar existe
@@ -17,7 +18,7 @@ export class RotinasService {
       throw new NotFoundException('Pilar não encontrado');
     }
 
-    return this.prisma.rotina.create({
+    const created = await this.prisma.rotina.create({
       data: {
         ...createRotinaDto,
         createdBy: userId,
@@ -26,6 +27,19 @@ export class RotinasService {
         pilar: true,
       },
     });
+
+    const user = await this.prisma.usuario.findUnique({ where: { id: userId } });
+    await this.audit.log({
+      usuarioId: userId,
+      usuarioNome: user?.nome ?? '',
+      usuarioEmail: user?.email ?? '',
+      entidade: 'rotinas',
+      entidadeId: created.id,
+      acao: 'CREATE',
+      dadosDepois: created,
+    });
+
+    return created;
   }
 
   async findAll(pilarId?: string) {
@@ -63,7 +77,7 @@ export class RotinasService {
   }
 
   async update(id: string, updateRotinaDto: UpdateRotinaDto, userId: string) {
-    await this.findOne(id);
+    const before = await this.findOne(id);
 
     if (updateRotinaDto.pilarId) {
       const pilar = await this.prisma.pilar.findUnique({
@@ -75,7 +89,7 @@ export class RotinasService {
       }
     }
 
-    return this.prisma.rotina.update({
+    const after = await this.prisma.rotina.update({
       where: { id },
       data: {
         ...updateRotinaDto,
@@ -85,18 +99,46 @@ export class RotinasService {
         pilar: true,
       },
     });
+
+    const user = await this.prisma.usuario.findUnique({ where: { id: userId } });
+    await this.audit.log({
+      usuarioId: userId,
+      usuarioNome: user?.nome ?? '',
+      usuarioEmail: user?.email ?? '',
+      entidade: 'rotinas',
+      entidadeId: id,
+      acao: 'UPDATE',
+      dadosAntes: before,
+      dadosDepois: after,
+    });
+
+    return after;
   }
 
   async remove(id: string, userId: string) {
-    await this.findOne(id);
+    const before = await this.findOne(id);
 
-    return this.prisma.rotina.update({
+    const after = await this.prisma.rotina.update({
       where: { id },
       data: {
         ativo: false,
         updatedBy: userId,
       },
     });
+
+    const user = await this.prisma.usuario.findUnique({ where: { id: userId } });
+    await this.audit.log({
+      usuarioId: userId,
+      usuarioNome: user?.nome ?? '',
+      usuarioEmail: user?.email ?? '',
+      entidade: 'rotinas',
+      entidadeId: id,
+      acao: 'DELETE',
+      dadosAntes: before,
+      dadosDepois: after,
+    });
+
+    return after;
   }
 
   async reordenarPorPilar(

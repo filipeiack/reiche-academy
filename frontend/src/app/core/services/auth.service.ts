@@ -23,19 +23,28 @@ export class AuthService {
     this.initializeTokenRefresh();
   }
 
-  login(credentials: LoginRequest): Observable<LoginResponse> {
+  login(credentials: LoginRequest, remember = false): Observable<LoginResponse> {
     return this.http.post<LoginResponse>(`${this.API_URL}/login`, credentials).pipe(
       tap(response => {
-        this.setSession(response);
+        const storage = remember ? localStorage : sessionStorage;
+        this.setSession(response, storage);
         this.initializeTokenRefresh();
       })
     );
   }
 
   logout(): void {
-    localStorage.removeItem(this.TOKEN_KEY);
-    localStorage.removeItem(this.REFRESH_TOKEN_KEY);
-    localStorage.removeItem(this.USER_KEY);
+    // Clear from both storages to be safe
+    try {
+      localStorage.removeItem(this.TOKEN_KEY);
+      localStorage.removeItem(this.REFRESH_TOKEN_KEY);
+      localStorage.removeItem(this.USER_KEY);
+    } catch {}
+    try {
+      sessionStorage.removeItem(this.TOKEN_KEY);
+      sessionStorage.removeItem(this.REFRESH_TOKEN_KEY);
+      sessionStorage.removeItem(this.USER_KEY);
+    } catch {}
     this.currentUserSubject.next(null);
     this.clearTokenRefreshInterval();
   }
@@ -54,11 +63,11 @@ export class AuthService {
   }
 
   getToken(): string | null {
-    return localStorage.getItem(this.TOKEN_KEY);
+    return localStorage.getItem(this.TOKEN_KEY) || sessionStorage.getItem(this.TOKEN_KEY);
   }
 
   getRefreshToken(): string | null {
-    return localStorage.getItem(this.REFRESH_TOKEN_KEY);
+    return localStorage.getItem(this.REFRESH_TOKEN_KEY) || sessionStorage.getItem(this.REFRESH_TOKEN_KEY);
   }
 
   getCurrentUser(): Usuario | null {
@@ -70,19 +79,20 @@ export class AuthService {
    * Útil quando dados do perfil são alterados (ex: avatar, nome, etc)
    */
   updateCurrentUser(user: Usuario): void {
-    localStorage.setItem(this.USER_KEY, JSON.stringify(user));
+    const storage = this.getActiveStorage();
+    storage.setItem(this.USER_KEY, JSON.stringify(user));
     this.currentUserSubject.next(user);
   }
 
-  private setSession(authResult: LoginResponse): void {
-    localStorage.setItem(this.TOKEN_KEY, authResult.accessToken);
-    localStorage.setItem(this.REFRESH_TOKEN_KEY, authResult.refreshToken);
-    localStorage.setItem(this.USER_KEY, JSON.stringify(authResult.usuario));
+  private setSession(authResult: LoginResponse, storage: Storage = this.getActiveStorage()): void {
+    storage.setItem(this.TOKEN_KEY, authResult.accessToken);
+    storage.setItem(this.REFRESH_TOKEN_KEY, authResult.refreshToken);
+    storage.setItem(this.USER_KEY, JSON.stringify(authResult.usuario));
     this.currentUserSubject.next(authResult.usuario as unknown as Usuario);
   }
 
   private loadStoredUser(): void {
-    const userJson = localStorage.getItem(this.USER_KEY);
+    const userJson = localStorage.getItem(this.USER_KEY) || sessionStorage.getItem(this.USER_KEY);
     if (userJson) {
       try {
         const user = JSON.parse(userJson);
@@ -126,6 +136,16 @@ export class AuthService {
       clearInterval(this.tokenRefreshInterval);
       this.tokenRefreshInterval = null;
     }
+  }
+
+  private getActiveStorage(): Storage {
+    // Prefer storage where the token is currently stored
+    const hasLocal = !!localStorage.getItem(this.TOKEN_KEY) || !!localStorage.getItem(this.USER_KEY);
+    const hasSession = !!sessionStorage.getItem(this.TOKEN_KEY) || !!sessionStorage.getItem(this.USER_KEY);
+    if (hasLocal) return localStorage;
+    if (hasSession) return sessionStorage;
+    // Default to localStorage
+    return localStorage;
   }
 }
 

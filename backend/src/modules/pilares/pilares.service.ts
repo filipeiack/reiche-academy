@@ -2,10 +2,11 @@ import { Injectable, NotFoundException, ConflictException } from '@nestjs/common
 import { PrismaService } from '../../common/prisma/prisma.service';
 import { CreatePilarDto } from './dto/create-pilar.dto';
 import { UpdatePilarDto } from './dto/update-pilar.dto';
+import { AuditService } from '../audit/audit.service';
 
 @Injectable()
 export class PilaresService {
-  constructor(private prisma: PrismaService) {}
+  constructor(private prisma: PrismaService, private audit: AuditService) {}
 
   async create(createPilarDto: CreatePilarDto, userId: string) {
     const existingPilar = await this.prisma.pilar.findUnique({
@@ -16,12 +17,25 @@ export class PilaresService {
       throw new ConflictException('Já existe um pilar com este nome');
     }
 
-    return this.prisma.pilar.create({
+    const created = await this.prisma.pilar.create({
       data: {
         ...createPilarDto,
         createdBy: userId,
       },
     });
+
+    const user = await this.prisma.usuario.findUnique({ where: { id: userId } });
+    await this.audit.log({
+      usuarioId: userId,
+      usuarioNome: user?.nome ?? '',
+      usuarioEmail: user?.email ?? '',
+      entidade: 'pilares',
+      entidadeId: created.id,
+      acao: 'CREATE',
+      dadosDepois: created,
+    });
+
+    return created;
   }
 
   async findAll() {
@@ -69,7 +83,7 @@ export class PilaresService {
   }
 
   async update(id: string, updatePilarDto: UpdatePilarDto, userId: string) {
-    await this.findOne(id);
+    const before = await this.findOne(id);
 
     if (updatePilarDto.nome) {
       const existingPilar = await this.prisma.pilar.findFirst({
@@ -84,17 +98,31 @@ export class PilaresService {
       }
     }
 
-    return this.prisma.pilar.update({
+    const after = await this.prisma.pilar.update({
       where: { id },
       data: {
         ...updatePilarDto,
         updatedBy: userId,
       },
     });
+
+    const user = await this.prisma.usuario.findUnique({ where: { id: userId } });
+    await this.audit.log({
+      usuarioId: userId,
+      usuarioNome: user?.nome ?? '',
+      usuarioEmail: user?.email ?? '',
+      entidade: 'pilares',
+      entidadeId: id,
+      acao: 'UPDATE',
+      dadosAntes: before,
+      dadosDepois: after,
+    });
+
+    return after;
   }
 
   async remove(id: string, userId: string) {
-    await this.findOne(id);
+    const before = await this.findOne(id);
 
     // Verifica se há rotinas ativas vinculadas
     const rotiasCount = await this.prisma.rotina.count({
@@ -110,13 +138,27 @@ export class PilaresService {
       );
     }
 
-    return this.prisma.pilar.update({
+    const after = await this.prisma.pilar.update({
       where: { id },
       data: {
         ativo: false,
         updatedBy: userId,
       },
     });
+
+    const user = await this.prisma.usuario.findUnique({ where: { id: userId } });
+    await this.audit.log({
+      usuarioId: userId,
+      usuarioNome: user?.nome ?? '',
+      usuarioEmail: user?.email ?? '',
+      entidade: 'pilares',
+      entidadeId: id,
+      acao: 'DELETE',
+      dadosAntes: before,
+      dadosDepois: after,
+    });
+
+    return after;
   }
 
   async reordenar(ordensIds: { id: string; ordem: number }[], userId: string) {

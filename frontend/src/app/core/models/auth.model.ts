@@ -3,6 +3,13 @@ export interface LoginRequest {
   senha: string;
 }
 
+export interface PerfilUsuarioBasic {
+  id: string;
+  codigo: string;
+  nome: string;
+  nivel: number;
+}
+
 export interface LoginResponse {
   accessToken: string;
   refreshToken: string;
@@ -11,7 +18,7 @@ export interface LoginResponse {
     email: string;
     nome: string;
     cargo?: string;
-    perfil: string;
+    perfil: PerfilUsuarioBasic | string;
     empresaId: string;
     fotoUrl?: string | null;
   };
@@ -22,7 +29,7 @@ export interface Usuario {
   email: string;
   nome: string;
   cargo?: string;
-  perfil: 'CONSULTOR' | 'GESTOR' | 'COLABORADOR' | 'LEITURA';
+  perfil: PerfilUsuarioBasic | string;
   ativo: boolean;
   empresaId?: string;
   fotoUrl?: string | null;

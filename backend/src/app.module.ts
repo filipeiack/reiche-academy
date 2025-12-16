@@ -9,6 +9,7 @@ import { PilaresModule } from './modules/pilares/pilares.module';
 import { RotinasModule } from './modules/rotinas/rotinas.module';
 import { DiagnosticosModule } from './modules/diagnosticos/diagnosticos.module';
 import { AuditModule } from './modules/audit/audit.module';
+import { PerfisModule } from './modules/perfis/perfis.module';
 
 @Module({
   imports: [
@@ -30,6 +31,7 @@ import { AuditModule } from './modules/audit/audit.module';
     RotinasModule,
     DiagnosticosModule,
     AuditModule,
+    PerfisModule,
   ],
 })
 export class AppModule {}

@@ -3,12 +3,19 @@ import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { environment } from '../../../environments/environment';
 
+export interface PerfilUsuarioBasic {
+  id: string;
+  codigo: string;
+  nome: string;
+  nivel: number;
+}
+
 export interface Usuario {
   id: string;
   email: string;
   nome: string;
   cargo: string;
-  perfil: 'CONSULTOR' | 'GESTOR' | 'COLABORADOR' | 'LEITURA';
+  perfil: PerfilUsuarioBasic | string;
   ativo: boolean;
   empresaId?: string;
   fotoUrl?: string | null;
@@ -21,7 +28,7 @@ export interface CreateUsuarioRequest {
   nome: string;
   senha: string;
   cargo: string;
-  perfil: 'CONSULTOR' | 'GESTOR' | 'COLABORADOR' | 'LEITURA';
+  perfilId: string;
   empresaId?: string;
 }
 
@@ -29,7 +36,7 @@ export interface UpdateUsuarioRequest {
   email?: string;
   nome?: string;
   cargo?: string;
-  perfil?: 'CONSULTOR' | 'GESTOR' | 'COLABORADOR' | 'LEITURA';
+  perfilId?: string;
   ativo?: boolean;
 }
 

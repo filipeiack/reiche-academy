@@ -15,6 +15,8 @@ import { EmpresasService } from './empresas.service';
 import { CreateEmpresaDto } from './dto/create-empresa.dto';
 import { UpdateEmpresaDto } from './dto/update-empresa.dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import { RolesGuard } from '../auth/guards/roles.guard';
+import { Roles } from '../auth/decorators/roles.decorator';
 
 @ApiTags('empresas')
 @Controller('empresas')
@@ -31,7 +33,8 @@ export class EmpresasController {
   }
 
   @ApiBearerAuth()
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('ADMINISTRADOR', 'CONSULTOR', 'GESTOR')
   @Post()
   @ApiOperation({ summary: 'Criar nova empresa' })
   @ApiResponse({ status: 201, description: 'Empresa criada com sucesso' })
@@ -40,16 +43,23 @@ export class EmpresasController {
   }
 
   @ApiBearerAuth()
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('ADMINISTRADOR', 'CONSULTOR', 'GESTOR')
   @Get()
-  @ApiOperation({ summary: 'Listar todas as empresas ativas' })
+  @ApiOperation({ summary: 'Listar empresas' })
   @ApiResponse({ status: 200, description: 'Lista de empresas' })
-  findAll() {
-    return this.empresasService.findAll();
+  findAll(@Request() req: ExpressRequest & { user: { empresaId: string; perfil: string } }) {
+    // ADMINISTRADOR vê todas as empresas
+    if (req.user.perfil === 'ADMINISTRADOR') {
+      return this.empresasService.findAll();
+    }
+    // Outros perfis veem apenas sua empresa
+    return this.empresasService.findAllByEmpresa(req.user.empresaId);
   }
 
   @ApiBearerAuth()
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('ADMINISTRADOR', 'CONSULTOR', 'GESTOR', 'COLABORADOR', 'LEITURA')
   @Get(':id')
   @ApiOperation({ summary: 'Buscar empresa por ID' })
   @ApiResponse({ status: 200, description: 'Empresa encontrada' })
@@ -59,7 +69,8 @@ export class EmpresasController {
   }
 
   @ApiBearerAuth()
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('ADMINISTRADOR', 'CONSULTOR', 'GESTOR')
   @Patch(':id')
   @ApiOperation({ summary: 'Atualizar empresa' })
   @ApiResponse({ status: 200, description: 'Empresa atualizada' })
@@ -72,7 +83,8 @@ export class EmpresasController {
   }
 
   @ApiBearerAuth()
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('ADMINISTRADOR', 'CONSULTOR')
   @Delete(':id')
   @ApiOperation({ summary: 'Desativar empresa' })
     @ApiResponse({ status: 200, description: 'Empresa desativada' })
@@ -81,6 +93,9 @@ export class EmpresasController {
     }
   
     @Post(':id/pilares')
+    @ApiBearerAuth()
+    @UseGuards(JwtAuthGuard, RolesGuard)
+    @Roles('ADMINISTRADOR', 'CONSULTOR', 'GESTOR')
     @ApiOperation({ summary: 'Vincular pilares à empresa' })
     vincularPilares(
       @Param('id') id: string,

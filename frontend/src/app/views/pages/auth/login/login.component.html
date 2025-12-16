@@ -1,7 +1,7 @@
 <div class="container">
   <div class="row w-100 mx-0 auth-page">
     <div class="col-md-8 col-xl-6 mx-auto">
-      <div class="card">
+      <div class="card auth-card">
         <div class="row">
           <div class="col-md-4 pe-md-0">
             <div class="auth-side-wrapper" [ngStyle]="{ 'background-image': 'url(assets/images/logo_reiche_250x650.png)' }">
@@ -10,7 +10,7 @@
           </div>
           <div class="col-md-8 ps-md-0">
             <div class="auth-form-wrapper px-4 py-5">
-              <a routerLink="." class="nobleui-logo d-block mb-2">{{ 'APP.BRAND' | translate }}<span>{{ 'APP.BRAND_SUFFIX' | translate }}</span></a>
+              <a routerLink="." class="nobleui-logo d-block mb-2">REICHE<span>ACADEMY</span></a>
               <h5 class="text-secondary fw-normal mb-4">{{ 'AUTH.LOGIN.TITLE' | translate }}</h5>
               <div *ngIf="errorMessage" class="text-danger small mb-3">{{ errorMessage }}</div>
               <form class="forms-sample" [formGroup]="form" (submit)="onLoggedin($event)">

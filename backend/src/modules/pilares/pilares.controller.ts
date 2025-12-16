@@ -15,15 +15,18 @@ import { PilaresService } from './pilares.service';
 import { CreatePilarDto } from './dto/create-pilar.dto';
 import { UpdatePilarDto } from './dto/update-pilar.dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import { RolesGuard } from '../auth/guards/roles.guard';
+import { Roles } from '../auth/decorators/roles.decorator';
 
 @ApiTags('pilares')
 @ApiBearerAuth()
-@UseGuards(JwtAuthGuard)
+@UseGuards(JwtAuthGuard, RolesGuard)
 @Controller('pilares')
 export class PilaresController {
   constructor(private readonly pilaresService: PilaresService) {}
 
   @Post()
+  @Roles('ADMINISTRADOR', 'CONSULTOR')
   @ApiOperation({ summary: 'Criar novo pilar' })
   @ApiResponse({ status: 201, description: 'Pilar criado com sucesso' })
   create(@Body() createPilarDto: CreatePilarDto, @Request() req: ExpressRequest & { user: { id: string } }) {
@@ -31,6 +34,7 @@ export class PilaresController {
   }
 
   @Get()
+  @Roles('ADMINISTRADOR', 'CONSULTOR', 'GESTOR', 'COLABORADOR', 'LEITURA')
   @ApiOperation({ summary: 'Listar todos os pilares ativos' })
   @ApiResponse({ status: 200, description: 'Lista de pilares ordenada' })
   findAll() {
@@ -38,6 +42,7 @@ export class PilaresController {
   }
 
   @Get(':id')
+  @Roles('ADMINISTRADOR', 'CONSULTOR', 'GESTOR', 'COLABORADOR', 'LEITURA')
   @ApiOperation({ summary: 'Buscar pilar por ID com suas rotinas' })
   @ApiResponse({ status: 200, description: 'Pilar encontrado' })
   @ApiResponse({ status: 404, description: 'Pilar não encontrado' })
@@ -46,6 +51,7 @@ export class PilaresController {
   }
 
   @Patch(':id')
+  @Roles('ADMINISTRADOR', 'CONSULTOR')
   @ApiOperation({ summary: 'Atualizar pilar' })
   @ApiResponse({ status: 200, description: 'Pilar atualizado' })
   update(
@@ -57,6 +63,7 @@ export class PilaresController {
   }
 
   @Delete(':id')
+  @Roles('ADMINISTRADOR', 'CONSULTOR')
   @ApiOperation({ summary: 'Desativar pilar' })
   @ApiResponse({ status: 200, description: 'Pilar desativado' })
   @ApiResponse({ status: 404, description: 'Pilar não encontrado' })
@@ -65,6 +72,7 @@ export class PilaresController {
   }
 
   @Post('reordenar')
+  @Roles('ADMINISTRADOR', 'CONSULTOR')
   @ApiOperation({ summary: 'Reordenar pilares' })
   reordenar(
     @Body('ordens') ordens: { id: string; ordem: number }[],

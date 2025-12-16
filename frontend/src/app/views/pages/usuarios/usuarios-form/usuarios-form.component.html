@@ -71,17 +71,18 @@
 
                         <!-- Perfil -->
                         <div class="mb-3">
-                            <label class="form-label" for="perfil">{{ "USERS.ROLE" | translate }}
+                            <label class="form-label" for="perfilId">{{ "USERS.ROLE" | translate }}
                                 <span class="text-danger">*</span></label>
-                            <select class="form-select" [class.is-invalid]="isFieldInvalid('perfil')" id="perfil"
-                                formControlName="perfil">
-                                @for (perfil of perfis; track perfil.value) {
-                                <option [value]="perfil.value">{{ perfil.label }}</option>
+                            <select class="form-select" [class.is-invalid]="isFieldInvalid('perfilId')" id="perfilId"
+                                formControlName="perfilId">
+                                <option value="">Selecione um perfil</option>
+                                @for (perfil of perfis; track perfil.id) {
+                                <option [value]="perfil.id">{{ perfil.nome }}</option>
                                 }
                             </select>
-                            @if (isFieldInvalid('perfil')) {
+                            @if (isFieldInvalid('perfilId')) {
                             <div class="invalid-feedback d-block">
-                                {{ getFieldError("perfil") }}
+                                {{ getFieldError("perfilId") }}
                             </div>
                             }
                         </div>
@@ -225,12 +226,11 @@
 
                     <h5 class="text-sm font-semibold mb-2">Perfis disponíveis:</h5>
                     <ul class="text-muted text-sm">
-                        <li><strong>Consultor:</strong> Acesso total ao sistema</li>
-                        <li><strong>Gestor:</strong> Acesso gerencial a empresas</li>
-                        <li>
-                            <strong>Colaborador:</strong> Acesso padrão a funcionalidades
-                        </li>
-                        <li><strong>Leitura:</strong> Acesso somente leitura</li>
+                        <li><strong>Administrador:</strong> Acesso total ao sistema e todas as empresas</li>
+                        <li><strong>Consultor:</strong> Acesso completo às funcionalidades da empresa</li>
+                        <li><strong>Gestor:</strong> Acesso gerencial e operacional</li>
+                        <li><strong>Colaborador:</strong> Acesso padrão às funcionalidades</li>
+                        <li><strong>Leitura:</strong> Acesso somente visualização</li>
                     </ul>
                 </div>
             </div>

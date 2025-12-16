@@ -1,12 +1,7 @@
 {
-  "APP": {
-    "TITLE": "Reiche Academy",
-    "BRAND": "REICHE",
-    "BRAND_SUFFIX": "CONSULT"
-  },
   "AUTH": {
     "LOGIN": {
-      "TITLE": "Bem-vindo! Faça login na sua conta.",
+      "TITLE": "Bem-vindo a Reiche Consultoria! Faça login na sua conta.",
       "EMAIL_LABEL": "Email",
       "EMAIL_PLACEHOLDER": "Email",
       "PASSWORD_LABEL": "Senha",

@@ -57,9 +57,9 @@ export class LoginComponent implements OnInit {
     this.loading = true;
     this.errorMessage = '';
 
-    const { email, senha } = this.form.value;
+    const { email, senha, remember } = this.form.value;
 
-    this.authService.login({ email: email || '', senha: senha || '' }).subscribe({
+    this.authService.login({ email: email || '', senha: senha || '' }, !!remember).subscribe({
       next: () => {
         this.loading = false;
         this.router.navigate([this.returnUrl]);

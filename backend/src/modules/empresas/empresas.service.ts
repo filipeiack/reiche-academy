@@ -2,10 +2,11 @@ import { Injectable, NotFoundException, ConflictException } from '@nestjs/common
 import { PrismaService } from '../../common/prisma/prisma.service';
 import { CreateEmpresaDto } from './dto/create-empresa.dto';
 import { UpdateEmpresaDto } from './dto/update-empresa.dto';
+import { AuditService } from '../audit/audit.service';
 
 @Injectable()
 export class EmpresasService {
-  constructor(private prisma: PrismaService) {}
+  constructor(private prisma: PrismaService, private audit: AuditService) {}
 
   async create(createEmpresaDto: CreateEmpresaDto, userId: string) {
     const existingEmpresa = await this.prisma.empresa.findUnique({
@@ -16,17 +17,34 @@ export class EmpresasService {
       throw new ConflictException('CNPJ já cadastrado');
     }
 
-    return this.prisma.empresa.create({
+    const created = await this.prisma.empresa.create({
       data: {
         ...createEmpresaDto,
         createdBy: userId,
       },
     });
+
+    return created;
   }
 
   async findAll() {
     return this.prisma.empresa.findMany({
       where: { ativo: true },
+      include: {
+        _count: {
+          select: {
+            usuarios: true,
+            pilares: true,
+          },
+        },
+      },
+      orderBy: { nome: 'asc' },
+    });
+  }
+
+  async findAllByEmpresa(empresaId: string) {
+    return this.prisma.empresa.findMany({
+      where: { ativo: true, id: empresaId },
       include: {
         _count: {
           select: {
@@ -95,7 +113,7 @@ export class EmpresasService {
   }
 
   async update(id: string, updateEmpresaDto: UpdateEmpresaDto, userId: string) {
-    await this.findOne(id);
+    const before = await this.findOne(id);
 
     if (updateEmpresaDto.cnpj) {
       const existingEmpresa = await this.prisma.empresa.findFirst({
@@ -110,29 +128,55 @@ export class EmpresasService {
       }
     }
 
-    return this.prisma.empresa.update({
+    const after = await this.prisma.empresa.update({
       where: { id },
       data: {
         ...updateEmpresaDto,
         updatedBy: userId,
       },
     });
+
+    await this.audit.log({
+      usuarioId: userId,
+      usuarioNome: before.usuarios?.find(u => u.id === userId)?.nome ?? '',
+      usuarioEmail: before.usuarios?.find(u => u.id === userId)?.email ?? '',
+      entidade: 'empresas',
+      entidadeId: id,
+      acao: 'UPDATE',
+      dadosAntes: before,
+      dadosDepois: after,
+    });
+
+    return after;
   }
 
   async remove(id: string, userId: string) {
-    await this.findOne(id);
+    const before = await this.findOne(id);
 
-    return this.prisma.empresa.update({
+    const after = await this.prisma.empresa.update({
       where: { id },
       data: {
         ativo: false,
         updatedBy: userId,
       },
     });
+
+    await this.audit.log({
+      usuarioId: userId,
+      usuarioNome: before.usuarios?.find(u => u.id === userId)?.nome ?? '',
+      usuarioEmail: before.usuarios?.find(u => u.id === userId)?.email ?? '',
+      entidade: 'empresas',
+      entidadeId: id,
+      acao: 'DELETE',
+      dadosAntes: before,
+      dadosDepois: after,
+    });
+
+    return after;
   }
 
   async vincularPilares(empresaId: string, pilaresIds: string[], userId: string) {
-    await this.findOne(empresaId);
+    const before = await this.findOne(empresaId);
 
     // Remove vínculos antigos
     await this.prisma.pilarEmpresa.deleteMany({
@@ -150,6 +194,19 @@ export class EmpresasService {
       data: vinculos,
     });
 
-    return this.findOne(empresaId);
+    const after = await this.findOne(empresaId);
+
+    await this.audit.log({
+      usuarioId: userId,
+      usuarioNome: after.usuarios?.find(u => u.id === userId)?.nome ?? '',
+      usuarioEmail: after.usuarios?.find(u => u.id === userId)?.email ?? '',
+      entidade: 'empresas',
+      entidadeId: empresaId,
+      acao: 'UPDATE',
+      dadosAntes: before,
+      dadosDepois: after,
+    });
+
+    return after;
   }
 }

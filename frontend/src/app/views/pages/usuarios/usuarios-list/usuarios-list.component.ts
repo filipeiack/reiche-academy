@@ -156,8 +156,12 @@ export class UsuariosListComponent implements OnInit {
     });
   }
 
-  getPerfilLabel(perfil: string): string {
+  getPerfilLabel(perfil: any): string {
+    if (typeof perfil === 'object' && perfil !== null) {
+      return perfil.nome || perfil.codigo || 'N/A';
+    }
     const labels: { [key: string]: string } = {
+      'ADMINISTRADOR': 'Administrador',
       'CONSULTOR': 'Consultor',
       'GESTOR': 'Gestor',
       'COLABORADOR': 'Colaborador',

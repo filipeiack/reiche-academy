@@ -9,13 +9,6 @@ datasource db {
 
 // ===== ENUMS =====
 
-enum PerfilUsuario {
-  CONSULTOR
-  GESTOR
-  COLABORADOR
-  LEITURA
-}
-
 enum Criticidade {
   ALTO
   MEDIO
@@ -31,15 +24,34 @@ enum StatusAcao {
 
 // ===== MODELS =====
 
+model PerfilUsuario {
+  id          String    @id @default(uuid())
+  codigo      String    @unique  // ADMINISTRADOR, CONSULTOR, GESTOR, COLABORADOR, LEITURA
+  nome        String               // "Administrador", "Consultor", etc
+  descricao   String?
+  nivel       Int                  // 1 (maior poder) a 5 (menor poder)
+  ativo       Boolean   @default(true)
+  
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  
+  // Relations
+  usuarios    Usuario[]
+  
+  @@map("perfis_usuario")
+}
+
 model Usuario {
   id        String   @id @default(uuid())
   email     String   @unique
   nome      String
   senha     String
   cargo     String
-  perfil    PerfilUsuario
   fotoUrl   String?
   ativo     Boolean  @default(true)
+  
+  perfilId  String
+  perfil    PerfilUsuario @relation(fields: [perfilId], references: [id])
   
   empresaId String?
   empresa   Empresa? @relation(fields: [empresaId], references: [id])

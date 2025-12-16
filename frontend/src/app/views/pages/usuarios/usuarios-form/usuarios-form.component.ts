@@ -6,6 +6,7 @@ import Swal from 'sweetalert2';
 import { UsersService, Usuario, CreateUsuarioRequest, UpdateUsuarioRequest } from '../../../../core/services/users.service';
 import { UserProfileService } from '../../../../core/services/user-profile.service';
 import { AuthService } from '../../../../core/services/auth.service';
+import { PerfisService, PerfilUsuario } from '../../../../core/services/perfis.service';
 import { TranslatePipe } from '../../../../core/pipes/translate.pipe';
 import { UserAvatarComponent } from '../../../../shared/components/user-avatar/user-avatar.component';
 
@@ -20,6 +21,7 @@ export class UsuariosFormComponent implements OnInit {
   private usersService = inject(UsersService);
   private userProfileService = inject(UserProfileService);
   private authService = inject(AuthService);
+  private perfisService = inject(PerfisService);
   private fb = inject(FormBuilder);
   private router = inject(Router);
   private route = inject(ActivatedRoute);
@@ -28,7 +30,7 @@ export class UsuariosFormComponent implements OnInit {
     nome: ['', [Validators.required, Validators.minLength(2)]],
     email: ['', [Validators.required, Validators.email]],
     cargo: ['', []],
-    perfil: ['COLABORADOR', Validators.required],
+    perfilId: ['', Validators.required],
     senha: ['', []],
     ativo: [true]
   });
@@ -44,12 +46,7 @@ export class UsuariosFormComponent implements OnInit {
   previewUrl: string | null = null;
   avatarFile: File | null = null;
 
-  perfis = [
-    { value: 'CONSULTOR', label: 'Consultor' },
-    { value: 'GESTOR', label: 'Gestor' },
-    { value: 'COLABORADOR', label: 'Colaborador' },
-    { value: 'LEITURA', label: 'Leitura' }
-  ];
+  perfis: PerfilUsuario[] = [];
 
   get senhaRequired(): boolean {
     return !this.isEditMode;
@@ -60,6 +57,7 @@ export class UsuariosFormComponent implements OnInit {
   }
 
   ngOnInit(): void {
+    this.loadPerfis();
     this.usuarioId = this.route.snapshot.paramMap.get('id');
     this.isEditMode = !!this.usuarioId;
 
@@ -71,6 +69,25 @@ export class UsuariosFormComponent implements OnInit {
       this.form.get('senha')?.setValidators([Validators.required, Validators.minLength(6)]);
       this.form.get('senha')?.updateValueAndValidity();
     }
+  }
+
+  private loadPerfis(): void {
+    this.perfisService.findAll().subscribe({
+      next: (perfis) => {
+        this.perfis = perfis;
+        // Set default to COLABORADOR if not in edit mode
+        if (!this.isEditMode && perfis.length > 0) {
+          const colaborador = perfis.find(p => p.codigo === 'COLABORADOR');
+          if (colaborador) {
+            this.form.patchValue({ perfilId: colaborador.id });
+          }
+        }
+      },
+      error: (error) => {
+        console.error('Erro ao carregar perfis:', error);
+        this.showToast('Erro ao carregar perfis', 'error');
+      }
+    });
   }
 
   private withCacheBuster(url: string | null): string | null {
@@ -101,7 +118,7 @@ export class UsuariosFormComponent implements OnInit {
           nome: usuario.nome,
           email: usuario.email,
           cargo: usuario.cargo,
-          perfil: usuario.perfil,
+          perfilId: typeof usuario.perfil === 'object' ? usuario.perfil.id : usuario.perfil,
           ativo: usuario.ativo
         });
         this.loading = false;
@@ -129,7 +146,7 @@ export class UsuariosFormComponent implements OnInit {
         nome: formValue.nome || '',
         email: formValue.email || '',
         cargo: formValue.cargo || '',
-        perfil: (formValue.perfil || 'COLABORADOR') as any,
+        perfilId: formValue.perfilId || '',
         ativo: formValue.ativo || true
       };
 
@@ -152,7 +169,7 @@ export class UsuariosFormComponent implements OnInit {
         nome: formValue.nome || '',
         email: formValue.email || '',
         cargo: formValue.cargo || '',
-        perfil: (formValue.perfil || 'COLABORADOR') as any,
+        perfilId: formValue.perfilId || '',
         senha: formValue.senha || ''
       };
 

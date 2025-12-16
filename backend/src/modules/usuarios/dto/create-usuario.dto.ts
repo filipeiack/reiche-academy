@@ -1,12 +1,5 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { IsEmail, IsNotEmpty, IsString, Length, IsEnum, IsUUID, IsOptional, MinLength } from 'class-validator';
-
-enum PerfilUsuario {
-  CONSULTOR = 'CONSULTOR',
-  GESTOR = 'GESTOR',
-  COLABORADOR = 'COLABORADOR',
-  LEITURA = 'LEITURA',
-}
+import { IsEmail, IsNotEmpty, IsString, Length, IsUUID, IsOptional, MinLength } from 'class-validator';
 
 export class CreateUsuarioDto {
   @ApiProperty({ example: 'joao.silva@reiche.com.br' })
@@ -32,9 +25,10 @@ export class CreateUsuarioDto {
   @Length(2, 100)
   cargo: string;
 
-  @ApiProperty({ example: 'GESTOR', enum: PerfilUsuario })
-  @IsEnum(PerfilUsuario)
-  perfil: PerfilUsuario;
+  @ApiProperty({ example: 'uuid-do-perfil', description: 'ID do perfil do usuário (ADMINISTRADOR, CONSULTOR, GESTOR, COLABORADOR, LEITURA)' })
+  @IsUUID()
+  @IsNotEmpty()
+  perfilId: string;
 
   @ApiPropertyOptional({ example: 'uuid-da-empresa' })
   @IsUUID()

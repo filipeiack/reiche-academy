@@ -21,45 +21,53 @@ import { UsuariosService } from './usuarios.service';
 import { CreateUsuarioDto } from './dto/create-usuario.dto';
 import { UpdateUsuarioDto } from './dto/update-usuario.dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import { RolesGuard } from '../auth/guards/roles.guard';
+import { Roles } from '../auth/decorators/roles.decorator';
 
 @ApiTags('usuarios')
 @ApiBearerAuth()
-@UseGuards(JwtAuthGuard)
+@UseGuards(JwtAuthGuard, RolesGuard)
 @Controller('usuarios')
 export class UsuariosController {
   constructor(private readonly usuariosService: UsuariosService) {}
 
   @Post()
+  @Roles('ADMINISTRADOR', 'CONSULTOR', 'GESTOR')
   @ApiOperation({ summary: 'Criar novo usuário' })
   create(@Body() createUsuarioDto: CreateUsuarioDto) {
     return this.usuariosService.create(createUsuarioDto);
   }
 
   @Get()
+  @Roles('ADMINISTRADOR', 'CONSULTOR', 'GESTOR')
   @ApiOperation({ summary: 'Listar todos os usuários' })
   findAll() {
     return this.usuariosService.findAll();
   }
 
   @Get(':id')
+  @Roles('ADMINISTRADOR', 'CONSULTOR', 'GESTOR', 'COLABORADOR', 'LEITURA')
   @ApiOperation({ summary: 'Buscar usuário por ID' })
   findOne(@Param('id') id: string) {
     return this.usuariosService.findById(id);
   }
 
   @Patch(':id')
+  @Roles('ADMINISTRADOR', 'CONSULTOR', 'GESTOR')
   @ApiOperation({ summary: 'Atualizar usuário' })
   update(@Param('id') id: string, @Body() updateUsuarioDto: UpdateUsuarioDto) {
     return this.usuariosService.update(id, updateUsuarioDto);
   }
 
   @Delete(':id')
+  @Roles('ADMINISTRADOR', 'CONSULTOR')
   @ApiOperation({ summary: 'Deletar usuário permanentemente' })
   remove(@Param('id') id: string) {
     return this.usuariosService.hardDelete(id);
   }
 
   @Patch(':id/inativar')
+  @Roles('ADMINISTRADOR', 'CONSULTOR', 'GESTOR')
   @ApiOperation({ summary: 'Inativar usuário' })
   inactivate(@Param('id') id: string) {
     return this.usuariosService.remove(id);
