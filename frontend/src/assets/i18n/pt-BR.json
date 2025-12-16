@@ -60,7 +60,11 @@
     "OF": "de",
     "PREV": "Anterior",
     "NEXT": "Próximo",
-    "OPTIONAL": "Opcional"
+    "OPTIONAL": "Opcional",
+    "BASIC_INFO": "Informações Básicas",
+    "TIMESTAMPS": "Datas",
+    "CREATED_AT": "Criado em",
+    "UPDATED_AT": "Atualizado em"
   },
   "BUTTONS": {
     "PRINT": "Imprimir",
@@ -83,11 +87,13 @@
     "EMAIL": "Email",
     "ROLE": "Perfil",
     "POSITION": "Cargo",
+    "CARGO": "Cargo",
     "STATUS": "Status",
     "ACTIVE": "Usuário Ativo",
     "CREATE": "Criar Usuário",
     "EDIT": "Editar Usuário",
-    "ADD": "Adicionar Usuário"
+    "ADD": "Adicionar Usuário",
+    "DETAILS": "Detalhes do Usuário"
   },
   "DASHBOARD": {
     "NEW_CUSTOMERS": "Novos Clientes",

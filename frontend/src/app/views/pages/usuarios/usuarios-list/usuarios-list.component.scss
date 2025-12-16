@@ -21,3 +21,14 @@
 .search-inline {
   min-width: 240px;
 }
+
+/* Offcanvas customizado */
+:host ::ng-deep .offcanvas-large {
+  width: 450px !important;
+  max-width: 90vw;
+}
+
+.avatar-placeholder {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  font-weight: 600;
+}

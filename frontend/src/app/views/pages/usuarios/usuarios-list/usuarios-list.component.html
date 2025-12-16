@@ -32,14 +32,14 @@
           </div>
 
           <div class="col-md-6 text-end">
-            
-          @if (selectedCount > 0) {
-          <ngb-alert id="usuarioBarBtn" class="alert-custom-primary" [dismissible]="false">
-            <button type="button" class="btn btn-xs btn-outline-danger" (click)="deleteSelectedUsuarios()">
-                        {{ "BUTTONS.DELETE_SELECTED" | translate }} ({{ selectedCount }})
-                    </button>
-          </ngb-alert>
-          }
+
+            @if (selectedCount > 0) {
+            <ngb-alert id="usuarioBarBtn" class="alert-custom-primary" [dismissible]="false">
+              <button type="button" class="btn btn-xs btn-outline-danger" (click)="deleteSelectedUsuarios()">
+                {{ "BUTTONS.DELETE_SELECTED" | translate }} ({{ selectedCount }})
+              </button>
+            </ngb-alert>
+            }
           </div>
         </div>
 
@@ -56,7 +56,8 @@
             <table class="table table-hover table-striped mb-2">
               <thead>
                 <tr>
-                  <th><input class="form-check-input" type="checkbox" [(ngModel)]="headerCheckboxChecked" (change)="toggleHeaderCheckbox()"></th>
+                  <th><input class="form-check-input" type="checkbox" [(ngModel)]="headerCheckboxChecked"
+                      (change)="toggleHeaderCheckbox()"></th>
                   <th scope="col" sortable="name" (sort)="onSort($event)">{{ 'USERS.NAME' | translate }}</th>
                   <th scope="col" sortable="email" (sort)="onSort($event)">{{ 'USERS.EMAIL' | translate }}</th>
                   <th>{{ 'USERS.ROLE' | translate }}</th>
@@ -68,8 +69,7 @@
                 @for (usuario of paginatedUsuarios; track usuario.id) {
                 <tr>
                   <td>
-                    <input class="form-check-input" type="checkbox" 
-                      [checked]="isUsuarioSelected(usuario.id)" 
+                    <input class="form-check-input" type="checkbox" [checked]="isUsuarioSelected(usuario.id)"
                       (change)="toggleUsuarioSelection(usuario.id)">
                   </td>
                   <td>{{ usuario.nome }}</td>
@@ -77,19 +77,25 @@
                   <td>{{ getPerfilLabel(usuario.perfil) }}</td>
                   <td class="text-muted">
                     <!-- <span class="badge" [ngClass]="{'bg-success': usuario.ativo, 'bg-danger': !usuario.ativo}"> -->
-                      {{ usuario.ativo ? ('COMMON.ACTIVE' | translate) : ('COMMON.INACTIVE' | translate) }}
+                    {{ usuario.ativo ? ('COMMON.ACTIVE' | translate) : ('COMMON.INACTIVE' | translate) }}
                     <!-- </span> -->
                   </td>
                   <td class="text-nowrap">
                     <div class="btn-group btn-group-sm" role="group">
-                      <a [routerLink]="['/usuarios', usuario.id, 'editar']" class="btn btn-icon text-primary"
-                        title="{{ 'BUTTONS.EDIT' | translate }}">
-                        <i class="feather icon-edit"></i>
-                      </a>
+                      <button class="btn btn-icon text-primary"
+                        (click)="openDetailsOffcanvas(usuario.id, detailsOffcanvas)"
+                        [title]="'Detalhes do usuário' | translate">
+                        <i class="feather icon-info"></i>
+                      </button>
                       <button class="btn btn-icon text-primary"
                         (click)="toggleStatusUsuario(usuario.id, usuario.nome, usuario.ativo)"
                         [title]="usuario.ativo ? 'Inativar usuário' : 'Ativar usuário'">
-                        <i class="feather" [ngClass]="{'icon-eye-off': usuario.ativo, 'icon-eye': !usuario.ativo}"></i>
+                        <i class="feather"
+                          [ngClass]="{'icon-toggle-right': usuario.ativo, 'icon-toggle-left': !usuario.ativo}"></i>
+                      </button>
+                      <button class="btn btn-icon text-secondary" [routerLink]="['/usuarios', usuario.id, 'editar']"
+                        title="{{ 'BUTTONS.EDIT' | translate }}">
+                        <i class="feather icon-edit"></i>
                       </button>
                       <button class="btn btn-icon text-danger" (click)="deleteUsuario(usuario.id, usuario.nome)"
                         title="{{ 'BUTTONS.DELETE' | translate }}">
@@ -111,34 +117,6 @@
             </table>
           </div>
 
-          <!-- Pagination -->
-          <!-- @if (totalPages > 1) {
-              <div class="card-footer d-flex align-items-center px-0">
-                <p class="text-muted me-3 mb-0">
-                  {{ 'COMMON.PAGE' | translate }} {{ currentPage }} {{ 'COMMON.OF' | translate }} {{ totalPages }}
-                </p>
-                <ul class="pagination m-0 ms-auto">
-                  <li class="page-item" [class.disabled]="currentPage === 1">
-                    <a class="page-link" (click)="prevPage()" href="javascript:void(0);">
-                      <i class="feather icon-chevron-left"></i> {{ 'COMMON.PREV' | translate }}
-                    </a>
-                  </li>
-                  @for (page of [].constructor(totalPages); let i = $index; track i) {
-                    <li class="page-item" [class.active]="i + 1 === currentPage">
-                      <a class="page-link" (click)="goToPage(i + 1)" href="javascript:void(0);">
-                        {{ i + 1 }}
-                      </a>
-                    </li>
-                  }
-                  <li class="page-item" [class.disabled]="currentPage === totalPages">
-                    <a class="page-link" (click)="nextPage()" href="javascript:void(0);">
-                      {{ 'COMMON.NEXT' | translate }} <i class="feather icon-chevron-right"></i>
-                    </a>
-                  </li>
-                </ul>
-              </div>
-            } -->
-
           <div class="d-flex justify-content-between p-2">
             <!-- <select class="form-select" style="width: auto" [(ngModel)]="pageSize" (ngModelChange)="paginatedUsuarios">
               <option [ngValue]="2">2 items per page</option>
@@ -148,9 +126,11 @@
 
             <span class="text-muted fs-12">{{ filteredUsuarios.length }} {{ 'COMMON.ITEMS' | translate }}</span>
 
-            <ngb-pagination [collectionSize]="filteredUsuarios.length" [(page)]="currentPage" size="sm"
-              [pageSize]="pageSize" (pageChange)="paginatedUsuarios">
-            </ngb-pagination>
+            @if (totalPages > 1) {
+              <ngb-pagination [collectionSize]="filteredUsuarios.length" [(page)]="currentPage" size="sm"
+                [pageSize]="pageSize" (pageChange)="paginatedUsuarios">
+              </ngb-pagination>
+            }
           </div>
           }
         </div>
@@ -158,3 +138,100 @@
     </div>
   </div>
 </div>
+
+<!-- Offcanvas de Detalhes do Usuário -->
+<ng-template #detailsOffcanvas let-offcanvas>
+  <div class="offcanvas-header">
+    <h5 class="offcanvas-title">{{ 'USERS.DETAILS' | translate }}</h5>
+    <button type="button" class="btn-close text-reset" (click)="offcanvas.dismiss()"></button>
+  </div>
+  <div class="offcanvas-body">
+    @if (loadingDetails) {
+    <div class="text-center py-5">
+      <div class="spinner-border text-primary" role="status">
+        <span class="visually-hidden">{{ 'COMMON.LOADING' | translate }}...</span>
+      </div>
+      <p class="text-muted mt-3">{{ 'COMMON.LOADING' | translate }}...</p>
+    </div>
+    } @else if (selectedUsuario) {
+    <div class="mb-4 text-center">
+      <div class="mb-3 d-flex justify-content-center">
+        <app-user-avatar [nome]="selectedUsuario.nome" [fotoUrl]="selectedUsuario.fotoUrl"
+          size="large"></app-user-avatar>
+      </div>
+      <h4 class="mb-1">{{ selectedUsuario.nome }}</h4>
+      <p class="text-muted">{{ selectedUsuario.cargo }}</p>
+      <span class="badge" [ngClass]="{'bg-success': selectedUsuario.ativo, 'bg-danger': !selectedUsuario.ativo}">
+        {{ selectedUsuario.ativo ? ('COMMON.ACTIVE' | translate) : ('COMMON.INACTIVE' | translate) }}
+      </span>
+    </div>
+
+    <div class="card mb-3">
+      <div class="card-body">
+        <h6 class="card-title mb-3">{{ 'COMMON.BASIC_INFO' | translate }}</h6>
+
+        <div class="mb-3">
+          <label class="text-muted small">{{ 'USERS.EMAIL' | translate }}</label>
+          <p class="mb-0">{{ selectedUsuario.email }}</p>
+        </div>
+
+        <div class="mb-3">
+          <label class="text-muted small">{{ 'USERS.ROLE' | translate }}</label>
+          <p class="mb-0">
+            {{ getPerfilLabel(selectedUsuario.perfil) }}
+          </p>
+        </div>
+
+        <div class="mb-3">
+          <label class="text-muted small">{{ 'USERS.CARGO' | translate }}</label>
+          <p class="mb-0">{{ selectedUsuario.cargo || '-' }}</p>
+        </div>
+
+        <!-- <div class="mb-3">
+          <label class="text-muted small">{{ 'USERS.STATUS' | translate }}</label>
+          <p class="mb-0">
+            <span class="badge" [ngClass]="{'bg-success': selectedUsuario.ativo, 'bg-danger': !selectedUsuario.ativo}">
+              {{ selectedUsuario.ativo ? ('COMMON.ACTIVE' | translate) : ('COMMON.INACTIVE' | translate) }}
+            </span>
+          </p>
+        </div> -->
+      </div>
+    </div>
+
+    <div class="card mb-3">
+      <div class="card-body">
+        <h6 class="card-title mb-3">{{ 'COMMON.TIMESTAMPS' | translate }}</h6>
+
+        <div class="mb-3">
+          <label class="text-muted small">{{ 'COMMON.CREATED_AT' | translate }}</label>
+          <p class="mb-0">{{ selectedUsuario.createdAt | date:'dd/MM/yyyy HH:mm' }}</p>
+        </div>
+
+        <div class="mb-0">
+          <label class="text-muted small">{{ 'COMMON.UPDATED_AT' | translate }}</label>
+          <p class="mb-0">{{ selectedUsuario.updatedAt | date:'dd/MM/yyyy HH:mm' }}</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="d-grid gap-2">
+      <button type="button" class="btn btn-primary" [routerLink]="['/usuarios', selectedUsuario.id, 'editar']"
+        (click)="offcanvas.dismiss()">
+        <i class="feather icon-edit"></i> {{ 'BUTTONS.EDIT' | translate }}
+      </button>
+
+      <!-- <button type="button" class="btn btn-outline-secondary"
+        (click)="toggleStatusUsuario(selectedUsuario.id, selectedUsuario.nome, selectedUsuario.ativo); offcanvas.dismiss()">
+        <i class="feather"
+          [ngClass]="{'icon-toggle-right': selectedUsuario.ativo, 'icon-toggle-left': !selectedUsuario.ativo}"></i>
+        {{ selectedUsuario.ativo ? 'Inativar' : 'Ativar' }}
+      </button> -->
+
+      <!-- <button type="button" class="btn btn-outline-danger" 
+                (click)="deleteUsuario(selectedUsuario.id, selectedUsuario.nome); offcanvas.dismiss()">
+          <i class="feather icon-trash-2"></i> {{ 'BUTTONS.DELETE' | translate }}
+        </button> -->
+    </div>
+    }
+  </div>
+</ng-template>

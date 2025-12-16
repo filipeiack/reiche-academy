@@ -1,13 +1,13 @@
-import { Component, OnInit, ViewChild, inject } from '@angular/core';
+import { Component, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import Swal from 'sweetalert2';
-import { ColumnMode, DatatableComponent, NgxDatatableModule } from '@siemens/ngx-datatable';
 import { UsersService, Usuario } from '../../../../core/services/users.service';
 import { TranslatePipe } from '../../../../core/pipes/translate.pipe';
-import { NgbAlertModule, NgbPaginationModule, NgbTypeaheadModule } from '@ng-bootstrap/ng-bootstrap';
+import { NgbAlertModule, NgbPaginationModule, NgbOffcanvas, NgbOffcanvasModule } from '@ng-bootstrap/ng-bootstrap';
 import { SortableDirective, SortEvent } from '../../../../shared/directives/sortable.directive';
+import { UserAvatarComponent } from '../../../../shared/components/user-avatar/user-avatar.component';
 
 @Component({
   selector: 'app-usuarios-list',
@@ -17,17 +17,18 @@ import { SortableDirective, SortEvent } from '../../../../shared/directives/sort
     FormsModule,
     RouterLink,
     TranslatePipe,
-    NgxDatatableModule,
-    NgbTypeaheadModule, NgbPaginationModule, NgbAlertModule,
-    SortableDirective
-],
+    NgbPaginationModule,
+    NgbAlertModule,
+    NgbOffcanvasModule,
+    SortableDirective,
+    UserAvatarComponent
+  ],
   templateUrl: './usuarios-list.component.html',
   styleUrl: './usuarios-list.component.scss'
 })
 export class UsuariosListComponent implements OnInit {
   private usersService = inject(UsersService);
-
-  @ViewChild('table') table!: DatatableComponent;
+  private offcanvasService = inject(NgbOffcanvas);
 
   usuarios: Usuario[] = [];
   filteredUsuarios: Usuario[] = [];
@@ -35,9 +36,9 @@ export class UsuariosListComponent implements OnInit {
   loading = false;
   error = '';
   
-  // Configurações do Ngx-Datatable
-  ColumnMode = ColumnMode;
-  pageSize = 5;
+  // Offcanvas de detalhes
+  selectedUsuario: Usuario | null = null;
+  loadingDetails = false;
 
   // Seleção de usuários para delete em lote
   selectedUsuariosIds: Set<string> = new Set();
@@ -46,6 +47,10 @@ export class UsuariosListComponent implements OnInit {
   // Ordenação de colunas
   sortColumn: string = '';
   sortDirection: 'asc' | 'desc' = 'asc';
+
+  // Paginação
+  currentPage = 1;
+  pageSize = 10;
 
   ngOnInit(): void {
     this.loadUsuarios();
@@ -105,11 +110,6 @@ export class UsuariosListComponent implements OnInit {
     if (this.sortColumn) {
       this.applySorting();
     }
-    
-    // Resetar para primeira página do datatable
-    if (this.table) {
-      this.table.offset = 0;
-    }
   }
 
   onSort(event: SortEvent): void {
@@ -166,16 +166,6 @@ export class UsuariosListComponent implements OnInit {
     return labels[perfil] || perfil;
   }
 
-  getPerfilBadgeClass(perfil: string): string {
-    const classes: { [key: string]: string } = {
-      'CONSULTOR': 'badge-primary',
-      'GESTOR': 'badge-success',
-      'COLABORADOR': 'badge-info',
-      'LEITURA': 'badge-secondary'
-    };
-    return classes[perfil] || 'badge-secondary';
-  }
-
   toggleStatusUsuario(usuarioId: string, nome: string, ativoAtual: boolean): void {
     if (ativoAtual) {
       this.inactivateUsuario(usuarioId, nome);
@@ -187,7 +177,6 @@ export class UsuariosListComponent implements OnInit {
   inactivateUsuario(usuarioId: string, nome: string): void {
     Swal.fire({
       title: '<strong>Inativar Usuário</strong>',
-      icon: 'warning',
       html: `Tem certeza que deseja inativar <strong>${nome}</strong>?<br>O usuário não poderá mais acessar o sistema.`,
       showCloseButton: true,
       showCancelButton: true,
@@ -206,7 +195,6 @@ export class UsuariosListComponent implements OnInit {
   activateUsuario(usuarioId: string, nome: string): void {
     Swal.fire({
       title: '<strong>Ativar Usuário</strong>',
-      icon: 'info',
       html: `Tem certeza que deseja ativar <strong>${nome}</strong>?<br>O usuário poderá acessar o sistema novamente.`,
       showCloseButton: true,
       showCancelButton: true,
@@ -261,7 +249,6 @@ export class UsuariosListComponent implements OnInit {
   deleteUsuario(usuarioId: string, nome: string): void {
     Swal.fire({
       title: '<strong>Deletar Usuário</strong>',
-      icon: 'error',
       html: `Tem certeza que deseja deletar <strong>${nome}</strong> permanentemente?<br><strong class="text-danger">Esta ação não pode ser desfeita!</strong>`,
       showCloseButton: true,
       showCancelButton: true,
@@ -293,8 +280,6 @@ export class UsuariosListComponent implements OnInit {
     });
   }
 
-  // Paginação
-  currentPage = 1;
   get totalPages(): number {
     return Math.ceil(this.filteredUsuarios.length / this.pageSize);
   }
@@ -303,20 +288,6 @@ export class UsuariosListComponent implements OnInit {
     const start = (this.currentPage - 1) * this.pageSize;
     const end = start + this.pageSize;
     return this.filteredUsuarios.slice(start, end);
-  }
-
-  goToPage(page: number): void {
-    if (page >= 1 && page <= this.totalPages) {
-      this.currentPage = page;
-    }
-  }
-
-  nextPage(): void {
-    this.goToPage(this.currentPage + 1);
-  }
-
-  prevPage(): void {
-    this.goToPage(this.currentPage - 1);
   }
 
   // ========================================
@@ -368,7 +339,6 @@ export class UsuariosListComponent implements OnInit {
     const count = this.selectedUsuariosIds.size;
     Swal.fire({
       title: '<strong>Deletar Usuários</strong>',
-      icon: 'error',
       html: `Tem certeza que deseja deletar <strong>${count} usuário(s)</strong> permanentemente?<br><strong class="text-danger">Esta ação não pode ser desfeita!</strong>`,
       showCloseButton: true,
       showCancelButton: true,
@@ -428,6 +398,33 @@ export class UsuariosListComponent implements OnInit {
     });
   }
 
+  // ========================================
+  // OFFCANVAS DE DETALHES
+  // ========================================
 
-  //Sortable
+  openDetailsOffcanvas(usuarioId: string, content: any): void {
+    this.loadingDetails = true;
+    this.selectedUsuario = null;
+    
+    // Abrir offcanvas
+    this.offcanvasService.open(content, { 
+      position: 'end',
+      backdrop: true,
+      keyboard: true,
+      panelClass: 'offcanvas-large'
+    });
+    
+    // Buscar dados do usuário no backend
+    this.usersService.getById(usuarioId).subscribe({
+      next: (usuario) => {
+        this.selectedUsuario = usuario;
+        this.loadingDetails = false;
+      },
+      error: (err) => {
+        this.showToast(err?.error?.message || 'Erro ao carregar detalhes do usuário', 'error');
+        this.loadingDetails = false;
+        this.offcanvasService.dismiss();
+      }
+    });
+  }
 }

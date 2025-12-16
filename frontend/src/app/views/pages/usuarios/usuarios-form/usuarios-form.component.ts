@@ -37,14 +37,12 @@ export class UsuariosFormComponent implements OnInit {
   usuarioId: string | null = null;
   loading = false;
   uploadingAvatar = false;
-  showPassword = false; // Toggle para mostrar/ocultar senha
+  showPassword = false;
   
   currentUsuario: Usuario | null = null;
   fotoUrl: string | null = null;
   previewUrl: string | null = null;
-  avatarFile: File | null = null; // Armazenar avatar em memória para upload posterior
-  error = '';
-  success = '';
+  avatarFile: File | null = null;
 
   perfis = [
     { value: 'CONSULTOR', label: 'Consultor' },
@@ -67,11 +65,9 @@ export class UsuariosFormComponent implements OnInit {
 
     if (this.isEditMode && this.usuarioId) {
       this.loadUsuario(this.usuarioId);
-      // No modo edição, senha é opcional (minLength apenas se preenchida)
       this.form.get('senha')?.setValidators([Validators.minLength(6)]);
       this.form.get('senha')?.updateValueAndValidity();
     } else {
-      // No modo criação, senha é obrigatória
       this.form.get('senha')?.setValidators([Validators.required, Validators.minLength(6)]);
       this.form.get('senha')?.updateValueAndValidity();
     }
@@ -99,11 +95,8 @@ export class UsuariosFormComponent implements OnInit {
     this.loading = true;
     this.usersService.getById(id).subscribe({
       next: (usuario) => {
-        console.log('Usuario carregado:', usuario);
-        console.log('FotoUrl do usuario:', usuario.fotoUrl);
         this.currentUsuario = usuario;
         this.fotoUrl = this.withCacheBuster(usuario.fotoUrl || null);
-        console.log('FotoUrl setado no componente:', this.fotoUrl);
         this.form.patchValue({
           nome: usuario.nome,
           email: usuario.email,
@@ -114,7 +107,7 @@ export class UsuariosFormComponent implements OnInit {
         this.loading = false;
       },
       error: (err) => {
-        this.error = err?.error?.message || 'Erro ao carregar usuário';
+        this.showToast(err?.error?.message || 'Erro ao carregar usuário', 'error');
         this.loading = false;
       }
     });
@@ -127,8 +120,6 @@ export class UsuariosFormComponent implements OnInit {
     }
 
     this.loading = true;
-    this.error = '';
-    this.success = '';
 
     const formValue = this.form.value;
 
@@ -170,11 +161,9 @@ export class UsuariosFormComponent implements OnInit {
           this.showToast('Usuário criado com sucesso!', 'success');
           this.loading = false;
           
-          // Se houver avatar armazenado em memória, fazer upload
           if (this.avatarFile && novoUsuario.id) {
             this.uploadAvatar(this.avatarFile, novoUsuario.id);
           } else {
-            // Caso contrário, redirecionar imediatamente
             setTimeout(() => {
               this.router.navigate(['/usuarios']);
             }, 2000);
@@ -219,21 +208,17 @@ export class UsuariosFormComponent implements OnInit {
 
     if (!file) return;
 
-    // Validar tipo de arquivo
     const validTypes = ['image/jpeg', 'image/png', 'image/webp'];
     if (!validTypes.includes(file.type)) {
-      this.error = 'Por favor, selecione uma imagem em formato JPG, PNG ou WebP';
+      this.showToast('Por favor, selecione uma imagem em formato JPG, PNG ou WebP', 'error');
       return;
     }
 
-    // Validar tamanho (máx 5MB)
     const maxSize = 5 * 1024 * 1024;
     if (file.size > maxSize) {
-      this.error = 'A imagem não pode exceder 5MB';
+      this.showToast('A imagem não pode exceder 5MB', 'error');
       return;
     }
-
-    this.error = ''; // Limpar erro anterior
 
     // Criar preview
     const reader = new FileReader();
@@ -246,12 +231,10 @@ export class UsuariosFormComponent implements OnInit {
     if (this.isEditMode && this.usuarioId) {
       this.uploadAvatar(file);
     } else {
-      // Modo criação: armazenar arquivo em memória para upload após criar usuário
       this.avatarFile = file;
       this.showToast('Avatar será enviado quando você criar o usuário', 'info');
     }
 
-    // Limpar o input
     input.value = '';
   }
 
@@ -260,33 +243,25 @@ export class UsuariosFormComponent implements OnInit {
     if (!idToUse) return;
 
     this.uploadingAvatar = true;
-    this.error = '';
-
-    console.log('Iniciando upload de avatar para usuário:', idToUse);
     
     this.userProfileService.uploadProfilePhoto(idToUse, file).subscribe({
       next: (response) => {
-        console.log('Resposta do upload:', response);
         const refreshedUrl = this.withCacheBuster(response.fotoUrl);
         this.fotoUrl = refreshedUrl;
         this.previewUrl = null;
-        this.avatarFile = null; // Limpar arquivo armazenado
-        console.log('FotoUrl atualizado para:', this.fotoUrl);
+        this.avatarFile = null;
         
-        // Se for o usuário logado, atualizar AuthService
         const currentUser = this.authService.getCurrentUser();
         if (currentUser && currentUser.id === idToUse) {
           this.authService.updateCurrentUser({
             ...currentUser,
             fotoUrl: refreshedUrl
           });
-          console.log('Avatar do usuário logado atualizado na navbar');
         }
         
         this.showToast('Avatar atualizado com sucesso!', 'success');
         this.uploadingAvatar = false;
         
-        // Se foi upload após criação do usuário, redirecionar
         if (usuarioId && !this.isEditMode) {
           setTimeout(() => {
             this.router.navigate(['/usuarios']);
@@ -294,7 +269,6 @@ export class UsuariosFormComponent implements OnInit {
         }
       },
       error: (err) => {
-        console.error('Erro ao fazer upload:', err);
         this.showToast(err?.error?.message || 'Erro ao fazer upload do avatar', 'error');
         this.uploadingAvatar = false;
       }
@@ -306,7 +280,6 @@ export class UsuariosFormComponent implements OnInit {
 
     Swal.fire({
       title: '<strong>Remover Avatar</strong>',
-      icon: 'warning',
       html: 'Tem certeza que deseja remover o avatar?<br>Esta ação não pode ser desfeita.',
       showCloseButton: true,
       showCancelButton: true,
@@ -331,14 +304,12 @@ export class UsuariosFormComponent implements OnInit {
         this.fotoUrl = null;
         this.previewUrl = null;
         
-        // Se for o usuário logado, atualizar AuthService
         const currentUser = this.authService.getCurrentUser();
         if (currentUser && currentUser.id === this.usuarioId) {
           this.authService.updateCurrentUser({
             ...currentUser,
             fotoUrl: null
           });
-          console.log('Avatar do usuário logado removido da navbar');
         }
         
         this.showToast('Avatar removido com sucesso!', 'success');
