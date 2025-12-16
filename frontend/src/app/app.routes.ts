@@ -34,5 +34,17 @@ export const routes: Routes = [
       }
     ]
   }
+  ,
+  {
+    path: 'empresas',
+    component: BaseComponent,
+    canActivate: [authGuard],
+    children: [
+      {
+        path: '',
+        loadChildren: () => import('./views/pages/empresas/empresas.routes').then(m => m.EMPRESAS_ROUTES)
+      }
+    ]
+  }
 ];
 

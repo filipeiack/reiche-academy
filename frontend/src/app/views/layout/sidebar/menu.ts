@@ -29,7 +29,13 @@ export const MENU: MenuItem[] = [
   {
     label: 'MENU.EMPRESAS',
     icon: 'codesandbox',
-    link: '/empresas'
+    link: '/empresas',
+    // subItems: [
+    //   {
+    //     label: 'COMPANIES.ADD',
+    //     link: '/empresas/nova'
+    //   }
+    // ]
   },
   {
     label: 'MENU.PILARES',

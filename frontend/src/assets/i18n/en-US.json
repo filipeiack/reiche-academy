@@ -58,7 +58,11 @@
     "PAGE": "Page",
     "OF": "of",
     "PREV": "Previous",
-    "NEXT": "Next"
+    "NEXT": "Next",
+    "BASIC_INFO": "Basic Information",
+    "TIMESTAMPS": "Timestamps",
+    "CREATED_AT": "Created at",
+    "UPDATED_AT": "Updated at"
   },
   "BUTTONS": {
     "PRINT": "Print",
@@ -85,6 +89,15 @@
     "ACTIVE": "Active User",
     "CREATE": "Create User",
     "EDIT": "Edit User"
+  },
+  "COMPANIES": {
+    "NAME": "Name",
+    "CNPJ": "CNPJ",
+    "RAZAO_SOCIAL": "Legal Name",
+    "TIPO_NEGOCIO": "Business Type",
+    "USUARIOS_COUNT": "Users",
+    "ADD": "Add Company",
+    "DETAILS": "Company Details"
   },
   "DASHBOARD": {
     "NEW_CUSTOMERS": "New Customers",

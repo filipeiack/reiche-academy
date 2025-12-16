@@ -76,6 +76,15 @@
     "CONFIRM": "Confirmar",
     "UPLOAD": "Fazer Upload"
   },
+  "COMPANIES": {
+    "NAME": "Nome",
+    "CNPJ": "CNPJ",
+    "RAZAO_SOCIAL": "Razão Social",
+    "TIPO_NEGOCIO": "Tipo de Negócio",
+    "USUARIOS_COUNT": "Usuários",
+    "ADD": "Adicionar Empresa",
+    "DETAILS": "Detalhes da Empresa"
+  },
   "USERS": {
     "AVATAR": "Avatar",
     "NAME": "Nome",

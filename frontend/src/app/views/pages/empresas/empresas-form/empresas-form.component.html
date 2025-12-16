@@ -1,0 +1,66 @@
+<nav aria-label="breadcrumb">
+  <ol class="breadcrumb breadcrumb-dot mb-1">
+    <li class="breadcrumb-item">
+      <i class="input-icon" data-feather="briefcase" style="width: 16px; height: 16px"></i>
+    </li>
+    <li class="breadcrumb-item">
+      <a routerLink="/empresas">{{ 'MENU.EMPRESAS' | translate }}</a>
+    </li>
+    <li class="breadcrumb-item active" aria-current="page">
+      @if (isEditMode) { {{ 'COMMON.EDIT' | translate }} } @else { {{ 'COMMON.CREATE' | translate }} }
+    </li>
+  </ol>
+</nav>
+
+<div class="card">
+  <div class="card-body">
+    @if (loading && isEditMode) {
+    <div class="text-center py-5">
+      <div class="spinner-border text-primary" role="status">
+        <span class="visually-hidden">{{ 'COMMON.LOADING' | translate }}</span>
+      </div>
+    </div>
+    } @else {
+    <form [formGroup]="form" (ngSubmit)="onSubmit()">
+      <div class="mb-3">
+        <label class="form-label" for="nome">{{ 'COMPANIES.NAME' | translate }} <span class="text-danger">*</span></label>
+        <input type="text" class="form-control" [class.is-invalid]="isFieldInvalid('nome')" id="nome" formControlName="nome" />
+        @if (isFieldInvalid('nome')) { <div class="invalid-feedback d-block">{{ getFieldError('nome') }}</div> }
+      </div>
+
+      <div class="mb-3">
+        <label class="form-label" for="cnpj">{{ 'COMPANIES.CNPJ' | translate }} <span class="text-danger">*</span></label>
+        <input type="text" class="form-control" [class.is-invalid]="isFieldInvalid('cnpj')" id="cnpj" formControlName="cnpj" (input)="onCnpjInput($event)" />
+        @if (isFieldInvalid('cnpj')) { <div class="invalid-feedback d-block">{{ getFieldError('cnpj') }}</div> }
+      </div>
+
+      <div class="mb-3">
+        <label class="form-label" for="razaoSocial">{{ 'COMPANIES.RAZAO_SOCIAL' | translate }} <span class="text-danger">*</span></label>
+        <input type="text" class="form-control" [class.is-invalid]="isFieldInvalid('razaoSocial')" id="razaoSocial" formControlName="razaoSocial" />
+        @if (isFieldInvalid('razaoSocial')) { <div class="invalid-feedback d-block">{{ getFieldError('razaoSocial') }}</div> }
+      </div>
+
+      <div class="mb-3">
+        <label class="form-label" for="tipoNegocio">{{ 'COMPANIES.TIPO_NEGOCIO' | translate }} <span class="text-danger">*</span></label>
+        <input type="text" class="form-control" [class.is-invalid]="isFieldInvalid('tipoNegocio')" id="tipoNegocio" formControlName="tipoNegocio" />
+        @if (isFieldInvalid('tipoNegocio')) { <div class="invalid-feedback d-block">{{ getFieldError('tipoNegocio') }}</div> }
+      </div>
+
+      <div class="mb-3">
+        <div class="form-check">
+          <input type="checkbox" class="form-check-input" id="ckativo" formControlName="ativo" />
+          <label class="form-check-label" for="ckativo">{{ 'COMMON.ACTIVE' | translate }}</label>
+        </div>
+      </div>
+
+      <div class="form-footer mt-4 d-flex justify-content-end gap-2">
+        <a [routerLink]="['/empresas']" class="btn btn-link">{{ 'BUTTONS.CANCEL' | translate }}</a>
+        <button type="submit" class="btn btn-primary" [disabled]="loading || form.invalid">
+          @if (loading) { <span class="spinner-border spinner-border-sm me-2" role="status"></span> }
+          @if (isEditMode) { {{ 'BUTTONS.UPDATE' | translate }} } @else { {{ 'BUTTONS.CREATE' | translate }} }
+        </button>
+      </div>
+    </form>
+    }
+  </div>
+</div>

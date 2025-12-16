@@ -1,0 +1,160 @@
+<div class="mb-2 align-items-center gap-2 d-flex justify-content-between flex-wrap">
+  <nav aria-label="breadcrumb">
+    <ol class="breadcrumb breadcrumb-arrow mb-1">
+      <li class="breadcrumb-item">
+        <i class="input-icon" data-feather="briefcase" style="width: 16px; height: 16px"></i>
+      </li>
+      <li class="breadcrumb-item active" aria-current="page">
+        <a routerLink="/empresas">{{ 'MENU.EMPRESAS' | translate }}</a>
+      </li>
+    </ol>
+  </nav>
+
+  <button id="btnNovaEmpresa" type="button" class="btn btn-primary btn-icon-text btn-xs" [routerLink]="['/empresas/nova']">
+    <i class="feather icon-plus btn-icon-prepend"></i>
+    {{ 'COMPANIES.ADD' | translate }}
+  </button>
+</div>
+
+<div class="row">
+  <div class="col-md-12 stretch-card">
+    <div class="card">
+      <div class="card-body">
+        <div class="row">
+          <div class="col-md-6">
+            <div class="input-icon search-inline">
+              <span class="input-icon-addon">
+                <i class="feather icon-search"></i>
+              </span>
+              <input type="text" class="form-control" placeholder="{{ 'COMMON.SEARCH' | translate }}" [value]="searchQuery" (input)="onSearchInput($event)" />
+            </div>
+          </div>
+
+          <div class="col-md-6 text-end">
+            @if (selectedCount > 0) {
+            <ngb-alert id="empresaBarBtn" class="alert-custom-primary" [dismissible]="false">
+              <button type="button" class="btn btn-xs btn-outline-danger" (click)="deleteSelected()">
+                {{ 'BUTTONS.DELETE_SELECTED' | translate }} ({{ selectedCount }})
+              </button>
+            </ngb-alert>
+            }
+          </div>
+        </div>
+
+        <div class="table-responsive">
+          @if (loading) {
+          <div class="text-center py-5">
+            <div class="spinner-border text-primary" role="status">
+              <span class="visually-hidden">{{ 'COMMON.LOADING' | translate }}...</span>
+            </div>
+          </div>
+          } @else {
+          <div class="table-responsive">
+            <table class="table table-hover table-striped mb-2">
+              <thead>
+                <tr>
+                  <th>
+                    <input class="form-check-input" type="checkbox" [(ngModel)]="headerCheckboxChecked" (change)="toggleHeaderCheckbox()">
+                  </th>
+                  <th scope="col" sortable="nome" (sort)="onSort($event)">{{ 'COMPANIES.NAME' | translate }}</th>
+                  <th scope="col" sortable="cnpj" (sort)="onSort($event)">{{ 'COMPANIES.CNPJ' | translate }}</th>
+                  <th scope="col" sortable="razaoSocial" (sort)="onSort($event)">{{ 'COMPANIES.RAZAO_SOCIAL' | translate }}</th>
+                  <th scope="col" sortable="tipoNegocio" (sort)="onSort($event)">{{ 'COMPANIES.TIPO_NEGOCIO' | translate }}</th>
+                  <th scope="col">{{ 'COMPANIES.USUARIOS_COUNT' | translate }}</th>
+                  <th>{{ 'COMMON.STATUS' | translate }}</th>
+                  <th>{{ 'COMMON.ACTIONS' | translate }}</th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (empresa of paginatedEmpresas; track empresa.id) {
+                <tr>
+                  <td>
+                    <input class="form-check-input" type="checkbox" [checked]="isSelected(empresa.id)" (change)="toggleSelection(empresa.id)">
+                  </td>
+                  <td>{{ empresa.nome }}</td>
+                  <td class="text-muted">{{ empresa.cnpj }}</td>
+                  <td>{{ empresa.razaoSocial }}</td>
+                  <td class="text-muted">{{ empresa.tipoNegocio }}</td>
+                  <td class="text-muted">{{ empresa._count?.usuarios ?? 0 }}</td>
+                  <td class="text-muted">
+                    {{ empresa.ativo ? ('COMMON.ACTIVE' | translate) : ('COMMON.INACTIVE' | translate) }}
+                  </td>
+                  <td class="text-nowrap">
+                    <div class="btn-group btn-group-sm" role="group">
+                      <button class="btn btn-icon text-primary" (click)="openDetailsOffcanvas(empresa.id, detailsOffcanvas)" [title]="'Detalhes da empresa' | translate">
+                        <i class="feather icon-info"></i>
+                      </button>
+                      <button class="btn btn-icon text-secondary" [routerLink]="['/empresas', empresa.id, 'editar']" title="{{ 'BUTTONS.EDIT' | translate }}">
+                        <i class="feather icon-edit"></i>
+                      </button>
+                      <button class="btn btn-icon text-danger" (click)="deleteEmpresa(empresa.id, empresa.nome)" title="{{ 'BUTTONS.DELETE' | translate }}">
+                        <i class="feather icon-trash-2"></i>
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+                } @empty {
+                <tr>
+                  <td colspan="7" class="border-bottom text-center text-muted py-4">
+                    {{ 'COMMON.NO_DATA' | translate }}
+                  </td>
+                </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+
+          <div class="d-flex justify-content-between p-2">
+            <span class="text-muted fs-12">{{ filteredEmpresas.length }} {{ 'COMMON.ITEMS' | translate }}</span>
+            @if (totalPages > 1) {
+            <ngb-pagination [collectionSize]="filteredEmpresas.length" [(page)]="currentPage" size="sm" [pageSize]="pageSize"></ngb-pagination>
+            }
+          </div>
+          }
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Offcanvas de Detalhes da Empresa -->
+<ng-template #detailsOffcanvas let-offcanvas>
+  <div class="offcanvas-header">
+    <h5 class="offcanvas-title">{{ 'COMPANIES.DETAILS' | translate }}</h5>
+    <button type="button" class="btn-close text-reset" (click)="offcanvas.dismiss()"></button>
+  </div>
+  <div class="offcanvas-body">
+    @if (loadingDetails) {
+    <div class="text-center py-5">
+      <div class="spinner-border text-primary" role="status">
+        <span class="visually-hidden">{{ 'COMMON.LOADING' | translate }}...</span>
+      </div>
+      <p class="text-muted mt-3">{{ 'COMMON.LOADING' | translate }}...</p>
+    </div>
+    } @else if (selectedEmpresa) {
+    <div class="mb-4">
+      <h4 class="mb-1">{{ selectedEmpresa.nome }}</h4>
+      <p class="text-muted mb-1">{{ selectedEmpresa.razaoSocial }}</p>
+      <p class="text-muted">{{ selectedEmpresa.cnpj }}</p>
+      <span class="badge" [ngClass]="{ 'bg-success': selectedEmpresa.ativo, 'bg-danger': !selectedEmpresa.ativo }">
+        {{ selectedEmpresa.ativo ? ('COMMON.ACTIVE' | translate) : ('COMMON.INACTIVE' | translate) }}
+      </span>
+    </div>
+
+    <div class="card mb-3">
+      <div class="card-body">
+        <h6 class="card-title mb-3">{{ 'COMMON.BASIC_INFO' | translate }}</h6>
+        <div class="mb-2"><span class="text-muted small">{{ 'COMPANIES.TIPO_NEGOCIO' | translate }}</span> <div>{{ selectedEmpresa.tipoNegocio }}</div></div>
+        <div class="mb-2"><span class="text-muted small">Logo URL</span> <div>{{ selectedEmpresa.logoUrl || '-' }}</div></div>
+        <div class="mb-0"><span class="text-muted small">Login URL</span> <div>{{ selectedEmpresa.loginUrl || '-' }}</div></div>
+      </div>
+    </div>
+
+    <div class="d-grid gap-2">
+      <button type="button" class="btn btn-primary" [routerLink]="['/empresas', selectedEmpresa.id, 'editar']" (click)="offcanvas.dismiss()">
+        <i class="feather icon-edit"></i> {{ 'BUTTONS.EDIT' | translate }}
+      </button>
+    </div>
+    }
+  </div>
+</ng-template>

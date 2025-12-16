@@ -1,32 +1,5 @@
 /* Estilos específicos da listagem de usuários */
 
-/* Input de busca com ícone (não existe no padrão) */
-.input-icon {
-  position: relative;
-
-  &-addon {
-    position: absolute;
-    left: 12px;
-    top: 50%;
-    transform: translateY(-50%);
-    color: var(--bs-text-muted);
-    font-size: 1rem;
-  }
-
-  input {
-    padding-left: 2.5rem;
-  }
-}
-
-.search-inline {
-  min-width: 240px;
-}
-
-/* Offcanvas customizado */
-:host ::ng-deep .offcanvas-large {
-  width: 450px !important;
-  max-width: 90vw;
-}
 
 .avatar-placeholder {
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
