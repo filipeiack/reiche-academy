@@ -9,11 +9,12 @@ import { AuthService } from '../../../../core/services/auth.service';
 import { PerfisService, PerfilUsuario } from '../../../../core/services/perfis.service';
 import { TranslatePipe } from '../../../../core/pipes/translate.pipe';
 import { UserAvatarComponent } from '../../../../shared/components/user-avatar/user-avatar.component';
+import { NgSelectModule } from '@ng-select/ng-select';
 
 @Component({
   selector: 'app-usuarios-form',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, RouterLink, TranslatePipe, UserAvatarComponent],
+  imports: [CommonModule, ReactiveFormsModule, RouterLink, TranslatePipe, UserAvatarComponent, NgSelectModule],
   templateUrl: './usuarios-form.component.html',
   styleUrl: './usuarios-form.component.scss'
 })

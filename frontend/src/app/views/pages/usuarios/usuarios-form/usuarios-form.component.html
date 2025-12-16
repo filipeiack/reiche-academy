@@ -73,13 +73,14 @@
                         <div class="mb-3">
                             <label class="form-label" for="perfilId">{{ "USERS.ROLE" | translate }}
                                 <span class="text-danger">*</span></label>
-                            <select class="form-select" [class.is-invalid]="isFieldInvalid('perfilId')" id="perfilId"
-                                formControlName="perfilId">
-                                <option value="">Selecione um perfil</option>
-                                @for (perfil of perfis; track perfil.id) {
-                                <option [value]="perfil.id">{{ perfil.nome }}</option>
-                                }
-                            </select>
+                            <ng-select 
+                                [items]="perfis" 
+                                bindLabel="nome" 
+                                bindValue="id"
+                                placeholder="Selecione um perfil"
+                                formControlName="perfilId"
+                                [class.is-invalid]="isFieldInvalid('perfilId')">
+                            </ng-select>
                             @if (isFieldInvalid('perfilId')) {
                             <div class="invalid-feedback d-block">
                                 {{ getFieldError("perfilId") }}
