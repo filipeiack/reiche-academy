@@ -1,4 +1,4 @@
-import { Component, OnInit, inject } from '@angular/core';
+import { Component, OnInit, Input, Output, EventEmitter, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router, ActivatedRoute, RouterLink } from '@angular/router';
@@ -7,6 +7,7 @@ import { UsersService, Usuario, CreateUsuarioRequest, UpdateUsuarioRequest } fro
 import { UserProfileService } from '../../../../core/services/user-profile.service';
 import { AuthService } from '../../../../core/services/auth.service';
 import { PerfisService, PerfilUsuario } from '../../../../core/services/perfis.service';
+import { EmpresasService, Empresa } from '../../../../core/services/empresas.service';
 import { TranslatePipe } from '../../../../core/pipes/translate.pipe';
 import { UserAvatarComponent } from '../../../../shared/components/user-avatar/user-avatar.component';
 import { NgSelectModule } from '@ng-select/ng-select';
@@ -23,15 +24,23 @@ export class UsuariosFormComponent implements OnInit {
   private userProfileService = inject(UserProfileService);
   private authService = inject(AuthService);
   private perfisService = inject(PerfisService);
+  private empresasService = inject(EmpresasService);
   private fb = inject(FormBuilder);
   private router = inject(Router);
   private route = inject(ActivatedRoute);
+
+  // Modo modal: quando true, não navega e emite evento onSave
+  @Input() modalMode = false;
+  @Input() presetEmpresaId?: string;
+  @Output() onSave = new EventEmitter<Usuario>();
+  @Output() onCancel = new EventEmitter<void>();
 
   form = this.fb.group({
     nome: ['', [Validators.required, Validators.minLength(2)]],
     email: ['', [Validators.required, Validators.email]],
     cargo: ['', []],
     perfilId: ['', Validators.required],
+    empresaId: [''],
     senha: ['', []],
     ativo: [true]
   });
@@ -41,6 +50,7 @@ export class UsuariosFormComponent implements OnInit {
   loading = false;
   uploadingAvatar = false;
   showPassword = false;
+  loadingEmpresas = false;
   
   currentUsuario: Usuario | null = null;
   fotoUrl: string | null = null;
@@ -48,6 +58,7 @@ export class UsuariosFormComponent implements OnInit {
   avatarFile: File | null = null;
 
   perfis: PerfilUsuario[] = [];
+  empresas: Empresa[] = [];
 
   get senhaRequired(): boolean {
     return !this.isEditMode;
@@ -59,8 +70,17 @@ export class UsuariosFormComponent implements OnInit {
 
   ngOnInit(): void {
     this.loadPerfis();
-    this.usuarioId = this.route.snapshot.paramMap.get('id');
-    this.isEditMode = !!this.usuarioId;
+    this.loadEmpresas();
+    
+    // Se tiver empresaId preset, preencher o campo
+    if (this.presetEmpresaId) {
+      this.form.patchValue({ empresaId: this.presetEmpresaId });
+    }
+    
+    if (!this.modalMode) {
+      this.usuarioId = this.route.snapshot.paramMap.get('id');
+      this.isEditMode = !!this.usuarioId;
+    }
 
     if (this.isEditMode && this.usuarioId) {
       this.loadUsuario(this.usuarioId);
@@ -70,6 +90,20 @@ export class UsuariosFormComponent implements OnInit {
       this.form.get('senha')?.setValidators([Validators.required, Validators.minLength(6)]);
       this.form.get('senha')?.updateValueAndValidity();
     }
+  }
+
+  private loadEmpresas(): void {
+    this.loadingEmpresas = true;
+    this.empresasService.getAll().subscribe({
+      next: (empresas) => {
+        this.empresas = empresas;
+        this.loadingEmpresas = false;
+      },
+      error: (error) => {
+        console.error('Erro ao carregar empresas:', error);
+        this.loadingEmpresas = false;
+      }
+    });
   }
 
   private loadPerfis(): void {
@@ -120,6 +154,7 @@ export class UsuariosFormComponent implements OnInit {
           email: usuario.email,
           cargo: usuario.cargo,
           perfilId: typeof usuario.perfil === 'object' ? usuario.perfil.id : usuario.perfil,
+          empresaId: usuario.empresaId || null,
           ativo: usuario.ativo
         });
         this.loading = false;
@@ -147,6 +182,7 @@ export class UsuariosFormComponent implements OnInit {
         nome: formValue.nome || '',
         email: formValue.email || '',
         cargo: formValue.cargo || '',
+        empresaId: formValue.empresaId || null,
         perfilId: formValue.perfilId || '',
         ativo: formValue.ativo || true
       };
@@ -171,7 +207,8 @@ export class UsuariosFormComponent implements OnInit {
         email: formValue.email || '',
         cargo: formValue.cargo || '',
         perfilId: formValue.perfilId || '',
-        senha: formValue.senha || ''
+        senha: formValue.senha || '',
+        empresaId: formValue.empresaId || undefined
       };
 
       this.usersService.create(createData).subscribe({
@@ -182,9 +219,13 @@ export class UsuariosFormComponent implements OnInit {
           if (this.avatarFile && novoUsuario.id) {
             this.uploadAvatar(this.avatarFile, novoUsuario.id);
           } else {
-            setTimeout(() => {
-              this.router.navigate(['/usuarios']);
-            }, 2000);
+            if (this.modalMode) {
+              this.onSave.emit(novoUsuario);
+            } else {
+              setTimeout(() => {
+                this.router.navigate(['/usuarios']);
+              }, 2000);
+            }
           }
         },
         error: (err) => {
@@ -281,9 +322,16 @@ export class UsuariosFormComponent implements OnInit {
         this.uploadingAvatar = false;
         
         if (usuarioId && !this.isEditMode) {
-          setTimeout(() => {
-            this.router.navigate(['/usuarios']);
-          }, 2000);
+          if (this.modalMode) {
+            // Em modo modal, emitir evento onSave com usuário completo
+            this.usersService.getById(usuarioId).subscribe({
+              next: (usuario) => this.onSave.emit(usuario)
+            });
+          } else {
+            setTimeout(() => {
+              this.router.navigate(['/usuarios']);
+            }, 2000);
+          }
         }
       },
       error: (err) => {

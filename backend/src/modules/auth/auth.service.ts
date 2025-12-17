@@ -19,16 +19,20 @@ export class AuthService {
     private emailService: EmailService,
   ) {}
 
-  async validateUser(email: string, senha: string): Promise<any> {
+  async validateUser(email: string, senha: string, ip?: string, userAgent?: string): Promise<any> {
     const usuario = await this.usuariosService.findByEmail(email);
     
     if (!usuario || !usuario.ativo) {
+      // Registra tentativa de login falhada
+      await this.registrarLogin(null, email, false, 'Credenciais inválidas', ip, userAgent);
       throw new UnauthorizedException('Credenciais inválidas');
     }
 
     const isPasswordValid = await argon2.verify(usuario.senha, senha);
     
     if (!isPasswordValid) {
+      // Registra tentativa de login falhada
+      await this.registrarLogin(usuario.id, email, false, 'Senha incorreta', ip, userAgent);
       throw new UnauthorizedException('Credenciais inválidas');
     }
 
@@ -36,7 +40,7 @@ export class AuthService {
     return result;
   }
 
-  async login(usuario: any) {
+  async login(usuario: any, ip?: string, userAgent?: string) {
     const payload = {
       sub: usuario.id,
       email: usuario.email,
@@ -49,6 +53,9 @@ export class AuthService {
       secret: this.configService.get('JWT_REFRESH_SECRET'),
       expiresIn: this.configService.get('JWT_REFRESH_EXPIRATION', '7d'),
     });
+
+    // Registra login bem-sucedido
+    await this.registrarLogin(usuario.id, usuario.email, true, null, ip, userAgent);
 
     return {
       accessToken,
@@ -178,5 +185,67 @@ export class AuthService {
     );
 
     return { message: 'Senha alterada com sucesso!' };
+  }
+
+  /**
+   * Registra tentativa de login (sucesso ou falha) para auditoria
+   */
+  private async registrarLogin(
+    usuarioId: string | null,
+    email: string,
+    sucesso: boolean,
+    motivoFalha: string | null,
+    ip?: string,
+    userAgent?: string,
+  ): Promise<void> {
+    try {
+      let dispositivo: string | null = null;
+      let navegador: string | null = null;
+
+      // Parse básico do user agent
+      if (userAgent) {
+        const ua = userAgent.toLowerCase();
+        
+        // Detecta dispositivo
+        if (ua.includes('mobile') || ua.includes('android') || ua.includes('iphone')) {
+          dispositivo = 'Mobile';
+        } else if (ua.includes('tablet') || ua.includes('ipad')) {
+          dispositivo = 'Tablet';
+        } else {
+          dispositivo = 'Desktop';
+        }
+
+        // Detecta navegador
+        if (ua.includes('edg/') || ua.includes('edge/')) {
+          navegador = 'Edge';
+        } else if (ua.includes('chrome/') && !ua.includes('edg/')) {
+          navegador = 'Chrome';
+        } else if (ua.includes('firefox/')) {
+          navegador = 'Firefox';
+        } else if (ua.includes('safari/') && !ua.includes('chrome/')) {
+          navegador = 'Safari';
+        } else if (ua.includes('opera/') || ua.includes('opr/')) {
+          navegador = 'Opera';
+        } else {
+          navegador = 'Outro';
+        }
+      }
+
+      await this.prisma.loginHistory.create({
+        data: {
+          usuarioId,
+          email,
+          sucesso,
+          motivoFalha,
+          ipAddress: ip,
+          userAgent,
+          dispositivo,
+          navegador,
+        },
+      });
+    } catch (error) {
+      // Não bloqueia o login se falhar o registro de auditoria
+      console.error('Erro ao registrar histórico de login:', error);
+    }
   }
 }

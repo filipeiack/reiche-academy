@@ -43,6 +43,34 @@ export class UsuariosService {
     });
   }
 
+  async findDisponiveis() {
+    return this.prisma.usuario.findMany({
+      where: {
+        empresaId: null,
+        ativo: true,
+      },
+      select: {
+        id: true,
+        email: true,
+        nome: true,
+        cargo: true,
+        perfil: {
+          select: {
+            id: true,
+            codigo: true,
+            nome: true,
+            nivel: true,
+          },
+        },
+        fotoUrl: true,
+        empresaId: true,
+      },
+      orderBy: {
+        nome: 'asc',
+      },
+    });
+  }
+
   async findById(id: string) {
     const usuario = await this.prisma.usuario.findUnique({
       where: { id },

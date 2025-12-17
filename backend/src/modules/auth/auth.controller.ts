@@ -19,7 +19,10 @@ export class AuthController {
   @ApiOperation({ summary: 'Autenticar usuário' })
   @ApiResponse({ status: 200, description: 'Login realizado com sucesso' })
   async login(@Request() req: ExpressRequest & { user: any }, @Body() loginDto: LoginDto) {
-    return this.authService.login(req.user);
+    const ip = req.ip || req.headers['x-forwarded-for'] as string || req.socket.remoteAddress;
+    const userAgent = req.headers['user-agent'];
+    
+    return this.authService.login(req.user, ip, userAgent);
   }
 
   @Post('refresh')

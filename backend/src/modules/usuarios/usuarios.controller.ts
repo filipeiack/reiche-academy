@@ -45,6 +45,13 @@ export class UsuariosController {
     return this.usuariosService.findAll();
   }
 
+  @Get('disponiveis/empresa')
+  @Roles('ADMINISTRADOR', 'CONSULTOR', 'GESTOR')
+  @ApiOperation({ summary: 'Buscar usuários disponíveis (sem empresa associada)' })
+  findDisponiveis() {
+    return this.usuariosService.findDisponiveis();
+  }
+
   @Get(':id')
   @Roles('ADMINISTRADOR', 'CONSULTOR', 'GESTOR', 'COLABORADOR', 'LEITURA')
   @ApiOperation({ summary: 'Buscar usuário por ID' })

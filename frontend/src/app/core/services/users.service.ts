@@ -10,6 +10,13 @@ export interface PerfilUsuarioBasic {
   nivel: number;
 }
 
+export interface EmpresaBasic {
+  id: string;
+  nome: string;
+  cnpj: string;
+  logoUrl?: string | null;
+}
+
 export interface Usuario {
   id: string;
   email: string;
@@ -18,6 +25,7 @@ export interface Usuario {
   perfil: PerfilUsuarioBasic | string;
   ativo: boolean;
   empresaId?: string;
+  empresa?: EmpresaBasic;
   fotoUrl?: string | null;
   createdAt: Date;
   updatedAt: Date;
@@ -38,6 +46,7 @@ export interface UpdateUsuarioRequest {
   cargo?: string;
   perfilId?: string;
   ativo?: boolean;
+  empresaId?: string | null;
 }
 
 @Injectable({
@@ -52,6 +61,13 @@ export class UsersService {
    */
   getAll(): Observable<Usuario[]> {
     return this.http.get<Usuario[]>(this.API_URL);
+  }
+
+  /**
+   * Buscar usuários disponíveis (sem empresa associada)
+   */
+  getDisponiveis(): Observable<Usuario[]> {
+    return this.http.get<Usuario[]>(`${this.API_URL}/disponiveis/empresa`);
   }
 
   /**

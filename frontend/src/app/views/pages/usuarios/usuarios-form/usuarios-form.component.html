@@ -20,7 +20,7 @@
     <div class="row">
         <div class="col-md-8">
             <!-- Form Card -->
-            <div class="card">
+            <div class="card mb-3">
                 <div class="card-body">
                     @if (loading && isEditMode) {
                     <div class="text-center py-5">
@@ -133,6 +133,40 @@
                                 {{ getFieldError("senha") }}
                             </div>
                             }
+                        </div>
+                        }
+
+                        <!-- Empresa Associada (dentro do formulário) -->
+                        @if (!modalMode) {
+                        <div class="mb-3">
+                            <label class="form-label">
+                                <i class="feather icon-briefcase me-2"></i>
+                                Empresa Associada
+                            </label>
+                            <ng-select 
+                                [items]="empresas" 
+                                bindLabel="nome" 
+                                bindValue="id"
+                                placeholder="Busque por empresa..."
+                                formControlName="empresaId"
+                                [searchable]="true"
+                                [clearable]="true"
+                                [loading]="loadingEmpresas">
+                                <ng-template ng-option-tmp let-item="item">
+                                    <div>
+                                        <div><strong>{{ item.nome }}</strong></div>
+                                        <small class="text-muted">CNPJ: {{ item.cnpj }}</small>
+                                    </div>
+                                </ng-template>
+                                <ng-template ng-label-tmp let-item="item">
+                                    <div class="d-flex align-items-center">
+                                        <span>{{ item.nome }}</span>
+                                    </div>
+                                </ng-template>
+                            </ng-select>
+                            <small class="form-text text-muted">
+                                Associe o usuário a uma empresa específica
+                            </small>
                         </div>
                         }
 

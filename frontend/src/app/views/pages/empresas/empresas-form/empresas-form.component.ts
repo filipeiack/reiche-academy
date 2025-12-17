@@ -1,28 +1,36 @@
-import { Component, OnInit, inject } from '@angular/core';
+import { Component, OnInit, ViewChild, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
+import { FormBuilder, ReactiveFormsModule, FormsModule, Validators } from '@angular/forms';
 import { Router, ActivatedRoute, RouterLink } from '@angular/router';
 import Swal from 'sweetalert2';
 import { EmpresasService, Empresa, CreateEmpresaRequest, UpdateEmpresaRequest, EstadoBrasil } from '../../../../core/services/empresas.service';
+import { UsersService, Usuario } from '../../../../core/services/users.service';
 import { TranslatePipe } from '../../../../core/pipes/translate.pipe';
 import { environment } from '../../../../../environments/environment';
 import { NgSelectModule } from '@ng-select/ng-select';
+import { UsuarioModalComponent } from '../../usuarios/usuario-modal/usuario-modal.component';
+import { UserAvatarComponent } from '../../../../shared/components/user-avatar/user-avatar.component';
 
 @Component({
   selector: 'app-empresas-form',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, RouterLink, TranslatePipe, NgSelectModule],
+  imports: [CommonModule, ReactiveFormsModule, FormsModule, RouterLink, TranslatePipe, NgSelectModule, UsuarioModalComponent, UserAvatarComponent],
   templateUrl: './empresas-form.component.html',
   styleUrl: './empresas-form.component.scss'
 })
 export class EmpresasFormComponent implements OnInit {
   private service = inject(EmpresasService);
+  private usersService = inject(UsersService);
   private fb = inject(FormBuilder);
   private router = inject(Router);
   private route = inject(ActivatedRoute);
 
+  @ViewChild(UsuarioModalComponent) usuarioModal!: UsuarioModalComponent;
+
   readonly estadosList: EstadoBrasil[] = ['AC', 'AL', 'AP', 'AM', 'BA', 'CE', 'DF', 'ES', 'GO', 'MA', 'MT', 'MS', 'MG', 'PA', 'PB', 'PR', 'PE', 'PI', 'RJ', 'RN', 'RS', 'RO', 'RR', 'SC', 'SP', 'SE', 'TO'];
   tiposNegocioList: string[] = [];
+  usuariosDisponiveis: Usuario[] = [];
+  usuariosAssociados: Usuario[] = [];
 
   form = this.fb.group({
     nome: ['', [Validators.required, Validators.minLength(2)]],
@@ -48,7 +56,11 @@ export class EmpresasFormComponent implements OnInit {
     this.empresaId = this.route.snapshot.paramMap.get('id');
     this.isEditMode = !!this.empresaId;
     this.loadTiposNegocio();
-    if (this.isEditMode && this.empresaId) this.loadEmpresa(this.empresaId);
+    this.loadUsuariosDisponiveis();
+    if (this.isEditMode && this.empresaId) {
+      this.loadEmpresa(this.empresaId);
+      this.loadUsuariosAssociados(this.empresaId);
+    }
   }
 
   private showToast(title: string, icon: 'success' | 'error' | 'info' | 'warning', timer: number = 3000): void {
@@ -61,7 +73,8 @@ export class EmpresasFormComponent implements OnInit {
         this.tiposNegocioList = tipos;
       },
       error: (err) => {
-        console.error('Erro ao carregar tipos de negócio:', err);
+        // Erro não é crítico - usuário pode digitar manualmente
+        console.warn('Não foi possível carregar tipos de negócio. Certifique-se que o backend está rodando.', err.message);
         this.tiposNegocioList = [];
       }
     });
@@ -290,5 +303,94 @@ export class EmpresasFormComponent implements OnInit {
         this.uploadingLogo = false;
       }
     });
+  }
+
+  // ===== GESTÃO DE USUÁRIOS =====
+
+  loadUsuariosDisponiveis(): void {
+    this.usersService.getDisponiveis().subscribe({
+      next: (usuarios) => {
+        this.usuariosDisponiveis = usuarios;
+      },
+      error: (err) => {
+        console.error('Erro ao carregar usuários disponíveis:', err);
+      }
+    });
+  }
+
+  loadUsuariosAssociados(empresaId: string): void {
+    this.usersService.getAll().subscribe({
+      next: (usuarios) => {
+        this.usuariosAssociados = usuarios.filter(u => u.empresaId === empresaId);
+      },
+      error: (err) => {
+        console.error('Erro ao carregar usuários associados:', err);
+      }
+    });
+  }
+
+  associarUsuario(usuario: Usuario): void {
+    if (!this.empresaId) {
+      this.showToast('Salve a empresa antes de associar usuários', 'warning');
+      return;
+    }
+
+    this.usersService.update(usuario.id, { empresaId: this.empresaId } as any).subscribe({
+      next: () => {
+        this.showToast(`Usuário ${usuario.nome} associado com sucesso!`, 'success');
+        this.usuariosAssociados.push(usuario);
+        this.usuariosDisponiveis = this.usuariosDisponiveis.filter(u => u.id !== usuario.id);
+      },
+      error: (err) => {
+        this.showToast(err?.error?.message || 'Erro ao associar usuário', 'error');
+      }
+    });
+  }
+
+  desassociarUsuario(usuario: Usuario): void {
+    Swal.fire({
+      title: 'Desassociar Usuário',
+      html: `Deseja desassociar <strong>${usuario.nome}</strong> desta empresa?`,
+      icon: 'question',
+      showCancelButton: true,
+      confirmButtonText: 'Sim, desassociar',
+      cancelButtonText: 'Cancelar'
+    }).then((result) => {
+      if (result.isConfirmed) {
+        this.confirmarDesassociacao(usuario);
+      }
+    });
+  }
+
+  private confirmarDesassociacao(usuario: Usuario): void {
+    this.usersService.update(usuario.id, { empresaId: null } as any).subscribe({
+      next: () => {
+        this.showToast(`Usuário ${usuario.nome} desassociado com sucesso!`, 'success');
+        this.usuariosAssociados = this.usuariosAssociados.filter(u => u.id !== usuario.id);
+        this.usuariosDisponiveis.push(usuario);
+      },
+      error: (err) => {
+        this.showToast(err?.error?.message || 'Erro ao desassociar usuário', 'error');
+      }
+    });
+  }
+
+  abrirModalNovoUsuario(): void {
+    if (!this.empresaId) {
+      this.showToast('Salve a empresa antes de criar usuários', 'warning');
+      return;
+    }
+    this.usuarioModal.open();
+  }
+
+  onUsuarioCriado(usuario: Usuario): void {
+    this.showToast(`Usuário ${usuario.nome} criado e associado com sucesso!`, 'success');
+    this.usuariosAssociados.push(usuario);
+    // Atualizar lista de disponíveis
+    this.loadUsuariosDisponiveis();
+  }
+
+  isPerfilObject(perfil: any): perfil is { id: string; codigo: string; nome: string; nivel: number } {
+    return perfil && typeof perfil === 'object' && 'nome' in perfil;
   }
 }

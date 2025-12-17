@@ -139,6 +139,95 @@
                     </form>
                 </div>
             </div>
+
+            <!-- Gestão de Usuários - Apenas em modo edição -->
+            @if (isEditMode && empresaId) {
+                <div class="card mt-3">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <h3 class="card-title mb-0">
+                            <i class="feather icon-users me-2"></i>
+                            Usuários Associados
+                        </h3>
+                        <button type="button" class="btn btn-sm btn-primary" (click)="abrirModalNovoUsuario()">
+                            <i class="feather icon-user-plus me-1"></i>
+                            Criar Novo Usuário
+                        </button>
+                    </div>
+                    <div class="card-body">
+                        <!-- Buscar e adicionar usuários existentes -->
+                        <div class="mb-4">
+                            <label class="form-label">Adicionar Usuário Existente</label>
+                            <ng-select 
+                                [items]="usuariosDisponiveis" 
+                                bindLabel="nome"
+                                [searchable]="true"
+                                [clearable]="true"
+                                placeholder="Busque por nome ou email..."
+                                (change)="associarUsuario($event)">
+                                <ng-template ng-option-tmp let-item="item">
+                                    <div class="d-flex align-items-center">
+                                        <app-user-avatar [nome]="item.nome" [fotoUrl]="item.fotoUrl" [size]="'small'" class="me-2"></app-user-avatar>
+                                        <div>
+                                            <div>{{ item.nome }}</div>
+                                            <small class="text-muted">{{ item.email }}</small>
+                                        </div>
+                                    </div>
+                                </ng-template>
+                            </ng-select>
+                            <small class="text-muted">Selecione um usuário para associar a esta empresa</small>
+                        </div>
+
+                        <!-- Lista de usuários associados -->
+                        @if (usuariosAssociados.length > 0) {
+                            <div class="table-responsive">
+                                <table class="table table-hover">
+                                    <thead>
+                                        <tr>
+                                            <th>Usuário</th>
+                                            <th>Email</th>
+                                            <th>Cargo</th>
+                                            <th>Perfil</th>
+                                            <th class="text-end">Ações</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        @for (usuario of usuariosAssociados; track usuario.id) {
+                                            <tr>
+                                                <td>
+                                                    <div class="text-muted">
+                                                        <span>{{ usuario.nome }}</span>
+                                                    </div>
+                                                </td>
+                                                <td class="text-muted">{{ usuario.email }}</td>
+                                                <td class="text-muted">{{ usuario.cargo }}</td>
+                                                <td>
+                                                    @if (isPerfilObject(usuario.perfil)) {
+                                                        <span class="badge bg-info">{{ usuario.perfil.nome }}</span>
+                                                    }
+                                                </td>
+                                                <td class="text-muted">
+                                                    <button 
+                                                        type="button" 
+                                                        class="btn btn-icon text-danger"
+                                                        (click)="desassociarUsuario(usuario)"
+                                                        title="Desassociar usuário">
+                                                        <i class="feather icon-trash-2"></i>
+                                                    </button>
+                                                </td>
+                                            </tr>
+                                        }
+                                    </tbody>
+                                </table>
+                            </div>
+                        } @else {
+                            <div class="alert alert-info mb-0">
+                                <i class="feather icon-info me-2"></i>
+                                Nenhum usuário associado a esta empresa ainda.
+                            </div>
+                        }
+                    </div>
+                </div>
+            }
         </div>
 
         <!-- Logo Sidebar -->
@@ -211,3 +300,9 @@
     </div>
     }
 </div>
+
+<!-- Modal para criar novo usuário -->
+<app-usuario-modal maxheight="50vh" title="Criar Novo Usuário"
+    [empresaId]="empresaId || undefined"
+    (usuarioCriado)="onUsuarioCriado($event)">
+</app-usuario-modal>

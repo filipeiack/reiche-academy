@@ -187,6 +187,17 @@
           <p class="mb-0">{{ selectedUsuario.cargo || '-' }}</p>
         </div>
 
+        <div class="mb-3">
+          <label class="text-muted small">Empresa</label>
+          <p class="mb-0">
+            @if (selectedUsuario.empresa) {
+              {{ selectedUsuario.empresa.nome }}
+            } @else {
+              <span class="text-muted">Não associado</span>
+            }
+          </p>
+        </div>
+
         <!-- <div class="mb-3">
           <label class="text-muted small">{{ 'USERS.STATUS' | translate }}</label>
           <p class="mb-0">

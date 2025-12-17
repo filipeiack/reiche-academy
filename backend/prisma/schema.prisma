@@ -94,6 +94,7 @@ model Usuario {
   // Relations
   reunioes      AgendaReuniao[]
   passwordResets PasswordReset[]
+  loginHistory   LoginHistory[]
 
   @@map("usuarios")
 }
@@ -112,6 +113,30 @@ model PasswordReset {
   @@index([token])
   @@index([usuarioId])
   @@map("password_resets")
+}
+
+model LoginHistory {
+  id          String   @id @default(uuid())
+  
+  usuarioId   String?
+  usuario     Usuario? @relation(fields: [usuarioId], references: [id], onDelete: SetNull)
+  
+  email       String
+  sucesso     Boolean
+  motivoFalha String?
+  
+  ipAddress   String?
+  userAgent   String?
+  dispositivo String?
+  navegador   String?
+  
+  createdAt   DateTime @default(now())
+  
+  @@index([usuarioId])
+  @@index([email])
+  @@index([createdAt])
+  @@index([sucesso])
+  @@map("login_history")
 }
 
 model Empresa {

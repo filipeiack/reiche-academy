@@ -8,12 +8,16 @@ export class LocalStrategy extends PassportStrategy(Strategy) {
   constructor(private authService: AuthService) {
     super({ 
       usernameField: 'email',
-      passwordField: 'senha'
+      passwordField: 'senha',
+      passReqToCallback: true // Permite acessar req no validate
     });
   }
 
-  async validate(email: string, senha: string): Promise<any> {
-    const user = await this.authService.validateUser(email, senha);
+  async validate(req: any, email: string, senha: string): Promise<any> {
+    const ip = req.ip || req.headers['x-forwarded-for'] as string || req.socket.remoteAddress;
+    const userAgent = req.headers['user-agent'];
+    
+    const user = await this.authService.validateUser(email, senha, ip, userAgent);
     if (!user) {
       throw new UnauthorizedException();
     }
