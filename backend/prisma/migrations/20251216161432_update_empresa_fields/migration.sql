@@ -1,0 +1,3 @@
+-- AlterTable
+ALTER TABLE "empresas" ALTER COLUMN "cidade" DROP DEFAULT,
+ALTER COLUMN "estado" DROP DEFAULT;

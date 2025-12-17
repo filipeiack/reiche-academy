@@ -147,5 +147,19 @@ export class AuthService {
     // Default to localStorage
     return localStorage;
   }
+
+  /**
+   * Solicita reset de senha - envia email com link
+   */
+  forgotPassword(email: string): Observable<{ message: string }> {
+    return this.http.post<{ message: string }>(`${this.API_URL}/forgot-password`, { email });
+  }
+
+  /**
+   * Redefine senha com token
+   */
+  resetPassword(token: string, novaSenha: string): Observable<{ message: string }> {
+    return this.http.post<{ message: string }>(`${this.API_URL}/reset-password`, { token, novaSenha });
+  }
 }
 

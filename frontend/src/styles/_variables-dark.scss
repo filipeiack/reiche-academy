@@ -1,22 +1,21 @@
 // ========================================
-// PALETA UIBakery Dark Theme - TESTE
 // Backup das cores originais comentadas no final do arquivo
 // ========================================
 
 $app-bg-dark:                       #0A0A0A !default; // Fundo geral do app
-$primary-dark:                      #C67A3D !default; // Orange/Copper da paleta UIBakery
-$secondary-dark:                    #4E4E4E !default; // Gray Scale
+$primary-dark:                      #8C6E45 !default; 
+$secondary-dark:                    $gray-500 !default;
 
-$body-color-dark:                   #FFFFFF !default; // Texto principal branco
-$body-bg-dark:                      #1A1A1A !default; // Background escuro profundo
+$body-color-dark:                   #f0f0f0 !default; // Texto principal branco
+$body-bg-dark:                      $gray-900 !default; // Background escuro profundo
 //$body-emphasis-color-dark:          #A66532 !default;
 
-$body-tertiary-bg-dark:             #1A1A1A !default; // Cards e componentes
+$body-tertiary-bg-dark:             $gray-900 !default; // Cards e componentes
 
-$body-secondary-color-dark:         #A0A0A0 !default; // Texto secundário
-$link-color-dark:                   #C67A3D !default; // Links usando primary
+$body-secondary-color-dark:         $secondary-dark !default; // Texto secundário
+$link-color-dark:                   $primary-dark !default; // Links usando primary
 
-$border-color-dark:                 #2A2A2A !default; // Bordas sutis
+$border-color-dark:                 $gray-900 !default; // Bordas sutis
 
 // Shadows
 $box-shadow-dark:                   0 2px 8px rgba(0, 0, 0, 0.3) !default;
@@ -25,23 +24,7 @@ $box-shadow-lg-dark:                0 4px 16px rgba(0, 0, 0, 0.4) !default;
 
 // Card
 $card-box-shadow-dark:              0 2px 8px rgba(0, 0, 0, 0.3) !default;
-$card-border-color-dark:            #2A2A2A !default;
-
-
-// ========================================
-// CORES ORIGINAIS (BACKUP)
-// ========================================
-// $primary-dark:                      rgb(198, 122, 61) !default; //B6915D, A67C00
-// $secondary-dark:                    $gray-500 !default;
-// $body-color-dark:                   #d0d6e1 !default;
-// $body-bg-dark:                      #000000 !default;
-// $body-tertiary-bg-dark:             mix($gray-700, $gray-900, 50%) !default;
-// $body-secondary-color-dark:         #7987a1 !default;
-// $link-color-dark:                   $primary !default;
-// $border-color-dark:                 #172340 !default;
-// $card-border-color-dark:            #172340;
-// ========================================
-
+$card-border-color-dark:            $gray-800 !default;
 
 @media (min-width: 1400px) {
   .container-xxl, .container-xl, .container-lg, .container-md, .container-sm, .container {

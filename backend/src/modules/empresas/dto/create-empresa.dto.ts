@@ -1,5 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsNotEmpty, IsString, Length, Matches } from 'class-validator';
+import { IsNotEmpty, IsString, Length, Matches, IsEnum, IsOptional } from 'class-validator';
+import { EstadoBrasil } from '@prisma/client';
 
 export class CreateEmpresaDto {
   @ApiProperty({ example: 'Reiche Consultoria Ltda' })
@@ -16,15 +17,29 @@ export class CreateEmpresaDto {
   })
   cnpj: string;
 
-  @ApiProperty({ example: 'Reiche Consultoria Empresarial Ltda' })
+  @ApiProperty({ example: 'Consultoria Empresarial', required: false })
   @IsString()
-  @IsNotEmpty()
-  @Length(2, 200)
-  razaoSocial: string;
+  @IsOptional()
+  @Length(2, 100)
+  tipoNegocio?: string;
 
-  @ApiProperty({ example: 'Consultoria Empresarial' })
+  @ApiProperty({ example: 'São Paulo' })
   @IsString()
   @IsNotEmpty()
   @Length(2, 100)
-  tipoNegocio: string;
+  cidade: string;
+
+  @ApiProperty({ example: 'SP', enum: EstadoBrasil })
+  @IsEnum(EstadoBrasil)
+  @IsNotEmpty()
+  estado: EstadoBrasil;
+
+  @ApiProperty({ example: 'reiche-consultoria', required: false })
+  @IsString()
+  @IsOptional()
+  @Length(3, 100)
+  @Matches(/^\S+$/, {
+    message: 'loginUrl não pode conter espaços em branco',
+  })
+  loginUrl?: string;
 }

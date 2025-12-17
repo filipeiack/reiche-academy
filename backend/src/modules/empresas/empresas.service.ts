@@ -97,8 +97,10 @@ export class EmpresasService {
       select: {
         id: true,
         nome: true,
-        razaoSocial: true,
+        cnpj: true,
         tipoNegocio: true,
+        cidade: true,
+        estado: true,
         logoUrl: true,
         loginUrl: true,
         ativo: true,
@@ -208,5 +210,48 @@ export class EmpresasService {
     });
 
     return after;
+  }
+
+  async getTiposNegocioDistinct(): Promise<string[]> {
+    const result = await this.prisma.empresa.findMany({
+      where: {
+        tipoNegocio: {
+          not: null,
+        },
+      },
+      select: {
+        tipoNegocio: true,
+      },
+      distinct: ['tipoNegocio'],
+      orderBy: {
+        tipoNegocio: 'asc',
+      },
+    });
+
+    return result
+      .map(r => r.tipoNegocio)
+      .filter((tipo): tipo is string => tipo !== null);
+  }
+
+  async updateLogo(id: string, logoUrl: string) {
+    const empresa = await this.findOne(id);
+    
+    const updated = await this.prisma.empresa.update({
+      where: { id },
+      data: { logoUrl },
+    });
+
+    return { logoUrl: updated.logoUrl };
+  }
+
+  async deleteLogo(id: string) {
+    const empresa = await this.findOne(id);
+
+    const updated = await this.prisma.empresa.update({
+      where: { id },
+      data: { logoUrl: null },
+    });
+
+    return { logoUrl: null };
   }
 }

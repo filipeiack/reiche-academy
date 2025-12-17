@@ -1,8 +1,13 @@
-import { Injectable, UnauthorizedException } from '@nestjs/common';
+import { Injectable, UnauthorizedException, BadRequestException, NotFoundException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
 import * as argon2 from 'argon2';
+import { randomBytes } from 'crypto';
 import { UsuariosService } from '../usuarios/usuarios.service';
+import { PrismaService } from '../../common/prisma/prisma.service';
+import { EmailService } from './email.service';
+import { ForgotPasswordDto } from './dto/forgot-password.dto';
+import { ResetPasswordDto } from './dto/reset-password.dto';
 
 @Injectable()
 export class AuthService {
@@ -10,6 +15,8 @@ export class AuthService {
     private usuariosService: UsuariosService,
     private jwtService: JwtService,
     private configService: ConfigService,
+    private prisma: PrismaService,
+    private emailService: EmailService,
   ) {}
 
   async validateUser(email: string, senha: string): Promise<any> {
@@ -78,5 +85,98 @@ export class AuthService {
 
   async hashPassword(senha: string): Promise<string> {
     return argon2.hash(senha);
+  }
+
+  /**
+   * Solicita reset de senha - envia email com token
+   */
+  async forgotPassword(dto: ForgotPasswordDto): Promise<{ message: string }> {
+    const usuario = await this.prisma.usuario.findUnique({
+      where: { email: dto.email },
+    });
+
+    // Retorna sucesso mesmo se email não existir (segurança)
+    if (!usuario) {
+      return { message: 'Se o email existir, você receberá instruções para redefinir sua senha.' };
+    }
+
+    if (!usuario.ativo) {
+      throw new BadRequestException('Usuário inativo');
+    }
+
+    // Gera token único
+    const token = randomBytes(32).toString('hex');
+    const expiresAt = new Date();
+    expiresAt.setMinutes(expiresAt.getMinutes() + 15); // 15 minutos
+
+    // Salva token no banco
+    await this.prisma.passwordReset.create({
+      data: {
+        token,
+        expiresAt,
+        usuarioId: usuario.id,
+      },
+    });
+
+    // Monta link de reset (ajustar URL conforme ambiente)
+    const frontendUrl = this.configService.get('FRONTEND_URL', 'http://localhost:4200');
+    const resetLink = `${frontendUrl}/auth/reset-password?token=${token}`;
+
+    // Envia email
+    await this.emailService.sendPasswordResetEmail({
+      to: usuario.email,
+      nome: usuario.nome,
+      resetLink,
+    });
+
+    return { message: 'Se o email existir, você receberá instruções para redefinir sua senha.' };
+  }
+
+  /**
+   * Reseta a senha usando o token
+   */
+  async resetPassword(dto: ResetPasswordDto): Promise<{ message: string }> {
+    // Busca token
+    const passwordReset = await this.prisma.passwordReset.findUnique({
+      where: { token: dto.token },
+      include: { usuario: true },
+    });
+
+    if (!passwordReset) {
+      throw new BadRequestException('Token inválido ou expirado');
+    }
+
+    // Verifica se já foi usado
+    if (passwordReset.used) {
+      throw new BadRequestException('Este link já foi utilizado');
+    }
+
+    // Verifica expiração
+    if (new Date() > passwordReset.expiresAt) {
+      throw new BadRequestException('Token expirado. Solicite um novo link de recuperação.');
+    }
+
+    // Hash da nova senha
+    const senhaHash = await this.hashPassword(dto.novaSenha);
+
+    // Atualiza senha do usuário
+    await this.prisma.usuario.update({
+      where: { id: passwordReset.usuarioId },
+      data: { senha: senhaHash },
+    });
+
+    // Marca token como usado
+    await this.prisma.passwordReset.update({
+      where: { id: passwordReset.id },
+      data: { used: true },
+    });
+
+    // Envia email de confirmação
+    await this.emailService.sendPasswordChangedEmail(
+      passwordReset.usuario.email,
+      passwordReset.usuario.nome,
+    );
+
+    return { message: 'Senha alterada com sucesso!' };
   }
 }

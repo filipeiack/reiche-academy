@@ -8,9 +8,15 @@ import {
   Delete,
   UseGuards,
   Request,
+  UploadedFile,
+  UseInterceptors,
+  BadRequestException,
 } from '@nestjs/common';
 import { Request as ExpressRequest } from 'express';
-import { ApiTags, ApiOperation, ApiBearerAuth, ApiResponse } from '@nestjs/swagger';
+import { ApiTags, ApiOperation, ApiBearerAuth, ApiResponse, ApiConsumes } from '@nestjs/swagger';
+import { FileInterceptor } from '@nestjs/platform-express';
+import { diskStorage } from 'multer';
+import { extname } from 'path';
 import { EmpresasService } from './empresas.service';
 import { CreateEmpresaDto } from './dto/create-empresa.dto';
 import { UpdateEmpresaDto } from './dto/update-empresa.dto';
@@ -55,6 +61,16 @@ export class EmpresasController {
     }
     // Outros perfis veem apenas sua empresa
     return this.empresasService.findAllByEmpresa(req.user.empresaId);
+  }
+
+  @ApiBearerAuth()
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('ADMINISTRADOR', 'CONSULTOR', 'GESTOR')
+  @Get('tipos-negocio/distinct')
+  @ApiOperation({ summary: 'Buscar tipos de negócio distintos' })
+  @ApiResponse({ status: 200, description: 'Lista de tipos de negócio' })
+  getTiposNegocio() {
+    return this.empresasService.getTiposNegocioDistinct();
   }
 
   @ApiBearerAuth()
@@ -104,4 +120,51 @@ export class EmpresasController {
     ) {
       return this.empresasService.vincularPilares(id, pilaresIds, req.user.id);
     }
+
+  @Post(':id/logo')
+  @ApiBearerAuth()
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('ADMINISTRADOR', 'CONSULTOR', 'GESTOR')
+  @ApiOperation({ summary: 'Upload de logotipo da empresa' })
+  @ApiConsumes('multipart/form-data')
+  @UseInterceptors(
+    FileInterceptor('file', {
+      storage: diskStorage({
+        destination: './public/images/logos',
+        filename: (req, file, cb) => {
+          const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
+          const ext = extname(file.originalname);
+          cb(null, `empresa-${uniqueSuffix}${ext}`);
+        },
+      }),
+      fileFilter: (req: any, file: Express.Multer.File, cb: any) => {
+        if (!file.mimetype.match(/\/(jpg|jpeg|png|webp)$/)) {
+          cb(new BadRequestException('Apenas imagens JPG, PNG ou WebP são permitidas'), false);
+        } else {
+          cb(null, true);
+        }
+      },
+      limits: { fileSize: 5 * 1024 * 1024 }, // 5MB
+    }),
+  )
+  async uploadLogo(
+    @Param('id') id: string,
+    @UploadedFile() file: Express.Multer.File,
+  ) {
+    if (!file) {
+      throw new BadRequestException('Nenhuma imagem foi enviada');
+    }
+
+    const logoUrl = `/images/logos/${file.filename}`;
+    return await this.empresasService.updateLogo(id, logoUrl);
   }
+
+  @Delete(':id/logo')
+  @ApiBearerAuth()
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('ADMINISTRADOR', 'CONSULTOR', 'GESTOR')
+  @ApiOperation({ summary: 'Deletar logotipo da empresa' })
+  async deleteLogo(@Param('id') id: string) {
+    return this.empresasService.deleteLogo(id);
+  }
+}

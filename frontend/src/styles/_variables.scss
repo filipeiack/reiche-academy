@@ -1,7 +1,5 @@
 // Light theme variables
 
-
-
 // Bootstrap base colors
 $white:        #fff !default;
 $gray-100: #F7F7F7 !default;
@@ -10,7 +8,7 @@ $gray-300: #E0E0E0 !default;
 $gray-400: #CCCCCC !default;
 $gray-500: #B0B0B0 !default;
 $gray-600: #8A8A8A !default;
-$gray-700:     #4E4E4E !default;
+$gray-700: #4E4E4E !default;
 $gray-800: #333333  !default;
 $gray-900: #1A1A1A !default;
 $black:        #000 !default;
@@ -30,33 +28,17 @@ $teal:    #20c997 !default;
 $cyan:    #0dcaf0 !default;
 
 
-
 // --- Bootstrap Theme Colors --- //
-// PALETA UIBakery Dark Theme - TESTE
-//
-$primary:         #C67A3D !default; // Orange/Copper
-$secondary:       #4E4E4E !default; // Gray Scale
-$success:         #5CB870 !default; // Green
-$info:            #C67A3D !default; // Usando primary
-$warning:         #D6A655 !default; // Yellow/Gold
-$danger:          #C34D38 !default; // Red
+$primary:         #8C6E45 !default; 
+$secondary:       #4E4E4E !default; 
+$success:         #5CB870 !default; 
+$info:            #B6915D !default; 
+$warning:         #A67C00 !default; 
+$danger:          #C34D38 !default; 
 $light:           #FAFAFA !default;
 $dark:            #1A1A1A !default;
-//
-// CORES ORIGINAIS (BACKUP):
-// $primary:         rgb(198, 122, 61)!default;
-// $secondary:       $gray-700 !default;
-// $success:         #05a34a !default;
-// $info:            #66d1d1 !default;
-// $warning:         #fbbc06 !default;
-// $danger:          #C34D38 !default;
-// $light:           $gray-200 !default;
-// $dark:            $gray-900 !default;
-//
+
 // --- Bootstrap Theme Colors --- //
-
-
-
 // Social colors
 $social-colors: (
   "facebook":        #3b5998,
@@ -176,14 +158,13 @@ $position-values: (
 
 
 // Prefix for :root CSS variables
-
 $prefix:                      bs- !default;
 
 
 // Body
 //
 // Settings for the `<body>` element.
-$body-bg:                      #fff !default;
+$body-bg:                      $white !default;
 $body-color:                   $black !default;
 
 $body-secondary-color:      rgba($body-color, .75) !default;

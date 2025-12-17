@@ -58,8 +58,8 @@
                   </th>
                   <th scope="col" sortable="nome" (sort)="onSort($event)">{{ 'COMPANIES.NAME' | translate }}</th>
                   <th scope="col" sortable="cnpj" (sort)="onSort($event)">{{ 'COMPANIES.CNPJ' | translate }}</th>
-                  <th scope="col" sortable="razaoSocial" (sort)="onSort($event)">{{ 'COMPANIES.RAZAO_SOCIAL' | translate }}</th>
-                  <th scope="col" sortable="tipoNegocio" (sort)="onSort($event)">{{ 'COMPANIES.TIPO_NEGOCIO' | translate }}</th>
+                  <th scope="col" sortable="cidade" (sort)="onSort($event)">{{ 'COMPANIES.CIDADE' | translate }}</th>
+                  <th scope="col" sortable="estado" (sort)="onSort($event)">{{ 'COMPANIES.ESTADO' | translate }}</th>
                   <th scope="col">{{ 'COMPANIES.USUARIOS_COUNT' | translate }}</th>
                   <th>{{ 'COMMON.STATUS' | translate }}</th>
                   <th>{{ 'COMMON.ACTIONS' | translate }}</th>
@@ -73,8 +73,8 @@
                   </td>
                   <td>{{ empresa.nome }}</td>
                   <td class="text-muted">{{ empresa.cnpj }}</td>
-                  <td>{{ empresa.razaoSocial }}</td>
-                  <td class="text-muted">{{ empresa.tipoNegocio }}</td>
+                  <td class="text-muted">{{ empresa.cidade }}</td>
+                  <td class="text-muted">{{ empresa.estado }}</td>
                   <td class="text-muted">{{ empresa._count?.usuarios ?? 0 }}</td>
                   <td class="text-muted">
                     {{ empresa.ativo ? ('COMMON.ACTIVE' | translate) : ('COMMON.INACTIVE' | translate) }}
@@ -132,9 +132,16 @@
       <p class="text-muted mt-3">{{ 'COMMON.LOADING' | translate }}...</p>
     </div>
     } @else if (selectedEmpresa) {
+    <!-- Logo da Empresa -->
+    @if (selectedEmpresa.logoUrl) {
+    <div class="mb-3 text-center">
+      <img [src]="selectedEmpresa.logoUrl" alt="Logo de {{ selectedEmpresa.nome }}" class="img-fluid rounded" style="max-height: 120px; max-width: 100%;">
+    </div>
+    }
+
     <div class="mb-4">
       <h4 class="mb-1">{{ selectedEmpresa.nome }}</h4>
-      <p class="text-muted mb-1">{{ selectedEmpresa.razaoSocial }}</p>
+      <p class="text-muted mb-1">{{ selectedEmpresa.cidade }}, {{ selectedEmpresa.estado }}</p>
       <p class="text-muted">{{ selectedEmpresa.cnpj }}</p>
       <span class="badge" [ngClass]="{ 'bg-success': selectedEmpresa.ativo, 'bg-danger': !selectedEmpresa.ativo }">
         {{ selectedEmpresa.ativo ? ('COMMON.ACTIVE' | translate) : ('COMMON.INACTIVE' | translate) }}
@@ -144,7 +151,7 @@
     <div class="card mb-3">
       <div class="card-body">
         <h6 class="card-title mb-3">{{ 'COMMON.BASIC_INFO' | translate }}</h6>
-        <div class="mb-2"><span class="text-muted small">{{ 'COMPANIES.TIPO_NEGOCIO' | translate }}</span> <div>{{ selectedEmpresa.tipoNegocio }}</div></div>
+        <div class="mb-2"><span class="text-muted small">{{ 'COMPANIES.TIPO_NEGOCIO' | translate }}</span> <div>{{ selectedEmpresa.tipoNegocio || '-' }}</div></div>
         <div class="mb-2"><span class="text-muted small">Logo URL</span> <div>{{ selectedEmpresa.logoUrl || '-' }}</div></div>
         <div class="mb-0"><span class="text-muted small">Login URL</span> <div>{{ selectedEmpresa.loginUrl || '-' }}</div></div>
       </div>

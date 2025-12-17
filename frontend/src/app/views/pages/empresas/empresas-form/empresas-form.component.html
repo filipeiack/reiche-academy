@@ -1,66 +1,213 @@
 <nav aria-label="breadcrumb">
-  <ol class="breadcrumb breadcrumb-dot mb-1">
-    <li class="breadcrumb-item">
-      <i class="input-icon" data-feather="briefcase" style="width: 16px; height: 16px"></i>
-    </li>
-    <li class="breadcrumb-item">
-      <a routerLink="/empresas">{{ 'MENU.EMPRESAS' | translate }}</a>
-    </li>
-    <li class="breadcrumb-item active" aria-current="page">
-      @if (isEditMode) { {{ 'COMMON.EDIT' | translate }} } @else { {{ 'COMMON.CREATE' | translate }} }
-    </li>
-  </ol>
+    <ol class="breadcrumb breadcrumb-arrow mb-1">
+        <li class="breadcrumb-item">
+            <i class="input-icon" data-feather="briefcase" style="width: 16px; height: 16px"></i>
+        </li>
+        <li class="breadcrumb-item">
+            <a routerLink="/empresas">{{ 'MENU.EMPRESAS' | translate }}</a>
+        </li>
+        <li class="breadcrumb-item active" aria-current="page">
+            @if (isEditMode) {
+                {{ 'COMPANIES.EDIT' | translate }}
+            } @else {
+                {{ 'COMPANIES.CREATE' | translate }}
+            }
+        </li>
+    </ol>
 </nav>
 
-<div class="card">
-  <div class="card-body">
+
+<div class="card-body">
     @if (loading && isEditMode) {
-    <div class="text-center py-5">
-      <div class="spinner-border text-primary" role="status">
-        <span class="visually-hidden">{{ 'COMMON.LOADING' | translate }}</span>
-      </div>
-    </div>
-    } @else {
-    <form [formGroup]="form" (ngSubmit)="onSubmit()">
-      <div class="mb-3">
-        <label class="form-label" for="nome">{{ 'COMPANIES.NAME' | translate }} <span class="text-danger">*</span></label>
-        <input type="text" class="form-control" [class.is-invalid]="isFieldInvalid('nome')" id="nome" formControlName="nome" />
-        @if (isFieldInvalid('nome')) { <div class="invalid-feedback d-block">{{ getFieldError('nome') }}</div> }
-      </div>
-
-      <div class="mb-3">
-        <label class="form-label" for="cnpj">{{ 'COMPANIES.CNPJ' | translate }} <span class="text-danger">*</span></label>
-        <input type="text" class="form-control" [class.is-invalid]="isFieldInvalid('cnpj')" id="cnpj" formControlName="cnpj" (input)="onCnpjInput($event)" />
-        @if (isFieldInvalid('cnpj')) { <div class="invalid-feedback d-block">{{ getFieldError('cnpj') }}</div> }
-      </div>
-
-      <div class="mb-3">
-        <label class="form-label" for="razaoSocial">{{ 'COMPANIES.RAZAO_SOCIAL' | translate }} <span class="text-danger">*</span></label>
-        <input type="text" class="form-control" [class.is-invalid]="isFieldInvalid('razaoSocial')" id="razaoSocial" formControlName="razaoSocial" />
-        @if (isFieldInvalid('razaoSocial')) { <div class="invalid-feedback d-block">{{ getFieldError('razaoSocial') }}</div> }
-      </div>
-
-      <div class="mb-3">
-        <label class="form-label" for="tipoNegocio">{{ 'COMPANIES.TIPO_NEGOCIO' | translate }} <span class="text-danger">*</span></label>
-        <input type="text" class="form-control" [class.is-invalid]="isFieldInvalid('tipoNegocio')" id="tipoNegocio" formControlName="tipoNegocio" />
-        @if (isFieldInvalid('tipoNegocio')) { <div class="invalid-feedback d-block">{{ getFieldError('tipoNegocio') }}</div> }
-      </div>
-
-      <div class="mb-3">
-        <div class="form-check">
-          <input type="checkbox" class="form-check-input" id="ckativo" formControlName="ativo" />
-          <label class="form-check-label" for="ckativo">{{ 'COMMON.ACTIVE' | translate }}</label>
+        <div class="text-center py-5">
+            <div class="spinner-border text-primary" role="status">
+                <span class="visually-hidden">{{ 'COMMON.LOADING' | translate }}</span>
+            </div>
         </div>
-      </div>
+    } @else {
+        <div class="row">
+            <div class="col-md-8">
+                <div class="card">
+                    <div class="card-body">
+                        <form [formGroup]="form" (ngSubmit)="onSubmit()">
+                            <div class="mb-3">
+                            <label class="form-label" for="nome">{{ 'COMPANIES.NAME' | translate }} <span
+                                    class="text-danger">*</span></label>
+                            <input type="text" class="form-control" [class.is-invalid]="isFieldInvalid('nome')"
+                                id="nome" formControlName="nome" />
+                            @if (isFieldInvalid('nome')) {
+                                <div class="invalid-feedback d-block">{{ getFieldError('nome') }}</div>
+                            }
+                        </div>
 
-      <div class="form-footer mt-4 d-flex justify-content-end gap-2">
-        <a [routerLink]="['/empresas']" class="btn btn-link">{{ 'BUTTONS.CANCEL' | translate }}</a>
-        <button type="submit" class="btn btn-primary" [disabled]="loading || form.invalid">
-          @if (loading) { <span class="spinner-border spinner-border-sm me-2" role="status"></span> }
-          @if (isEditMode) { {{ 'BUTTONS.UPDATE' | translate }} } @else { {{ 'BUTTONS.CREATE' | translate }} }
-        </button>
-      </div>
-    </form>
+                        <div class="mb-3">
+                            <label class="form-label" for="cnpj">{{ 'COMPANIES.CNPJ' | translate }} <span
+                                    class="text-danger">*</span></label>
+                            <input type="text" class="form-control" [class.is-invalid]="isFieldInvalid('cnpj')"
+                                id="cnpj" formControlName="cnpj" (input)="onCnpjInput($event)" />
+                            @if (isFieldInvalid('cnpj')) {
+                                <div class="invalid-feedback d-block">{{ getFieldError('cnpj') }}</div>
+                            }
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-8">
+                                <div class="mb-3">
+                                    <label class="form-label" for="cidade">{{ 'COMPANIES.CIDADE' | translate }}
+                                        <span class="text-danger">*</span></label>
+                                    <input type="text" class="form-control"
+                                        [class.is-invalid]="isFieldInvalid('cidade')" id="cidade"
+                                        formControlName="cidade" />
+                                    @if (isFieldInvalid('cidade')) {
+                                        <div class="invalid-feedback d-block">{{ getFieldError('cidade') }}</div>
+                                    }
+                                </div>
+                            </div>
+
+                            <div class="col-md-4">
+                                <div class="mb-3">
+                                    <label class="form-label" for="estado">{{ 'COMPANIES.ESTADO' | translate }}
+                                        <span class="text-danger">*</span></label>
+                                    <ng-select [items]="estadosList" [searchable]="true" [clearable]="false"
+                                        placeholder="{{ 'COMMON.SELECT' | translate }}" formControlName="estado"
+                                        [class.is-invalid]="isFieldInvalid('estado')">
+                                    </ng-select>
+                                    @if (isFieldInvalid('estado')) {
+                                        <div class="invalid-feedback d-block">{{ getFieldError('estado') }}</div>
+                                    }
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-8">
+                                <div class="mb-3">
+                                    <label class="form-label" for="tipoNegocio">{{ 'COMPANIES.TIPO_NEGOCIO' |
+                                        translate }}</label>
+                                    <ng-select [items]="tiposNegocioList" [addTag]="true" [searchable]="true"
+                                        [clearable]="true" placeholder="Digite para buscar ou criar novo..."
+                                        formControlName="tipoNegocio"
+                                        [class.is-invalid]="isFieldInvalid('tipoNegocio')">
+                                    </ng-select>
+                                    @if (isFieldInvalid('tipoNegocio')) { 
+                                        <div class="invalid-feedback d-block">
+                                            {{ getFieldError('tipoNegocio') }}
+                                        </div> 
+                                    }
+                                </div>
+                            </div>
+
+                            <div class="col-md-4">
+                                <div class="mb-3">
+                                    <label class="form-label" for="loginUrl">{{ 'COMPANIES.LOGIN_URL' | translate }}</label>
+                                    <input type="text" class="form-control"
+                                        [class.is-invalid]="isFieldInvalid('loginUrl')" id="loginUrl"
+                                        formControlName="loginUrl" placeholder="ex: minha-empresa" />
+                                    @if (isFieldInvalid('loginUrl')) { 
+                                        <div class="invalid-feedback d-block">
+                                            {{ getFieldError('loginUrl') }}
+                                        </div> 
+                                    }
+                                    
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <div class="form-check">
+                                <input type="checkbox" class="form-check-input" id="ckativo"
+                                    formControlName="ativo" />
+                                <label class="form-check-label" for="ckativo">{{ 'COMMON.ACTIVE' | translate
+                                    }}</label>
+                            </div>
+                        </div>
+
+                        <div class="form-footer mt-4 d-flex justify-content-end gap-2">
+                            <a [routerLink]="['/empresas']" class="btn btn-link">{{ 'BUTTONS.CANCEL' | translate
+                                }}</a>
+                            <button type="submit" class="btn btn-primary" [disabled]="loading || form.invalid">
+                                @if (loading) {
+                                    <span class="spinner-border spinner-border-sm me-2" role="status"></span>
+                                }
+                                @if (isEditMode) {
+                                    {{ 'BUTTONS.UPDATE' | translate }}
+                                } @else {
+                                    {{ 'BUTTONS.CREATE' | translate }}
+                                }
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- Logo Sidebar -->
+        <div class="col-md-4">
+            <div class="card mb-3">
+                <div class="card-header">
+                    <h3 class="card-title">Logotipo da Empresa</h3>
+                </div>
+                <div class="card-body text-center">
+                    <div class="mb-3 d-flex justify-content-center">
+                        @if (previewUrl || logoUrl) {
+                            <img [src]="previewUrl || logoUrl" alt="Logo da empresa" class="img-fluid rounded"
+                                style="max-height: 150px; max-width: 100%;">
+                        } @else {
+                            <div class="d-flex align-items-center justify-content-center bg-light rounded"
+                                style="height: 150px; width: 150px;">
+                                <i class="feather icon-image text-muted" style="width: 48px; height: 48px;"></i>
+                            </div>
+                        }
+                    </div>
+
+                    <div class="mb-2">
+                        <input type="file" #logoInput hidden accept="image/jpeg,image/png,image/webp"
+                            (change)="onLogoSelected($event)" />
+                        <button type="button" id="btnUpLogo" class="btn btn-sm btn-primary w-100"
+                            (click)="logoInput.click()" [disabled]="uploadingLogo">
+                            @if (uploadingLogo) {
+                                <span class="spinner-border spinner-border-sm me-2" role="status">
+                                    <span class="visually-hidden">Loading...</span>
+                                </span>
+                            }
+                            {{ 'BUTTONS.UPLOAD' | translate }}
+                        </button>
+                    </div>
+
+                    @if (logoUrl || previewUrl) {
+                        <button type="button" class="btn btn-sm btn-danger w-100" (click)="removeLogo()"
+                            [disabled]="uploadingLogo || !isEditMode">
+                            {{ 'BUTTONS.REMOVE_IMAGE' | translate }}
+                        </button>
+                    }
+
+                    <p class="text-muted text-sm mt-3 mb-0">
+                        Formatos aceitos: JPG, PNG, WebP (máx 5MB)
+                    </p>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="card-title">{{ "COMMON.INFO" | translate }}</h3>
+                </div>
+                <div class="card-body">
+                    <p class="text-muted mb-2">
+                        @if (isEditMode) {
+                            Edite as informações da empresa e clique em "Atualizar" para salvar as mudanças.
+                        } @else {
+                            Preencha todos os campos obrigatórios (marcados com *) para criar uma nova empresa.
+                        }
+                    </p>
+                    <p class="text-muted text-sm mb-2">
+                        <strong>Identificação do login:</strong> o valor deste campo será usado na URL de acesso da empresa: /login/{{ '{' }}loginUrl{{ '}' }}. Use apenas letras, números e hífen, sem espaços.
+                    </p>
+                    <p class="text-muted text-sm mb-0">
+                        <strong>Dica:</strong> O logotipo será utilizado na tela de login personalizada da empresa.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
     }
-  </div>
 </div>

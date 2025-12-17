@@ -1,7 +1,7 @@
 {
   "AUTH": {
     "LOGIN": {
-      "TITLE": "Welcome to Reiche Consulting! Log in to your account.",
+      "TITLE": "Access your account and continue your journey at Reiche Academy.",
       "EMAIL_LABEL": "Email",
       "EMAIL_PLACEHOLDER": "Email",
       "PASSWORD_LABEL": "Password",
@@ -9,6 +9,27 @@
       "REMEMBER_ME": "Remember me",
       "LOGIN_BUTTON": "Login",
       "REGISTER_LINK": "Not a user? Sign up"
+    },
+    "FORGOT_PASSWORD": {
+      "TITLE": "Forgot Password",
+      "DESCRIPTION": "Enter your registered email and we'll send you a link to reset your password.",
+      "EMAIL_LABEL": "Email",
+      "EMAIL_PLACEHOLDER": "Enter your email",
+      "SUBMIT_BUTTON": "Send Link",
+      "BACK_TO_LOGIN": "Back to Login",
+      "SUCCESS_MESSAGE": "Email sent successfully! Check your inbox and follow the instructions."
+    },
+    "RESET_PASSWORD": {
+      "TITLE": "Reset Password",
+      "DESCRIPTION": "Create a new strong password for your account.",
+      "NEW_PASSWORD_LABEL": "New Password",
+      "NEW_PASSWORD_PLACEHOLDER": "Enter your new password",
+      "CONFIRM_PASSWORD_LABEL": "Confirm Password",
+      "CONFIRM_PASSWORD_PLACEHOLDER": "Enter again",
+      "SUBMIT_BUTTON": "Reset Password",
+      "BACK_TO_LOGIN": "Back to Login",
+      "SUCCESS_MESSAGE": "Password reset successfully!",
+      "REDIRECT_MESSAGE": "You will be redirected to the login page in a moment..."
     },
     "PASSWORD": "Password"
   },
@@ -62,13 +83,15 @@
     "BASIC_INFO": "Basic Information",
     "TIMESTAMPS": "Timestamps",
     "CREATED_AT": "Created at",
-    "UPDATED_AT": "Updated at"
+    "UPDATED_AT": "Updated at",
+    "SELECT": "Select"
   },
   "BUTTONS": {
     "PRINT": "Print",
     "DOWNLOAD_REPORT": "Download Report",
     "SAVE": "Save",
     "CANCEL": "Cancel",
+    "REMOVE_IMAGE": "Remove Image",
     "DELETE": "Delete",
     "DELETE_SELECTED": "Delete Selected",
     "EDIT": "Edit",
@@ -91,11 +114,15 @@
     "EDIT": "Edit User"
   },
   "COMPANIES": {
-    "NAME": "Name",
+    "NAME": "Company Name",
     "CNPJ": "CNPJ",
-    "RAZAO_SOCIAL": "Legal Name",
-    "TIPO_NEGOCIO": "Business Type",
+    "TIPO_NEGOCIO": "Business Area",
+    "LOGIN_URL": "Login Identifier",
+    "CIDADE": "City",
+    "ESTADO": "State",
     "USUARIOS_COUNT": "Users",
+    "CREATE": "Create Company",
+    "EDIT": "Edit Company",
     "ADD": "Add Company",
     "DETAILS": "Company Details"
   },

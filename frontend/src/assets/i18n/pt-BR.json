@@ -1,7 +1,7 @@
 {
   "AUTH": {
     "LOGIN": {
-      "TITLE": "Bem-vindo a Reiche Consultoria! Faça login na sua conta.",
+      "TITLE": "Acesse sua conta e continue sua jornada na Reiche Academy.",
       "EMAIL_LABEL": "Email",
       "EMAIL_PLACEHOLDER": "Email",
       "PASSWORD_LABEL": "Senha",
@@ -9,6 +9,27 @@
       "REMEMBER_ME": "Lembrar-me",
       "LOGIN_BUTTON": "Login",
       "REGISTER_LINK": "Não é um usuário? Cadastre-se"
+    },
+    "FORGOT_PASSWORD": {
+      "TITLE": "Esqueci Minha Senha",
+      "DESCRIPTION": "Informe seu email cadastrado e enviaremos um link para redefinir sua senha.",
+      "EMAIL_LABEL": "Email",
+      "EMAIL_PLACEHOLDER": "Digite seu email",
+      "SUBMIT_BUTTON": "Enviar Link",
+      "BACK_TO_LOGIN": "Voltar ao Login",
+      "SUCCESS_MESSAGE": "Email enviado com sucesso! Verifique sua caixa de entrada e siga as instruções."
+    },
+    "RESET_PASSWORD": {
+      "TITLE": "Redefinir Senha",
+      "DESCRIPTION": "Crie uma nova senha forte para sua conta.",
+      "NEW_PASSWORD_LABEL": "Nova Senha",
+      "NEW_PASSWORD_PLACEHOLDER": "Digite sua nova senha",
+      "CONFIRM_PASSWORD_LABEL": "Confirmar Senha",
+      "CONFIRM_PASSWORD_PLACEHOLDER": "Digite novamente",
+      "SUBMIT_BUTTON": "Redefinir Senha",
+      "BACK_TO_LOGIN": "Voltar ao Login",
+      "SUCCESS_MESSAGE": "Senha redefinida com sucesso!",
+      "REDIRECT_MESSAGE": "Você será redirecionado para a página de login em instantes..."
     },
     "PASSWORD": "Senha"
   },
@@ -59,7 +80,8 @@
     "BASIC_INFO": "Informações Básicas",
     "TIMESTAMPS": "Datas",
     "CREATED_AT": "Criado em",
-    "UPDATED_AT": "Atualizado em"
+    "UPDATED_AT": "Atualizado em",
+    "SELECT": "Selecione"
   },
   "BUTTONS": {
     "PRINT": "Imprimir",
@@ -67,6 +89,7 @@
     "SAVE": "Salvar",
     "CANCEL": "Cancelar",
     "DELETE": "Deletar",
+    "REMOVE_IMAGE": "Remover Imagem",
     "DELETE_SELECTED": "Deletar Selecionados",
     "EDIT": "Editar",
     "VIEW": "Visualizar",
@@ -77,11 +100,15 @@
     "UPLOAD": "Fazer Upload"
   },
   "COMPANIES": {
-    "NAME": "Nome",
+    "NAME": "Nome da Empresa",
     "CNPJ": "CNPJ",
-    "RAZAO_SOCIAL": "Razão Social",
-    "TIPO_NEGOCIO": "Tipo de Negócio",
+    "TIPO_NEGOCIO": "Área de Negócio",
+    "LOGIN_URL": "Identificação de Login",
+    "CIDADE": "Cidade",
+    "ESTADO": "Estado",
     "USUARIOS_COUNT": "Usuários",
+    "CREATE": "Criar Empresa",
+    "EDIT": "Editar Empresa",
     "ADD": "Adicionar Empresa",
     "DETAILS": "Detalhes da Empresa"
   },

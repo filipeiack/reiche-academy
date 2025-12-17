@@ -3,6 +3,8 @@ import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { environment } from '../../../environments/environment';
 
+export type EstadoBrasil = 'AC' | 'AL' | 'AP' | 'AM' | 'BA' | 'CE' | 'DF' | 'ES' | 'GO' | 'MA' | 'MT' | 'MS' | 'MG' | 'PA' | 'PB' | 'PR' | 'PE' | 'PI' | 'RJ' | 'RN' | 'RS' | 'RO' | 'RR' | 'SC' | 'SP' | 'SE' | 'TO';
+
 export interface EmpresaCounts {
   usuarios: number;
   pilares: number;
@@ -12,8 +14,9 @@ export interface Empresa {
   id: string;
   nome: string;
   cnpj: string;
-  razaoSocial: string;
-  tipoNegocio: string;
+  tipoNegocio?: string | null;
+  cidade: string;
+  estado: EstadoBrasil;
   logoUrl?: string | null;
   loginUrl?: string | null;
   ativo: boolean;
@@ -25,15 +28,18 @@ export interface Empresa {
 export interface CreateEmpresaRequest {
   nome: string;
   cnpj: string;
-  razaoSocial: string;
-  tipoNegocio: string;
+  tipoNegocio?: string;
+  cidade: string;
+  estado: EstadoBrasil;
+  loginUrl?: string;
 }
 
 export interface UpdateEmpresaRequest {
   nome?: string;
   cnpj?: string;
-  razaoSocial?: string;
   tipoNegocio?: string;
+  cidade?: string;
+  estado?: EstadoBrasil;
   ativo?: boolean;
   logoUrl?: string | null;
   loginUrl?: string | null;
@@ -70,5 +76,19 @@ export class EmpresasService {
 
   vincularPilares(id: string, pilaresIds: string[]): Observable<Empresa> {
     return this.http.post<Empresa>(`${this.API_URL}/${id}/pilares`, { pilaresIds });
+  }
+
+  getTiposNegocio(): Observable<string[]> {
+    return this.http.get<string[]>(`${this.API_URL}/tipos-negocio/distinct`);
+  }
+
+  uploadLogo(id: string, file: File): Observable<{ logoUrl: string }> {
+    const formData = new FormData();
+    formData.append('file', file);
+    return this.http.post<{ logoUrl: string }>(`${this.API_URL}/${id}/logo`, formData);
+  }
+
+  deleteLogo(id: string): Observable<{ logoUrl: null }> {
+    return this.http.delete<{ logoUrl: null }>(`${this.API_URL}/${id}/logo`);
   }
 }

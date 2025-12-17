@@ -28,7 +28,7 @@ export const MENU: MenuItem[] = [
   },
   {
     label: 'MENU.EMPRESAS',
-    icon: 'codesandbox',
+    icon: 'briefcase',
     link: '/empresas',
     // subItems: [
     //   {

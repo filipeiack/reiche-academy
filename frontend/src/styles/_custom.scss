@@ -1,19 +1,19 @@
 
 .table-hover tbody tr:hover > * {
-		background-color: rgba(198, 122, 61, 0.1) !important;
+		background-color: rgba(140, 110, 69, 0.1) !important;
 	}
 
 // Checkbox border com cor UIBakery
 .form-check-input {
-	border-color: #C67A3D;
+	border-color: var(--bs-primary);
 }
 
 // Custom alert style para UIBakery theme
 .alert-custom-primary {
   padding: 3px;
   margin-bottom: 2px;
-  background-color: rgba(198, 122, 61, 0.1);
-  border-color: rgba(198, 122, 61, 0.3);
+  background-color: rgba(140, 110, 69, 0.1);
+  border-color: rgba(140, 110, 69, 0.3);
   //border-radius: 8px;
   border-style: solid;
   border-width: 1px;
@@ -55,8 +55,8 @@
 // Tema Dark específico
 [data-bs-theme="dark"] {
 	.form-control:focus {
-		border-color: #C67A3D;
-		box-shadow: 0 0 0 0.1rem rgba(198, 122, 61, 0.25);
+		border-color: var(--bs-primary);
+		box-shadow: 0 0 0 0.1rem rgba(140, 110, 69, 0.25);
 	}
 
 	.form-control {

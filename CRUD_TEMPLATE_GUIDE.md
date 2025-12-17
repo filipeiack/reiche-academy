@@ -1227,6 +1227,7 @@ export class {Entidade}FormComponent implements OnInit {
 - [ ] Criar template list: `{nome-modulo}-list.component.html`
 - [ ] Criar componente form: `{nome-modulo}-form.component.ts`
 - [ ] Criar template form: `{nome-modulo}-form.component.html`
+- [ ] Selects: usar `ng-select` (NgSelectModule) sempre, nunca `<select>` nativo
 - [ ] Configurar rotas: `{nome-modulo}.routes.ts`
 - [ ] Adicionar traduções em `i18n/pt-BR.json` e `i18n/en-US.json`
 - [ ] Implementar busca/filtro

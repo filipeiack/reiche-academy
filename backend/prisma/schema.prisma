@@ -22,6 +22,36 @@ enum StatusAcao {
   CANCELADA
 }
 
+enum EstadoBrasil {
+  AC
+  AL
+  AP
+  AM
+  BA
+  CE
+  DF
+  ES
+  GO
+  MA
+  MT
+  MS
+  MG
+  PA
+  PB
+  PR
+  PE
+  PI
+  RJ
+  RN
+  RS
+  RO
+  RR
+  SC
+  SP
+  SE
+  TO
+}
+
 // ===== MODELS =====
 
 model PerfilUsuario {
@@ -63,16 +93,34 @@ model Usuario {
   
   // Relations
   reunioes      AgendaReuniao[]
+  passwordResets PasswordReset[]
 
   @@map("usuarios")
+}
+
+model PasswordReset {
+  id        String   @id @default(uuid())
+  token     String   @unique
+  expiresAt DateTime
+  used      Boolean  @default(false)
+  
+  usuarioId String
+  usuario   Usuario  @relation(fields: [usuarioId], references: [id], onDelete: Cascade)
+  
+  createdAt DateTime @default(now())
+  
+  @@index([token])
+  @@index([usuarioId])
+  @@map("password_resets")
 }
 
 model Empresa {
   id            String   @id @default(uuid())
   nome          String
   cnpj          String   @unique
-  razaoSocial   String
-  tipoNegocio   String
+  tipoNegocio   String?
+  cidade        String
+  estado        EstadoBrasil
   ativo         Boolean  @default(true)
   
   // Personalização

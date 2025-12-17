@@ -7,6 +7,7 @@ import Swal from 'sweetalert2';
 import { TranslatePipe } from '../../../../core/pipes/translate.pipe';
 import { EmpresasService, Empresa } from '../../../../core/services/empresas.service';
 import { SortableDirective, SortEvent } from '../../../../shared/directives/sortable.directive';
+import { environment } from '../../../../../environments/environment';
 
 @Component({
   selector: 'app-empresas-list',
@@ -88,8 +89,8 @@ export class EmpresasListComponent implements OnInit {
       this.filteredEmpresas = this.empresas.filter(e =>
         e.nome?.toLowerCase().includes(query) ||
         e.cnpj?.toLowerCase().includes(query) ||
-        e.razaoSocial?.toLowerCase().includes(query) ||
-        e.tipoNegocio?.toLowerCase().includes(query)
+        e.cidade?.toLowerCase().includes(query) ||
+        e.estado?.toLowerCase().includes(query)
       );
     }
     if (this.sortColumn) this.applySorting();
@@ -217,7 +218,14 @@ export class EmpresasListComponent implements OnInit {
     this.selectedEmpresa = null;
     this.offcanvas.open(content, { position: 'end' });
     this.service.getById(id).subscribe({
-      next: (empresa) => { this.selectedEmpresa = empresa; this.loadingDetails = false; },
+      next: (empresa) => { 
+        // Adicionar backendUrl ao logoUrl se necessário
+        if (empresa.logoUrl && !empresa.logoUrl.startsWith('http')) {
+          empresa.logoUrl = `${environment.backendUrl}${empresa.logoUrl}`;
+        }
+        this.selectedEmpresa = empresa; 
+        this.loadingDetails = false; 
+      },
       error: () => { this.loadingDetails = false; this.showToast('Erro ao carregar detalhes', 'error'); }
     });
   }
