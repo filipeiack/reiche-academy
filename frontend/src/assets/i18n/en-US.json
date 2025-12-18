@@ -110,7 +110,6 @@
     "ROLE": "Role in System",
     "CARGO": "Position in Company",
     "STATUS": "Status",
-    "ACTIVE": "Active User",
     "CREATE": "Create User",
     "EDIT": "Edit User"
   },

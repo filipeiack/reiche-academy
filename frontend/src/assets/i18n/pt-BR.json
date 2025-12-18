@@ -115,12 +115,11 @@
   },
   "USERS": {
     "AVATAR": "Avatar",
-    "NAME": "Nome",
+    "NAME": "Nome Completo",
     "EMAIL": "Email",
     "ROLE": "Perfil Sistema",
     "CARGO": "Cargo na Empresa",
     "STATUS": "Status",
-    "ACTIVE": "Usuário Ativo",
     "CREATE": "Criar Usuário",
     "EDIT": "Editar Usuário",
     "ADD": "Adicionar Usuário",

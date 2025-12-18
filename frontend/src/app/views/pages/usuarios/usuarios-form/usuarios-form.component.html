@@ -25,6 +25,16 @@
             <form [formGroup]="form" (ngSubmit)="onSubmit()">
                 <div class="card mb-3">
                     <div class="card-body">
+
+                        <div class="d-flex justify-content-end mb-0">
+                            <div class="form-check form-switch">
+                                <input class="form-check-input" type="checkbox" id="ativo" formControlName="ativo">
+                                <label class="form-check-label" for="ativo">
+                                    {{ "COMMON.ACTIVE" | translate }}
+                                </label>
+                            </div>
+                        </div>
+
                         @if (loading && isEditMode) {
                         <div class="text-center py-5">
                             <div class="spinner-border text-primary" role="status">
@@ -52,35 +62,6 @@
                                 <input type="text" class="form-control" id="telefone" formControlName="telefone"
                                     placeholder="(11) 98765-4321" (input)="applyPhoneMask($event)" maxlength="15" />
                             </div>
-                        </div>
-
-                        <!-- Email e Senha -->
-                        <div class="row">
-                            <div class="col-md-8 mb-3">
-                                <label class="form-label" for="email">{{ "USERS.EMAIL" | translate }}
-                                    <span class="text-danger">*</span></label>
-                                <input type="email" class="form-control" [class.is-invalid]="isFieldInvalid('email')"
-                                    id="email" formControlName="email" placeholder="Ex: joao@reiche.com" />
-                                @if (isFieldInvalid('email')) {
-                                <div class="invalid-feedback d-block">
-                                    {{ getFieldError("email") }}
-                                </div>
-                                }
-                            </div>
-
-                            @if (!isEditMode) {
-                            <div class="col-md-4 mb-3">
-                                <label class="form-label" for="senha">{{ "AUTH.PASSWORD" | translate }}
-                                    <span class="text-danger">*</span></label>
-                                <input type="password" class="form-control" [class.is-invalid]="isFieldInvalid('senha')"
-                                    id="senha" formControlName="senha" placeholder="Mínimo 6 caracteres" />
-                                @if (isFieldInvalid('senha')) {
-                                <div class="invalid-feedback d-block">
-                                    {{ getFieldError("senha") }}
-                                </div>
-                                }
-                            </div>
-                            }
                         </div>
 
                         <!-- Cargo e Perfil -->
@@ -112,49 +93,66 @@
                                 }
                             </div>
                         </div>
-
-                        <!-- Senha (modo edição - opcional) -->
-                        @if (isEditMode) {
+                        
+                        <!-- Email -->
                         <div class="mb-3">
-                            <label class="form-label" for="senhaEdit">{{ "AUTH.PASSWORD" | translate }}
-                                <span class="text-muted">({{ "COMMON.OPTIONAL" | translate }})</span></label>
-                            <div class="input-group">
-                                <input [type]="showPassword ? 'text' : 'password'" class="form-control"
-                                    [class.is-invalid]="isFieldInvalid('senha')" id="senhaEdit" formControlName="senha"
-                                    placeholder="Deixe em branco para manter a senha atual" />
-                                <!-- <button 
-                                type="button" 
-                                class="btn btn-outline-primary"
-                                (click)="togglePasswordVisibility()"
-                                tabindex="-1"
-                            >
-                                @if (showPassword) {
-                                    <i data-feather="eye-off" appFeatherIcon></i>
-                                } @else {
-                                    <i data-feather="eye" appFeatherIcon></i>
-                                }
-                            </button> -->
-                            </div>
-                            <small class="form-text text-muted d-block mt-1">
-                                Deixe em branco para manter a senha atual. Mínimo 6 caracteres.
-                            </small>
-                            @if (isFieldInvalid('senha')) {
+                            <label class="form-label" for="email">{{ "USERS.EMAIL" | translate }}
+                                <span class="text-danger">*</span></label>
+                            <input type="email" class="form-control" [class.is-invalid]="isFieldInvalid('email')"
+                                id="email" formControlName="email" placeholder="Ex: joao@reiche.com" />
+                            @if (isFieldInvalid('email')) {
                             <div class="invalid-feedback d-block">
-                                {{ getFieldError("senha") }}
+                                {{ getFieldError("email") }}
                             </div>
                             }
                         </div>
-                        }
 
-                        <!-- Status -->
-                        <div class="mb-3">
-                            <div class="form-check">
-                                <input type="checkbox" class="form-check-input" id="ckativo" formControlName="ativo" />
-                                <label class="form-check-label" for="ativo">
-                                    {{ "USERS.ACTIVE" | translate }}
-                                </label>
+                        <div class="row">
+                            <!-- Senha -->
+                            <div class="mb-3">
+                            @if (!isEditMode) {
+                                <label class="form-label" for="senha">{{ "AUTH.PASSWORD" | translate }}
+                                    <span class="text-danger">*</span></label>
+                                <input type="password" class="form-control" [class.is-invalid]="isFieldInvalid('senha')"
+                                    id="senha" formControlName="senha" placeholder="Mínimo 6 caracteres" />
+                                @if (isFieldInvalid('senha')) {
+                                <div class="invalid-feedback d-block">
+                                    {{ getFieldError("senha") }}
+                                </div>
+                                }
+                            
+                            } @else {
+                            <!-- Senha (modo edição - opcional) -->
+                                <label class="form-label" for="senhaEdit">{{ "AUTH.PASSWORD" | translate }}
+                                    <span class="text-muted">({{ "COMMON.OPTIONAL" | translate }})</span></label>
+                                <div class="input-group">
+                                    <input [type]="showPassword ? 'text' : 'password'" class="form-control"
+                                        [class.is-invalid]="isFieldInvalid('senha')" id="senhaEdit" formControlName="senha"
+                                        placeholder="Deixe em branco para manter a senha atual" />
+                                    <!-- <button 
+                                    type="button" 
+                                    class="btn btn-outline-primary"
+                                    (click)="togglePasswordVisibility()"
+                                    tabindex="-1"
+                                >
+                                    @if (showPassword) {
+                                        <i data-feather="eye-off" appFeatherIcon></i>
+                                    } @else {
+                                        <i data-feather="eye" appFeatherIcon></i>
+                                    }
+                                </button> -->
+                                </div>
+                                <small class="form-text text-muted d-block mt-1">
+                                    Deixe em branco para manter a senha atual. Mínimo 6 caracteres.
+                                </small>
+                                @if (isFieldInvalid('senha')) {
+                                <div class="invalid-feedback d-block">
+                                    {{ getFieldError("senha") }}
+                                </div>
+                            }
+                            }
                             </div>
-                        </div>
+                        </div>                        
                         }
                     </div>
                 </div>
