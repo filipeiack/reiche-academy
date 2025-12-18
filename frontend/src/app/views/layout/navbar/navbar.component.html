@@ -44,110 +44,6 @@
           }
         </div>
       </li>
-      <!-- <li class="nav-item nav-apps" ngbDropdown>
-        <a class="nav-link" ngbDropdownToggle id="appsDropdown">
-          <i class="link-icon feather icon-grid"></i>
-        </a>
-        <div ngbDropdownMenu class="px-0" aria-labelledby="appsDropdown">
-          <div class="px-3 py-2 d-flex align-items-center justify-content-between border-bottom">
-            <p class="mb-0 fw-bold">Web Apps</p>
-            <a href="javascript:;" class="text-secondary">Edit</a>
-          </div>
-          <div class="row g-0 p-1">
-            <div class="col-3 text-center">
-              <a routerLink="/apps/chat" class="dropdown-item d-flex flex-column align-items-center justify-content-center w-70px h-70px"><i class="feather icon-message-square icon-lg mb-1"></i><p class="fs-12px">Chat</p></a>
-            </div>
-            <div class="col-3 text-center">
-              <a routerLink="/apps/calendar" class="dropdown-item d-flex flex-column align-items-center justify-content-center w-70px h-70px"><i class="feather icon-calendar icon-lg mb-1"></i><p class="fs-12px">Calendar</p></a>
-            </div>
-            <div class="col-3 text-center">
-              <a routerLink="/apps/email/inbox" class="dropdown-item d-flex flex-column align-items-center justify-content-center w-70px h-70px"><i class="feather icon-mail icon-lg mb-1"></i><p class="fs-12px">Email</p></a>
-            </div>
-            <div class="col-3 text-center">
-              <a routerLink="/general/profile" class="dropdown-item d-flex flex-column align-items-center justify-content-center w-70px h-70px"><i class="feather icon-instagram icon-lg mb-1"></i><p class="fs-12px">Profile</p></a>
-            </div>
-          </div>
-          <div class="px-3 py-2 d-flex align-items-center justify-content-center border-top">
-            <a href="" (click)="false">View all</a>
-          </div>
-        </div>
-      </li> -->
-      <!-- <li class="nav-item nav-messages" ngbDropdown>
-        <a class="nav-link" ngbDropdownToggle id="messageDropdown">
-          <i class="link-icon feather icon-mail"></i>
-        </a>
-        <div ngbDropdownMenu class="px-0" aria-labelledby="messageDropdown">
-          <div class="px-3 py-2 d-flex align-items-center justify-content-between border-bottom">
-            <p>9 New Messages</p>
-            <a href="" (click)="false" class="text-secondary">Clear all</a>
-          </div>
-          <div class="p-1">
-            <a href="" (click)="false" class="dropdown-item d-flex align-items-center py-2">
-              <div class="me-3">
-                <img class="w-30px h-30px rounded-circle" src="https://placehold.co/30x30" alt="user">
-              </div>
-              <div class="d-flex justify-content-between flex-grow-1">
-                <div class="me-4">
-                  <p>Leonardo Payne</p>
-                  <p class="fs-12px text-secondary">Project status</p>
-                </div>
-                <p class="fs-12px text-secondary">2 min ago</p>
-              </div>	
-            </a>
-            <a href="" (click)="false" class="dropdown-item d-flex align-items-center py-2">
-              <div class="me-3">
-                <img class="w-30px h-30px rounded-circle" src="https://placehold.co/30x30" alt="user">
-              </div>
-              <div class="d-flex justify-content-between flex-grow-1">
-                <div class="me-4">
-                  <p>Carl Henson</p>
-                  <p class="fs-12px text-secondary">Client meeting</p>
-                </div>
-                <p class="fs-12px text-secondary">30 min ago</p>
-              </div>	
-            </a>
-            <a href="" (click)="false" class="dropdown-item d-flex align-items-center py-2">
-              <div class="me-3">
-                <img class="w-30px h-30px rounded-circle" src="https://placehold.co/30x30" alt="user">
-              </div>
-              <div class="d-flex justify-content-between flex-grow-1">
-                <div class="me-4">
-                  <p>Jensen Combs</p>
-                  <p class="fs-12px text-secondary">Project updates</p>
-                </div>
-                <p class="fs-12px text-secondary">1 hrs ago</p>
-              </div>	
-            </a>
-            <a href="" (click)="false" class="dropdown-item d-flex align-items-center py-2">
-              <div class="me-3">
-                <img class="w-30px h-30px rounded-circle" src="https://placehold.co/30x30" alt="user">
-              </div>
-              <div class="d-flex justify-content-between flex-grow-1">
-                <div class="me-4">
-                  <p>Amiah Burton</p>
-                  <p class="fs-12px text-secondary">Project deatline</p>
-                </div>
-                <p class="fs-12px text-secondary">2 hrs ago</p>
-              </div>	
-            </a>
-            <a href="" (click)="false" class="dropdown-item d-flex align-items-center py-2">
-              <div class="me-3">
-                <img class="w-30px h-30px rounded-circle" src="https://placehold.co/30x30" alt="user">
-              </div>
-              <div class="d-flex justify-content-between flex-grow-1">
-                <div class="me-4">
-                  <p>Yaretzi Mayo</p>
-                  <p class="fs-12px text-secondary">New record</p>
-                </div>
-                <p class="fs-12px text-secondary">5 hrs ago</p>
-              </div>	
-            </a>
-          </div>
-          <div class="px-3 py-2 d-flex align-items-center justify-content-center border-top">
-            <a href="" (click)="false">View all</a>
-          </div>
-        </div>
-      </li> -->
       <li class="nav-item nav-notifications" ngbDropdown>
         <a class="nav-link" ngbDropdownToggle id="notificationDropdown">
           <i class="link-icon feather icon-bell"></i>
@@ -232,6 +128,14 @@
             <div class="text-center">
               <p class="tx-16 fw-bolder">{{ currentUser?.nome || 'Usuário' }}</p>
               <p class="fs-12px text-secondary">{{ currentUser?.email }}</p>
+              @if (getEmpresaNome()) {
+              <p class="fs-12px text-muted mb-1">
+                {{ getEmpresaNome() }}
+              </p>
+              }
+              @if (getPerfilNome()) {
+              <span class="badge bg-primary mt-1">{{ getPerfilNome() }}</span>
+              }
             </div>
           </div>
           <ul class="list-unstyled p-1">
@@ -239,6 +143,17 @@
               <a [routerLink]="currentUser ? ['/usuarios', currentUser.id, 'editar'] : null" class="dropdown-item py-2 d-flex ms-0">
                 <i class="feather icon-user me-2 icon-md"></i>
                 <span>{{ 'NAVBAR.PROFILE.USER' | translate }}</span>
+              </a>
+            </li>
+            <li>
+              <a [routerLink]="hasEmpresa ? ['/empresas', currentUser?.empresaId, 'editar'] : null" 
+                 [class.disabled]="!hasEmpresa"
+                 [class.text-muted]="!hasEmpresa"
+                 class="dropdown-item py-2 d-flex ms-0"
+                 [style.cursor]="hasEmpresa ? 'pointer' : 'not-allowed'"
+                 [style.opacity]="hasEmpresa ? '1' : '0.5'">
+                <i class="feather icon-briefcase me-2 icon-md"></i>
+                <span>{{ 'NAVBAR.PROFILE.COMPANY' | translate }}</span>
               </a>
             </li>
             <li>

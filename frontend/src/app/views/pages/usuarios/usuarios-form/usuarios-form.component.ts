@@ -37,6 +37,7 @@ export class UsuariosFormComponent implements OnInit {
 
   form = this.fb.group({
     nome: ['', [Validators.required, Validators.minLength(2)]],
+    telefone: [''],
     email: ['', [Validators.required, Validators.email]],
     cargo: ['', []],
     perfilId: ['', Validators.required],
@@ -66,6 +67,14 @@ export class UsuariosFormComponent implements OnInit {
 
   togglePasswordVisibility(): void {
     this.showPassword = !this.showPassword;
+  }
+
+  handleCancel(): void {
+    if (this.modalMode) {
+      this.onCancel.emit();
+    } else {
+      this.router.navigate(['/usuarios']);
+    }
   }
 
   ngOnInit(): void {
@@ -151,6 +160,7 @@ export class UsuariosFormComponent implements OnInit {
         this.fotoUrl = this.withCacheBuster(usuario.fotoUrl || null);
         this.form.patchValue({
           nome: usuario.nome,
+          telefone: usuario.telefone || '',
           email: usuario.email,
           cargo: usuario.cargo,
           perfilId: typeof usuario.perfil === 'object' ? usuario.perfil.id : usuario.perfil,
@@ -180,6 +190,7 @@ export class UsuariosFormComponent implements OnInit {
       // Atualizar usuário
       const updateData: UpdateUsuarioRequest = {
         nome: formValue.nome || '',
+        telefone: formValue.telefone || '',
         email: formValue.email || '',
         cargo: formValue.cargo || '',
         empresaId: formValue.empresaId || null,
@@ -204,6 +215,7 @@ export class UsuariosFormComponent implements OnInit {
       // Criar novo usuário
       const createData: CreateUsuarioRequest = {
         nome: formValue.nome || '',
+        telefone: formValue.telefone || '',
         email: formValue.email || '',
         cargo: formValue.cargo || '',
         perfilId: formValue.perfilId || '',
@@ -386,5 +398,21 @@ export class UsuariosFormComponent implements OnInit {
         this.uploadingAvatar = false;
       }
     });
+  }
+
+  // Máscara de telefone brasileiro
+  applyPhoneMask(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    let value = input.value.replace(/\D/g, '');
+    
+    if (value.length <= 10) {
+      // Telefone fixo: (11) 3333-4444
+      value = value.replace(/^(\d{2})(\d{4})(\d{0,4}).*/, '($1) $2-$3');
+    } else {
+      // Celular: (11) 98765-4321
+      value = value.replace(/^(\d{2})(\d{5})(\d{0,4}).*/, '($1) $2-$3');
+    }
+    
+    this.form.patchValue({ telefone: value }, { emitEvent: false });
   }
 }

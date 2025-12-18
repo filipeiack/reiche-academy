@@ -3,6 +3,10 @@
 		background-color: rgba(140, 110, 69, 0.1) !important;
 	}
 
+  .table-hover tbody td {
+		vertical-align: middle;
+	}
+
 // Checkbox border com cor UIBakery
 .form-check-input {
 	border-color: var(--bs-primary);

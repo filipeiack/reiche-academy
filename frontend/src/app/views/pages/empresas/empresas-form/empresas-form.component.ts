@@ -31,6 +31,7 @@ export class EmpresasFormComponent implements OnInit {
   tiposNegocioList: string[] = [];
   usuariosDisponiveis: Usuario[] = [];
   usuariosAssociados: Usuario[] = [];
+  usuariosPendentesAssociacao: Usuario[] = []; // Usuários a serem associados após criar a empresa
 
   form = this.fb.group({
     nome: ['', [Validators.required, Validators.minLength(2)]],
@@ -144,6 +145,11 @@ export class EmpresasFormComponent implements OnInit {
           
           this.showToast('Empresa criada com sucesso!', 'success');
           this.loading = false;
+
+          // Associar usuários pendentes
+          if (this.usuariosPendentesAssociacao.length > 0 && novaEmpresa.id) {
+            this.associarUsuariosPendentes(novaEmpresa.id);
+          }
 
           if (this.logoFile && novaEmpresa.id) {
             console.log('Iniciando upload do logo para empresa recém-criada');
@@ -331,10 +337,18 @@ export class EmpresasFormComponent implements OnInit {
 
   associarUsuario(usuario: Usuario): void {
     if (!this.empresaId) {
-      this.showToast('Salve a empresa antes de associar usuários', 'warning');
+      // Modo criação: acumular em memória
+      if (this.usuariosPendentesAssociacao.find(u => u.id === usuario.id)) {
+        this.showToast('Usuário já está na lista de associação', 'info');
+        return;
+      }
+      this.usuariosPendentesAssociacao.push(usuario);
+      this.usuariosDisponiveis = this.usuariosDisponiveis.filter(u => u.id !== usuario.id);
+      this.showToast(`Usuário ${usuario.nome} será associado ao salvar a empresa`, 'info');
       return;
     }
 
+    // Modo edição: associar imediatamente
     this.usersService.update(usuario.id, { empresaId: this.empresaId } as any).subscribe({
       next: () => {
         this.showToast(`Usuário ${usuario.nome} associado com sucesso!`, 'success');
@@ -357,7 +371,15 @@ export class EmpresasFormComponent implements OnInit {
       cancelButtonText: 'Cancelar'
     }).then((result) => {
       if (result.isConfirmed) {
-        this.confirmarDesassociacao(usuario);
+        if (!this.empresaId) {
+          // Modo criação: remover da lista pendente
+          this.usuariosPendentesAssociacao = this.usuariosPendentesAssociacao.filter(u => u.id !== usuario.id);
+          this.usuariosDisponiveis.push(usuario);
+          this.showToast(`Usuário ${usuario.nome} removido da lista`, 'success');
+        } else {
+          // Modo edição: desassociar do banco
+          this.confirmarDesassociacao(usuario);
+        }
       }
     });
   }
@@ -376,18 +398,41 @@ export class EmpresasFormComponent implements OnInit {
   }
 
   abrirModalNovoUsuario(): void {
-    if (!this.empresaId) {
-      this.showToast('Salve a empresa antes de criar usuários', 'warning');
-      return;
-    }
     this.usuarioModal.open();
   }
 
   onUsuarioCriado(usuario: Usuario): void {
-    this.showToast(`Usuário ${usuario.nome} criado e associado com sucesso!`, 'success');
-    this.usuariosAssociados.push(usuario);
+    this.showToast(`Usuário ${usuario.nome} criado com sucesso!`, 'success');
+    
+    if (!this.empresaId) {
+      // Modo criação: adicionar à lista pendente
+      this.usuariosPendentesAssociacao.push(usuario);
+    } else {
+      // Modo edição: já foi associado automaticamente pelo modal
+      this.usuariosAssociados.push(usuario);
+    }
+    
     // Atualizar lista de disponíveis
     this.loadUsuariosDisponiveis();
+  }
+
+  // Método auxiliar para associar usuários pendentes após criar empresa
+  private associarUsuariosPendentes(empresaId: string): void {
+    const promises = this.usuariosPendentesAssociacao.map(usuario => {
+      return this.usersService.update(usuario.id, { empresaId } as any).toPromise();
+    });
+
+    Promise.all(promises).then(
+      () => {
+        const count = this.usuariosPendentesAssociacao.length;
+        this.showToast(`${count} usuário(s) associado(s) com sucesso!`, 'success');
+        this.usuariosPendentesAssociacao = [];
+      },
+      (err) => {
+        console.error('Erro ao associar usuários pendentes:', err);
+        this.showToast('Erro ao associar alguns usuários. Verifique em modo edição.', 'warning');
+      }
+    );
   }
 
   isPerfilObject(perfil: any): perfil is { id: string; codigo: string; nome: string; nivel: number } {

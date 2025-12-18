@@ -57,7 +57,8 @@
       "ENGLISH": "English"
     },
     "PROFILE": {
-      "USER": "User",
+      "USER": "My User",
+      "COMPANY": "My Company",
       "LOGOUT": "Logout"
     },
     "NOTIFICATIONS": {
@@ -106,8 +107,8 @@
     "AVATAR": "Avatar",
     "NAME": "Name",
     "EMAIL": "Email",
-    "ROLE": "Role",
-    "POSITION": "Position",
+    "ROLE": "Role in System",
+    "CARGO": "Position in Company",
     "STATUS": "Status",
     "ACTIVE": "Active User",
     "CREATE": "Create User",

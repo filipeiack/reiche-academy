@@ -31,6 +31,26 @@ export class NavbarComponent implements OnInit {
   currentLanguage: LanguageOption | undefined;
   currentUser: Usuario | null = null;
 
+  get hasEmpresa(): boolean {
+    return !!this.currentUser?.empresaId;
+  }
+
+  getPerfilNome(): string | null {
+    if (!this.currentUser?.perfil) return null;
+    if (typeof this.currentUser.perfil === 'object') {
+      return this.currentUser.perfil.nome;
+    }
+    return null;
+  }
+
+  getEmpresaNome(): string | null {
+    if (!this.currentUser?.empresa) return null;
+    if (typeof this.currentUser.empresa === 'object') {
+      return this.currentUser.empresa.nome;
+    }
+    return null;
+  }
+
   constructor(private router: Router, private themeModeService: ThemeModeService) {}
 
   ngOnInit(): void {

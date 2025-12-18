@@ -115,6 +115,14 @@ export class UsuariosService {
             nivel: true,
           },
         },
+        empresa: {
+          select: {
+            id: true,
+            nome: true,
+            cnpj: true,
+            logoUrl: true,
+          },
+        },
       },
     });
   }

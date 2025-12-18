@@ -25,6 +25,11 @@ export class CreateUsuarioDto {
   @Length(2, 100)
   cargo: string;
 
+  @ApiPropertyOptional({ example: '(11) 98765-4321' })
+  @IsString()
+  @IsOptional()
+  telefone?: string;
+
   @ApiProperty({ example: 'uuid-do-perfil', description: 'ID do perfil do usuário (ADMINISTRADOR, CONSULTOR, GESTOR, COLABORADOR, LEITURA)' })
   @IsUUID()
   @IsNotEmpty()

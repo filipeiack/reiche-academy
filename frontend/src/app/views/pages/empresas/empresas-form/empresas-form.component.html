@@ -8,9 +8,9 @@
         </li>
         <li class="breadcrumb-item active" aria-current="page">
             @if (isEditMode) {
-                {{ 'COMPANIES.EDIT' | translate }}
+            {{ 'COMPANIES.EDIT' | translate }}
             } @else {
-                {{ 'COMPANIES.CREATE' | translate }}
+            {{ 'COMPANIES.CREATE' | translate }}
             }
         </li>
     </ol>
@@ -19,37 +19,39 @@
 
 <div class="card-body">
     @if (loading && isEditMode) {
-        <div class="text-center py-5">
-            <div class="spinner-border text-primary" role="status">
-                <span class="visually-hidden">{{ 'COMMON.LOADING' | translate }}</span>
-            </div>
+    <div class="text-center py-5">
+        <div class="spinner-border text-primary" role="status">
+            <span class="visually-hidden">{{ 'COMMON.LOADING' | translate }}</span>
         </div>
+    </div>
     } @else {
-        <div class="row">
-            <div class="col-md-8">
+    <div class="row">
+        <div class="col-md-8">
+            <form [formGroup]="form" (ngSubmit)="onSubmit()">
                 <div class="card">
                     <div class="card-body">
-                        <form [formGroup]="form" (ngSubmit)="onSubmit()">
-                            <div class="mb-3">
-                            <label class="form-label" for="nome">{{ 'COMPANIES.NAME' | translate }} <span
-                                    class="text-danger">*</span></label>
-                            <input type="text" class="form-control" [class.is-invalid]="isFieldInvalid('nome')"
-                                id="nome" formControlName="nome" />
-                            @if (isFieldInvalid('nome')) {
+                        <div class="row">
+                            <div class="col-md-8 mb-3">
+                                <label class="form-label" for="nome">{{ 'COMPANIES.NAME' | translate }} <span
+                                        class="text-danger">*</span></label>
+                                <input type="text" class="form-control" [class.is-invalid]="isFieldInvalid('nome')"
+                                    id="nome" formControlName="nome" />
+                                @if (isFieldInvalid('nome')) {
                                 <div class="invalid-feedback d-block">{{ getFieldError('nome') }}</div>
-                            }
+                                }
+                            </div>
+
+                            <div class="col-md-4 mb-3">
+                                <label class="form-label" for="cnpj">{{ 'COMPANIES.CNPJ' | translate }} <span
+                                        class="text-danger">*</span></label>
+                                <input type="text" class="form-control" [class.is-invalid]="isFieldInvalid('cnpj')"
+                                    id="cnpj" formControlName="cnpj" (input)="onCnpjInput($event)" />
+                                @if (isFieldInvalid('cnpj')) {
+                                <div class="invalid-feedback d-block">{{ getFieldError('cnpj') }}</div>
+                                }
+                            </div>
                         </div>
 
-                        <div class="mb-3">
-                            <label class="form-label" for="cnpj">{{ 'COMPANIES.CNPJ' | translate }} <span
-                                    class="text-danger">*</span></label>
-                            <input type="text" class="form-control" [class.is-invalid]="isFieldInvalid('cnpj')"
-                                id="cnpj" formControlName="cnpj" (input)="onCnpjInput($event)" />
-                            @if (isFieldInvalid('cnpj')) {
-                                <div class="invalid-feedback d-block">{{ getFieldError('cnpj') }}</div>
-                            }
-                        </div>
-                        
                         <div class="row">
                             <div class="col-md-8">
                                 <div class="mb-3">
@@ -59,7 +61,7 @@
                                         [class.is-invalid]="isFieldInvalid('cidade')" id="cidade"
                                         formControlName="cidade" />
                                     @if (isFieldInvalid('cidade')) {
-                                        <div class="invalid-feedback d-block">{{ getFieldError('cidade') }}</div>
+                                    <div class="invalid-feedback d-block">{{ getFieldError('cidade') }}</div>
                                     }
                                 </div>
                             </div>
@@ -73,7 +75,7 @@
                                         [class.is-invalid]="isFieldInvalid('estado')">
                                     </ng-select>
                                     @if (isFieldInvalid('estado')) {
-                                        <div class="invalid-feedback d-block">{{ getFieldError('estado') }}</div>
+                                    <div class="invalid-feedback d-block">{{ getFieldError('estado') }}</div>
                                     }
                                 </div>
                             </div>
@@ -89,59 +91,43 @@
                                         formControlName="tipoNegocio"
                                         [class.is-invalid]="isFieldInvalid('tipoNegocio')">
                                     </ng-select>
-                                    @if (isFieldInvalid('tipoNegocio')) { 
-                                        <div class="invalid-feedback d-block">
-                                            {{ getFieldError('tipoNegocio') }}
-                                        </div> 
+                                    @if (isFieldInvalid('tipoNegocio')) {
+                                    <div class="invalid-feedback d-block">
+                                        {{ getFieldError('tipoNegocio') }}
+                                    </div>
                                     }
                                 </div>
                             </div>
 
                             <div class="col-md-4">
                                 <div class="mb-3">
-                                    <label class="form-label" for="loginUrl">{{ 'COMPANIES.LOGIN_URL' | translate }}</label>
+                                    <label class="form-label" for="loginUrl">{{ 'COMPANIES.LOGIN_URL' | translate
+                                        }}</label>
                                     <input type="text" class="form-control"
                                         [class.is-invalid]="isFieldInvalid('loginUrl')" id="loginUrl"
                                         formControlName="loginUrl" placeholder="ex: minha-empresa" />
-                                    @if (isFieldInvalid('loginUrl')) { 
-                                        <div class="invalid-feedback d-block">
-                                            {{ getFieldError('loginUrl') }}
-                                        </div> 
+                                    @if (isFieldInvalid('loginUrl')) {
+                                    <div class="invalid-feedback d-block">
+                                        {{ getFieldError('loginUrl') }}
+                                    </div>
                                     }
-                                    
+
                                 </div>
                             </div>
                         </div>
 
                         <div class="mb-3">
                             <div class="form-check">
-                                <input type="checkbox" class="form-check-input" id="ckativo"
-                                    formControlName="ativo" />
+                                <input type="checkbox" class="form-check-input" id="ckativo" formControlName="ativo" />
                                 <label class="form-check-label" for="ckativo">{{ 'COMMON.ACTIVE' | translate
                                     }}</label>
                             </div>
                         </div>
 
-                        <div class="form-footer mt-4 d-flex justify-content-end gap-2">
-                            <a [routerLink]="['/empresas']" class="btn btn-link">{{ 'BUTTONS.CANCEL' | translate
-                                }}</a>
-                            <button type="submit" class="btn btn-primary" [disabled]="loading || form.invalid">
-                                @if (loading) {
-                                    <span class="spinner-border spinner-border-sm me-2" role="status"></span>
-                                }
-                                @if (isEditMode) {
-                                    {{ 'BUTTONS.UPDATE' | translate }}
-                                } @else {
-                                    {{ 'BUTTONS.CREATE' | translate }}
-                                }
-                            </button>
-                        </div>
-                    </form>
+                    </div>
                 </div>
-            </div>
 
-            <!-- Gestão de Usuários - Apenas em modo edição -->
-            @if (isEditMode && empresaId) {
+                <!-- Gestão de Usuários -->
                 <div class="card mt-3">
                     <div class="card-header d-flex justify-content-between align-items-center">
                         <h3 class="card-title mb-0">
@@ -156,17 +142,20 @@
                     <div class="card-body">
                         <!-- Buscar e adicionar usuários existentes -->
                         <div class="mb-4">
-                            <label class="form-label">Adicionar Usuário Existente</label>
-                            <ng-select 
-                                [items]="usuariosDisponiveis" 
-                                bindLabel="nome"
-                                [searchable]="true"
-                                [clearable]="true"
-                                placeholder="Busque por nome ou email..."
+                            <label class="form-label">
+                                @if (isEditMode) {
+                                    Adicionar Usuário Existente
+                                } @else {
+                                    Selecionar Usuários para Associar
+                                }
+                            </label>
+                            <ng-select [items]="usuariosDisponiveis" bindLabel="nome" [searchable]="true"
+                                [clearable]="true" placeholder="Busque por nome ou email..."
                                 (change)="associarUsuario($event)">
                                 <ng-template ng-option-tmp let-item="item">
                                     <div class="d-flex align-items-center">
-                                        <app-user-avatar [nome]="item.nome" [fotoUrl]="item.fotoUrl" [size]="'small'" class="me-2"></app-user-avatar>
+                                        <app-user-avatar [nome]="item.nome" [fotoUrl]="item.fotoUrl" [size]="'small'"
+                                            class="me-2"></app-user-avatar>
                                         <div>
                                             <div>{{ item.nome }}</div>
                                             <small class="text-muted">{{ item.email }}</small>
@@ -174,60 +163,81 @@
                                     </div>
                                 </ng-template>
                             </ng-select>
-                            <small class="text-muted">Selecione um usuário para associar a esta empresa</small>
+                            <small class="text-muted">
+                                @if (isEditMode) {
+                                    Selecione um usuário para associar a esta empresa
+                                } @else {
+                                    Os usuários serão associados após criar a empresa
+                                }
+                            </small>
                         </div>
 
                         <!-- Lista de usuários associados -->
-                        @if (usuariosAssociados.length > 0) {
-                            <div class="table-responsive">
-                                <table class="table table-hover">
-                                    <thead>
-                                        <tr>
-                                            <th>Usuário</th>
-                                            <th>Email</th>
-                                            <th>Cargo</th>
-                                            <th>Perfil</th>
-                                            <th class="text-end">Ações</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        @for (usuario of usuariosAssociados; track usuario.id) {
-                                            <tr>
-                                                <td>
-                                                    <div class="text-muted">
-                                                        <span>{{ usuario.nome }}</span>
-                                                    </div>
-                                                </td>
-                                                <td class="text-muted">{{ usuario.email }}</td>
-                                                <td class="text-muted">{{ usuario.cargo }}</td>
-                                                <td>
-                                                    @if (isPerfilObject(usuario.perfil)) {
-                                                        <span class="badge bg-info">{{ usuario.perfil.nome }}</span>
-                                                    }
-                                                </td>
-                                                <td class="text-muted">
-                                                    <button 
-                                                        type="button" 
-                                                        class="btn btn-icon text-danger"
-                                                        (click)="desassociarUsuario(usuario)"
-                                                        title="Desassociar usuário">
-                                                        <i class="feather icon-trash-2"></i>
-                                                    </button>
-                                                </td>
-                                            </tr>
-                                        }
-                                    </tbody>
-                                </table>
-                            </div>
+                        @if (isEditMode ? usuariosAssociados.length > 0 : usuariosPendentesAssociacao.length > 0) {
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>Usuário</th>
+                                        <th>Cargo</th>
+                                        <th>Perfil</th>
+                                        <th class="text-end">Ações</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @for (usuario of (isEditMode ? usuariosAssociados : usuariosPendentesAssociacao); track usuario.id) {
+                                    <tr>
+                                        <td>
+                                            <div class="text-muted">
+                                                <span>{{ usuario.nome }}</span>
+                                            </div>
+                                        </td>
+                                        <td class="text-muted">{{ usuario.cargo }}</td>
+                                        <td>
+                                            @if (isPerfilObject(usuario.perfil)) {
+                                            <span class="badge bg-info">{{ usuario.perfil.nome }}</span>
+                                            }
+                                        </td>
+                                        <td class="text-muted text-end">
+                                            <button type="button" class="btn btn-icon text-danger"
+                                                (click)="desassociarUsuario(usuario)" title="Desassociar usuário">
+                                                <i class="feather icon-trash-2"></i>
+                                            </button>
+                                        </td>
+                                    </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
                         } @else {
-                            <div class="alert alert-info mb-0">
-                                <i class="feather icon-info me-2"></i>
+                        <div class="alert alert-info mb-0">
+                            <i class="feather icon-info me-2"></i>
+                            @if (isEditMode) {
                                 Nenhum usuário associado a esta empresa ainda.
-                            </div>
+                            } @else {
+                                Nenhum usuário adicionado ainda. Os usuários serão associados quando a empresa for criada.
+                            }
+                        </div>
                         }
                     </div>
                 </div>
-            }
+
+
+                <div class="form-footer mt-4 d-flex justify-content-end gap-2">
+                    <button [routerLink]="['/empresas']" class="btn btn-outline-secondary">{{ 'BUTTONS.CANCEL' | translate
+                        }}</button>
+                    <button type="submit" class="btn btn-primary" [disabled]="loading || form.invalid">
+                        @if (loading) {
+                        <span class="spinner-border spinner-border-sm me-2" role="status"></span>
+                        }
+                        @if (isEditMode) {
+                        {{ 'BUTTONS.UPDATE' | translate }}
+                        } @else {
+                        {{ 'BUTTONS.CREATE' | translate }}
+                        }
+                    </button>
+                </div>
+            </form>
         </div>
 
         <!-- Logo Sidebar -->
@@ -239,13 +249,13 @@
                 <div class="card-body text-center">
                     <div class="mb-3 d-flex justify-content-center">
                         @if (previewUrl || logoUrl) {
-                            <img [src]="previewUrl || logoUrl" alt="Logo da empresa" class="img-fluid rounded"
-                                style="max-height: 150px; max-width: 100%;">
+                        <img [src]="previewUrl || logoUrl" alt="Logo da empresa" class="img-fluid rounded"
+                            style="max-height: 150px; max-width: 100%;">
                         } @else {
-                            <div class="d-flex align-items-center justify-content-center bg-light rounded"
-                                style="height: 150px; width: 150px;">
-                                <i class="feather icon-image text-muted" style="width: 48px; height: 48px;"></i>
-                            </div>
+                        <div class="d-flex align-items-center justify-content-center bg-light rounded text-muted"
+                            style="height: 150px; width: 300px;">
+                            <span>Imagem 300 x 115</span>
+                        </div>
                         }
                     </div>
 
@@ -255,19 +265,19 @@
                         <button type="button" id="btnUpLogo" class="btn btn-sm btn-primary w-100"
                             (click)="logoInput.click()" [disabled]="uploadingLogo">
                             @if (uploadingLogo) {
-                                <span class="spinner-border spinner-border-sm me-2" role="status">
-                                    <span class="visually-hidden">Loading...</span>
-                                </span>
+                            <span class="spinner-border spinner-border-sm me-2" role="status">
+                                <span class="visually-hidden">Loading...</span>
+                            </span>
                             }
                             {{ 'BUTTONS.UPLOAD' | translate }}
                         </button>
                     </div>
 
                     @if (logoUrl || previewUrl) {
-                        <button type="button" class="btn btn-sm btn-danger w-100" (click)="removeLogo()"
-                            [disabled]="uploadingLogo || !isEditMode">
-                            {{ 'BUTTONS.REMOVE_IMAGE' | translate }}
-                        </button>
+                    <button type="button" class="btn btn-sm btn-danger w-100" (click)="removeLogo()"
+                        [disabled]="uploadingLogo || !isEditMode">
+                        {{ 'BUTTONS.REMOVE_IMAGE' | translate }}
+                    </button>
                     }
 
                     <p class="text-muted text-sm mt-3 mb-0">
@@ -283,13 +293,14 @@
                 <div class="card-body">
                     <p class="text-muted mb-2">
                         @if (isEditMode) {
-                            Edite as informações da empresa e clique em "Atualizar" para salvar as mudanças.
+                        Edite as informações da empresa e clique em "Atualizar" para salvar as mudanças.
                         } @else {
-                            Preencha todos os campos obrigatórios (marcados com *) para criar uma nova empresa.
+                        Preencha todos os campos obrigatórios (marcados com *) para criar uma nova empresa.
                         }
                     </p>
                     <p class="text-muted text-sm mb-2">
-                        <strong>Identificação do login:</strong> o valor deste campo será usado na URL de acesso da empresa: /login/{{ '{' }}loginUrl{{ '}' }}. Use apenas letras, números e hífen, sem espaços.
+                        <strong>Identificação do login:</strong> o valor deste campo será usado na URL de acesso da
+                        empresa: /login/{{ '{' }}loginUrl{{ '}' }}. Use apenas letras, números e hífen, sem espaços.
                     </p>
                     <p class="text-muted text-sm mb-0">
                         <strong>Dica:</strong> O logotipo será utilizado na tela de login personalizada da empresa.
@@ -302,7 +313,6 @@
 </div>
 
 <!-- Modal para criar novo usuário -->
-<app-usuario-modal maxheight="50vh" title="Criar Novo Usuário"
-    [empresaId]="empresaId || undefined"
+<app-usuario-modal maxheight="50vh" title="Criar Novo Usuário" [empresaId]="empresaId || undefined"
     (usuarioCriado)="onUsuarioCriado($event)">
 </app-usuario-modal>

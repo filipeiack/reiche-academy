@@ -53,7 +53,8 @@
       "ENGLISH": "Inglês"
     },
     "PROFILE": {
-      "USER": "Usuário",
+      "USER": "Meu Usuário",
+      "COMPANY": "Minha Empresa",
       "LOGOUT": "Sair"
     },
     "NOTIFICATIONS": {
@@ -116,9 +117,8 @@
     "AVATAR": "Avatar",
     "NAME": "Nome",
     "EMAIL": "Email",
-    "ROLE": "Perfil",
-    "POSITION": "Cargo",
-    "CARGO": "Cargo",
+    "ROLE": "Perfil Sistema",
+    "CARGO": "Cargo na Empresa",
     "STATUS": "Status",
     "ACTIVE": "Usuário Ativo",
     "CREATE": "Criar Usuário",

@@ -67,6 +67,7 @@ export class AuthService {
         cargo: usuario.cargo,
         perfil: usuario.perfil,
         empresaId: usuario.empresaId,
+        empresa: usuario.empresa,
         fotoUrl: usuario.fotoUrl,
       },
     };

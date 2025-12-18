@@ -10,6 +10,13 @@ export interface PerfilUsuarioBasic {
   nivel: number;
 }
 
+export interface EmpresaBasic {
+  id: string;
+  nome: string;
+  cnpj: string;
+  logoUrl?: string | null;
+}
+
 export interface LoginResponse {
   accessToken: string;
   refreshToken: string;
@@ -32,6 +39,7 @@ export interface Usuario {
   perfil: PerfilUsuarioBasic | string;
   ativo: boolean;
   empresaId?: string;
+  empresa?: EmpresaBasic;
   fotoUrl?: string | null;
   createdAt: Date;
   updatedAt: Date;

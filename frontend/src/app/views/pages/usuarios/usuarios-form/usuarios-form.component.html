@@ -1,3 +1,4 @@
+@if (!modalMode) {
 <nav aria-label="breadcrumb">
     <ol class="breadcrumb breadcrumb-dot mb-1">
         <li class="breadcrumb-item">
@@ -15,93 +16,102 @@
         </li>
     </ol>
 </nav>
+}
 
 <div class="card-body">
     <div class="row">
-        <div class="col-md-8">
+        <div [ngClass]="!modalMode ? 'col-md-8' : 'col-md-12'">
             <!-- Form Card -->
-            <div class="card mb-3">
-                <div class="card-body">
-                    @if (loading && isEditMode) {
-                    <div class="text-center py-5">
-                        <div class="spinner-border text-primary" role="status">
-                            <span class="visually-hidden">{{ "COMMON.LOADING" | translate }}</span>
+            <form [formGroup]="form" (ngSubmit)="onSubmit()">
+                <div class="card mb-3">
+                    <div class="card-body">
+                        @if (loading && isEditMode) {
+                        <div class="text-center py-5">
+                            <div class="spinner-border text-primary" role="status">
+                                <span class="visually-hidden">{{ "COMMON.LOADING" | translate }}</span>
+                            </div>
                         </div>
-                    </div>
-                    } @else {
-                    <form [formGroup]="form" (ngSubmit)="onSubmit()">
-                        <!-- Nome -->
-                        <div class="mb-3">
-                            <label class="form-label" for="nome">{{ "USERS.NAME" | translate }}
-                                <span class="text-danger">*</span></label>
-                            <input type="text" class="form-control" [class.is-invalid]="isFieldInvalid('nome')"
-                                id="nome" formControlName="nome" placeholder="Ex: João Silva" />
-                            @if (isFieldInvalid('nome')) {
-                            <div class="invalid-feedback d-block">
-                                {{ getFieldError("nome") }}
+                        } @else {
+
+                        <!-- Nome e Telefone -->
+                        <div class="row">
+                            <div class="col-md-8 mb-3">
+                                <label class="form-label" for="nome">{{ "USERS.NAME" | translate }}
+                                    <span class="text-danger">*</span></label>
+                                <input type="text" class="form-control" [class.is-invalid]="isFieldInvalid('nome')"
+                                    id="nome" formControlName="nome" placeholder="Ex: João Silva" />
+                                @if (isFieldInvalid('nome')) {
+                                <div class="invalid-feedback d-block">
+                                    {{ getFieldError("nome") }}
+                                </div>
+                                }
+                            </div>
+
+                            <div class="col-md-4 mb-3">
+                                <label class="form-label" for="telefone">Telefone</label>
+                                <input type="text" class="form-control" id="telefone" formControlName="telefone"
+                                    placeholder="(11) 98765-4321" (input)="applyPhoneMask($event)" maxlength="15" />
+                            </div>
+                        </div>
+
+                        <!-- Email e Senha -->
+                        <div class="row">
+                            <div class="col-md-8 mb-3">
+                                <label class="form-label" for="email">{{ "USERS.EMAIL" | translate }}
+                                    <span class="text-danger">*</span></label>
+                                <input type="email" class="form-control" [class.is-invalid]="isFieldInvalid('email')"
+                                    id="email" formControlName="email" placeholder="Ex: joao@reiche.com" />
+                                @if (isFieldInvalid('email')) {
+                                <div class="invalid-feedback d-block">
+                                    {{ getFieldError("email") }}
+                                </div>
+                                }
+                            </div>
+
+                            @if (!isEditMode) {
+                            <div class="col-md-4 mb-3">
+                                <label class="form-label" for="senha">{{ "AUTH.PASSWORD" | translate }}
+                                    <span class="text-danger">*</span></label>
+                                <input type="password" class="form-control" [class.is-invalid]="isFieldInvalid('senha')"
+                                    id="senha" formControlName="senha" placeholder="Mínimo 6 caracteres" />
+                                @if (isFieldInvalid('senha')) {
+                                <div class="invalid-feedback d-block">
+                                    {{ getFieldError("senha") }}
+                                </div>
+                                }
                             </div>
                             }
                         </div>
 
-                        <!-- Email -->
-                        <div class="mb-3">
-                            <label class="form-label" for="email">{{ "USERS.EMAIL" | translate }}
-                                <span class="text-danger">*</span></label>
-                            <input type="email" class="form-control" [class.is-invalid]="isFieldInvalid('email')"
-                                id="email" formControlName="email" placeholder="Ex: joao@reiche.com" />
-                            @if (isFieldInvalid('email')) {
-                            <div class="invalid-feedback d-block">
-                                {{ getFieldError("email") }}
+                        <!-- Cargo e Perfil -->
+                        <div class="row">
+                            <!-- Cargo -->
+                            <div class="col-md-8 mb-3">
+                                <label class="form-label" for="cargo">{{ "USERS.CARGO" | translate }}</label>
+                                <input type="text" class="form-control" [class.is-invalid]="isFieldInvalid('cargo')"
+                                    id="cargo" formControlName="cargo" placeholder="Ex: Diretor Financeiro" />
+                                @if (isFieldInvalid('cargo')) {
+                                <div class="invalid-feedback d-block">
+                                    {{ getFieldError("cargo") }}
+                                </div>
+                                }
                             </div>
-                            }
-                        </div>
 
-                        <!-- Cargo -->
-                        <div class="mb-3">
-                            <label class="form-label" for="cargo">{{ "USERS.POSITION" | translate }}
-                                <span class="text-danger">*</span></label>
-                            <input type="text" class="form-control" [class.is-invalid]="isFieldInvalid('cargo')"
-                                id="cargo" formControlName="cargo" placeholder="Ex: Diretor de Operações" />
-                            @if (isFieldInvalid('cargo')) {
-                            <div class="invalid-feedback d-block">
-                                {{ getFieldError("cargo") }}
+                            <!-- Perfil -->
+                            <div class="col-md-4 mb-3">
+                                <label class="form-label" for="perfilId">{{ "USERS.ROLE" | translate }}
+                                    <span class="text-danger">*</span></label>
+                                <ng-select [items]="perfis" bindLabel="nome" bindValue="id"
+                                    placeholder="Selecione um perfil" formControlName="perfilId"
+                                    [class.is-invalid]="isFieldInvalid('perfilId')">
+                                </ng-select>
+                                @if (isFieldInvalid('perfilId')) {
+                                <div class="invalid-feedback d-block">
+                                    {{ getFieldError("perfilId") }}
+                                </div>
+                                }
                             </div>
-                            }
                         </div>
-
-                        <!-- Perfil -->
-                        <div class="mb-3">
-                            <label class="form-label" for="perfilId">{{ "USERS.ROLE" | translate }}
-                                <span class="text-danger">*</span></label>
-                            <ng-select 
-                                [items]="perfis" 
-                                bindLabel="nome" 
-                                bindValue="id"
-                                placeholder="Selecione um perfil"
-                                formControlName="perfilId"
-                                [class.is-invalid]="isFieldInvalid('perfilId')">
-                            </ng-select>
-                            @if (isFieldInvalid('perfilId')) {
-                            <div class="invalid-feedback d-block">
-                                {{ getFieldError("perfilId") }}
-                            </div>
-                            }
-                        </div>
-
-                        <!-- Senha (apenas em modo criação) -->
-                        @if (!isEditMode) {
-                        <div class="mb-3">
-                            <label class="form-label" for="senha">{{ "AUTH.PASSWORD" | translate }}
-                                <span class="text-danger">*</span></label>
-                            <input type="password" class="form-control" [class.is-invalid]="isFieldInvalid('senha')"
-                                id="senha" formControlName="senha" placeholder="Mínimo 6 caracteres" />
-                            @if (isFieldInvalid('senha')) {
-                            <div class="invalid-feedback d-block">
-                                {{ getFieldError("senha") }}
-                            </div>
-                            }
-                        </div>
-                        }
 
                         <!-- Senha (modo edição - opcional) -->
                         @if (isEditMode) {
@@ -113,17 +123,17 @@
                                     [class.is-invalid]="isFieldInvalid('senha')" id="senhaEdit" formControlName="senha"
                                     placeholder="Deixe em branco para manter a senha atual" />
                                 <!-- <button 
-                            type="button" 
-                            class="btn btn-outline-primary"
-                            (click)="togglePasswordVisibility()"
-                            tabindex="-1"
-                        >
-                            @if (showPassword) {
-                                <i data-feather="eye-off" appFeatherIcon></i>
-                            } @else {
-                                <i data-feather="eye" appFeatherIcon></i>
-                            }
-                        </button> -->
+                                type="button" 
+                                class="btn btn-outline-primary"
+                                (click)="togglePasswordVisibility()"
+                                tabindex="-1"
+                            >
+                                @if (showPassword) {
+                                    <i data-feather="eye-off" appFeatherIcon></i>
+                                } @else {
+                                    <i data-feather="eye" appFeatherIcon></i>
+                                }
+                            </button> -->
                             </div>
                             <small class="form-text text-muted d-block mt-1">
                                 Deixe em branco para manter a senha atual. Mínimo 6 caracteres.
@@ -136,22 +146,31 @@
                         </div>
                         }
 
-                        <!-- Empresa Associada (dentro do formulário) -->
-                        @if (!modalMode) {
+                        <!-- Status -->
+                        <div class="mb-3">
+                            <div class="form-check">
+                                <input type="checkbox" class="form-check-input" id="ckativo" formControlName="ativo" />
+                                <label class="form-check-label" for="ativo">
+                                    {{ "USERS.ACTIVE" | translate }}
+                                </label>
+                            </div>
+                        </div>
+                        }
+                    </div>
+                </div>
+
+                <!-- Empresa Associada (dentro do formulário) -->
+                @if (!modalMode) {
+                <div class="card mb-3">
+                    <div class="card-body">
                         <div class="mb-3">
                             <label class="form-label">
                                 <i class="feather icon-briefcase me-2"></i>
                                 Empresa Associada
                             </label>
-                            <ng-select 
-                                [items]="empresas" 
-                                bindLabel="nome" 
-                                bindValue="id"
-                                placeholder="Busque por empresa..."
-                                formControlName="empresaId"
-                                [searchable]="true"
-                                [clearable]="true"
-                                [loading]="loadingEmpresas">
+                            <ng-select [items]="empresas" bindLabel="nome" bindValue="id"
+                                placeholder="Busque por empresa..." formControlName="empresaId" [searchable]="true"
+                                [clearable]="true" [loading]="loadingEmpresas">
                                 <ng-template ng-option-tmp let-item="item">
                                     <div>
                                         <div><strong>{{ item.nome }}</strong></div>
@@ -168,42 +187,33 @@
                                 Associe o usuário a uma empresa específica
                             </small>
                         </div>
-                        }
-
-                        <!-- Status -->
-                        <div class="mb-3">
-                            <div class="form-check">
-                                <input type="checkbox" class="form-check-input" id="ckativo" formControlName="ativo" />
-                                <label class="form-check-label" for="ativo">
-                                    {{ "USERS.ACTIVE" | translate }}
-                                </label>
-                            </div>
-                        </div>
-
-                        <!-- Buttons -->
-                        <div class="form-footer mt-4 d-flex justify-content-end gap-2">
-                            <a [routerLink]="['/usuarios']" class="btn btn-link">
-                                {{ "BUTTONS.CANCEL" | translate }}
-                            </a>
-                            <button type="submit" class="btn btn-primary" [disabled]="loading || form.invalid">
-                                @if (loading) {
-                                <span class="spinner-border spinner-border-sm me-2" role="status">
-                                    <span class="visually-hidden">Loading...</span>
-                                </span>
-                                } @if (isEditMode) {
-                                {{ "BUTTONS.UPDATE" | translate }}
-                                } @else {
-                                {{ "BUTTONS.CREATE" | translate }}
-                                }
-                            </button>
-                        </div>
-                    </form>
-                    }
+                    </div>
                 </div>
-            </div>
+                }
+
+                <!-- Form Actions -->
+                <!-- Buttons -->
+                <div class="form-footer mt-4 d-flex justify-content-end gap-2">
+                    <button type="button" (click)="handleCancel()" class="btn btn-outline-secondary">
+                        {{ "BUTTONS.CANCEL" | translate }}
+                    </button>
+                    <button type="submit" class="btn btn-primary" [disabled]="loading || form.invalid">
+                        @if (loading) {
+                        <span class="spinner-border spinner-border-sm me-2" role="status">
+                            <span class="visually-hidden">Loading...</span>
+                        </span>
+                        } @if (isEditMode) {
+                        {{ "BUTTONS.UPDATE" | translate }}
+                        } @else {
+                        {{ "BUTTONS.CREATE" | translate }}
+                        }
+                    </button>
+                </div>
+            </form>
         </div>
 
         <!-- Info Sidebar -->
+        @if (!modalMode) {
         <div class="col-md-4">
             <div class="card mb-3">
                 <div class="card-header">
@@ -270,5 +280,6 @@
                 </div>
             </div>
         </div>
+        }
     </div>
 </div>

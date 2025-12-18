@@ -77,6 +77,7 @@ model Usuario {
   nome      String
   senha     String
   cargo     String
+  telefone  String?
   fotoUrl   String?
   ativo     Boolean  @default(true)
   

@@ -176,6 +176,11 @@
         </div>
 
         <div class="mb-3">
+          <label class="text-muted small">Telefone</label>
+          <p class="mb-0">{{ selectedUsuario.telefone || '-' }}</p>
+        </div>
+
+        <div class="mb-3">
           <label class="text-muted small">{{ 'USERS.ROLE' | translate }}</label>
           <p class="mb-0">
             {{ getPerfilLabel(selectedUsuario.perfil) }}
