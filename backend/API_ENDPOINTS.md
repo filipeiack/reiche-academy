@@ -55,7 +55,7 @@ Criar novo usuário
   "empresaId": "uuid-opcional"
 }
 ```
-**Perfis disponíveis:** `CONSULTOR`, `GESTOR`, `COLABORADOR`, `LEITURA`
+**Perfis disponíveis:** `ADMINISTRADOR`, `GESTOR`, `COLABORADOR`, `LEITURA`
 
 ### **PATCH** `/api/usuarios/:id`
 Atualizar usuário (todos os campos são opcionais)

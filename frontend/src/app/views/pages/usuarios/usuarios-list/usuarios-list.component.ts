@@ -3,7 +3,8 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import Swal from 'sweetalert2';
-import { UsersService, Usuario } from '../../../../core/services/users.service';
+import { UsersService } from '../../../../core/services/users.service';
+import { Usuario } from '../../../../core/models/auth.model';
 import { TranslatePipe } from '../../../../core/pipes/translate.pipe';
 import { NgbAlertModule, NgbPaginationModule, NgbOffcanvas, NgbOffcanvasModule } from '@ng-bootstrap/ng-bootstrap';
 import { SortableDirective, SortEvent } from '../../../../shared/directives/sortable.directive';
@@ -162,7 +163,6 @@ export class UsuariosListComponent implements OnInit {
     }
     const labels: { [key: string]: string } = {
       'ADMINISTRADOR': 'Administrador',
-      'CONSULTOR': 'Consultor',
       'GESTOR': 'Gestor',
       'COLABORADOR': 'Colaborador',
       'LEITURA': 'Leitura'

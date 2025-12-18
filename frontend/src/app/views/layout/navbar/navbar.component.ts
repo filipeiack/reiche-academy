@@ -51,6 +51,14 @@ export class NavbarComponent implements OnInit {
     return null;
   }
 
+  isPerfilCliente(): boolean {
+    if (!this.currentUser?.perfil) return false;
+    const perfilCodigo = typeof this.currentUser.perfil === 'object' 
+      ? this.currentUser.perfil.codigo 
+      : this.currentUser.perfil;
+    return ['GESTOR', 'COLABORADOR', 'LEITURA'].includes(perfilCodigo);
+  }
+
   constructor(private router: Router, private themeModeService: ThemeModeService) {}
 
   ngOnInit(): void {

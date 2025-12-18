@@ -151,7 +151,7 @@ erDiagram
 ```
 
 ## Enums
-- `PerfilUsuario`: CONSULTOR | GESTOR | COLABORADOR | LEITURA
+- `PerfilUsuario`: ADMINISTRADOR | GESTOR | COLABORADOR | LEITURA
 - `Criticidade`: ALTO | MEDIO | BAIXO
 - `StatusAcao`: PENDENTE | EM_ANDAMENTO | CONCLUIDA | CANCELADA
 

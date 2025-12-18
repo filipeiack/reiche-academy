@@ -40,7 +40,7 @@ export class EmpresasController {
 
   @ApiBearerAuth()
   @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles('ADMINISTRADOR', 'CONSULTOR', 'GESTOR')
+  @Roles('ADMINISTRADOR')
   @Post()
   @ApiOperation({ summary: 'Criar nova empresa' })
   @ApiResponse({ status: 201, description: 'Empresa criada com sucesso' })
@@ -50,7 +50,7 @@ export class EmpresasController {
 
   @ApiBearerAuth()
   @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles('ADMINISTRADOR', 'CONSULTOR', 'GESTOR')
+  @Roles('ADMINISTRADOR', 'GESTOR')
   @Get()
   @ApiOperation({ summary: 'Listar empresas' })
   @ApiResponse({ status: 200, description: 'Lista de empresas' })
@@ -59,13 +59,13 @@ export class EmpresasController {
     if (req.user.perfil === 'ADMINISTRADOR') {
       return this.empresasService.findAll();
     }
-    // Outros perfis veem apenas sua empresa
+    // GESTOR vê apenas sua empresa
     return this.empresasService.findAllByEmpresa(req.user.empresaId);
   }
 
   @ApiBearerAuth()
   @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles('ADMINISTRADOR', 'CONSULTOR', 'GESTOR')
+  @Roles('ADMINISTRADOR')
   @Get('tipos-negocio/distinct')
   @ApiOperation({ summary: 'Buscar tipos de negócio distintos' })
   @ApiResponse({ status: 200, description: 'Lista de tipos de negócio' })

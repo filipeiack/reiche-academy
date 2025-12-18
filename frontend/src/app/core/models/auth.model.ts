@@ -36,6 +36,7 @@ export interface Usuario {
   email: string;
   nome: string;
   cargo?: string;
+  telefone?: string;
   perfil: PerfilUsuarioBasic | string;
   ativo: boolean;
   empresaId?: string;

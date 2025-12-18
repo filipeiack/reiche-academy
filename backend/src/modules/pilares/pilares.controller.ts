@@ -26,7 +26,7 @@ export class PilaresController {
   constructor(private readonly pilaresService: PilaresService) {}
 
   @Post()
-  @Roles('ADMINISTRADOR', 'CONSULTOR')
+  @Roles('ADMINISTRADOR')
   @ApiOperation({ summary: 'Criar novo pilar' })
   @ApiResponse({ status: 201, description: 'Pilar criado com sucesso' })
   create(@Body() createPilarDto: CreatePilarDto, @Request() req: ExpressRequest & { user: { id: string } }) {
@@ -51,7 +51,7 @@ export class PilaresController {
   }
 
   @Patch(':id')
-  @Roles('ADMINISTRADOR', 'CONSULTOR')
+  @Roles('ADMINISTRADOR')
   @ApiOperation({ summary: 'Atualizar pilar' })
   @ApiResponse({ status: 200, description: 'Pilar atualizado' })
   update(
@@ -63,7 +63,7 @@ export class PilaresController {
   }
 
   @Delete(':id')
-  @Roles('ADMINISTRADOR', 'CONSULTOR')
+  @Roles('ADMINISTRADOR')
   @ApiOperation({ summary: 'Desativar pilar' })
   @ApiResponse({ status: 200, description: 'Pilar desativado' })
   @ApiResponse({ status: 404, description: 'Pilar não encontrado' })
@@ -72,7 +72,7 @@ export class PilaresController {
   }
 
   @Post('reordenar')
-  @Roles('ADMINISTRADOR', 'CONSULTOR')
+  @Roles('ADMINISTRADOR')
   @ApiOperation({ summary: 'Reordenar pilares' })
   reordenar(
     @Body('ordens') ordens: { id: string; ordem: number }[],

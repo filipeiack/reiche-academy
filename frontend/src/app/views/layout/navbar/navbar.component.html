@@ -139,23 +139,25 @@
             </div>
           </div>
           <ul class="list-unstyled p-1">
+            <!-- Meu Usuário - Todos os perfis podem acessar -->
             <li>
               <a [routerLink]="currentUser ? ['/usuarios', currentUser.id, 'editar'] : null" class="dropdown-item py-2 d-flex ms-0">
                 <i class="feather icon-user me-2 icon-md"></i>
-                <span>{{ 'NAVBAR.PROFILE.USER' | translate }}</span>
+                <span>Meu Usuário</span>
               </a>
             </li>
+            
+            <!-- Minha Empresa - Exibir quando usuário tem empresa associada -->
+            @if (hasEmpresa) {
             <li>
-              <a [routerLink]="hasEmpresa ? ['/empresas', currentUser?.empresaId, 'editar'] : null" 
-                 [class.disabled]="!hasEmpresa"
-                 [class.text-muted]="!hasEmpresa"
-                 class="dropdown-item py-2 d-flex ms-0"
-                 [style.cursor]="hasEmpresa ? 'pointer' : 'not-allowed'"
-                 [style.opacity]="hasEmpresa ? '1' : '0.5'">
+              <a [routerLink]="['/empresas', currentUser?.empresaId, 'editar']" 
+                 class="dropdown-item py-2 d-flex ms-0">
                 <i class="feather icon-briefcase me-2 icon-md"></i>
-                <span>{{ 'NAVBAR.PROFILE.COMPANY' | translate }}</span>
+                <span>Minha Empresa</span>
               </a>
             </li>
+            }
+            
             <li>
               <a href="" (click)="onLogout($event)" class="dropdown-item py-2 d-flex ms-0">
                 <i class="feather icon-log-out me-2 icon-md"></i>

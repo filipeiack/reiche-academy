@@ -8,7 +8,7 @@ Stack:
 - Front-end: Angular 18+, Angular Material, RxJS, NgRx (quando necessário). Template baseado em "reiche-academy\templates\nobleui-angular\template\demo1".
 - Back-end: Node.js 20 LTS com NestJS, TypeScript, Swagger/OpenAPI, DTOs e validação class-validator.
 - Banco de dados: PostgreSQL + Prisma ORM (migrations versionadas).
-- Autenticação: JWT (access + refresh), RBAC por perfis (Consultor, Gestor, Colaborador, Leitura).
+- Autenticação: JWT (access + refresh), RBAC por perfis (Administrador, Gestor, Colaborador, Leitura).
 - Infraestrutura: Docker, Nginx, CI/CD GitHub Actions, storage S3 compatível, HTTPS.
 - Segurança: Argon2 para senhas, proteção CSRF/XSS/SQLi, LGPD e logs de auditoria.
 - Observabilidade: Winston ou Pino + OpenTelemetry.

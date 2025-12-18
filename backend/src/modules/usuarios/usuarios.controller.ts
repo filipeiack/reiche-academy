@@ -32,21 +32,21 @@ export class UsuariosController {
   constructor(private readonly usuariosService: UsuariosService) {}
 
   @Post()
-  @Roles('ADMINISTRADOR', 'CONSULTOR', 'GESTOR')
+  @Roles('ADMINISTRADOR')
   @ApiOperation({ summary: 'Criar novo usuário' })
   create(@Body() createUsuarioDto: CreateUsuarioDto) {
     return this.usuariosService.create(createUsuarioDto);
   }
 
   @Get()
-  @Roles('ADMINISTRADOR', 'CONSULTOR', 'GESTOR')
+  @Roles('ADMINISTRADOR')
   @ApiOperation({ summary: 'Listar todos os usuários' })
   findAll() {
     return this.usuariosService.findAll();
   }
 
   @Get('disponiveis/empresa')
-  @Roles('ADMINISTRADOR', 'CONSULTOR', 'GESTOR')
+  @Roles('ADMINISTRADOR')
   @ApiOperation({ summary: 'Buscar usuários disponíveis (sem empresa associada)' })
   findDisponiveis() {
     return this.usuariosService.findDisponiveis();
@@ -60,21 +60,21 @@ export class UsuariosController {
   }
 
   @Patch(':id')
-  @Roles('ADMINISTRADOR', 'CONSULTOR', 'GESTOR')
+  @Roles('ADMINISTRADOR', 'GESTOR', 'COLABORADOR')
   @ApiOperation({ summary: 'Atualizar usuário' })
   update(@Param('id') id: string, @Body() updateUsuarioDto: UpdateUsuarioDto) {
     return this.usuariosService.update(id, updateUsuarioDto);
   }
 
   @Delete(':id')
-  @Roles('ADMINISTRADOR', 'CONSULTOR')
+  @Roles('ADMINISTRADOR')
   @ApiOperation({ summary: 'Deletar usuário permanentemente' })
   remove(@Param('id') id: string) {
     return this.usuariosService.hardDelete(id);
   }
 
   @Patch(':id/inativar')
-  @Roles('ADMINISTRADOR', 'CONSULTOR', 'GESTOR')
+  @Roles('ADMINISTRADOR')
   @ApiOperation({ summary: 'Inativar usuário' })
   inactivate(@Param('id') id: string) {
     return this.usuariosService.remove(id);

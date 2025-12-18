@@ -3,7 +3,8 @@ import { CommonModule } from '@angular/common';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router, ActivatedRoute, RouterLink } from '@angular/router';
 import Swal from 'sweetalert2';
-import { UsersService, Usuario, CreateUsuarioRequest, UpdateUsuarioRequest } from '../../../../core/services/users.service';
+import { UsersService, CreateUsuarioRequest, UpdateUsuarioRequest } from '../../../../core/services/users.service';
+import { Usuario } from '../../../../core/models/auth.model';
 import { UserProfileService } from '../../../../core/services/user-profile.service';
 import { AuthService } from '../../../../core/services/auth.service';
 import { PerfisService, PerfilUsuario } from '../../../../core/services/perfis.service';
@@ -54,6 +55,7 @@ export class UsuariosFormComponent implements OnInit {
   loadingEmpresas = false;
   
   currentUsuario: Usuario | null = null;
+  currentLoggedUser: Usuario | null = null;
   fotoUrl: string | null = null;
   previewUrl: string | null = null;
   avatarFile: File | null = null;
@@ -63,6 +65,23 @@ export class UsuariosFormComponent implements OnInit {
 
   get senhaRequired(): boolean {
     return !this.isEditMode;
+  }
+
+  get isPerfilCliente(): boolean {
+    if (!this.currentLoggedUser?.perfil) return false;
+    const perfilCodigo = typeof this.currentLoggedUser.perfil === 'object' 
+      ? this.currentLoggedUser.perfil.codigo 
+      : this.currentLoggedUser.perfil;
+    return ['GESTOR', 'COLABORADOR', 'LEITURA'].includes(perfilCodigo);
+  }
+
+  get isEditingOwnUser(): boolean {
+    return this.isEditMode && this.currentLoggedUser?.id === this.usuarioId;
+  }
+
+  get shouldDisableEmpresaField(): boolean {
+    // Perfis de cliente não podem alterar a associação com empresa ao editar seus próprios dados
+    return this.isPerfilCliente && this.isEditingOwnUser;
   }
 
   togglePasswordVisibility(): void {
@@ -78,6 +97,11 @@ export class UsuariosFormComponent implements OnInit {
   }
 
   ngOnInit(): void {
+    // Carregar usuário logado
+    this.authService.currentUser$.subscribe(user => {
+      this.currentLoggedUser = user;
+    });
+
     this.loadPerfis();
     this.loadEmpresas();
     
@@ -197,6 +221,11 @@ export class UsuariosFormComponent implements OnInit {
         perfilId: formValue.perfilId || '',
         ativo: formValue.ativo || true
       };
+
+      // Incluir senha somente se foi preenchida
+      if (formValue.senha && formValue.senha.trim()) {
+        updateData.senha = formValue.senha;
+      }
 
       this.usersService.update(this.usuarioId, updateData).subscribe({
         next: () => {

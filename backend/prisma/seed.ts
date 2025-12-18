@@ -8,11 +8,10 @@ async function main() {
 
   // Criar perfis de usuário
   const perfis = [
-    { codigo: 'ADMINISTRADOR', nome: 'Administrador', descricao: 'Acesso total ao sistema', nivel: 1 },
-    { codigo: 'CONSULTOR', nome: 'Consultor', descricao: 'Gerencia estrutura (pilares, rotinas, empresas)', nivel: 2 },
-    { codigo: 'GESTOR', nome: 'Gestor', descricao: 'Gerencia empresa e colaboradores', nivel: 3 },
-    { codigo: 'COLABORADOR', nome: 'Colaborador', descricao: 'Acessa dados da empresa', nivel: 4 },
-    { codigo: 'LEITURA', nome: 'Leitura', descricao: 'Apenas visualização', nivel: 5 },
+    { codigo: 'ADMINISTRADOR', nome: 'Administrador', descricao: 'Equipe Reiche Academy - Acesso total ao sistema', nivel: 1 },
+    { codigo: 'GESTOR', nome: 'Gestor', descricao: 'Empresa cliente - Gerencia diagnósticos e dados da empresa', nivel: 2 },
+    { codigo: 'COLABORADOR', nome: 'Colaborador', descricao: 'Empresa cliente - Acessa diagnósticos e dados da empresa', nivel: 3 },
+    { codigo: 'LEITURA', nome: 'Leitura', descricao: 'Empresa cliente - Apenas visualização', nivel: 4 },
   ];
 
   for (const perfil of perfis) {
@@ -24,13 +23,13 @@ async function main() {
   }
   console.log(`✅ ${perfis.length} perfis de usuário criados`);
 
-  // Buscar perfil CONSULTOR para usar no admin
-  const perfilConsultor = await prisma.perfilUsuario.findUnique({
-    where: { codigo: 'CONSULTOR' },
+  // Buscar perfil ADMINISTRADOR para usar no admin
+  const perfilAdministrador = await prisma.perfilUsuario.findUnique({
+    where: { codigo: 'ADMINISTRADOR' },
   });
 
-  if (!perfilConsultor) {
-    throw new Error('Perfil CONSULTOR não encontrado');
+  if (!perfilAdministrador) {
+    throw new Error('Perfil ADMINISTRADOR não encontrado');
   }
 
   // Create a default empresa
@@ -50,18 +49,18 @@ async function main() {
   // Hash the password
   const hashedPassword = await argon2.hash('123456');
 
-  // Create admin user
+  // Create admin user (Administrador não precisa estar associado a empresa)
   const admin = await prisma.usuario.upsert({
     where: { email: 'admin@reiche.com' },
     update: {},
     create: {
       email: 'admin@reiche.com',
-      nome: 'Administrador',
+      nome: 'Administrador Reiche',
       senha: hashedPassword,
-      perfilId: perfilConsultor.id,
-      cargo: 'Administrador',
+      perfilId: perfilAdministrador.id,
+      cargo: 'Administrador do Sistema',
       ativo: true,
-      empresaId: empresa.id,
+      empresaId: null, // Administrador não precisa estar associado a empresa
     },
   });
   console.log(`✅ Usuário admin criado: ${admin.email}`);

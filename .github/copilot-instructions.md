@@ -26,7 +26,7 @@ Sistema web SPA para gestão empresarial PDCA, substituindo planilhas Excel de D
 ### Segurança & Autenticação
 - **Auth**: JWT (access + refresh tokens)
 - **Senhas**: Argon2 (nunca bcrypt)
-- **RBAC**: 4 perfis (Consultor, Gestor, Colaborador, Leitura)
+- **RBAC**: 4 perfis (Administrador, Gestor, Colaborador, Leitura)
 - **Proteção**: CSRF, XSS, SQL Injection
 - **Compliance**: LGPD
 

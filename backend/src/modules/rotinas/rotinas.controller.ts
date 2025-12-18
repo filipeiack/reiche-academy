@@ -27,7 +27,7 @@ export class RotinasController {
   constructor(private readonly rotinasService: RotinasService) {}
 
   @Post()
-  @Roles('ADMINISTRADOR', 'CONSULTOR')
+  @Roles('ADMINISTRADOR')
   @ApiOperation({ summary: 'Criar nova rotina' })
   @ApiResponse({ status: 201, description: 'Rotina criada com sucesso' })
   create(@Body() createRotinaDto: CreateRotinaDto, @Request() req: ExpressRequest & { user: { id: string } }) {
@@ -53,7 +53,7 @@ export class RotinasController {
   }
 
   @Patch(':id')
-  @Roles('ADMINISTRADOR', 'CONSULTOR')
+  @Roles('ADMINISTRADOR')
   @ApiOperation({ summary: 'Atualizar rotina' })
   @ApiResponse({ status: 200, description: 'Rotina atualizada' })
   update(
@@ -65,7 +65,7 @@ export class RotinasController {
   }
 
   @Delete(':id')
-  @Roles('ADMINISTRADOR', 'CONSULTOR')
+  @Roles('ADMINISTRADOR')
   @ApiOperation({ summary: 'Desativar rotina' })
   @ApiResponse({ status: 200, description: 'Rotina desativada' })
   remove(@Param('id') id: string, @Request() req: ExpressRequest & { user: { id: string } }) {
@@ -73,7 +73,7 @@ export class RotinasController {
   }
 
   @Post('pilar/:pilarId/reordenar')
-  @Roles('ADMINISTRADOR', 'CONSULTOR')
+  @Roles('ADMINISTRADOR')
   @ApiOperation({ summary: 'Reordenar rotinas de um pilar' })
   reordenar(
     @Param('pilarId') pilarId: string,

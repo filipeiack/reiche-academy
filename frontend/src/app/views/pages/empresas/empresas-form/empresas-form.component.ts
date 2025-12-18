@@ -4,7 +4,9 @@ import { FormBuilder, ReactiveFormsModule, FormsModule, Validators } from '@angu
 import { Router, ActivatedRoute, RouterLink } from '@angular/router';
 import Swal from 'sweetalert2';
 import { EmpresasService, Empresa, CreateEmpresaRequest, UpdateEmpresaRequest, EstadoBrasil } from '../../../../core/services/empresas.service';
-import { UsersService, Usuario } from '../../../../core/services/users.service';
+import { UsersService } from '../../../../core/services/users.service';
+import { Usuario } from '../../../../core/models/auth.model';
+import { AuthService } from '../../../../core/services/auth.service';
 import { TranslatePipe } from '../../../../core/pipes/translate.pipe';
 import { environment } from '../../../../../environments/environment';
 import { NgSelectModule } from '@ng-select/ng-select';
@@ -21,6 +23,7 @@ import { UserAvatarComponent } from '../../../../shared/components/user-avatar/u
 export class EmpresasFormComponent implements OnInit {
   private service = inject(EmpresasService);
   private usersService = inject(UsersService);
+  private authService = inject(AuthService);
   private fb = inject(FormBuilder);
   private router = inject(Router);
   private route = inject(ActivatedRoute);
@@ -32,6 +35,8 @@ export class EmpresasFormComponent implements OnInit {
   usuariosDisponiveis: Usuario[] = [];
   usuariosAssociados: Usuario[] = [];
   usuariosPendentesAssociacao: Usuario[] = []; // Usuários a serem associados após criar a empresa
+
+  currentLoggedUser: Usuario | null = null;
 
   form = this.fb.group({
     nome: ['', [Validators.required, Validators.minLength(2)]],
@@ -53,11 +58,29 @@ export class EmpresasFormComponent implements OnInit {
   previewUrl: string | null = null;
   logoFile: File | null = null;
 
+  get isPerfilCliente(): boolean {
+    if (!this.currentLoggedUser?.perfil) return false;
+    const perfilCodigo = typeof this.currentLoggedUser.perfil === 'object' 
+      ? this.currentLoggedUser.perfil.codigo 
+      : this.currentLoggedUser.perfil;
+    return ['GESTOR', 'COLABORADOR', 'LEITURA'].includes(perfilCodigo);
+  }
+
   ngOnInit(): void {
+    // Carregar usuário logado
+    this.authService.currentUser$.subscribe(user => {
+      this.currentLoggedUser = user;
+    });
+
     this.empresaId = this.route.snapshot.paramMap.get('id');
     this.isEditMode = !!this.empresaId;
     this.loadTiposNegocio();
-    this.loadUsuariosDisponiveis();
+    
+    // Perfis de cliente não carregam usuários disponíveis para associação
+    if (!this.isPerfilCliente) {
+      this.loadUsuariosDisponiveis();
+    }
+    
     if (this.isEditMode && this.empresaId) {
       this.loadEmpresa(this.empresaId);
       this.loadUsuariosAssociados(this.empresaId);

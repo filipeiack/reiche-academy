@@ -2,7 +2,7 @@ import { Component, Input, Output, EventEmitter, TemplateRef, ViewChild, inject 
 import { CommonModule } from '@angular/common';
 import { NgbModal, NgbModalModule } from '@ng-bootstrap/ng-bootstrap';
 import { UsuariosFormComponent } from '../usuarios-form/usuarios-form.component';
-import { Usuario } from '../../../../core/services/users.service';
+import { Usuario } from '../../../../core/models/auth.model';
 
 @Component({
   selector: 'app-usuario-modal',

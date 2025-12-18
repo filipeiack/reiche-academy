@@ -170,7 +170,9 @@
                             </label>
                             <ng-select [items]="empresas" bindLabel="nome" bindValue="id"
                                 placeholder="Busque por empresa..." formControlName="empresaId" [searchable]="true"
-                                [clearable]="true" [loading]="loadingEmpresas">
+                                [clearable]="!shouldDisableEmpresaField"
+                                [disabled]="shouldDisableEmpresaField"
+                                [loading]="loadingEmpresas">
                                 <ng-template ng-option-tmp let-item="item">
                                     <div>
                                         <div><strong>{{ item.nome }}</strong></div>
@@ -183,9 +185,16 @@
                                     </div>
                                 </ng-template>
                             </ng-select>
+                            @if (shouldDisableEmpresaField) {
+                            <small class="text-muted d-block mt-2">
+                                <i class="feather icon-info"></i> 
+                                A associação com a empresa não pode ser alterada.
+                            </small>
+                            } @else {
                             <small class="form-text text-muted">
                                 Associe o usuário a uma empresa específica
                             </small>
+                            }
                         </div>
                     </div>
                 </div>
@@ -271,11 +280,10 @@
 
                     <h5 class="text-sm font-semibold mb-2">Perfis disponíveis:</h5>
                     <ul class="text-muted text-sm">
-                        <li><strong>Administrador:</strong> Acesso total ao sistema e todas as empresas</li>
-                        <li><strong>Consultor:</strong> Acesso completo às funcionalidades da empresa</li>
-                        <li><strong>Gestor:</strong> Acesso gerencial e operacional</li>
-                        <li><strong>Colaborador:</strong> Acesso padrão às funcionalidades</li>
-                        <li><strong>Leitura:</strong> Acesso somente visualização</li>
+                        <li><strong>Administrador:</strong> Equipe Reiche Academy - Acesso total ao sistema, sem vinculação a empresa</li>
+                        <li><strong>Gestor:</strong> Empresa cliente - Gerencia diagnósticos da própria empresa, pode editar seus dados</li>
+                        <li><strong>Colaborador:</strong> Empresa cliente - Acessa diagnósticos da própria empresa, pode editar seus dados</li>
+                        <li><strong>Leitura:</strong> Empresa cliente - Apenas visualização de dados da própria empresa</li>
                     </ul>
                 </div>
             </div>
