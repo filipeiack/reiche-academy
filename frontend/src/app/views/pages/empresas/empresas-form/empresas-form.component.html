@@ -4,9 +4,9 @@
             <i class="input-icon" data-feather="briefcase" style="width: 16px; height: 16px"></i>
         </li>
         <li class="breadcrumb-item">
-            <a routerLink="/empresas">{{ 'MENU.EMPRESAS' | translate }}</a>
+            {{ 'MENU.EMPRESAS' | translate }}
         </li>
-        <li class="breadcrumb-item active" aria-current="page">
+        <li class="breadcrumb-item active text-primary" aria-current="page">
             @if (isEditMode) {
             {{ 'COMPANIES.EDIT' | translate }}
             } @else {
@@ -235,7 +235,7 @@
 
 
                 <div class="form-footer mt-4 d-flex justify-content-end gap-2">
-                    <button [routerLink]="['/empresas']" class="btn btn-outline-secondary">{{ 'BUTTONS.CANCEL' | translate
+                    <button type="button" (click)="handleCancel()" class="btn btn-outline-secondary">{{ 'BUTTONS.CANCEL' | translate
                         }}</button>
                     <button type="submit" class="btn btn-primary" [disabled]="loading || form.invalid">
                         @if (loading) {

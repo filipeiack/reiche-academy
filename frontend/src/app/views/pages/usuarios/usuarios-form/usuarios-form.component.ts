@@ -88,11 +88,16 @@ export class UsuariosFormComponent implements OnInit {
     this.showPassword = !this.showPassword;
   }
 
+  private getRedirectUrl(): string {
+    // Perfis de cliente vão para o dashboard
+    return this.isPerfilCliente ? '/dashboard' : '/usuarios';
+  }
+
   handleCancel(): void {
     if (this.modalMode) {
       this.onCancel.emit();
     } else {
-      this.router.navigate(['/usuarios']);
+      this.router.navigate([this.getRedirectUrl()]);
     }
   }
 
@@ -232,7 +237,7 @@ export class UsuariosFormComponent implements OnInit {
           this.showToast('Usuário atualizado com sucesso!', 'success');
           this.loading = false;
           setTimeout(() => {
-            this.router.navigate(['/usuarios']);
+            this.router.navigate([this.getRedirectUrl()]);
           }, 2000);
         },
         error: (err) => {
@@ -264,7 +269,7 @@ export class UsuariosFormComponent implements OnInit {
               this.onSave.emit(novoUsuario);
             } else {
               setTimeout(() => {
-                this.router.navigate(['/usuarios']);
+                this.router.navigate([this.getRedirectUrl()]);
               }, 2000);
             }
           }

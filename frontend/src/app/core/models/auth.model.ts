@@ -25,7 +25,7 @@ export interface LoginResponse {
     email: string;
     nome: string;
     cargo?: string;
-    perfil: PerfilUsuarioBasic | string;
+    perfil: PerfilUsuarioBasic;
     empresaId: string;
     fotoUrl?: string | null;
   };
@@ -37,7 +37,7 @@ export interface Usuario {
   nome: string;
   cargo?: string;
   telefone?: string;
-  perfil: PerfilUsuarioBasic | string;
+  perfil: PerfilUsuarioBasic;
   ativo: boolean;
   empresaId?: string;
   empresa?: EmpresaBasic;

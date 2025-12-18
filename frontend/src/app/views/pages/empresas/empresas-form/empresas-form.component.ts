@@ -87,6 +87,15 @@ export class EmpresasFormComponent implements OnInit {
     }
   }
 
+  private getRedirectUrl(): string {
+    // Perfis de cliente vão para o dashboard
+    return this.isPerfilCliente ? '/dashboard' : '/empresas';
+  }
+
+  handleCancel(): void {
+    this.router.navigate([this.getRedirectUrl()]);
+  }
+
   private showToast(title: string, icon: 'success' | 'error' | 'info' | 'warning', timer: number = 3000): void {
     Swal.fire({ toast: true, position: 'top-end', showConfirmButton: false, timer, timerProgressBar: true, title, icon });
   }
@@ -149,7 +158,7 @@ export class EmpresasFormComponent implements OnInit {
         ativo: v.ativo || true
       };
       this.service.update(this.empresaId, updateData).subscribe({
-        next: () => { this.showToast('Empresa atualizada com sucesso!', 'success'); this.loading = false; setTimeout(() => this.router.navigate(['/empresas']), 1500); },
+        next: () => { this.showToast('Empresa atualizada com sucesso!', 'success'); this.loading = false; setTimeout(() => this.router.navigate([this.getRedirectUrl()]), 1500); },
         error: (err) => { this.showToast(err?.error?.message || 'Erro ao atualizar empresa', 'error'); this.loading = false; }
       });
     } else {
@@ -179,7 +188,7 @@ export class EmpresasFormComponent implements OnInit {
             this.uploadLogo(this.logoFile, novaEmpresa.id);
           } else {
             console.log('Sem logo para upload, redirecionando');
-            setTimeout(() => this.router.navigate(['/empresas']), 1500);
+            setTimeout(() => this.router.navigate([this.getRedirectUrl()]), 1500);
           }
         },
         error: (err) => { this.showToast(err?.error?.message || 'Erro ao criar empresa', 'error'); this.loading = false; }
@@ -283,7 +292,7 @@ export class EmpresasFormComponent implements OnInit {
 
         if (empresaId && !this.isEditMode) {
           setTimeout(() => {
-            this.router.navigate(['/empresas']);
+            this.router.navigate([this.getRedirectUrl()]);
           }, 1500);
         }
       },

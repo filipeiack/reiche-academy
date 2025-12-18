@@ -5,9 +5,9 @@
             <i class="input-icon" data-feather="users" style="width: 16px; height: 16px"></i>
         </li>
         <li class="breadcrumb-item">
-            <a routerLink="/usuarios">{{ "MENU.USUARIOS" | translate }}</a>
+            {{ "MENU.USUARIOS" | translate }}
         </li>
-        <li class="breadcrumb-item active" aria-current="page">
+        <li class="breadcrumb-item active text-primary" aria-current="page">
             @if (isEditMode) {
             {{ "USERS.EDIT" | translate }}
             } @else {
