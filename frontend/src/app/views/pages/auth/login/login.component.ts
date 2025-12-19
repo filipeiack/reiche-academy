@@ -40,24 +40,13 @@ export class LoginComponent implements OnInit {
   });
 
   ngOnInit(): void {
-    console.log('[LoginComponent] ngOnInit called');
-    console.log('[LoginComponent] Current URL:', window.location.href);
-    console.log('[LoginComponent] Query params:', this.route.snapshot.queryParams);
-    console.log('[LoginComponent] Param Map:', this.route.snapshot.paramMap.keys);
-    
     // Get the return URL from the route parameters, or default to '/dashboard'
     this.returnUrl = this.route.snapshot.queryParams['returnUrl'] || '/dashboard';
-    
-    console.log('[LoginComponent] Return URL set to:', this.returnUrl);
 
     // Verificar se há uma empresa customizada na rota
     const loginUrl = this.route.snapshot.paramMap.get('loginUrl');
-    console.log('[LoginComponent] loginUrl param:', loginUrl);
     if (loginUrl) {
-      console.log('[LoginComponent] Carregando customização para:', loginUrl);
       this.loadEmpresaCustomization(loginUrl);
-    } else {
-      console.log('[LoginComponent] Nenhum loginUrl encontrado, usando padrão');
     }
   }
 
@@ -70,10 +59,6 @@ export class LoginComponent implements OnInit {
           this.logoUrl = empresa.logoUrl.startsWith('/')
             ? `${environment.backendUrl}${empresa.logoUrl}`
             : empresa.logoUrl;
-          console.log('[LoginComponent] Customização carregada:', empresa.nome);
-          console.log('[LoginComponent] Logo URL:', this.logoUrl);
-        } else {
-          console.warn('[LoginComponent] Empresa não encontrada ou sem logo, usando padrão');
         }
       },
       error: (err) => {
