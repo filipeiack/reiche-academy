@@ -1,15 +1,16 @@
-﻿import { NgIf, NgStyle } from '@angular/common';
+﻿import { NgIf } from '@angular/common';
 import { Component, OnInit, inject } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { AuthService } from '../../../../core/services/auth.service';
+import { EmpresasService, Empresa } from '../../../../core/services/empresas.service';
 import { TranslatePipe } from '../../../../core/pipes/translate.pipe';
+import { environment } from '../../../../../environments/environment';
 
 @Component({
   selector: 'app-login',
   standalone: true,
   imports: [
-    NgStyle,
     NgIf,
     RouterLink,
     ReactiveFormsModule,
@@ -23,9 +24,12 @@ export class LoginComponent implements OnInit {
   returnUrl: any;
   loading = false;
   errorMessage = '';
+  empresa: Empresa | null = null;
+  logoUrl = 'assets/images/logo_reiche_academy.png'; // Logo padrão
 
   private fb = inject(FormBuilder);
   private authService = inject(AuthService);
+  private empresasService = inject(EmpresasService);
   private router = inject(Router);
   private route = inject(ActivatedRoute);
 
@@ -39,11 +43,44 @@ export class LoginComponent implements OnInit {
     console.log('[LoginComponent] ngOnInit called');
     console.log('[LoginComponent] Current URL:', window.location.href);
     console.log('[LoginComponent] Query params:', this.route.snapshot.queryParams);
+    console.log('[LoginComponent] Param Map:', this.route.snapshot.paramMap.keys);
     
     // Get the return URL from the route parameters, or default to '/dashboard'
     this.returnUrl = this.route.snapshot.queryParams['returnUrl'] || '/dashboard';
     
     console.log('[LoginComponent] Return URL set to:', this.returnUrl);
+
+    // Verificar se há uma empresa customizada na rota
+    const loginUrl = this.route.snapshot.paramMap.get('loginUrl');
+    console.log('[LoginComponent] loginUrl param:', loginUrl);
+    if (loginUrl) {
+      console.log('[LoginComponent] Carregando customização para:', loginUrl);
+      this.loadEmpresaCustomization(loginUrl);
+    } else {
+      console.log('[LoginComponent] Nenhum loginUrl encontrado, usando padrão');
+    }
+  }
+
+  private loadEmpresaCustomization(loginUrl: string): void {
+    this.empresasService.findByLoginUrl(loginUrl).subscribe({
+      next: (empresa) => {
+        if (empresa && empresa.logoUrl) {
+          this.empresa = empresa;
+          // Se logoUrl começa com /, adiciona a URL do backend
+          this.logoUrl = empresa.logoUrl.startsWith('/')
+            ? `${environment.backendUrl}${empresa.logoUrl}`
+            : empresa.logoUrl;
+          console.log('[LoginComponent] Customização carregada:', empresa.nome);
+          console.log('[LoginComponent] Logo URL:', this.logoUrl);
+        } else {
+          console.warn('[LoginComponent] Empresa não encontrada ou sem logo, usando padrão');
+        }
+      },
+      error: (err) => {
+        console.error('[LoginComponent] Erro ao carregar customização:', err);
+        // Mantém logo padrão em caso de erro
+      }
+    });
   }
 
   onLoggedin(e: Event) {

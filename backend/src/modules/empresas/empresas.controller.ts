@@ -29,6 +29,8 @@ import { Roles } from '../auth/decorators/roles.decorator';
 export class EmpresasController {
   constructor(private readonly empresasService: EmpresasService) {}
 
+  // Endpoints públicos DEVEM vir ANTES de rotas com :id para não serem interceptados
+  
   // Endpoint público para buscar customização por CNPJ (sem autenticação)
   @Get('customization/:cnpj')
   @ApiOperation({ summary: 'Buscar customização da empresa por CNPJ (público)' })
@@ -36,6 +38,25 @@ export class EmpresasController {
   @ApiResponse({ status: 404, description: 'Empresa não encontrada' })
   async getCustomizationByCnpj(@Param('cnpj') cnpj: string) {
     return this.empresasService.findByCnpj(cnpj);
+  }
+
+  // Endpoint público para buscar empresa por loginUrl (sem autenticação)
+  @Get('by-login-url/:loginUrl')
+  @ApiOperation({ summary: 'Buscar empresa por loginUrl (público)' })
+  @ApiResponse({ status: 200, description: 'Empresa encontrada' })
+  @ApiResponse({ status: 404, description: 'Empresa não encontrada' })
+  async getByLoginUrl(@Param('loginUrl') loginUrl: string) {
+    return this.empresasService.findByLoginUrl(loginUrl);
+  }
+
+  @ApiBearerAuth()
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('ADMINISTRADOR')
+  @Get('tipos-negocio/distinct')
+  @ApiOperation({ summary: 'Buscar tipos de negócio distintos' })
+  @ApiResponse({ status: 200, description: 'Lista de tipos de negócio' })
+  getTiposNegocio() {
+    return this.empresasService.getTiposNegocioDistinct();
   }
 
   @ApiBearerAuth()
@@ -61,16 +82,6 @@ export class EmpresasController {
     }
     // GESTOR vê apenas sua empresa
     return this.empresasService.findAllByEmpresa(req.user.empresaId);
-  }
-
-  @ApiBearerAuth()
-  @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles('ADMINISTRADOR')
-  @Get('tipos-negocio/distinct')
-  @ApiOperation({ summary: 'Buscar tipos de negócio distintos' })
-  @ApiResponse({ status: 200, description: 'Lista de tipos de negócio' })
-  getTiposNegocio() {
-    return this.empresasService.getTiposNegocioDistinct();
   }
 
   @ApiBearerAuth()

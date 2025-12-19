@@ -74,6 +74,10 @@ export class EmpresasService {
     return this.http.get<Partial<Empresa>>(`${this.API_URL}/customization/${cnpj}`);
   }
 
+  findByLoginUrl(loginUrl: string): Observable<Empresa | null> {
+    return this.http.get<Empresa | null>(`${this.API_URL}/by-login-url/${loginUrl}`);
+  }
+
   vincularPilares(id: string, pilaresIds: string[]): Observable<Empresa> {
     return this.http.post<Empresa>(`${this.API_URL}/${id}/pilares`, { pilaresIds });
   }

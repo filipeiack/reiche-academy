@@ -7,6 +7,10 @@ export default [
     loadComponent: () => import('./login/login.component').then(c => c.LoginComponent)
   },
   {
+    path: 'login/:loginUrl',
+    loadComponent: () => import('./login/login.component').then(c => c.LoginComponent)
+  },
+  {
     path: 'forgot-password',
     loadComponent: () => import('./forgot-password/forgot-password.component').then(c => c.ForgotPasswordComponent)
   },

@@ -32,20 +32,22 @@ backend/
 ├── prisma/
 │   └── schema.prisma              # ✅ Campos: logoUrl, loginUrl
 ├── src/modules/empresas/
-│   ├── empresas.controller.ts     # ✅ Endpoint público GET /customization/:cnpj
-│   └── empresas.service.ts        # ✅ Método findByCnpj()
 ```
 
 ## 🎨 Personalização
 
 ### Assets Padrão
-✅ **Logo Padrão na tela login**: `assets/images/logo_reiche_250x650.png`
+✅ **Logo Padrão na tela login**: `assets/images/logo_reiche_academy.png`
 
 ## 🚀 Como Usar
 
 ### 1. **Usuário Final**
 1. Acessa a página de login pela url.
-2. **Opção A**: URL de login [padrão Reiche](http://localhost:4200/auth/login): Insere email/senha diretamente (logo Reiche Academy)
-3. **Opção B**: URL de login especifica http://empresa.localhost:4200/auth/login/[empresa]
-   - Sistema carrega logo atraves do campo loginUrl do cadastro da empresa (ou padrão se não existir)
-   - Insere email/senha e faz login
+2. **Opção A**: URL de acesso padrão [padrão Reiche] (http://localhost:4200): 
+   - redireciona para login http://localhost:4200/auth/login 
+   - Insere email/senha diretamente (logo Reiche Academy)
+3. **Opção B**: URL de login especifica http://localhost:4200/[empresa]
+   - Sistema identifica empresa pelo nome comparando com campo loginURL da empresa.
+   - Redireciona para o login exibindo a logotipo da empresa (logoURL) no lugar do logo da Reiche.
+   - Fallback: Se não encontrar o nome da empresa digitado, redireciona para o padrão de login.
+   - Insere email/senha e faz login normal no sistema.

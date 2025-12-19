@@ -114,6 +114,27 @@ export class EmpresasService {
     return empresa;
   }
 
+  async findByLoginUrl(loginUrl: string) {
+    const empresa = await this.prisma.empresa.findFirst({
+      where: { 
+        loginUrl,
+        ativo: true
+      },
+      select: {
+        id: true,
+        nome: true,
+        logoUrl: true,
+        loginUrl: true,
+      },
+    });
+
+    if (!empresa) {
+      throw new NotFoundException('Empresa não encontrada');
+    }
+
+    return empresa;
+  }
+
   async update(id: string, updateEmpresaDto: UpdateEmpresaDto, userId: string) {
     const before = await this.findOne(id);
 

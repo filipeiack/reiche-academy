@@ -5,6 +5,7 @@ import { NgbDropdownModule } from '@ng-bootstrap/ng-bootstrap';
 import { ThemeModeService } from '../../../core/services/theme-mode.service';
 import { TranslateService, LanguageOption } from '../../../core/services/translate.service';
 import { AuthService } from '../../../core/services/auth.service';
+import { EmpresasService } from '../../../core/services/empresas.service';
 import { TranslatePipe } from '../../../core/pipes/translate.pipe';
 import { UserAvatarComponent } from '../../../shared/components/user-avatar/user-avatar.component';
 import { Usuario } from '../../../core/models/auth.model';
@@ -27,6 +28,7 @@ export class NavbarComponent implements OnInit {
   currentTheme: string = 'dark';
   translateService = inject(TranslateService);
   authService = inject(AuthService);
+  empresasService = inject(EmpresasService);
   languages: LanguageOption[] = [];
   currentLanguage: LanguageOption | undefined;
   currentUser: Usuario | null = null;
@@ -131,8 +133,33 @@ export class NavbarComponent implements OnInit {
    */
   onLogout(e: Event) {
     e.preventDefault();
-    this.authService.logout();
-    this.router.navigate(['/auth/login']);
+    
+    const currentUser = this.authService.getCurrentUser();
+    
+    // Se o usuário tem empresa, buscar a loginUrl e redirecionar
+    if (currentUser?.empresaId) {
+      this.empresasService.getById(currentUser.empresaId).subscribe({
+        next: (empresa) => {
+          this.authService.logout();
+          if (empresa.loginUrl) {
+            // Redireciona para URL customizada da empresa
+            this.router.navigate([`/${empresa.loginUrl}`]);
+          } else {
+            // Empresa sem loginUrl, vai para login padrão
+            this.router.navigate(['/auth/login']);
+          }
+        },
+        error: () => {
+          // Em caso de erro, faz logout e vai para login padrão
+          this.authService.logout();
+          this.router.navigate(['/auth/login']);
+        }
+      });
+    } else {
+      // Usuário sem empresa (ex: Administrador), vai para login padrão
+      this.authService.logout();
+      this.router.navigate(['/auth/login']);
+    }
   }
 
 }

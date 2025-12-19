@@ -6,7 +6,7 @@ import { BehaviorSubject } from 'rxjs';
 })
 export class ThemeModeService {
 
-  readonly currentTheme = new BehaviorSubject<string>('light');
+  readonly currentTheme = new BehaviorSubject<string>('dark');
   
   constructor() {
 
@@ -17,9 +17,9 @@ export class ThemeModeService {
       this.toggleTheme(themeParam);
     }
 
-    // Set initial localStorage 'theme' value based on the 'prefers-color-scheme' media query if 'null'
+    // Set initial localStorage 'theme' value to 'dark' if 'null'
     if (this.getStoredTheme() === null) {
-      this.setStoredTheme(window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+      this.setStoredTheme('dark');
     }
     
     // Set the initial theme.
@@ -35,7 +35,7 @@ export class ThemeModeService {
       return storedTheme;
     }
 
-    return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+    return 'dark'; // Tema padrão
   }
 
   setTheme = (theme: string) => {

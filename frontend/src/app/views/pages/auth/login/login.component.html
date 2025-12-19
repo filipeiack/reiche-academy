@@ -2,20 +2,19 @@
   <div class="row w-100 mx-0 auth-page">
     <div class="col-md-8 col-xl-6 mx-auto">
       <div class="logo-container">
-        <!-- Logo Reiche Academy -->
-        <div class="logo-wrapper mb-4">
-          <img src="assets/images/logo_reiche_academy.png" alt="Reiche Academy" class="img-fluid">
-          <div class="logo-overlay"></div>
+        <!-- Logo Reiche Academy ou Logo da Empresa -->
+        <div class="logo-wrapper mb-2">
+          <img [src]="logoUrl" [alt]="empresa?.nome || 'Reiche Academy'" class="img-fluid">
         </div>
 
         <div class="card auth-card">
           <div class="row">
           <div class="auth-form-left col-md-3 pe-md-0">
-            
+            <img src="assets/images/logo_reiche_250x650.png" alt="Logo Reiche Academy" class="img-fluid">
           </div>
           <div class="auth-form-wrapper col-md-9 ps-md-0">
             <div class="px-4 py-5">
-              <a routerLink="." class="nobleui-logo d-block mb-2">REICHE<span>ACADEMY</span></a>
+              <a routerLink="." class="nobleui-logo d-block mb-2">RCH<span>ACADEMY</span></a>
               <h5 class="text-secondary fw-normal mb-4">{{ 'AUTH.LOGIN.TITLE' | translate }}</h5>
               <div *ngIf="errorMessage" class="text-danger small mb-3">{{ errorMessage }}</div>
               <form class="forms-sample" [formGroup]="form" (submit)="onLoggedin($event)">

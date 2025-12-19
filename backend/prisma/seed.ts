@@ -38,9 +38,11 @@ async function main() {
     update: {},
     create: {
       cnpj: '00000000000000',
-      razaoSocial: 'Empresa Demo',
-      nome: 'Demo',
+      nome: 'Empresa Demo',
       tipoNegocio: 'Consultoria',
+      cidade: 'São Paulo',
+      estado: 'SP',
+      loginUrl: 'demo',
       ativo: true,
     },
   });

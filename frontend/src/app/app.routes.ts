@@ -33,8 +33,7 @@ export const routes: Routes = [
         loadChildren: () => import('./views/pages/usuarios/usuarios.routes').then(m => m.usuariosRoutes)
       }
     ]
-  }
-  ,
+  },
   {
     path: 'empresas',
     component: BaseComponent,
@@ -45,6 +44,11 @@ export const routes: Routes = [
         loadChildren: () => import('./views/pages/empresas/empresas.routes').then(m => m.EMPRESAS_ROUTES)
       }
     ]
+  },
+  // Rota wildcard para login customizado - DEVE SER A ÚLTIMA!
+  // Captura qualquer URL não reconhecida e trata como loginUrl
+  {
+    path: ':loginUrl',
+    loadComponent: () => import('./views/pages/auth/login/login.component').then(c => c.LoginComponent)
   }
 ];
-
