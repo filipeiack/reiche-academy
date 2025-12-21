@@ -1,65 +1,76 @@
-# 📘 FLOW.md — Fluxo Oficial de Desenvolvimento
-
-## Objetivo
-
-Este documento define **o fluxo oficial de desenvolvimento**, validação e entrega de código do projeto, utilizando **agentes especializados** e **documentação normativa**.
-
-Nenhuma implementação deve ignorar este fluxo.
+## 📘 FLOW.md — Fluxo Oficial e Normativo do Projeto
 
 ---
 
-## 🧭 Princípios Fundamentais
+## 🎯 Objetivo
+
+Este documento define **o único fluxo oficial** de desenvolvimento, validação e entrega de código do projeto.
+
+👉 **Nenhuma ação técnica é válida fora deste fluxo.**  
+👉 **Nenhum agente pode atuar sem estar formalmente definido aqui.**
+
+---
+
+## 🧭 Princípios Inquebráveis
 
 1. **Documentos mandam, agentes obedecem**
-2. **Agentes não compartilham memória, compartilham artefatos**
-3. **Nenhuma mudança entra no `main` sem validação**
-4. **Autoridade documental é centralizada**
+2. **Agentes não compartilham memória — apenas artefatos**
+3. **Nenhum agente valida o próprio trabalho**
+4. **Instruções ad-hoc não criam autoridade**
+5. **Nenhuma mudança entra no `main` sem passar pelo fluxo completo**
 
 ---
 
-## 🔐 Autoridade Documental
+## 🔐 Autoridade Documental (Precedência)
 
-Todo o fluxo obedece estritamente ao mapeamento definido em:
+A ordem de autoridade no projeto é **imutável**:
 
-```
-/docs/DOCUMENTATION_AUTHORITY.md
-```
+1. `FLOW.md`
+2. `/docs/DOCUMENTATION_AUTHORITY.md`
+3. Definições de agentes em `/.github/agents/*.md`
+4. Documentos de regras e arquitetura
+5. Instruções do usuário (chat, prompt, comentário)
 
-Somente documentos classificados como **Fontes de Verdade** podem:
-- definir regras de negócio
-- impor padrões técnicos
-- orientar testes
-- bloquear ou permitir PRs
-
----
-
-## 🤖 Agentes Envolvidos
-
-| Agente | Responsabilidade |
-|-----|----------------|
-| Dev Agent Disciplinado | Implementar código conforme docs |
-| Pattern Enforcer | Validar padrões e convenções |
-| QA Unitário Estrito | Criar testes unitários confiáveis |
-| Reviewer de Regra | Validar regras de negócio |
-| Extractor | Extrair arquitetura e regras AS-IS |
+⚠️ **Instruções do usuário NÃO podem:**
+- Criar novos agentes
+- Alterar escopo de agentes
+- Ignorar proibições documentadas
+- Substituir regras normativas
 
 ---
 
-## 🔁 Fluxo Completo (Visão Geral)
+## 🤖 Agentes Oficiais Autorizados
+
+Somente os agentes abaixo podem atuar neste projeto:
+
+| Agente | Documento |
+|------|---------|
+| Extractor de Regras | `/.github/agents/1-Extractor_Regras.md` |
+| Reviewer de Regras | `/.github/agents/2-Reviewer_Regras.md` |
+| Dev Agent Disciplinado | `/.github/agents/3-DEV_Agent.md` |
+| Pattern Enforcer | `/.github/agents/4-Pattern_Enforcer.md` |
+| QA Unitário Estrito | `/.github/agents/5-QA_Unitário_Estrito.md` |
+| E2E Agent | `/.github/agents/QA_E2E_Interface.md` |
+
+🚫 **Qualquer agente não listado aqui NÃO EXISTE para o projeto**, mesmo sob instrução direta.
+
+---
+
+## 🔁 Fluxo Oficial (Visão Geral)
 
 ```text
-Requisito
-   ↓
+Requisito / Regra
+        ↓
 Dev Agent Disciplinado
-   ↓ (código + relatório)
+        ↓ (código + relatório)
 Pattern Enforcer
-   ↓ (CONFORME)
+        ↓ (CONFORME)
 QA Unitário Estrito
-   ↓ (testes)
-Reviewer de Regra (se necessário)
-   ↓
-PR aprovado
-   ↓
+        ↓ (testes)
+Reviewer de Regras (quando aplicável)
+        ↓
+Pull Request
+        ↓
 Merge no main
 ```
 
@@ -67,182 +78,147 @@ Merge no main
 
 ## 1️⃣ Início do Fluxo — Requisito
 
-O fluxo inicia quando existe **uma demanda clara**, como:
-- nova feature
-- correção
-- ajuste funcional
-- melhoria aprovada
+O fluxo só inicia quando há **um requisito válido**, originado de:
 
-📌 O requisito deve estar:
-- documentado em `/docs/rules` **OU**
-- descrito explicitamente na solicitação
+- Documento de regras (`/docs/business-rules`)
+- Correção aprovada
+- Demanda explícita registrada
+
+📌 **Código sem requisito documentado é inválido.**
 
 ---
 
 ## 2️⃣ Implementação — Dev Agent Disciplinado
 
 ### Entradas
-- Requisito
-- `/docs/rules`
-- `/docs/architecture`
-- `/docs/conventions`
+- Requisito válido
+- Documentação normativa
+- Arquitetura e convenções
 
-### Ações
-- Implementa apenas o escopo solicitado
-- Não cria regras de negócio
-- Não define padrões
-- Não valida o próprio código
+### Restrições
+- ❌ Não cria regras
+- ❌ Não cria testes finais
+- ❌ Não valida o próprio código
 
 ### Saída obrigatória (handoff)
 
 ```md
-### Implementação Concluída
+### DEV HANDOFF
 
-#### Escopo atendido
-- Lista objetiva
+Escopo implementado:
+- ...
 
-#### Arquivos alterados/criados
-- Caminhos completos
+Arquivos alterados:
+- ...
 
-#### Pontos de atenção
-- Ambiguidades
-- TODOs
+Ambiguidades encontradas:
+- ...
 
-#### Próximo passo sugerido
+Próximo agente obrigatório:
 - Pattern Enforcer
 ```
 
-⚠️ Sem este relatório, o fluxo **não avança**.
+Sem esse handoff, o fluxo **para**.
 
 ---
 
 ## 3️⃣ Validação de Padrões — Pattern Enforcer
 
-### Entradas
-- Código implementado
-- `/docs/conventions`
-- `/docs/architecture`
-
-### Ações
-- Verifica aderência estrita aos padrões
-- Não sugere melhorias
-- Não corrige código
+### Função
+- Garantir aderência estrita a padrões
+- Bloquear drift arquitetural
 
 ### Saída obrigatória
 
 ```md
-### Pattern Enforcement Report
+### PATTERN ENFORCEMENT REPORT
 
-#### Escopo
-- Backend | Frontend | Testes
-
-#### Conformidades
-- [✔] ...
-
-#### Violações
-- [✖] ...
-
-#### Conclusão
-- Status geral: CONFORME | NÃO CONFORME
+Status: CONFORME | NÃO CONFORME
+Violações encontradas:
+- ...
 ```
 
-📌 Apenas **CONFORME** permite seguir no fluxo.
+🚫 **NÃO CONFORME bloqueia o fluxo.**
 
 ---
 
 ## 4️⃣ Testes Unitários — QA Unitário Estrito
 
-### Entradas
-- Código validado
-- `/docs/rules` (somente regras normativas)
-- Relatório do Pattern Enforcer
+### Função
+- Criar testes independentes
+- Proteger regras documentadas
+- Detectar falhas de segurança e negócio
 
-### Ações
-- Cria testes unitários reais
-- Testa comportamentos explícitos
-- Não inventa regras
-- Não cobre fluxos não documentados
+### Restrições
+- ❌ Não altera código de produção
+- ❌ Não confia em testes existentes
+- ❌ Não testa comportamento não documentado
 
 ### Saída
-- Arquivos de teste executáveis
-- Lista de comportamentos cobertos
-- Ambiguidades encontradas
+- Testes executáveis
+- Lista de regras protegidas
+- Lacunas identificadas
 
 ---
 
-## 5️⃣ Validação de Regras — Reviewer de Regra (Opcional)
+## 5️⃣ Validação de Regras — Reviewer de Regras (Condicional)
 
-### Quando usar
-- Regras críticas (segurança, permissões, compliance)
-- Conflito entre código e documentação
+### Quando acionar
+- Segurança
+- RBAC
+- Multi-tenant
+- Compliance
 
-### Ações
-- Compara código × `/docs/rules`
-- Identifica lacunas
-- Não cria nem corrige regras
-
-### Saída
-- Relatório de aderência ou divergência
+### Função
+- Comparar código × regras documentadas
+- Emitir parecer técnico
+- Nunca implementar
 
 ---
 
 ## 6️⃣ Pull Request (PR)
 
-O PR deve conter:
-- Código implementado
-- Testes associados
+O PR é o **checkpoint humano final**.
+
+Deve conter:
+- Código
+- Testes
 - Relatórios dos agentes
 - Referência ao requisito
-
-📌 O PR é o **checkpoint final humano + IA**.
 
 ---
 
 ## 7️⃣ Merge no `main`
 
-O merge só pode ocorrer se:
+O merge só é permitido se:
+
 - Pattern Enforcer: **CONFORME**
 - Testes: **passando**
-- Regras: **validadas** (se aplicável)
+- Regras: **aderentes**
+- Nenhum agente violou escopo
 
 Após o merge:
-- O código torna-se nova **fonte de verdade**
-- O Extractor pode ser acionado para atualização documental
+- O código vira fonte de verdade
+- Extractor pode ser acionado para atualização documental
 
 ---
 
-## 🧪 Fluxos Alternativos
+## 🚨 Regras Absolutas
 
-### 🔄 Atualização de Documentação
-
-```text
-Código existente
-   ↓
-Extractor
-   ↓
-Reviewer de Regra
-   ↓
-Docs atualizados
-```
-
----
-
-## 🚨 Regras Inquebráveis
-
-- Nenhum agente valida o próprio trabalho
-- Nenhuma regra implícita é aceita
-- Nenhum documento fora da autoridade manda
-- Nenhum merge sem PR
+- Dev e QA **nunca** atuam na mesma PR
+- Nenhum agente assume papel não documentado
+- Nenhum teste valida intenção — apenas regra
+- Nenhuma exceção sem registro explícito
 
 ---
 
 ## 🎯 Conclusão
 
 Este fluxo existe para:
-- eliminar ambiguidade
-- conter drift de IA
-- preservar padrões
-- escalar o projeto com segurança
 
-Qualquer exceção a este fluxo deve ser **explícita e documentada**.
+- eliminar improviso
+- conter viés de IA
+- proteger regras reais
+- permitir escala com segurança
 
+Se algo não está neste fluxo, não é permitido.

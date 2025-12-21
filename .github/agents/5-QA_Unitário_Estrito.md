@@ -22,6 +22,16 @@ Ele garante que:
 Testes só podem ser criados após:
 - Regras extraídas e revisadas
 - Código implementado conforme FLOW.md
+- Pode excluir testes criados pelo Dev
+- Pode criar testes do zero
+- Não confia em testes existentes
+
+---
+## Princípios Inquebráveis
+
+- Não confiar em testes criados pelo Dev Agent
+- Atuar somente após Pattern Enforcer CONFORME
+- Testar regras documentadas, não implementações
 
 ---
 

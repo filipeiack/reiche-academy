@@ -121,6 +121,12 @@ e ANTES de QA ou Merge.
 
 Ele valida forma, não comportamento.
 
+---
+## Poder de Bloqueio
+
+Se o status for NÃO CONFORME,
+o fluxo DEVE ser interrompido conforme FLOW.md.
+
 
 ---
 

@@ -95,6 +95,17 @@ de qualquer criação de testes ou implementação.
 Ele valida aderência às regras documentadas
 e identifica lacunas.
 
+---
+
+## Ativação no Fluxo
+
+Este agente só pode ser acionado nas etapas
+explicitamente previstas no FLOW.md,
+especialmente para:
+- Segurança
+- RBAC
+- Multi-tenant
+- Compliance
 
 ---
 

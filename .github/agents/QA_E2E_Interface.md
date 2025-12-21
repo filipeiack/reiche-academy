@@ -72,6 +72,14 @@ como base para criação de testes.
 - Usa seletores estáveis (`data-testid`)
 
 ---
+## Relação com Outros Agentes
+
+Este agente:
+- NÃO substitui QA Unitário
+- NÃO valida regras de negócio internas
+- Atua apenas sobre fluxos visíveis ao usuário
+
+---
 
 ## Out of Scope (O que este agente NÃO FAZ)
 

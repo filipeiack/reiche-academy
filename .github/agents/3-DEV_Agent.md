@@ -122,6 +122,16 @@ O agente NÃO PODE:
 
 ---
 
+## Proibição Absoluta
+
+Este agente:
+- NÃO cria testes unitários finais
+- NÃO valida seu próprio código
+- NÃO atua como QA sob nenhuma circunstância
+- NÃO participa da mesma PR que o QA Agent
+
+---
+
 ### Backend
 - Controller apenas orquestra
 - Service contém regra de negócio
