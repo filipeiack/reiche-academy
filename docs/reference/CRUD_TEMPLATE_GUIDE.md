@@ -1308,8 +1308,8 @@ Adicionar traduções em `/frontend/src/assets/i18n/`:
 - **Módulo de Referência**: `/backend/src/modules/usuarios/`
 - **Frontend de Referência**: `/frontend/src/app/views/pages/usuarios/`
 - **Planilhas de Negócio**: `/planilhas/`
-- **Contexto Completo**: `CONTEXT.md`
-- **Design System**: `DESIGN_SYSTEM_FINAL.md`
+- **Contexto Completo**: `/docs/CONTEXT.md`
+- **Design System**: `/docs/DESIGN_SYSTEM_FINAL.md`
 
 ---
 

@@ -7,20 +7,12 @@ Registro de todas as mudanças e atualizações do projeto.
 ### ✅ Documentação Atualizada
 
 #### DESIGN_SYSTEM_FINAL.md
-- ✅ **Paleta de Cores**: Migrada para UIBakery Dark Theme
-  - Primary: `#C67A3D` (Orange/Copper)
-  - Secondary: `#4E4E4E` (Gray)
-  - Background: `#0A0A0A` (Deep)
-  - Cards: `#1A1A1A`
-  - Borders: `#2A2A2A`
-  - Text: `#FFFFFF` / `#A0A0A0`
 
-- ✅ **Tema Light**: Atualizado com cores UIBakery
+- ✅ **Tema Light**: Atualizado com cores
 - ✅ **Tema Dark**: Completo com customizações
   - Inputs: Borda #C67A3D em focus
   - Checkboxes: Borda e background #C67A3D
   - Table Hover: rgba(198, 122, 61, 0.1)
-  - Custom Alert: alert-custom-primary com UIBakery colors
 
 - ✅ **Nova Seção**: Features de Tabelas
   - Multi-Select Checkboxes
@@ -32,7 +24,7 @@ Registro de todas as mudanças e atualizações do projeto.
 - ✅ **Status**: Atualizado para refletir implementações
 
 #### frontend/README.md
-- ✅ **Design System**: Paleta UIBakery atualizada
+- ✅ **Design System**: Paleta atualizada
 - ✅ **Features Implementadas**: Expandido com detalhes
   - Tema Dark completo
   - Usuarios-list com multi-select
@@ -44,7 +36,7 @@ Registro de todas as mudanças e atualizações do projeto.
   - Sortable Columns (diretiva)
   - Batch Delete (confirmação)
   - Selection Counter (alert bar)
-  - Table Hover Effect (UIBakery colors)
+  - Table Hover Effect ( colors)
   
 - ✅ **Design System Integration**: Cores e referências
 
@@ -73,7 +65,7 @@ Registro de todas as mudanças e atualizações do projeto.
 
 ## 🎨 Features Implementadas (Session)
 
-### Dark Theme (UIBakery)
+### Dark Theme
 - ✅ Paleta completa integrada
 - ✅ Input borders (#C67A3D)
 - ✅ Table hover styling
@@ -90,7 +82,7 @@ Registro de todas as mudanças e atualizações do projeto.
 - ✅ Selection counter
 - ✅ Alert bar (ng-bootstrap)
 - ✅ SweetAlert2 confirmation
-- ✅ UIBakery styling
+
 
 ### Diretivas
 - ✅ SortableDirective standalone
@@ -111,10 +103,6 @@ Registro de todas as mudanças e atualizações do projeto.
 - **Solução**: Mudar para `track $index`
 - **Status**: ✅ Resolvido
 
-### Table Hover Color
-- **Problema**: Bootstrap usando cor padrão em vez de UIBakery
-- **Solução**: Adicionar rule com !important
-- **Status**: ✅ Resolvido
 
 ### Checkbox Border Color
 - **Problema**: Usando cor genérica
@@ -141,7 +129,7 @@ Registro de todas as mudanças e atualizações do projeto.
 
 ```
 ✅ DESIGN_SYSTEM_FINAL.md
-   ├── Seção Paleta de Cores (migrada para UIBakery)
+   ├── Seção Paleta de Cores 
    ├── Seção Tema Light (atualizado)
    ├── Seção Tema Dark (expandido com customizações)
    ├── Seção Features de Tabelas (nova)
@@ -149,7 +137,7 @@ Registro de todas as mudanças e atualizações do projeto.
    └── Status/próximos passos atualizados
 
 ✅ frontend/README.md
-   ├── Design System (paleta UIBakery)
+   ├── Design System 
    ├── Features Implementadas (expandido)
    ├── Features Detalhadas (nova seção)
    └── Design System Integration (novo)
@@ -201,7 +189,6 @@ Registro de todas as mudanças e atualizações do projeto.
 
 3. **Styling Patterns**
    - Dark theme customization
-   - UIBakery color integration
    - Responsive design
    - Bootstrap 5 overrides
 

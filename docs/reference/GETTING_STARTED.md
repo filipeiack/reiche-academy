@@ -45,7 +45,7 @@ Reiche/
 │   └── tsconfig.json
 ├── docker-compose.yml              # PostgreSQL + Redis
 ├── README.md
-├── CONTEXT.md
+├── /docs/CONTEXT.md
 └── planilhas/
 ```
 

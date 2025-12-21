@@ -225,7 +225,7 @@ th[sortable] {
   transition: color 0.2s ease;
 
   &:hover {
-    color: #C67A3D;  // UIBakery primary
+    color: #C67A3D; 
   }
 }
 ```

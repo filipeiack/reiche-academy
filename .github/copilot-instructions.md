@@ -1,156 +1,121 @@
-# Reiche Academy - Sistema de Gestão Empresarial PDCA
+# Copilot Instructions — Orchestrator & Guardrails
 
-## Visão Geral
-Sistema web SPA para gestão empresarial PDCA, substituindo planilhas Excel de Diagnóstico e Cockpit. Desenvolvimento em 2 fases, iniciando com módulo de Diagnóstico.
+Este arquivo define as **regras globais de comportamento**
+para qualquer IA que interaja com este repositório
+(GitHub Copilot, ChatGPT, agentes personalizados, etc.).
 
-## Stack Tecnológica
+⚠️ Este arquivo NÃO descreve um agente executor.
+Ele atua como **orquestrador passivo e camada de proteção**.
 
-### Frontend
-- **Framework**: Angular 18+ com Angular Material
-- **Template Base**: NobleUI Angular (em `C:\Users\filip\source\repos\templates\nobleui-angular\`)
-- **Estado**: RxJS + NgRx (quando necessário)
-- **Estrutura**: Componentes e módulos isolados, arquitetura modular
+---
 
-### Backend
-- **Runtime**: Node.js 20 LTS
-- **Framework**: NestJS com TypeScript
-- **Validação**: DTOs com class-validator
-- **Documentação**: Swagger/OpenAPI (todos os endpoints documentados)
-- **Arquitetura**: Clean Architecture (controllers → services → repositories)
+## Core Principle
 
-### Banco de Dados
-- **SGBD**: PostgreSQL
-- **ORM**: Prisma com migrations versionadas
-- **Auditoria**: Logs registram usuário, data/hora, operação e versão anterior dos dados
+Nenhuma IA tem autoridade implícita neste projeto.
 
-### Segurança & Autenticação
-- **Auth**: JWT (access + refresh tokens)
-- **Senhas**: Argon2 (nunca bcrypt)
-- **RBAC**: 4 perfis (Administrador, Gestor, Colaborador, Leitura)
-- **Proteção**: CSRF, XSS, SQL Injection
-- **Compliance**: LGPD
+Toda decisão deve ser baseada em:
+- código existente
+- documentos normativos
+- fluxo oficial do projeto
 
-### Infraestrutura
-- **Containers**: Docker + Docker Compose
-- **Proxy**: Nginx
-- **CI/CD**: GitHub Actions
-- **Storage**: S3-compatible
-- **Observabilidade**: Winston/Pino + OpenTelemetry
+Criatividade sem respaldo documental é proibida.
 
-## Estrutura do Projeto
+---
 
-### Fase 1 (Atual)
-1. **Cadastros Essenciais**: Empresa, Usuário, Pilares, Rotinas, Agenda de Reuniões
-2. **Wizard de Diagnóstico**: Associar Pilares/Rotinas por empresa, atribuir notas e criticidade (Alto/Médio/Baixo)
-3. **Perfis e Permissões**: Isolamento de dados por empresa/contrato
-4. **Log de Auditoria**: Rastreabilidade completa
+## Document Authority (Obrigatório)
 
-### Fase 2 (Futura)
-- Cockpit PDCA (5W2H, tarefas, anexos)
-- KPIs/Metas/Resultados
-- Dashboard 360°
+Toda IA deve obedecer estritamente ao mapa de autoridade definido em:
 
-## Convenções de Código
+- `/docs/DOCUMENTATION_AUTHORITY.md`
 
-### Backend (NestJS)
-```typescript
-// Sempre usar DTOs tipados e validados
-export class CreateDiagnosticoDto {
-  @IsNotEmpty()
-  @IsUUID()
-  empresaId: string;
-  
-  @IsArray()
-  @ValidateNested({ each: true })
-  pilares: PilarDiagnosticoDto[];
-}
+Regras:
+- Apenas documentos **normativos** podem orientar decisões técnicas
+- Documentos informativos, históricos ou guias NÃO têm poder decisório
+- Em caso de conflito, a hierarquia documental deve ser seguida
+- Nenhuma IA pode “reinterpretar” documentação antiga
 
-// Services com injeção de dependências
-@Injectable()
-export class DiagnosticoService {
-  constructor(
-    private readonly repository: DiagnosticoRepository,
-    private readonly auditService: AuditService,
-  ) {}
-}
+---
 
-// Controllers documentados com Swagger
-@ApiTags('diagnostico')
-@Controller('diagnostico')
-export class DiagnosticoController {}
-```
+## Official Workflow
 
-### Frontend (Angular)
-```typescript
-// Componentes standalone quando possível (Angular 18+)
-@Component({
-  selector: 'app-diagnostico-wizard',
-  standalone: true,
-  imports: [CommonModule, MaterialModule],
-  templateUrl: './diagnostico-wizard.component.html'
-})
+Toda atuação deve seguir obrigatoriamente o fluxo definido em:
 
-// Services com tipagem rigorosa
-@Injectable({ providedIn: 'root' })
-export class DiagnosticoService {
-  private apiUrl = environment.apiUrl;
-  
-  getDiagnostico(id: string): Observable<Diagnostico> {
-    return this.http.get<Diagnostico>(`${this.apiUrl}/diagnostico/${id}`);
-  }
-}
-```
+- `/docs/FLOW.md`
 
-### Banco de Dados (Prisma)
-```prisma
-// Sempre incluir auditoria
-model Diagnostico {
-  id          String   @id @default(uuid())
-  empresaId   String
-  empresa     Empresa  @relation(fields: [empresaId], references: [id])
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-  createdBy   String
-  updatedBy   String?
-}
-```
+Antes de qualquer ação, a IA deve identificar:
+1. Qual etapa do fluxo está sendo executada
+2. Qual agente seria responsável por essa etapa
+3. Quais artefatos de entrada são exigidos
 
-## Regras de Negócio Críticas
+Se a tarefa não corresponder claramente a uma etapa do FLOW,
+a IA deve interromper e solicitar orientação humana.
 
-1. **Isolamento de Dados**: Usuários só veem dados de suas empresas/contratos
-2. **Auditoria Obrigatória**: Toda alteração deve ser logada
-3. **Criticidade**: Sempre usar enum `Alto | Medio | Baixo` (sem acento)
-4. **Validação**: Backend valida TUDO, frontend valida para UX
-5. **Nomenclatura**: PascalCase para classes, camelCase para variáveis, kebab-case para rotas
+---
 
-## Referências Importantes
+## Delegation Model (Modelo de Atuação)
 
-- **Planilhas Originais**: `planilhas/DIAGNOSTICO.xlsx` e `planilhas/COCKPIT.xlsx`
-- **Template Frontend**: `C:\Users\filip\source\repos\templates\nobleui-angular\`
-- **Contexto Completo**: `CONTEXT.md`
+Este projeto utiliza **agentes especializados**.
 
-## Comandos Essenciais
+A IA **NÃO deve**:
+- assumir múltiplos papéis ao mesmo tempo
+- decidir regras de negócio
+- criar testes baseados em suposição
+- corrigir código para “fazer testes passarem”
 
-```bash
-# Backend
-cd backend
-npm install
-npm run migration:dev    # Rodar migrations
-npm run dev             # Desenvolvimento
+A IA **DEVE**:
+- agir como se estivesse “emprestando mãos” a um agente específico
+- respeitar os limites desse agente
+- produzir apenas os artefatos esperados daquela função
 
-# Frontend
-cd frontend
-npm install
-ng serve                # Desenvolvimento (porta 4200)
+---
 
-# Docker
-docker-compose up -d    # Subir PostgreSQL
-```
+## Prohibited Behaviors
 
-## Próximos Passos
+É explicitamente proibido:
 
-1. Criar estrutura monorepo (backend + frontend)
-2. Configurar Prisma e migrations iniciais
-3. Implementar autenticação JWT
-4. Desenvolver módulo de Cadastros Essenciais
-5. Implementar Wizard de Diagnóstico
+- Inventar regras de negócio
+- Inferir requisitos não documentados
+- Criar testes genéricos ou artificiais
+- Alterar código de produção durante tarefas de QA
+- Misturar revisão, implementação e validação
+- Ignorar convenções definidas em `/docs/conventions`
+
+Se algo não estiver claro, a IA deve **parar**.
+
+---
+
+## Safe Failure Rule
+
+Quando faltar informação suficiente:
+- A IA NÃO deve improvisar
+- A IA deve explicar o que está faltando
+- A IA deve indicar qual agente ou documento resolveria a lacuna
+
+Silêncio ou erro explícito são preferíveis a comportamento incorreto.
+
+---
+
+## Role of This File
+
+Este arquivo existe para:
+
+- Impedir que a IA “faça tudo”
+- Garantir previsibilidade
+- Reduzir retrabalho humano
+- Manter disciplina ao longo do tempo
+
+Ele NÃO substitui:
+- agentes especializados
+- documentação normativa
+- decisões humanas
+
+---
+
+## Final Rule
+
+Se uma ação não puder ser justificada por:
+- código existente
+- documentos normativos
+- FLOW.md
+
+👉 **Ela não deve acontecer.**

@@ -9,7 +9,7 @@ Guia de navegação para toda a documentação do projeto.
 | Documento | Descrição | Link |
 |-----------|-----------|------|
 | **README.md** | Guia completo do frontend, stack, estrutura e features | [frontend/README.md](frontend/README.md) |
-| **DESIGN_SYSTEM_FINAL.md** | Sistema de cores, temas light/dark, UIBakery palette | [DESIGN_SYSTEM_FINAL.md](DESIGN_SYSTEM_FINAL.md) |
+| **DESIGN_SYSTEM_FINAL.md** | Sistema de cores, temas light/dark, paleta atual | [DESIGN_SYSTEM_FINAL.md](DESIGN_SYSTEM_FINAL.md) |
 | **SORTABLE_DIRECTIVE_GUIDE.md** | Documentação da diretiva para colunas ordenáveis | [frontend/SORTABLE_DIRECTIVE_GUIDE.md](frontend/SORTABLE_DIRECTIVE_GUIDE.md) |
 | **MULTI_SELECT_BATCH_DELETE_GUIDE.md** | Multi-select checkboxes e delete em lote | [frontend/MULTI_SELECT_BATCH_DELETE_GUIDE.md](frontend/MULTI_SELECT_BATCH_DELETE_GUIDE.md) |
 | **LOGIN_CUSTOMIZATION.md** | Guia de customização do login (logos, backgrounds) | [frontend/LOGIN_CUSTOMIZATION.md](frontend/LOGIN_CUSTOMIZATION.md) |
@@ -21,35 +21,28 @@ Guia de navegação para toda a documentação do projeto.
 
 | Documento | Descrição | Link |
 |-----------|-----------|------|
-| **README.md** | Guia completo do backend, stack, arquitetura | [backend/README.md](backend/README.md) |
-| **API_ENDPOINTS.md** | Lista completa de endpoints da API | [backend/API_ENDPOINTS.md](backend/API_ENDPOINTS.md) |
-| **DATA_MODEL.md** | Modelo de dados, ERD, relações | [backend/DATA_MODEL.md](backend/DATA_MODEL.md) |
+| **README.md** | Guia completo do backend, stack, arquitetura | [backend/README.md](/backend/README.md) |
+| **API_ENDPOINTS.md** | Lista completa de endpoints da API | [backend/API_ENDPOINTS.md](/backend/API_ENDPOINTS.md) |
+| **DATA_MODEL.md** | Modelo de dados, ERD, relações | [backend/DATA_MODEL.md](/backend/DATA_MODEL.md) |
 
 ### Geral/Projeto
 
 | Documento | Descrição | Link |
 |-----------|-----------|------|
 | **README.md** | Visão geral do projeto Reiche Academy | [README.md](README.md) |
-| **GETTING_STARTED.md** | Guia de início rápido (instalação, setup) | [GETTING_STARTED.md](GETTING_STARTED.md) |
-| **CONTEXT.md** | Contexto completo do projeto, arquivo de referência | [CONTEXT.md](CONTEXT.md) |
+| **GETTING_STARTED.md** | Guia de início rápido (instalação, setup) | [/docs/GETTING_STARTED.md](/docs/GETTING_STARTED.md) |
+| **CONTEXT.md** | Contexto completo do projeto, arquivo de referência | [/docs/CONTEXT.md](/docs/CONTEXT.md) |
 
 ---
 
-## 🎨 Features Implementadas
+## � Guia de Uso Rápido
 
-### Frontend - Tema Dark (UIBakery)
+### Quando usar cada cor
 
-**Paleta de Cores**:
-- Primary: `#C67A3D` (Orange/Copper)
-- Secondary: `#4E4E4E` (Gray)
-- Background: `#0A0A0A` (Deep)
-- Cards: `#1A1A1A`
-- Borders: `#2A2A2A`
-- Text: `#FFFFFF` / `#A0A0A0`
-
-**Referência**: [DESIGN_SYSTEM_FINAL.md](DESIGN_SYSTEM_FINAL.md#-paleta-uibakery-dark-theme-implementada)
-
-### Frontend - Usuarios-List Component
+| Situação | Cor | Classe/Variável |
+|----------|-----|-----------------|
+| Ação principal | Primary | `.btn-primary` / `$primary` |
+| Ação secundária | Secondary | `.btn-secondary` / `$secondary` |
 
 **Features**:
 1. ✅ Multi-select checkboxes com header sync
@@ -61,7 +54,7 @@ Guia de navegação para toda a documentação do projeto.
 **Documentação**:
 - Multi-select: [MULTI_SELECT_BATCH_DELETE_GUIDE.md](frontend/MULTI_SELECT_BATCH_DELETE_GUIDE.md)
 - Sorting: [SORTABLE_DIRECTIVE_GUIDE.md](frontend/SORTABLE_DIRECTIVE_GUIDE.md)
-- Overview: [frontend/README.md](frontend/README.md#-features-detalhadas)
+- Overview: [frontend/README.md](frontend/README.md)
 
 ---
 
@@ -70,9 +63,9 @@ Guia de navegação para toda a documentação do projeto.
 ```
 reiche-academy/
 ├── README.md                          # Visão geral
-├── GETTING_STARTED.md                 # Início rápido
-├── CONTEXT.md                         # Contexto completo
-├── DESIGN_SYSTEM_FINAL.md             # Sistema de cores e componentes
+├── /docs/GETTING_STARTED.md                 # Início rápido
+├── /docs/CONTEXT.md                         # Contexto completo
+├── /docs/DESIGN_SYSTEM_FINAL.md             # Sistema de cores e componentes
 │
 ├── backend/                           # NestJS + Prisma
 │   ├── README.md
@@ -161,7 +154,7 @@ src/app/views/pages/usuarios/usuarios-list/
 # Cores e temas
 src/styles/
 ├── _variables.scss                   # Light theme
-├── _variables-dark.scss              # Dark theme (UIBakery)
+├── _variables-dark.scss              # Dark theme (padrão)
 ├── _custom.scss                      # Overrides (checkboxes, tables)
 └── styles.scss                       # Import principal
 ```
@@ -173,7 +166,7 @@ src/styles/
 ### Design & Estilo
 
 1. **Sistema de Cores**: [DESIGN_SYSTEM_FINAL.md](DESIGN_SYSTEM_FINAL.md)
-   - Paleta UIBakery
+   - Paleta atual (Bronze/Gray)
    - Tema Light/Dark
    - WCAG Acessibilidade
    - Custom styling
@@ -351,8 +344,8 @@ Para dúvidas ou problemas:
 
 ## 🔄 Última Atualização
 
-**Data**: 09/12/2024  
-**Mudanças**: Documentação completa de features UIBakery Dark, Multi-Select, Sorting  
+**Data**: 18/12/2024  
+**Mudanças**: Atualização do sistema de cores, tema dark como padrão, login customizado  
 **Status**: ✅ Pronto para produção
 
 ---

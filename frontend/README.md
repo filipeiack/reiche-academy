@@ -15,13 +15,6 @@ Aplicação web SPA desenvolvida com **Angular 18+** para o sistema **Reiche Aca
 
 ## 🎨 Design System
 
-- **Paleta Oficial (UIBakery Dark Theme)**:
-  - Primary: `#C67A3D` (Orange/Copper)
-  - Secondary: `#4E4E4E` (Gray)
-  - Background: `#0A0A0A` (Deep)
-  - Cards: `#1A1A1A`
-  - Borders: `#2A2A2A`
-  - Text: `#FFFFFF` (Primary), `#A0A0A0` (Secondary)
 - **Tema Light**: Suporte completo com cores light theme
 - **Bootstrap 5**: Dark mode nativo + custom overrides
 - **Referência**: `DESIGN_SYSTEM_FINAL.md`
@@ -128,8 +121,8 @@ src/
   - localStorage (isLoggedin)
   - Estrutura pronta para JWT
 
-- ✅ **Tema Dark (UIBakery)**
-  - Paleta UIBakery (#C67A3D, #4E4E4E, #0A0A0A, #1A1A1A, #2A2A2A)
+- ✅ **Tema Dark**
+
   - Dark theme completo com Bootstrap 5
   - Custom styling para inputs, checkboxes, tables
 
@@ -138,7 +131,7 @@ src/
   - Sortable columns (nome, email)
   - Batch delete com confirmação SweetAlert2
   - Selection counter com ng-bootstrap alert
-  - Dark theme styling com UIBakery colors
+
 
 - ⏳ **Dashboard** (em progresso)
 - ⏳ **Integrações com backend** (JWT, API calls)
@@ -316,7 +309,7 @@ deleteSelectedUsuarios(): void {
 #### 5. Table Hover Effect
 ```scss
 .table-hover tbody tr:hover {
-  background-color: rgba(198, 122, 61, 0.1) !important;  // UIBakery hover
+  background-color: rgba(198, 122, 61, 0.1) !important; 
 }
 ```
 
@@ -468,7 +461,7 @@ export const environment = {
 - **TypeScript**: https://www.typescriptlang.org
 - **Design System**: `DESIGN_SYSTEM_COLORS.md`
 - **Customização**: `LOGIN_CUSTOMIZATION.md`
-- **Contexto Geral**: `CONTEXT.md`
+- **Contexto Geral**: `/docs/CONTEXT.md`
 
 ## 📝 Commits
 

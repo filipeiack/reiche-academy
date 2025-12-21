@@ -104,9 +104,60 @@ reiche-academy/
 
 ## 📚 Documentação
 
-- [Contexto do Projeto](CONTEXT.md)
+- [Contexto do Projeto](/docs/CONTEXT.md)
+- [Convenções do Projeto](/docs/conventions/README.md) - Padrões reais observados no código
+  - [Backend](/docs/conventions/backend.md)
+  - [Frontend](/docs/conventions/frontend.md)
+  - [Testes](/docs/conventions/testing.md)
+  - [Naming](/docs/conventions/naming.md)
+  - [Git](/docs/conventions/git.md)
 - [Instruções Copilot](.github/copilot-instructions.md)
 - [Planilhas Originais](planilhas/)
+
+## ⚠️ Limitações das Convenções Atuais
+
+Este projeto está em fase de consolidação de padrões. Abaixo estão questões não consolidadas que precisam de decisão futura:
+
+### Backend
+- [ ] **Auditoria incompleta**: Service existe mas não é chamado em todos os endpoints
+- [ ] **Error handler global**: Exceções NestJS sem filtro global centralizado
+- [ ] **Repository pattern**: Não consolidado (services acessam Prisma diretamente)
+- [ ] **Soft delete automático**: Consultas não filtram automaticamente usuários inativos
+- [ ] **Testes unitários**: Nenhum teste com Jest encontrado no repositório
+- [ ] **Custom validators**: Apenas class-validator padrão (sem validação customizada)
+
+### Frontend
+- [ ] **Guards de rota não integrados**: Estrutura existe, rotas sem autenticação obrigatória
+- [ ] **Lazy loading**: Sem code splitting em rotas (todas carregadas imediatamente)
+- [ ] **Interceptors não consolidados**: Sem injeção automática de JWT nas requisições
+- [ ] **Memory leaks**: Componentes sem unsubscribe de Observables (sem takeUntil)
+- [ ] **Error handler global**: Sem HttpErrorResponse centralizado
+- [ ] **State management**: Apenas BehaviorSubject (sem NgRx)
+- [ ] **Logger centralizado**: Sem Winston/Pino no frontend
+- [ ] **TypeScript strict**: Não confirmado se `strict: true` está ativo
+
+### Testes
+- [ ] **Testes unitários backend**: Configurado (jest) mas não implementado
+- [ ] **Mocks e fixtures**: Sem padrão consolidado (HttpClientTestingModule não usado)
+- [ ] **E2E timing**: Waits fixos (`waitForTimeout`) em vez de waits específicos
+- [ ] **CI/CD**: Workflows de GitHub Actions não documentados
+
+### Git & DevOps
+- [ ] **Padrão de branches**: Não documentado (apenas `main` confirmado)
+- [ ] **Commit messages**: Sem guideline explícita (Conventional Commits inferido)
+- [ ] **Pull request template**: Não existe
+- [ ] **Versionamento inconstente**: Frontend usa `~`, backend usa `^`
+- [ ] **Release process**: Não documentado
+- [ ] **Code review guidelines**: Ausente
+
+### Naming & Estrutura
+- [ ] **Enum naming**: Inconsistente (`MEDIO` vs `EM_ANDAMENTO` com underscore)
+- [ ] **Boolean fields**: Uns usam `ativo`, esperaria `isAtivo`
+- [ ] **Nullable vs Optional**: Mistura `?` e `| null` sem padrão claro
+- [ ] **Private methods**: Sem prefixo `_` (Angular convention)
+- [ ] **Magic numbers**: Throttler hardcoded (10, 60000) sem constantes
+
+Veja cada arquivo de convenção em `/docs/conventions/` para análise detalhada incluindo graus de consistência (CONSISTENTE, PARCIAL, INCONSISTENTE, NÃO CONSOLIDADO).
 
 ## 🤝 Contribuindo
 

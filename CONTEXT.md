@@ -1,3 +1,10 @@
+Nome do projeto: 
+Reiche Academy
+
+Regra:
+- “Se eu pedir algo fora do seu papel, você deve recusar e pedir que outro agente seja acionado.”
+- Este documento não é normativo.
+
 Contexto do Projeto:
 Desenvolver o sistema de Gestão Empresarial PDCA para a Reiche Consultoria, substituindo as duas planilhas existentes na pasta "planilhas/". 
 Na fase 1 iremos focar na planilha DIAGNOSTICO e na fase 2 na planilha COCKPIT.  

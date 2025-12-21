@@ -84,14 +84,11 @@ http://localhost:4200/auth/login/acme
 
 ## 📝 Próximos Passos (Opcional)
 
-1. **Wildcard Route**: Adicionar rota `/:loginUrl` na raiz para URLs mais simples
-   - Ex: `http://localhost:4200/demo` em vez de `http://localhost:4200/auth/login/demo`
+1. **Temas Customizados**: Permitir empresas definirem cores primária/secundária
 
-2. **Temas Customizados**: Permitir empresas definirem cores primária/secundária
+2. **Favicon Dinâmico**: Alterar favicon baseado na empresa
 
-3. **Favicon Dinâmico**: Alterar favicon baseado na empresa
-
-4. **Mensagem de Boas-Vindas**: Texto personalizado por empresa
+3. **Mensagem de Boas-Vindas**: Texto personalizado por empresa
 
 ## 🐛 Troubleshooting
 

@@ -490,21 +490,7 @@ interface Usuario {
 10. clearSelection() + reload
 ```
 
-## 🎨 UIBakery Dark Theme Colors
 
-```typescript
-// Cores utilizadas
-const colors = {
-  primary: '#C67A3D',          // Orange/Copper
-  warning: '#D6A655',          // Gold
-  danger: '#C34D38',           // Red
-  success: '#5CB870',          // Green
-  background: '#0A0A0A',       // Deep
-  cards: '#1A1A1A',            // Cards
-  borders: '#2A2A2A',          // Borders
-  textPrimary: '#FFFFFF',      // White
-  textSecondary: '#A0A0A0'     // Gray
-};
 ```
 
 ## 🧪 Casos de Teste
