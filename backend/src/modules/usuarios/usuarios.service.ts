@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException, ConflictException } from '@nestjs/common';
+import { Injectable, NotFoundException, ConflictException, ForbiddenException } from '@nestjs/common';
 import { PrismaService } from '../../common/prisma/prisma.service';
 import * as argon2 from 'argon2';
 import * as fs from 'fs';
@@ -8,6 +8,47 @@ import { AuditService } from '../audit/audit.service';
 @Injectable()
 export class UsuariosService {
   constructor(private prisma: PrismaService, private audit: AuditService) {}
+
+  /**
+   * RA-001: Valida isolamento multi-tenant
+   * ADMINISTRADOR tem acesso global
+   * Outros perfis só acessam usuários da mesma empresa
+   */
+  private validateTenantAccess(targetUsuario: any, requestUser: any, action: string) {
+    // ADMINISTRADOR tem acesso global
+    if (requestUser.perfil?.codigo === 'ADMINISTRADOR') {
+      return;
+    }
+
+    // Outros perfis só acessam usuários da mesma empresa
+    if (targetUsuario.empresaId !== requestUser.empresaId) {
+      throw new ForbiddenException(`Você não pode ${action} usuários de outra empresa`);
+    }
+  }
+
+  /**
+   * RA-004: Valida que usuário não pode criar/editar usuário com perfil superior
+   */
+  private async validateProfileElevation(targetPerfilId: string, requestUser: any, action: string) {
+    // ADMINISTRADOR pode criar qualquer perfil
+    if (requestUser.perfil?.codigo === 'ADMINISTRADOR') {
+      return;
+    }
+
+    // Buscar perfil alvo
+    const targetPerfil = await this.prisma.perfilUsuario.findUnique({
+      where: { id: targetPerfilId },
+    });
+
+    if (!targetPerfil) {
+      throw new NotFoundException('Perfil não encontrado');
+    }
+
+    // Verificar se está tentando criar/editar perfil com nível superior (menor número = maior poder)
+    if (targetPerfil.nivel < requestUser.perfil.nivel) {
+      throw new ForbiddenException(`Você não pode ${action} usuário com perfil superior ao seu`);
+    }
+  }
 
   private getAbsolutePublicPath(relativePath: string): string {
     return path.join(process.cwd(), 'public', relativePath.replace(/^[/\\]+/, ''));
@@ -71,7 +112,7 @@ export class UsuariosService {
     });
   }
 
-  async findById(id: string) {
+  async findById(id: string, requestUser?: any) {
     const usuario = await this.prisma.usuario.findUnique({
       where: { id },
       select: {
@@ -98,6 +139,11 @@ export class UsuariosService {
 
     if (!usuario) {
       throw new NotFoundException('Usuário não encontrado');
+    }
+
+    // RA-001: Validar acesso multi-tenant (se requestUser fornecido)
+    if (requestUser) {
+      this.validateTenantAccess(usuario, requestUser, 'visualizar');
     }
 
     return usuario;
@@ -127,11 +173,16 @@ export class UsuariosService {
     });
   }
 
-  async create(data: any) {
+  async create(data: any, requestUser?: any) {
     const existingUser = await this.findByEmail(data.email);
     
     if (existingUser) {
       throw new ConflictException('Email já cadastrado');
+    }
+
+    // RA-004: Validar elevação de perfil (se requestUser fornecido)
+    if (requestUser && data.perfilId) {
+      await this.validateProfileElevation(data.perfilId, requestUser, 'criar');
     }
 
     const hashedPassword = await argon2.hash(data.senha);
@@ -174,8 +225,27 @@ export class UsuariosService {
     return created;
   }
 
-  async update(id: string, data: any) {
+  async update(id: string, data: any, requestUser: any) {
     const before = await this.findById(id);
+
+    // RA-001: Validar isolamento multi-tenant
+    this.validateTenantAccess(before, requestUser, 'editar');
+
+    // RA-002: Bloquear auto-edição de campos privilegiados
+    const isSelfEdit = id === requestUser.id;
+    if (isSelfEdit) {
+      const forbiddenFields = ['perfilId', 'empresaId', 'ativo'];
+      const attemptingForbidden = forbiddenFields.some(field => data[field] !== undefined);
+      
+      if (attemptingForbidden) {
+        throw new ForbiddenException('Você não pode alterar perfilId, empresaId ou ativo no seu próprio usuário');
+      }
+    }
+
+    // RA-004: Validar elevação de perfil se houver mudança de perfilId
+    if (data.perfilId && data.perfilId !== before.perfil.id) {
+      await this.validateProfileElevation(data.perfilId, requestUser, 'atribuir');
+    }
 
     if (data.senha) {
       data.senha = await argon2.hash(data.senha);
@@ -264,8 +334,16 @@ export class UsuariosService {
     });
   }
 
-  async updateProfilePhoto(id: string, fotoUrl: string) {
+  async updateProfilePhoto(id: string, fotoUrl: string, requestUser: any) {
     const usuario = await this.findById(id);
+
+    // RA-003: Apenas ADMINISTRADOR ou o próprio usuário pode alterar foto
+    if (requestUser.perfil?.codigo !== 'ADMINISTRADOR' && requestUser.id !== id) {
+      throw new ForbiddenException('Você não pode alterar a foto de outro usuário');
+    }
+
+    // RA-001: Validar isolamento multi-tenant
+    this.validateTenantAccess(usuario, requestUser, 'alterar foto de');
 
     // Remove o arquivo anterior para evitar acúmulo de imagens
     if (usuario.fotoUrl && usuario.fotoUrl !== fotoUrl) {
@@ -273,7 +351,7 @@ export class UsuariosService {
       this.deleteFileIfExists(oldFilePath);
     }
 
-    return this.prisma.usuario.update({
+    const updated = await this.prisma.usuario.update({
       where: { id },
       data: { fotoUrl },
       select: {
@@ -294,10 +372,32 @@ export class UsuariosService {
         updatedAt: true,
       },
     });
+
+    // Auditoria de alteração de foto
+    await this.audit.log({
+      usuarioId: requestUser.id,
+      usuarioNome: requestUser.nome,
+      usuarioEmail: requestUser.email,
+      entidade: 'usuarios',
+      entidadeId: id,
+      acao: 'UPDATE',
+      dadosAntes: { fotoUrl: usuario.fotoUrl },
+      dadosDepois: { fotoUrl },
+    });
+
+    return updated;
   }
 
-  async deleteProfilePhoto(id: string) {
+  async deleteProfilePhoto(id: string, requestUser: any) {
     const usuario = await this.findById(id);
+
+    // RA-003: Apenas ADMINISTRADOR ou o próprio usuário pode deletar foto
+    if (requestUser.perfil?.codigo !== 'ADMINISTRADOR' && requestUser.id !== id) {
+      throw new ForbiddenException('Você não pode deletar a foto de outro usuário');
+    }
+
+    // RA-001: Validar isolamento multi-tenant
+    this.validateTenantAccess(usuario, requestUser, 'deletar foto de');
 
     // Delete file from filesystem if it exists
     if (usuario.fotoUrl) {
@@ -305,7 +405,7 @@ export class UsuariosService {
       this.deleteFileIfExists(filePath);
     }
 
-    return this.prisma.usuario.update({
+    const updated = await this.prisma.usuario.update({
       where: { id },
       data: { fotoUrl: null },
       select: {
@@ -326,5 +426,19 @@ export class UsuariosService {
         updatedAt: true,
       },
     });
+
+    // Auditoria de remoção de foto
+    await this.audit.log({
+      usuarioId: requestUser.id,
+      usuarioNome: requestUser.nome,
+      usuarioEmail: requestUser.email,
+      entidade: 'usuarios',
+      entidadeId: id,
+      acao: 'UPDATE',
+      dadosAntes: { fotoUrl: usuario.fotoUrl },
+      dadosDepois: { fotoUrl: null },
+    });
+
+    return updated;
   }
 }

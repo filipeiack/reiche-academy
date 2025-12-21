@@ -34,8 +34,8 @@ export class UsuariosController {
   @Post()
   @Roles('ADMINISTRADOR')
   @ApiOperation({ summary: 'Criar novo usuário' })
-  create(@Body() createUsuarioDto: CreateUsuarioDto) {
-    return this.usuariosService.create(createUsuarioDto);
+  create(@Body() createUsuarioDto: CreateUsuarioDto, @Request() req: any) {
+    return this.usuariosService.create(createUsuarioDto, req.user);
   }
 
   @Get()
@@ -55,15 +55,15 @@ export class UsuariosController {
   @Get(':id')
   @Roles('ADMINISTRADOR', 'CONSULTOR', 'GESTOR', 'COLABORADOR', 'LEITURA')
   @ApiOperation({ summary: 'Buscar usuário por ID' })
-  findOne(@Param('id') id: string) {
-    return this.usuariosService.findById(id);
+  findOne(@Param('id') id: string, @Request() req: any) {
+    return this.usuariosService.findById(id, req.user);
   }
 
   @Patch(':id')
   @Roles('ADMINISTRADOR', 'GESTOR', 'COLABORADOR')
   @ApiOperation({ summary: 'Atualizar usuário' })
-  update(@Param('id') id: string, @Body() updateUsuarioDto: UpdateUsuarioDto) {
-    return this.usuariosService.update(id, updateUsuarioDto);
+  update(@Param('id') id: string, @Body() updateUsuarioDto: UpdateUsuarioDto, @Request() req: any) {
+    return this.usuariosService.update(id, updateUsuarioDto, req.user);
   }
 
   @Delete(':id')
@@ -81,6 +81,7 @@ export class UsuariosController {
   }
 
   @Post(':id/foto')
+  @Roles('ADMINISTRADOR', 'GESTOR', 'COLABORADOR')
   @ApiOperation({ summary: 'Upload de foto de perfil' })
   @ApiConsumes('multipart/form-data')
   @ApiBody({
@@ -119,18 +120,20 @@ export class UsuariosController {
   async uploadProfilePhoto(
     @Param('id') id: string,
     @UploadedFile() file: Express.Multer.File,
+    @Request() req: any,
   ) {
     if (!file) {
       throw new BadRequestException('Nenhuma imagem foi enviada');
     }
 
     const fotoUrl = `/images/faces/${file.filename}`;
-    return await this.usuariosService.updateProfilePhoto(id, fotoUrl);
+    return await this.usuariosService.updateProfilePhoto(id, fotoUrl, req.user);
   }
 
   @Delete(':id/foto')
+  @Roles('ADMINISTRADOR', 'GESTOR', 'COLABORADOR')
   @ApiOperation({ summary: 'Deletar foto de perfil' })
-  async deleteProfilePhoto(@Param('id') id: string) {
-    return this.usuariosService.deleteProfilePhoto(id);
+  async deleteProfilePhoto(@Param('id') id: string, @Request() req: any) {
+    return this.usuariosService.deleteProfilePhoto(id, req.user);
   }
 }
