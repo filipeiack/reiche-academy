@@ -104,8 +104,9 @@ describe('UsuariosService - Validação Completa de Regras de Negócio', () => {
           email: 'colab-a@test.com',
           nome: 'Duplicado',
           senha: '123456',
+          cargo: 'Desenvolvedor',
           perfilId: 'perfil-colab',
-        })
+        }, mockAdminUser)
       ).rejects.toThrow(ConflictException);
 
       await expect(
@@ -113,8 +114,9 @@ describe('UsuariosService - Validação Completa de Regras de Negócio', () => {
           email: 'colab-a@test.com',
           nome: 'Duplicado',
           senha: '123456',
+          cargo: 'Desenvolvedor',
           perfilId: 'perfil-colab',
-        })
+        }, mockAdminUser)
       ).rejects.toThrow('Email já cadastrado');
     });
 
@@ -129,8 +131,9 @@ describe('UsuariosService - Validação Completa de Regras de Negócio', () => {
         email: 'unico@test.com',
         nome: 'Novo Usuario',
         senha: '123456',
+        cargo: 'Analista',
         perfilId: 'perfil-colab',
-      });
+      }, mockAdminUser);
 
       expect(result).toBeDefined();
       expect(result.email).toBe('unico@test.com');
@@ -150,8 +153,9 @@ describe('UsuariosService - Validação Completa de Regras de Negócio', () => {
         email: 'novo@test.com',
         nome: 'Novo',
         senha: senhaPlainText,
+        cargo: 'Analista',
         perfilId: 'perfil-colab',
-      });
+      }, mockAdminUser);
 
       const createCall = (prisma.usuario.create as jest.Mock).mock.calls[0][0];
       expect(createCall.data.senha).not.toBe(senhaPlainText);
@@ -190,8 +194,9 @@ describe('UsuariosService - Validação Completa de Regras de Negócio', () => {
         email: 'novo@test.com',
         nome: 'Novo',
         senha: 'senha123',
+        cargo: 'Analista',
         perfilId: 'perfil-colab',
-      });
+      }, mockAdminUser);
 
       expect(audit.log).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -591,6 +596,7 @@ describe('UsuariosService - Validação Completa de Regras de Negócio', () => {
           email: 'novo@test.com',
           nome: 'Novo Admin',
           senha: '123456',
+          cargo: 'Gerente',
           perfilId: 'perfil-admin',
         }, mockGestorEmpresaA)
       ).rejects.toThrow(ForbiddenException);
@@ -615,6 +621,7 @@ describe('UsuariosService - Validação Completa de Regras de Negócio', () => {
         email: 'novo@test.com',
         nome: 'Novo Colaborador',
         senha: '123456',
+        cargo: 'Analista',
         perfilId: 'perfil-colab',
       }, mockGestorEmpresaA);
 

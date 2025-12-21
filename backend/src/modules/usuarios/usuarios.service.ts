@@ -4,6 +4,16 @@ import * as argon2 from 'argon2';
 import * as fs from 'fs';
 import * as path from 'path';
 import { AuditService } from '../audit/audit.service';
+import { CreateUsuarioDto } from './dto/create-usuario.dto';
+import { UpdateUsuarioDto } from './dto/update-usuario.dto';
+
+export interface RequestUser {
+  id: string;
+  perfil: { codigo: string; nivel: number };
+  empresaId: string | null;
+  nome: string;
+  email: string;
+}
 
 @Injectable()
 export class UsuariosService {
@@ -14,7 +24,7 @@ export class UsuariosService {
    * ADMINISTRADOR tem acesso global
    * Outros perfis só acessam usuários da mesma empresa
    */
-  private validateTenantAccess(targetUsuario: any, requestUser: any, action: string) {
+  private validateTenantAccess(targetUsuario: { empresaId: string | null }, requestUser: RequestUser, action: string) {
     // ADMINISTRADOR tem acesso global
     if (requestUser.perfil?.codigo === 'ADMINISTRADOR') {
       return;
@@ -29,7 +39,7 @@ export class UsuariosService {
   /**
    * RA-004: Valida que usuário não pode criar/editar usuário com perfil superior
    */
-  private async validateProfileElevation(targetPerfilId: string, requestUser: any, action: string) {
+  private async validateProfileElevation(targetPerfilId: string, requestUser: RequestUser, action: string) {
     // ADMINISTRADOR pode criar qualquer perfil
     if (requestUser.perfil?.codigo === 'ADMINISTRADOR') {
       return;
@@ -112,7 +122,7 @@ export class UsuariosService {
     });
   }
 
-  async findById(id: string, requestUser?: any) {
+  async findById(id: string, requestUser: RequestUser) {
     const usuario = await this.prisma.usuario.findUnique({
       where: { id },
       select: {
@@ -141,9 +151,39 @@ export class UsuariosService {
       throw new NotFoundException('Usuário não encontrado');
     }
 
-    // RA-001: Validar acesso multi-tenant (se requestUser fornecido)
-    if (requestUser) {
-      this.validateTenantAccess(usuario, requestUser, 'visualizar');
+    // RA-001: Validar acesso multi-tenant
+    this.validateTenantAccess(usuario, requestUser, 'visualizar');
+
+    return usuario;
+  }
+
+  private async findByIdInternal(id: string) {
+    const usuario = await this.prisma.usuario.findUnique({
+      where: { id },
+      select: {
+        id: true,
+        email: true,
+        nome: true,
+        cargo: true,
+        perfil: {
+          select: {
+            id: true,
+            codigo: true,
+            nome: true,
+            nivel: true,
+          },
+        },
+        fotoUrl: true,
+        ativo: true,
+        empresaId: true,
+        empresa: true,
+        createdAt: true,
+        updatedAt: true,
+      },
+    });
+
+    if (!usuario) {
+      throw new NotFoundException('Usuário não encontrado');
     }
 
     return usuario;
@@ -173,17 +213,15 @@ export class UsuariosService {
     });
   }
 
-  async create(data: any, requestUser?: any) {
+  async create(data: CreateUsuarioDto, requestUser: RequestUser) {
     const existingUser = await this.findByEmail(data.email);
     
     if (existingUser) {
       throw new ConflictException('Email já cadastrado');
     }
 
-    // RA-004: Validar elevação de perfil (se requestUser fornecido)
-    if (requestUser && data.perfilId) {
-      await this.validateProfileElevation(data.perfilId, requestUser, 'criar');
-    }
+    // RA-004: Validar elevação de perfil
+    await this.validateProfileElevation(data.perfilId, requestUser, 'criar');
 
     const hashedPassword = await argon2.hash(data.senha);
 
@@ -225,8 +263,8 @@ export class UsuariosService {
     return created;
   }
 
-  async update(id: string, data: any, requestUser: any) {
-    const before = await this.findById(id);
+  async update(id: string, data: UpdateUsuarioDto, requestUser: RequestUser) {
+    const before = await this.findById(id, requestUser);
 
     // RA-001: Validar isolamento multi-tenant
     this.validateTenantAccess(before, requestUser, 'editar');
@@ -235,7 +273,7 @@ export class UsuariosService {
     const isSelfEdit = id === requestUser.id;
     if (isSelfEdit) {
       const forbiddenFields = ['perfilId', 'empresaId', 'ativo'];
-      const attemptingForbidden = forbiddenFields.some(field => data[field] !== undefined);
+      const attemptingForbidden = forbiddenFields.some(field => (data as any)[field] !== undefined);
       
       if (attemptingForbidden) {
         throw new ForbiddenException('Você não pode alterar perfilId, empresaId ou ativo no seu próprio usuário');
@@ -289,7 +327,7 @@ export class UsuariosService {
   }
 
   async remove(id: string) {
-    const before = await this.findById(id);
+    const before = await this.findByIdInternal(id);
     
     const after = await this.prisma.usuario.update({
       where: { id },
@@ -311,7 +349,7 @@ export class UsuariosService {
   }
 
   async hardDelete(id: string) {
-    const usuario = await this.findById(id);
+    const usuario = await this.findByIdInternal(id);
 
     // Delete profile photo if exists
     if (usuario.fotoUrl) {
@@ -334,8 +372,8 @@ export class UsuariosService {
     });
   }
 
-  async updateProfilePhoto(id: string, fotoUrl: string, requestUser: any) {
-    const usuario = await this.findById(id);
+  async updateProfilePhoto(id: string, fotoUrl: string, requestUser: RequestUser) {
+    const usuario = await this.findById(id, requestUser);
 
     // RA-003: Apenas ADMINISTRADOR ou o próprio usuário pode alterar foto
     if (requestUser.perfil?.codigo !== 'ADMINISTRADOR' && requestUser.id !== id) {
@@ -388,8 +426,8 @@ export class UsuariosService {
     return updated;
   }
 
-  async deleteProfilePhoto(id: string, requestUser: any) {
-    const usuario = await this.findById(id);
+  async deleteProfilePhoto(id: string, requestUser: RequestUser) {
+    const usuario = await this.findById(id, requestUser);
 
     // RA-003: Apenas ADMINISTRADOR ou o próprio usuário pode deletar foto
     if (requestUser.perfil?.codigo !== 'ADMINISTRADOR' && requestUser.id !== id) {

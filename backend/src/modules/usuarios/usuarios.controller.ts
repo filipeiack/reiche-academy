@@ -53,7 +53,7 @@ export class UsuariosController {
   }
 
   @Get(':id')
-  @Roles('ADMINISTRADOR', 'CONSULTOR', 'GESTOR', 'COLABORADOR', 'LEITURA')
+  @Roles('ADMINISTRADOR', 'GESTOR', 'COLABORADOR', 'LEITURA')
   @ApiOperation({ summary: 'Buscar usuário por ID' })
   findOne(@Param('id') id: string, @Request() req: any) {
     return this.usuariosService.findById(id, req.user);
