@@ -4,7 +4,6 @@ import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router, ActivatedRoute, RouterLink } from '@angular/router';
 import Swal from 'sweetalert2';
 import { PilaresService, Pilar, CreatePilarDto, UpdatePilarDto } from '../../../../core/services/pilares.service';
-import { TranslatePipe } from '../../../../core/pipes/translate.pipe';
 
 @Component({
   selector: 'app-pilares-form',
