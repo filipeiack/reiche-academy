@@ -306,29 +306,51 @@ export class EmpresasService {
       .filter((tipo): tipo is string => tipo !== null);
   }
 
-  async updateLogo(id: string, logoUrl: string, requestUser: RequestUser) {
-    const empresa = await this.findOne(id);
+  async updateLogo(id: string, logoUrl: string, userId: string, requestUser: RequestUser) {
+    const before = await this.findOne(id);
 
     // RA-EMP-001: Validar isolamento multi-tenant
-    this.validateTenantAccess(empresa, requestUser, 'alterar logo de');
+    this.validateTenantAccess(before, requestUser, 'alterar logo de');
     
-    const updated = await this.prisma.empresa.update({
+    const after = await this.prisma.empresa.update({
       where: { id },
-      data: { logoUrl },
+      data: { logoUrl, updatedBy: userId },
     });
 
-    return { logoUrl: updated.logoUrl };
+    await this.audit.log({
+      usuarioId: userId,
+      usuarioNome: requestUser.nome,
+      usuarioEmail: requestUser.email,
+      entidade: 'empresas',
+      entidadeId: id,
+      acao: 'UPDATE',
+      dadosAntes: before,
+      dadosDepois: after,
+    });
+
+    return { logoUrl: after.logoUrl };
   }
 
-  async deleteLogo(id: string, requestUser: RequestUser) {
-    const empresa = await this.findOne(id);
+  async deleteLogo(id: string, userId: string, requestUser: RequestUser) {
+    const before = await this.findOne(id);
 
     // RA-EMP-001: Validar isolamento multi-tenant
-    this.validateTenantAccess(empresa, requestUser, 'deletar logo de');
+    this.validateTenantAccess(before, requestUser, 'deletar logo de');
 
-    const updated = await this.prisma.empresa.update({
+    const after = await this.prisma.empresa.update({
       where: { id },
-      data: { logoUrl: null },
+      data: { logoUrl: null, updatedBy: userId },
+    });
+
+    await this.audit.log({
+      usuarioId: userId,
+      usuarioNome: requestUser.nome,
+      usuarioEmail: requestUser.email,
+      entidade: 'empresas',
+      entidadeId: id,
+      acao: 'UPDATE',
+      dadosAntes: before,
+      dadosDepois: after,
     });
 
     return { logoUrl: null };

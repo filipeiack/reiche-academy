@@ -168,7 +168,7 @@ export class EmpresasController {
     }
 
     const logoUrl = `/images/logos/${file.filename}`;
-    return await this.empresasService.updateLogo(id, logoUrl, req.user);
+    return await this.empresasService.updateLogo(id, logoUrl, req.user.id, req.user);
   }
 
   @Delete(':id/logo')
@@ -177,6 +177,6 @@ export class EmpresasController {
   @Roles('ADMINISTRADOR', 'GESTOR')
   @ApiOperation({ summary: 'Deletar logotipo da empresa' })
   async deleteLogo(@Param('id') id: string, @Request() req: ExpressRequest & { user: any }) {
-    return this.empresasService.deleteLogo(id, req.user);
+    return this.empresasService.deleteLogo(id, req.user.id, req.user);
   }
 }
