@@ -45,6 +45,17 @@ export const routes: Routes = [
       }
     ]
   },
+  {
+    path: 'pilares',
+    component: BaseComponent,
+    canActivate: [authGuard],
+    children: [
+      {
+        path: '',
+        loadChildren: () => import('./views/pages/pilares/pilares.routes').then(m => m.pilaresRoutes)
+      }
+    ]
+  },
   // Rota wildcard para login customizado - DEVE SER A ÚLTIMA!
   // Captura qualquer URL não reconhecida e trata como loginUrl
   {
