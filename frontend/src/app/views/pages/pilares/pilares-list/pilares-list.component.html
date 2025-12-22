@@ -1,0 +1,193 @@
+<div class="mb-2 align-items-center gap-2 d-flex justify-content-between flex-wrap">
+  <nav aria-label="breadcrumb">
+    <ol class="breadcrumb breadcrumb-arrow mb-1">
+      <li class="breadcrumb-item">
+        <i class="input-icon" data-feather="layers" style="width: 16px; height: 16px"></i>
+      </li>
+      <li class="breadcrumb-item active" aria-current="page">
+        Pilares
+      </li>
+    </ol>
+  </nav>
+
+  <button type="button" class="btn btn-primary btn-icon-text btn-xs" [routerLink]="['/pilares/novo']">
+    <i class="feather icon-plus btn-icon-prepend"></i>
+    Novo Pilar
+  </button>
+</div>
+
+<div class="row">
+  <div class="col-md-12 stretch-card">
+    <div class="card">
+      <div class="card-body">
+        <!-- UI-PIL-007: Filtros -->
+        <div class="row mb-3">
+          <div class="col-md-4">
+            <div class="input-icon search-inline">
+              <span class="input-icon-addon">
+                <i class="feather icon-search"></i>
+              </span>
+              <input 
+                type="text" 
+                class="form-control" 
+                placeholder="Buscar por nome..."
+                [value]="searchQuery" 
+                (input)="onSearchInput($event)" />
+            </div>
+          </div>
+
+          <div class="col-md-3">
+            <select class="form-select" [(ngModel)]="statusFilter" (ngModelChange)="onStatusFilterChange($event)">
+              <option value="all">Todos os Status</option>
+              <option value="active">Ativos</option>
+              <option value="inactive">Inativos</option>
+            </select>
+          </div>
+
+          <div class="col-md-3">
+            <select class="form-select" [(ngModel)]="tipoFilter" (ngModelChange)="onTipoFilterChange($event)">
+              <option value="all">Todos os Tipos</option>
+              <option value="modelo">Padrão</option>
+              <option value="customizado">Customizados</option>
+            </select>
+          </div>
+        </div>
+
+        @if (loading) {
+        <div class="text-center py-5">
+          <div class="spinner-border text-primary" role="status">
+            <span class="visually-hidden">Carregando...</span>
+          </div>
+        </div>
+        } @else {
+        <div class="table-responsive">
+          <table class="table table-hover table-striped mb-2">
+            <thead>
+              <tr>
+                <th scope="col">Nome</th>
+                <th scope="col">Descrição</th>
+                <th scope="col">Tipo</th>
+                <th scope="col" class="text-center">Rotinas</th>
+                <th scope="col" class="text-center">Empresas</th>
+                <th scope="col">Status</th>
+                <th scope="col">Ações</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (pilar of paginatedPilares; track pilar.id) {
+              <tr>
+                <!-- Nome -->
+                <td>
+                  <strong>{{ pilar.nome }}</strong>
+                </td>
+                
+                <!-- Descrição com truncate e tooltip - UI-PIL-001 -->
+                <td class="text-muted">
+                  @if (pilar.descricao) {
+                    <span 
+                      [ngbTooltip]="pilar.descricao" 
+                      placement="top">
+                      {{ truncate(pilar.descricao, 50) }}
+                    </span>
+                  } @else {
+                    <span class="text-muted fst-italic">—</span>
+                  }
+                </td>
+                
+                <!-- UI-PIL-002: Badge de Tipo -->
+                <td>
+                  <app-pilar-badge 
+                    [modelo]="pilar.modelo"
+                    [title]="pilar.modelo ? 'Pilar padrão (auto-associado a novas empresas)' : 'Pilar customizado'">
+                  </app-pilar-badge>
+                </td>
+                
+                <!-- UI-PIL-003: Contadores -->
+                <td class="text-center">
+                  <span 
+                    class="badge bg-info"
+                    [ngbTooltip]="pilar.nome + '\n├─ ' + (pilar._count?.rotinas || 0) + ' rotinas vinculadas\n└─ ' + (pilar._count?.empresas || 0) + ' empresas usando'"
+                    placement="top">
+                    {{ pilar._count?.rotinas || 0 }}
+                  </span>
+                </td>
+                
+                <td class="text-center">
+                  <span 
+                    class="badge bg-success"
+                    [ngbTooltip]="pilar.nome + '\n├─ ' + (pilar._count?.rotinas || 0) + ' rotinas vinculadas\n└─ ' + (pilar._count?.empresas || 0) + ' empresas usando'"
+                    placement="top">
+                    {{ pilar._count?.empresas || 0 }}
+                  </span>
+                </td>
+                
+                <!-- Status -->
+                <td>
+                  <span 
+                    class="badge" 
+                    [ngClass]="pilar.ativo ? 'bg-success' : 'bg-danger'">
+                    {{ pilar.ativo ? 'Ativo' : 'Inativo' }}
+                  </span>
+                </td>
+                
+                <!-- UI-PIL-009: Ações por linha -->
+                <td class="text-nowrap">
+                  <div class="btn-group btn-group-sm" role="group">
+                    <!-- Editar (sempre visível) -->
+                    <button 
+                      class="btn btn-icon text-secondary" 
+                      [routerLink]="['/pilares', pilar.id, 'editar']"
+                      title="Editar pilar">
+                      <i class="feather icon-edit"></i>
+                    </button>
+                    
+                    <!-- Desativar (visível se ativo) -->
+                    @if (pilar.ativo) {
+                      <button 
+                        class="btn btn-icon text-danger"
+                        (click)="confirmDesativar(pilar)"
+                        title="Desativar pilar">
+                        <i class="feather icon-trash-2"></i>
+                      </button>
+                    }
+                    
+                    <!-- Reativar (visível se inativo) -->
+                    @if (!pilar.ativo) {
+                      <button 
+                        class="btn btn-icon text-success"
+                        (click)="reativar(pilar.id)"
+                        title="Reativar pilar">
+                        <i class="feather icon-check-circle"></i>
+                      </button>
+                    }
+                  </div>
+                </td>
+              </tr>
+              } @empty {
+              <tr>
+                <td colspan="7" class="border-bottom text-center text-muted py-4">
+                  Nenhum pilar encontrado
+                </td>
+              </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+
+        <div class="d-flex justify-content-between p-2">
+          <span class="text-muted fs-12">{{ filteredPilares.length }} itens</span>
+
+          @if (totalPages > 1) {
+            <ngb-pagination 
+              [collectionSize]="filteredPilares.length" 
+              [(page)]="currentPage" 
+              size="sm"
+              [pageSize]="pageSize">
+            </ngb-pagination>
+          }
+        </div>
+        }
+      </div>
+    </div>
+  </div>
+</div>
