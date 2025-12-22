@@ -69,15 +69,15 @@ export class UsuariosController {
   @Delete(':id')
   @Roles('ADMINISTRADOR')
   @ApiOperation({ summary: 'Deletar usuário permanentemente' })
-  remove(@Param('id') id: string) {
-    return this.usuariosService.hardDelete(id);
+  remove(@Param('id') id: string, @Request() req: any) {
+    return this.usuariosService.hardDelete(id, req.user);
   }
 
   @Patch(':id/inativar')
   @Roles('ADMINISTRADOR')
   @ApiOperation({ summary: 'Inativar usuário' })
-  inactivate(@Param('id') id: string) {
-    return this.usuariosService.remove(id);
+  inactivate(@Param('id') id: string, @Request() req: any) {
+    return this.usuariosService.remove(id, req.user);
   }
 
   @Post(':id/foto')

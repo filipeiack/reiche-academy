@@ -150,38 +150,6 @@ export class UsuariosService {
     return usuario;
   }
 
-  private async findByIdInternal(id: string) {
-    const usuario = await this.prisma.usuario.findUnique({
-      where: { id },
-      select: {
-        id: true,
-        email: true,
-        nome: true,
-        cargo: true,
-        perfil: {
-          select: {
-            id: true,
-            codigo: true,
-            nome: true,
-            nivel: true,
-          },
-        },
-        fotoUrl: true,
-        ativo: true,
-        empresaId: true,
-        empresa: true,
-        createdAt: true,
-        updatedAt: true,
-      },
-    });
-
-    if (!usuario) {
-      throw new NotFoundException('Usuário não encontrado');
-    }
-
-    return usuario;
-  }
-
   async findByEmail(email: string) {
     return this.prisma.usuario.findUnique({
       where: { email },
@@ -278,6 +246,15 @@ export class UsuariosService {
       await this.validateProfileElevation(data.perfilId, requestUser, 'atribuir');
     }
 
+    // R-USU-030: Validar unicidade de email se houver mudança
+    if (data.email && data.email !== before.email) {
+      const existingUser = await this.findByEmail(data.email);
+      
+      if (existingUser && existingUser.id !== id) {
+        throw new ConflictException('Email já cadastrado por outro usuário');
+      }
+    }
+
     if (data.senha) {
       data.senha = await argon2.hash(data.senha);
     }
@@ -319,8 +296,8 @@ export class UsuariosService {
     return after;
   }
 
-  async remove(id: string) {
-    const before = await this.findByIdInternal(id);
+  async remove(id: string, requestUser: RequestUser) {
+    const before = await this.findById(id, requestUser);
     
     const after = await this.prisma.usuario.update({
       where: { id },
@@ -341,8 +318,8 @@ export class UsuariosService {
     return after;
   }
 
-  async hardDelete(id: string) {
-    const usuario = await this.findByIdInternal(id);
+  async hardDelete(id: string, requestUser: RequestUser) {
+    const usuario = await this.findById(id, requestUser);
 
     // Delete profile photo if exists
     if (usuario.fotoUrl) {

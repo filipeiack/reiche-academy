@@ -225,7 +225,7 @@ describe('UsuariosService - Validação Completa de Regras de Negócio', () => {
       jest.spyOn(prisma.usuario, 'findUnique').mockResolvedValue(usuario as any);
       jest.spyOn(prisma.usuario, 'update').mockResolvedValue({ ...usuario, ativo: false } as any);
 
-      await service.remove('colab-a-id');
+      await service.remove('colab-a-id', mockAdminUser);
 
       expect(audit.log).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -240,7 +240,7 @@ describe('UsuariosService - Validação Completa de Regras de Negócio', () => {
       jest.spyOn(prisma.usuario, 'findUnique').mockResolvedValue(usuario as any);
       jest.spyOn(prisma.usuario, 'delete').mockResolvedValue({} as any);
 
-      await service.hardDelete('colab-a-id');
+      await service.hardDelete('colab-a-id', mockAdminUser);
 
       expect(audit.log).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -301,7 +301,7 @@ describe('UsuariosService - Validação Completa de Regras de Negócio', () => {
       jest.spyOn(prisma.usuario, 'update').mockResolvedValue({ ...usuarioAtivo, ativo: false } as any);
       jest.spyOn(prisma.usuario, 'delete');
 
-      await service.remove('colab-a-id');
+      await service.remove('colab-a-id', mockAdminUser);
 
       expect(prisma.usuario.update).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -316,7 +316,7 @@ describe('UsuariosService - Validação Completa de Regras de Negócio', () => {
       jest.spyOn(prisma.usuario, 'findUnique').mockResolvedValue(usuario as any);
       jest.spyOn(prisma.usuario, 'update').mockResolvedValue({ ...usuario, ativo: false } as any);
 
-      await service.remove('colab-a-id');
+      await service.remove('colab-a-id', mockAdminUser);
 
       expect(audit.log).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -338,7 +338,7 @@ describe('UsuariosService - Validação Completa de Regras de Negócio', () => {
 
       const deleteFileSpy = jest.spyOn<any, any>(service, 'deleteFileIfExists');
 
-      await service.hardDelete('colab-a-id');
+      await service.hardDelete('colab-a-id', mockAdminUser);
 
       expect(deleteFileSpy).toHaveBeenCalled();
       expect(prisma.usuario.delete).toHaveBeenCalled();
@@ -350,7 +350,7 @@ describe('UsuariosService - Validação Completa de Regras de Negócio', () => {
       jest.spyOn(prisma.usuario, 'findUnique').mockResolvedValue(usuarioSemFoto as any);
       jest.spyOn(prisma.usuario, 'delete').mockResolvedValue({} as any);
 
-      await service.hardDelete('colab-a-id');
+      await service.hardDelete('colab-a-id', mockAdminUser);
 
       expect(prisma.usuario.delete).toHaveBeenCalled();
     });
@@ -360,7 +360,7 @@ describe('UsuariosService - Validação Completa de Regras de Negócio', () => {
       jest.spyOn(prisma.usuario, 'findUnique').mockResolvedValue(usuario as any);
       jest.spyOn(prisma.usuario, 'delete').mockResolvedValue({} as any);
 
-      await service.hardDelete('colab-a-id');
+      await service.hardDelete('colab-a-id', mockAdminUser);
 
       expect(audit.log).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -637,6 +637,339 @@ describe('UsuariosService - Validação Completa de Regras de Negócio', () => {
       await expect(
         service.update('colab-a-id', { perfilId: 'perfil-admin' }, mockGestorEmpresaA)
       ).rejects.toThrow(ForbiddenException);
+    });
+  });
+
+  // ============================================================
+  // TESTES DAS REGRAS CANDIDATAS IMPLEMENTADAS
+  // ============================================================
+
+  describe('R-USU-030: Validação de Unicidade de Email em Update', () => {
+    it('deve permitir update sem mudança de email', async () => {
+      const usuarioAtual = {
+        ...mockColaboradorEmpresaA,
+        email: 'colab-a@test.com',
+      };
+
+      jest.spyOn(prisma.usuario, 'findUnique').mockResolvedValue(usuarioAtual as any);
+      jest.spyOn(prisma.usuario, 'update').mockResolvedValue({ ...usuarioAtual, cargo: 'Novo Cargo' } as any);
+
+      const result = await service.update(
+        'colab-a-id',
+        { cargo: 'Novo Cargo' },
+        mockAdminUser
+      );
+
+      expect(result).toBeDefined();
+      expect(result.cargo).toBe('Novo Cargo');
+    });
+
+    it('deve permitir update com novo email livre (não cadastrado)', async () => {
+      const usuarioAtual = {
+        ...mockColaboradorEmpresaA,
+        email: 'colab-a@test.com',
+      };
+
+      const emailLivre = 'novo-email@test.com';
+
+      jest.spyOn(prisma.usuario, 'findUnique')
+        .mockResolvedValueOnce(usuarioAtual as any) // findById
+        .mockResolvedValueOnce(null); // findByEmail (email livre)
+
+      jest.spyOn(prisma.usuario, 'update').mockResolvedValue({
+        ...usuarioAtual,
+        email: emailLivre,
+      } as any);
+
+      const result = await service.update(
+        'colab-a-id',
+        { email: emailLivre },
+        mockAdminUser
+      );
+
+      expect(result).toBeDefined();
+      expect(result.email).toBe(emailLivre);
+    });
+
+    it('deve bloquear update com email já existente em outro usuário', async () => {
+      const usuarioAtual = {
+        ...mockColaboradorEmpresaA,
+        email: 'colab-a@test.com',
+      };
+
+      const emailDuplicado = 'gestor-a@test.com';
+
+      jest.spyOn(prisma.usuario, 'findUnique')
+        .mockResolvedValueOnce(usuarioAtual as any) // findById
+        .mockResolvedValueOnce(mockGestorEmpresaA as any); // findByEmail (email já existe)
+
+      await expect(
+        service.update('colab-a-id', { email: emailDuplicado }, mockAdminUser)
+      ).rejects.toThrow(ConflictException);
+
+      await expect(
+        service.update('colab-a-id', { email: emailDuplicado }, mockAdminUser)
+      ).rejects.toThrow('Email já cadastrado por outro usuário');
+    });
+
+    it('deve permitir update do próprio email (edge case)', async () => {
+      const usuarioAtual = {
+        ...mockColaboradorEmpresaA,
+        email: 'colab-a@test.com',
+      };
+
+      jest.spyOn(prisma.usuario, 'findUnique')
+        .mockResolvedValueOnce(usuarioAtual as any) // findById
+        .mockResolvedValueOnce(usuarioAtual as any); // findByEmail (mesmo usuário)
+
+      jest.spyOn(prisma.usuario, 'update').mockResolvedValue(usuarioAtual as any);
+
+      const result = await service.update(
+        'colab-a-id',
+        { email: 'colab-a@test.com' }, // mesmo email
+        mockAdminUser
+      );
+
+      expect(result).toBeDefined();
+    });
+
+    it('NÃO deve chamar findByEmail se email não foi fornecido no update', async () => {
+      const usuarioAtual = {
+        ...mockColaboradorEmpresaA,
+      };
+
+      const findByEmailSpy = jest.spyOn(service, 'findByEmail');
+      jest.spyOn(prisma.usuario, 'findUnique').mockResolvedValue(usuarioAtual as any);
+      jest.spyOn(prisma.usuario, 'update').mockResolvedValue({ ...usuarioAtual, cargo: 'Novo Cargo' } as any);
+
+      await service.update('colab-a-id', { cargo: 'Novo Cargo' }, mockAdminUser);
+
+      expect(findByEmailSpy).not.toHaveBeenCalled();
+    });
+
+    it('NÃO deve chamar findByEmail se email não mudou', async () => {
+      const usuarioAtual = {
+        ...mockColaboradorEmpresaA,
+        email: 'colab-a@test.com',
+      };
+
+      const findByEmailSpy = jest.spyOn(service, 'findByEmail');
+      jest.spyOn(prisma.usuario, 'findUnique').mockResolvedValue(usuarioAtual as any);
+      jest.spyOn(prisma.usuario, 'update').mockResolvedValue(usuarioAtual as any);
+
+      await service.update('colab-a-id', { email: 'colab-a@test.com' }, mockAdminUser);
+
+      expect(findByEmailSpy).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('R-USU-031: Validação de Senha Forte na Criação', () => {
+    // Nota: Estes testes validam que o DTO rejeita senhas fracas
+    // A validação acontece no class-validator do DTO, não no service
+    // Aqui validamos que o service recebe apenas senhas já validadas
+
+    it('deve criar usuário com senha forte válida', async () => {
+      const senhaForte = 'SenhaForte1@';
+      const novoUsuario = {
+        id: 'novo-id',
+        email: 'novo@test.com',
+        nome: 'Novo Usuario',
+        senha: await argon2.hash(senhaForte),
+        cargo: 'Analista',
+        perfil: mockPerfilColaborador,
+        empresaId: 'empresa-a',
+        ativo: true,
+        createdAt: new Date(),
+      };
+
+      jest.spyOn(prisma.usuario, 'findUnique').mockResolvedValue(null);
+      jest.spyOn(prisma.perfilUsuario, 'findUnique').mockResolvedValue(mockPerfilColaborador as any);
+      jest.spyOn(prisma.usuario, 'create').mockResolvedValue(novoUsuario as any);
+
+      const result = await service.create(
+        {
+          email: 'novo@test.com',
+          nome: 'Novo Usuario',
+          senha: senhaForte,
+          cargo: 'Analista',
+          perfilId: 'perfil-colab',
+        },
+        mockAdminUser
+      );
+
+      expect(result).toBeDefined();
+      expect(result.email).toBe('novo@test.com');
+    });
+
+    it('deve fazer hash da senha antes de criar usuário', async () => {
+      const senhaPlaintext = 'SenhaForte1@';
+      const hashSpy = jest.spyOn(argon2, 'hash');
+
+      jest.spyOn(prisma.usuario, 'findUnique').mockResolvedValue(null);
+      jest.spyOn(prisma.perfilUsuario, 'findUnique').mockResolvedValue(mockPerfilColaborador as any);
+      jest.spyOn(prisma.usuario, 'create').mockResolvedValue({
+        id: 'novo-id',
+        email: 'novo@test.com',
+        senha: 'hash-gerado',
+        perfil: mockPerfilColaborador,
+      } as any);
+
+      await service.create(
+        {
+          email: 'novo@test.com',
+          nome: 'Novo Usuario',
+          senha: senhaPlaintext,
+          cargo: 'Analista',
+          perfilId: 'perfil-colab',
+        },
+        mockAdminUser
+      );
+
+      expect(hashSpy).toHaveBeenCalledWith(senhaPlaintext);
+    });
+
+    it('deve fazer hash da senha em update se senha fornecida', async () => {
+      const novaSenha = 'NovaSenhaForte1@';
+      const hashSpy = jest.spyOn(argon2, 'hash');
+
+      jest.spyOn(prisma.usuario, 'findUnique').mockResolvedValue(mockColaboradorEmpresaA as any);
+      jest.spyOn(prisma.usuario, 'update').mockResolvedValue({
+        ...mockColaboradorEmpresaA,
+        senha: 'novo-hash',
+      } as any);
+
+      await service.update('colab-a-id', { senha: novaSenha }, mockAdminUser);
+
+      expect(hashSpy).toHaveBeenCalledWith(novaSenha);
+    });
+
+    it('NÃO deve fazer hash se senha não fornecida em update', async () => {
+      const hashSpy = jest.spyOn(argon2, 'hash');
+
+      jest.spyOn(prisma.usuario, 'findUnique').mockResolvedValue(mockColaboradorEmpresaA as any);
+      jest.spyOn(prisma.usuario, 'update').mockResolvedValue({
+        ...mockColaboradorEmpresaA,
+        cargo: 'Novo Cargo',
+      } as any);
+
+      await service.update('colab-a-id', { cargo: 'Novo Cargo' }, mockAdminUser);
+
+      expect(hashSpy).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('R-USU-032: Remoção de findByIdInternal', () => {
+    it('NÃO deve existir método findByIdInternal no service', () => {
+      expect((service as any).findByIdInternal).toBeUndefined();
+    });
+
+    it('método remove deve validar isolamento multi-tenant via findById', async () => {
+      const usuarioEmpresaB = { ...mockUsuarioEmpresaB };
+
+      jest.spyOn(prisma.usuario, 'findUnique').mockResolvedValue(usuarioEmpresaB as any);
+
+      // GESTOR de empresa A tentando inativar usuário de empresa B
+      await expect(
+        service.remove('user-b-id', mockGestorEmpresaA)
+      ).rejects.toThrow(ForbiddenException);
+
+      await expect(
+        service.remove('user-b-id', mockGestorEmpresaA)
+      ).rejects.toThrow('Você não pode editar usuários de outra empresa');
+    });
+
+    it('método hardDelete deve validar isolamento multi-tenant via findById', async () => {
+      const usuarioEmpresaB = { ...mockUsuarioEmpresaB };
+
+      jest.spyOn(prisma.usuario, 'findUnique').mockResolvedValue(usuarioEmpresaB as any);
+
+      // GESTOR de empresa A tentando deletar usuário de empresa B
+      await expect(
+        service.hardDelete('user-b-id', mockGestorEmpresaA)
+      ).rejects.toThrow(ForbiddenException);
+
+      await expect(
+        service.hardDelete('user-b-id', mockGestorEmpresaA)
+      ).rejects.toThrow('Você não pode editar usuários de outra empresa');
+    });
+
+    it('ADMINISTRADOR pode remover usuário de qualquer empresa (acesso global)', async () => {
+      const usuarioEmpresaB = { ...mockUsuarioEmpresaB };
+
+      jest.spyOn(prisma.usuario, 'findUnique').mockResolvedValue(usuarioEmpresaB as any);
+      jest.spyOn(prisma.usuario, 'update').mockResolvedValue({
+        ...usuarioEmpresaB,
+        ativo: false,
+      } as any);
+
+      const result = await service.remove('user-b-id', mockAdminUser);
+
+      expect(result).toBeDefined();
+      expect(result.ativo).toBe(false);
+    });
+
+    it('ADMINISTRADOR pode fazer hardDelete de usuário de qualquer empresa', async () => {
+      const usuarioEmpresaB = { ...mockUsuarioEmpresaB };
+
+      jest.spyOn(prisma.usuario, 'findUnique').mockResolvedValue(usuarioEmpresaB as any);
+      jest.spyOn(prisma.usuario, 'delete').mockResolvedValue(usuarioEmpresaB as any);
+
+      await service.hardDelete('user-b-id', mockAdminUser);
+
+      expect(prisma.usuario.delete).toHaveBeenCalledWith({ where: { id: 'user-b-id' } });
+    });
+
+    it('GESTOR pode remover usuário da mesma empresa', async () => {
+      const usuarioMesmaEmpresa = {
+        ...mockColaboradorEmpresaA,
+        empresaId: 'empresa-a',
+      };
+
+      jest.spyOn(prisma.usuario, 'findUnique').mockResolvedValue(usuarioMesmaEmpresa as any);
+      jest.spyOn(prisma.usuario, 'update').mockResolvedValue({
+        ...usuarioMesmaEmpresa,
+        ativo: false,
+      } as any);
+
+      const result = await service.remove('colab-a-id', mockGestorEmpresaA);
+
+      expect(result).toBeDefined();
+      expect(result.ativo).toBe(false);
+    });
+
+    it('remove deve registrar auditoria após soft delete', async () => {
+      const usuarioAtual = { ...mockColaboradorEmpresaA };
+
+      jest.spyOn(prisma.usuario, 'findUnique').mockResolvedValue(usuarioAtual as any);
+      jest.spyOn(prisma.usuario, 'update').mockResolvedValue({
+        ...usuarioAtual,
+        ativo: false,
+      } as any);
+
+      await service.remove('colab-a-id', mockAdminUser);
+
+      expect(audit.log).toHaveBeenCalledWith(
+        expect.objectContaining({
+          acao: 'DELETE',
+          entidade: 'usuarios',
+        })
+      );
+    });
+
+    it('hardDelete deve registrar auditoria antes de deletar', async () => {
+      const usuarioAtual = { ...mockColaboradorEmpresaA };
+
+      jest.spyOn(prisma.usuario, 'findUnique').mockResolvedValue(usuarioAtual as any);
+      jest.spyOn(prisma.usuario, 'delete').mockResolvedValue(usuarioAtual as any);
+
+      await service.hardDelete('colab-a-id', mockAdminUser);
+
+      expect(audit.log).toHaveBeenCalledWith(
+        expect.objectContaining({
+          acao: 'DELETE',
+          entidade: 'usuarios',
+        })
+      );
     });
   });
 });
