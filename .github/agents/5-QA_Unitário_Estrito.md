@@ -156,12 +156,3 @@ Testam apenas comportamento de interface.
   - Services externos
 - Nunca usar DB real
 
-### Exemplo obrigatório de nomenclatura
-```ts
-it('deve impedir criação de administrador quando usuario não é administrador (Regra: Criacao-Usuario)', () => {
-  ...
-});
-it('deve lançar erro quando email já está em uso (Regra: Unicidade-Email)', () => {
-  ...
-});
-```

@@ -8,7 +8,7 @@ autoridade normativa sobre o sistema.
 Os seguintes diretórios possuem autoridade normativa.
 Devem ser seguidos por todos os agentes:
 
-1. /docs/rules
+1. /docs/business-rules
 2. /docs/architecture
 3. /docs/conventions
 4. /.github/agents

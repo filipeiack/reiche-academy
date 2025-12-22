@@ -58,21 +58,26 @@ Somente os agentes abaixo podem atuar neste projeto:
 
 ## 🔁 Fluxo Oficial (Visão Geral)
 
-```text
-Requisito / Regra
+Ideia / Feature
+        ↓
+(Se regra não existe)
+Business Rules Extractor / Definição
+        ↓
+Business Rules Reviewer
+        ↓
+Docs /business-rules (contrato)
         ↓
 Dev Agent Disciplinado
         ↓ (código + relatório)
-Pattern Enforcer
+Pattern Enforcer (frontend/backend)
         ↓ (CONFORME)
 QA Unitário Estrito
         ↓ (testes)
-Reviewer de Regras (quando aplicável)
+E2E (opcional / crítico)
         ↓
 Pull Request
         ↓
 Merge no main
-```
 
 ---
 

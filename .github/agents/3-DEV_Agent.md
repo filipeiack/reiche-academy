@@ -21,7 +21,7 @@ O agente só pode iniciar implementação se:
 
 ## Fontes de Verdade (Ordem de Prioridade)
 
-1. `/docs/rules/*`
+1. `/docs/business-rules/*`
 2. `/docs/architecture/*`
 3. `/docs/conventions/*`
 4. Tarefa solicitada pelo usuário

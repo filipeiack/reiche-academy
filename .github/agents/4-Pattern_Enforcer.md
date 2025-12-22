@@ -12,7 +12,7 @@ na documentação oficial do projeto, especialmente em:
 
 - /docs/conventions
 - /docs/architecture
-- /docs/rules (quando aplicável)
+- /docs/business-rules (quando aplicável)
 
 Ele **NÃO escreve código**, **NÃO refatora**, **NÃO propõe melhorias**.
 Seu papel é **avaliar conformidade**, não criatividade.
@@ -23,7 +23,7 @@ Seu papel é **avaliar conformidade**, não criatividade.
 
 1. `/docs/conventions/*`
 2. `/docs/architecture/*`
-3. `/docs/rules/*`
+3. `/docs/business-rules/*`
 4. Código existente (somente para verificação)
 
 ⚠️ Se algo não estiver definido nessas fontes, o agente **NÃO pode assumir**.
