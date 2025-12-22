@@ -36,7 +36,7 @@ export class EmpresasService {
     }
 
     // RA-EMP-003: Validar unicidade de loginUrl
-    if (createEmpresaDto.loginUrl) {
+    if (createEmpresaDto.loginUrl && createEmpresaDto.loginUrl.trim() !== '') {
       const existingLoginUrl = await this.prisma.empresa.findFirst({
         where: { loginUrl: createEmpresaDto.loginUrl },
       });
@@ -184,7 +184,7 @@ export class EmpresasService {
     }
 
     // RA-EMP-003: Validar unicidade de loginUrl
-    if (updateEmpresaDto.loginUrl) {
+    if (updateEmpresaDto.loginUrl && updateEmpresaDto.loginUrl.trim() !== '') {
       const existingLoginUrl = await this.prisma.empresa.findFirst({
         where: {
           loginUrl: updateEmpresaDto.loginUrl,

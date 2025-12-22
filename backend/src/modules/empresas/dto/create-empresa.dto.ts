@@ -35,8 +35,9 @@ export class CreateEmpresaDto {
   estado: EstadoBrasil;
 
   @ApiProperty({ example: 'reiche-consultoria', required: false })
-  @IsString()
   @IsOptional()
+  @IsString()
+  @IsNotEmpty({ message: 'loginUrl não pode ser vazio' })
   @Length(3, 100)
   @Matches(/^\S+$/, {
     message: 'loginUrl não pode conter espaços em branco',
