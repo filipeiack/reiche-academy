@@ -1,12 +1,37 @@
-import { Injectable, NotFoundException, ConflictException } from '@nestjs/common';
+import { Injectable, NotFoundException, ConflictException, ForbiddenException } from '@nestjs/common';
 import { PrismaService } from '../../common/prisma/prisma.service';
 import { CreateEmpresaDto } from './dto/create-empresa.dto';
 import { UpdateEmpresaDto } from './dto/update-empresa.dto';
 import { AuditService } from '../audit/audit.service';
 
+export interface RequestUser {
+  id: string;
+  perfil: { codigo: string; nivel: number };
+  empresaId: string | null;
+  nome: string;
+  email: string;
+}
+
 @Injectable()
 export class EmpresasService {
   constructor(private prisma: PrismaService, private audit: AuditService) {}
+
+  /**
+   * RA-EMP-001: Valida isolamento multi-tenant
+   * ADMINISTRADOR tem acesso global
+   * GESTOR só pode acessar sua própria empresa
+   */
+  private validateTenantAccess(targetEmpresa: { id: string }, requestUser: RequestUser, action: string) {
+    // ADMINISTRADOR tem acesso global
+    if (requestUser.perfil?.codigo === 'ADMINISTRADOR') {
+      return;
+    }
+
+    // GESTOR só pode acessar sua própria empresa
+    if (targetEmpresa.id !== requestUser.empresaId) {
+      throw new ForbiddenException(`Você não pode ${action} dados de outra empresa`);
+    }
+  }
 
   async create(createEmpresaDto: CreateEmpresaDto, userId: string) {
     const existingEmpresa = await this.prisma.empresa.findUnique({
@@ -135,8 +160,11 @@ export class EmpresasService {
     return empresa;
   }
 
-  async update(id: string, updateEmpresaDto: UpdateEmpresaDto, userId: string) {
+  async update(id: string, updateEmpresaDto: UpdateEmpresaDto, userId: string, requestUser: RequestUser) {
     const before = await this.findOne(id);
+
+    // RA-EMP-001: Validar isolamento multi-tenant
+    this.validateTenantAccess(before, requestUser, 'atualizar');
 
     if (updateEmpresaDto.cnpj) {
       const existingEmpresa = await this.prisma.empresa.findFirst({
@@ -173,8 +201,11 @@ export class EmpresasService {
     return after;
   }
 
-  async remove(id: string, userId: string) {
+  async remove(id: string, userId: string, requestUser: RequestUser) {
     const before = await this.findOne(id);
+
+    // RA-EMP-001: Validar isolamento multi-tenant
+    this.validateTenantAccess(before, requestUser, 'desativar');
 
     const after = await this.prisma.empresa.update({
       where: { id },
@@ -198,8 +229,11 @@ export class EmpresasService {
     return after;
   }
 
-  async vincularPilares(empresaId: string, pilaresIds: string[], userId: string) {
+  async vincularPilares(empresaId: string, pilaresIds: string[], userId: string, requestUser: RequestUser) {
     const before = await this.findOne(empresaId);
+
+    // RA-EMP-001: Validar isolamento multi-tenant
+    this.validateTenantAccess(before, requestUser, 'vincular pilares em');
 
     // Remove vínculos antigos
     await this.prisma.pilarEmpresa.deleteMany({
@@ -254,8 +288,11 @@ export class EmpresasService {
       .filter((tipo): tipo is string => tipo !== null);
   }
 
-  async updateLogo(id: string, logoUrl: string) {
+  async updateLogo(id: string, logoUrl: string, requestUser: RequestUser) {
     const empresa = await this.findOne(id);
+
+    // RA-EMP-001: Validar isolamento multi-tenant
+    this.validateTenantAccess(empresa, requestUser, 'alterar logo de');
     
     const updated = await this.prisma.empresa.update({
       where: { id },
@@ -265,8 +302,11 @@ export class EmpresasService {
     return { logoUrl: updated.logoUrl };
   }
 
-  async deleteLogo(id: string) {
+  async deleteLogo(id: string, requestUser: RequestUser) {
     const empresa = await this.findOne(id);
+
+    // RA-EMP-001: Validar isolamento multi-tenant
+    this.validateTenantAccess(empresa, requestUser, 'deletar logo de');
 
     const updated = await this.prisma.empresa.update({
       where: { id },

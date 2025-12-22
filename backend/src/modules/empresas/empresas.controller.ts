@@ -104,9 +104,9 @@ export class EmpresasController {
   update(
     @Param('id') id: string,
     @Body() updateEmpresaDto: UpdateEmpresaDto,
-    @Request() req: ExpressRequest & { user: { id: string } },
+    @Request() req: ExpressRequest & { user: any },
   ) {
-    return this.empresasService.update(id, updateEmpresaDto, req.user.id);
+    return this.empresasService.update(id, updateEmpresaDto, req.user.id, req.user);
   }
 
   @ApiBearerAuth()
@@ -115,8 +115,8 @@ export class EmpresasController {
   @Delete(':id')
   @ApiOperation({ summary: 'Desativar empresa' })
     @ApiResponse({ status: 200, description: 'Empresa desativada' })
-    remove(@Param('id') id: string, @Request() req: ExpressRequest & { user: { id: string } }) {
-      return this.empresasService.remove(id, req.user.id);
+    remove(@Param('id') id: string, @Request() req: ExpressRequest & { user: any }) {
+      return this.empresasService.remove(id, req.user.id, req.user);
     }
   
     @Post(':id/pilares')
@@ -127,9 +127,9 @@ export class EmpresasController {
     vincularPilares(
       @Param('id') id: string,
       @Body('pilaresIds') pilaresIds: string[],
-      @Request() req: ExpressRequest & { user: { id: string } },
+      @Request() req: ExpressRequest & { user: any },
     ) {
-      return this.empresasService.vincularPilares(id, pilaresIds, req.user.id);
+      return this.empresasService.vincularPilares(id, pilaresIds, req.user.id, req.user);
     }
 
   @Post(':id/logo')
@@ -161,13 +161,14 @@ export class EmpresasController {
   async uploadLogo(
     @Param('id') id: string,
     @UploadedFile() file: Express.Multer.File,
+    @Request() req: ExpressRequest & { user: any },
   ) {
     if (!file) {
       throw new BadRequestException('Nenhuma imagem foi enviada');
     }
 
     const logoUrl = `/images/logos/${file.filename}`;
-    return await this.empresasService.updateLogo(id, logoUrl);
+    return await this.empresasService.updateLogo(id, logoUrl, req.user);
   }
 
   @Delete(':id/logo')
@@ -175,7 +176,7 @@ export class EmpresasController {
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('ADMINISTRADOR', 'CONSULTOR', 'GESTOR')
   @ApiOperation({ summary: 'Deletar logotipo da empresa' })
-  async deleteLogo(@Param('id') id: string) {
-    return this.empresasService.deleteLogo(id);
+  async deleteLogo(@Param('id') id: string, @Request() req: ExpressRequest & { user: any }) {
+    return this.empresasService.deleteLogo(id, req.user);
   }
 }
