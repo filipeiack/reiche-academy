@@ -207,8 +207,8 @@ export class EmpresasService {
 
     await this.audit.log({
       usuarioId: userId,
-      usuarioNome: before.usuarios?.find(u => u.id === userId)?.nome ?? '',
-      usuarioEmail: before.usuarios?.find(u => u.id === userId)?.email ?? '',
+      usuarioNome: requestUser.nome,
+      usuarioEmail: requestUser.email,
       entidade: 'empresas',
       entidadeId: id,
       acao: 'UPDATE',
@@ -235,8 +235,8 @@ export class EmpresasService {
 
     await this.audit.log({
       usuarioId: userId,
-      usuarioNome: before.usuarios?.find(u => u.id === userId)?.nome ?? '',
-      usuarioEmail: before.usuarios?.find(u => u.id === userId)?.email ?? '',
+      usuarioNome: requestUser.nome,
+      usuarioEmail: requestUser.email,
       entidade: 'empresas',
       entidadeId: id,
       acao: 'DELETE',
@@ -273,8 +273,8 @@ export class EmpresasService {
 
     await this.audit.log({
       usuarioId: userId,
-      usuarioNome: after.usuarios?.find(u => u.id === userId)?.nome ?? '',
-      usuarioEmail: after.usuarios?.find(u => u.id === userId)?.email ?? '',
+      usuarioNome: requestUser.nome,
+      usuarioEmail: requestUser.email,
       entidade: 'empresas',
       entidadeId: empresaId,
       acao: 'UPDATE',
