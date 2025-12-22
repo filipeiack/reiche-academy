@@ -1,5 +1,5 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { IsNotEmpty, IsString, Length, IsInt, Min, IsOptional } from 'class-validator';
+import { IsNotEmpty, IsString, Length, IsInt, Min, IsOptional, IsBoolean } from 'class-validator';
 
 export class CreatePilarDto {
   @ApiProperty({ example: 'Estratégia e Governança' })
@@ -14,8 +14,14 @@ export class CreatePilarDto {
   @Length(0, 500)
   descricao?: string;
 
-  @ApiProperty({ example: 1 })
+  @ApiPropertyOptional({ example: 1, description: 'Ordem de exibição (apenas para pilares padrão)' })
   @IsInt()
   @Min(1)
-  ordem: number;
+  @IsOptional()
+  ordem?: number;
+
+  @ApiPropertyOptional({ example: false, description: 'Se true, pilar é auto-associado a novas empresas' })
+  @IsBoolean()
+  @IsOptional()
+  modelo?: boolean;
 }
