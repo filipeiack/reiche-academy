@@ -1,9 +1,9 @@
 # Regras de Negócio — Pilares
 
 **Módulo:** Pilares  
-**Backend:** `backend/src/modules/pilares/`  
+**Backend:** `backend/src/modules/pilares/` e `backend/src/modules/pilares-empresa/`  
 **Frontend:** Não implementado  
-**Última extração:** 21/12/2024  
+**Última extração:** 22/12/2024  
 **Agente:** Extractor de Regras
 
 ---
@@ -11,23 +11,26 @@
 ## 1. Visão Geral
 
 O módulo Pilares é responsável por:
-- Gerenciar pilares do sistema (CRUD completo)
-- Ordenação customizável de pilares
+- Gerenciar catálogo global de pilares (CRUD admin)
+- Gerenciar pilares por empresa (vinculação e ordenação per-company)
 - Validação de dependências com rotinas ativas
 - Auditoria de operações em pilares
-- Vinculação de pilares a empresas (via PilarEmpresa)
+- Auto-associação de pilares padrão a novas empresas
 
 **Entidades principais:**
-- Pilar (pilares do sistema)
-- PilarEmpresa (vínculo pilar-empresa)
+- Pilar (catálogo global de pilares)
+- PilarEmpresa (vínculo pilar-empresa com ordenação per-company)
 
-**Endpoints implementados:**
+**Módulo Pilares (Catálogo Global):**
 - `POST /pilares` — Criar pilar (ADMINISTRADOR)
 - `GET /pilares` — Listar pilares ativos (todos)
-- `GET /pilares/:id` — Buscar pilar com rotinas (todos)
+- `GET /pilares/:id` — Buscar pilar ativo com rotinas (todos)
 - `PATCH /pilares/:id` — Atualizar pilar (ADMINISTRADOR)
 - `DELETE /pilares/:id` — Desativar pilar (ADMINISTRADOR)
-- `POST /pilares/reordenar` — Reordenar pilares (ADMINISTRADOR)
+
+**Módulo PilaresEmpresa (Multi-Tenant):**
+- `GET /empresas/:empresaId/pilares` — Listar pilares da empresa (todos)
+- `POST /empresas/:empresaId/pilares/reordenar` — Reordenar pilares da empresa (ADMINISTRADOR, GESTOR)
 
 ---
 
@@ -42,8 +45,8 @@ O módulo Pilares é responsável por:
 | id | String (UUID) | Identificador único |
 | nome | String (unique) | Nome do pilar (ex: "Estratégia e Governança") |
 | descricao | String? | Descrição detalhada do pilar |
-| ordem | Int | Ordem de exibição do pilar |
-| modelo | Boolean (default: false) | Indica se é pilar modelo (template) |
+| ordem | Int? | Ordem de referência (opcional, apenas visual) |
+| modelo | Boolean (default: false) | Se true, é auto-associado a novas empresas |
 | ativo | Boolean (default: true) | Soft delete flag |
 | createdAt | DateTime | Data de criação |
 | updatedAt | DateTime | Data da última atualização |
@@ -68,6 +71,7 @@ O módulo Pilares é responsável por:
 | id | String (UUID) | Identificador único |
 | empresaId | String | FK para Empresa |
 | pilarId | String | FK para Pilar |
+| ordem | Int | Ordem de exibição do pilar na empresa (per-company) |
 | ativo | Boolean (default: true) | Soft delete flag |
 | createdAt | DateTime | Data de criação |
 | updatedAt | DateTime | Data da última atualização |
@@ -110,7 +114,8 @@ if (existingPilar) {
 **Validação de DTO:**
 - `nome`: string, required, 2-100 caracteres
 - `descricao`: string, optional, 0-500 caracteres
-- `ordem`: number, required, >= 1
+- `ordem`: number, optional, >= 1 (apenas referência, não obrigatório)
+- `modelo`: boolean, optional (default: false)
 
 **Auditoria:**
 - Registra criação em tabela de auditoria
@@ -160,13 +165,21 @@ include: {
 
 ---
 
-### R-PIL-003: Busca de Pilar com Rotinas e Empresas
+### R-PIL-003: Busca de Pilar Ativo com Rotinas e Empresas
 
-**Descrição:** Endpoint retorna pilar completo com rotinas ativas vinculadas e empresas.
+**Descrição:** Endpoint retorna pilar ativo completo com rotinas ativas vinculadas e empresas.
 
 **Implementação:**
 - **Endpoint:** `GET /pilares/:id` (autenticado, todos os perfis)
 - **Método:** `PilaresService.findOne()`
+
+**Filtro (ATUALIZADO):**
+```typescript
+where: { 
+  id,
+  ativo: true,  // Apenas pilares ativos
+}
+```
 
 **Include:**
 ```typescript
@@ -269,51 +282,6 @@ const after = await this.prisma.pilar.update({
 
 ---
 
-### R-PIL-006: Reordenação de Pilares em Lote
-
-**Descrição:** Endpoint permite reordenar múltiplos pilares em uma única transação.
-
-**Implementação:**
-- **Endpoint:** `POST /pilares/reordenar` (restrito a ADMINISTRADOR)
-- **Método:** `PilaresService.reordenar()`
-
-**Input:**
-```typescript
-{
-  "ordens": [
-    { "id": "uuid-1", "ordem": 1 },
-    { "id": "uuid-2", "ordem": 2 },
-    { "id": "uuid-3", "ordem": 3 }
-  ]
-}
-```
-
-**Comportamento:**
-```typescript
-const updates = ordensIds.map((item) =>
-  this.prisma.pilar.update({
-    where: { id: item.id },
-    data: {
-      ordem: item.ordem,
-      updatedBy: userId,
-    },
-  }),
-);
-
-await this.prisma.$transaction(updates);
-```
-
-**Retorno:**
-- Lista completa de pilares reordenados (via `findAll()`)
-
-**Atomicidade:**
-- Todas as atualizações ocorrem em transação
-- Se uma falhar, todas falham (rollback)
-
-**Arquivo:** [pilares.service.ts](../../backend/src/modules/pilares/pilares.service.ts#L153-L165)
-
----
-
 ### RA-PIL-001: Validação de Rotinas Ativas Antes de Desativar
 
 **Descrição:** Sistema impede desativação de pilar se houver rotinas ativas vinculadas.
@@ -351,7 +319,7 @@ if (rotiasCount > 0) {
 
 ### RA-PIL-002: Restrição de CRUD a ADMINISTRADOR
 
-**Descrição:** Apenas usuários com perfil ADMINISTRADOR podem criar, atualizar, deletar ou reordenar pilares.
+**Descrição:** Apenas usuários com perfil ADMINISTRADOR podem criar, atualizar ou deletar pilares no catálogo global.
 
 **Implementação:**
 - **Decorator:** `@Roles('ADMINISTRADOR')`
@@ -360,7 +328,6 @@ if (rotiasCount > 0) {
   - POST /pilares
   - PATCH /pilares/:id
   - DELETE /pilares/:id
-  - POST /pilares/reordenar
 
 **Exceção:**
 - GET /pilares e GET /pilares/:id são liberados para todos os perfis autenticados
@@ -389,15 +356,187 @@ if (rotiasCount > 0) {
 - ✅ CREATE (criação de pilar)
 - ✅ UPDATE (atualização de pilar)
 - ✅ DELETE (desativação de pilar)
-- ❌ Reordenação NÃO é auditada
 
 **Arquivo:** [pilares.service.ts](../../backend/src/modules/pilares/pilares.service.ts#L32-L40)
+
+---
+
+### R-EMP-004: Auto-Associação de Pilares Padrão a Novas Empresas
+
+**Descrição:** Ao criar uma empresa, pilares com `modelo: true` são automaticamente vinculados via PilarEmpresa.
+
+**Implementação:**
+- **Módulo:** EmpresasService
+- **Método:** `create()`
+- **Configuração:** `AUTO_ASSOCIAR_PILARES_PADRAO` (env var)
+
+**Comportamento:**
+```typescript
+const autoAssociate = process.env.AUTO_ASSOCIAR_PILARES_PADRAO !== 'false';
+
+if (autoAssociate) {
+  const pilaresModelo = await this.prisma.pilar.findMany({
+    where: { 
+      modelo: true, 
+      ativo: true 
+    },
+    orderBy: { ordem: 'asc' },
+  });
+  
+  if (pilaresModelo.length > 0) {
+    await this.prisma.pilarEmpresa.createMany({
+      data: pilaresModelo.map((pilar, index) => ({
+        empresaId: created.id,
+        pilarId: pilar.id,
+        ordem: pilar.ordem ?? (index + 1),
+        createdBy: userId,
+      })),
+    });
+  }
+}
+```
+
+**Configuração:**
+- `AUTO_ASSOCIAR_PILARES_PADRAO="true"` (padrão): Associa automaticamente
+- `AUTO_ASSOCIAR_PILARES_PADRAO="false"`: Não associa (manual)
+
+**Justificativa:**
+- Onboarding rápido de novas empresas
+- Padronização inicial
+- Admin pode desvincular pilares não utilizados depois
+
+**Arquivo:** [empresas.service.ts](../../backend/src/modules/empresas/empresas.service.ts#L26-L51)
+
+---
+
+### R-PILEMP-001: Listagem de Pilares por Empresa (Multi-Tenant)
+
+**Descrição:** Endpoint retorna pilares ativos de uma empresa específica, ordenados por `PilarEmpresa.ordem`.
+
+**Implementação:**
+- **Endpoint:** `GET /empresas/:empresaId/pilares` (autenticado)
+- **Módulo:** PilaresEmpresaService
+- **Método:** `findByEmpresa()`
+
+**Validação Multi-Tenant:**
+```typescript
+if (user.perfil?.codigo !== 'ADMINISTRADOR') {
+  if (user.empresaId !== empresaId) {
+    throw new ForbiddenException('Você não pode acessar dados de outra empresa');
+  }
+}
+```
+
+**Filtro (Cascata Lógica):**
+```typescript
+where: {
+  empresaId,
+  ativo: true,
+  pilar: { ativo: true },  // Pilar desativado = invisível para empresa
+}
+```
+
+**Ordenação:**
+```typescript
+orderBy: { ordem: 'asc' }  // PilarEmpresa.ordem (per-company)
+```
+
+**Retorno:**
+- Array de PilarEmpresa com Pilar incluido
+- `_count.rotinas` e `_count.empresas` do Pilar
+- Ordenado por ordem da empresa (não ordem global)
+
+**Perfis autorizados:** Todos (com validação multi-tenant)
+
+**Arquivo:** [pilares-empresa.service.ts](../../backend/src/modules/pilares-empresa/pilares-empresa.service.ts#L31-L56)
+
+---
+
+### R-PILEMP-002: Reordenação de Pilares por Empresa
+
+**Descrição:** Endpoint permite reordenar pilares de uma empresa específica (atualiza `PilarEmpresa.ordem`).
+
+**Implementação:**
+- **Endpoint:** `POST /empresas/:empresaId/pilares/reordenar` (ADMINISTRADOR, GESTOR)
+- **Módulo:** PilaresEmpresaService
+- **Método:** `reordenar()`
+
+**Input:**
+```typescript
+{
+  "ordens": [
+    { "id": "uuid-pilar-empresa-1", "ordem": 1 },
+    { "id": "uuid-pilar-empresa-2", "ordem": 2 }
+  ]
+}
+```
+
+**Validação:**
+1. Multi-tenant: Usuário pode acessar empresaId?
+2. IDs pertencem à empresa especificada?
+3. Ordem >= 1?
+
+**Comportamento:**
+```typescript
+const updates = ordens.map((item) =>
+  this.prisma.pilarEmpresa.update({
+    where: { id: item.id },
+    data: {
+      ordem: item.ordem,
+      updatedBy: user.id,
+    },
+  }),
+);
+
+await this.prisma.$transaction(updates);
+```
+
+**Auditoria:**
+- Entidade: `pilares_empresa`
+- Acao: `UPDATE`
+- EntidadeId: empresaId
+
+**Atomicidade:** Transação (rollback se falhar)
+
+**Perfis autorizados:** ADMINISTRADOR, GESTOR
+
+**Arquivo:** [pilares-empresa.service.ts](../../backend/src/modules/pilares-empresa/pilares-empresa.service.ts#L58-L118)
+
+---
+
+### RA-PILEMP-001: Cascata Lógica em Desativação de Pilar
+
+**Descrição:** Quando um pilar é desativado (Pilar.ativo = false), ele automaticamente some de todas empresas via filtro de cascata.
+
+**Implementação:**
+- PilarEmpresa.ativo continua `true` (histórico preservado)
+- Filtro em queries: `WHERE pilar.ativo = true AND pilarEmpresa.ativo = true`
+- Efeito: Pilar inativo = invisível em todas empresas
+
+**Justificativa:**
+- Preserva histórico de vinculação
+- Permite reativação do pilar (restaura visibilidade automaticamente)
+- Sem necessidade de desativar PilarEmpresa manualmente
+
+**Arquivo:** [pilares-empresa.service.ts](../../backend/src/modules/pilares-empresa/pilares-empresa.service.ts#L41)
 
 ---
 
 ## 4. Validações
 
 ### 4.1. CreatePilarDto
+
+**Campos:**
+- `nome`: @IsString(), @IsNotEmpty(), @Length(2, 100)
+- `descricao`: @IsString(), @IsOptional(), @Length(0, 500)
+- `ordem`: @IsInt(), @Min(1), @IsOptional() ← ATUALIZADO
+- `modelo`: @IsBoolean(), @IsOptional()
+
+**Validações implementadas:**
+- Nome obrigatório, entre 2 e 100 caracteres
+- Descrição opcional, máximo 500 caracteres
+- Ordem opcional, mínimo 1 se fornecido
+- Modelo opcional (default: false)
 
 **Campos:**
 - `nome`: @IsString(), @IsNotEmpty(), @Length(2, 100)
@@ -429,34 +568,34 @@ if (rotiasCount > 0) {
 
 ## 5. Comportamentos Condicionais
 
-### 5.1. Pilares Inativos Não Aparecem em Listagem
+### 5.1. Pilares Inativos Não Aparecem em Listagem ou Busca
 
 **Condição:** `pilar.ativo === false`
 
 **Comportamento:**
 - Pilares inativos não são retornados em `findAll()`
+- **ATUALIZADO:** `findOne()` também filtra por `ativo: true`
+- Pilares inativos retornam 404 Not Found
 - Não aparecem em interfaces de seleção
-
-**Exceção:**
-- `findOne()` não filtra por ativo (retorna pilar mesmo se inativo)
 
 **Arquivo:** [pilares.service.ts](../../backend/src/modules/pilares/pilares.service.ts#L44-L45)
 
 ---
 
-### 5.2. Ordenação Customizável
+### 5.2. Ordenação Por Empresa (Multi-Tenant)
 
-**Condição:** Sempre
+**Condição:** Sempre em `GET /empresas/:empresaId/pilares`
 
 **Comportamento:**
-- Pilares sempre retornados ordenados por `ordem` (ascendente)
-- Ordem pode ser personalizada via endpoint `/pilares/reordenar`
+- Pilares retornados ordenados por `PilarEmpresa.ordem` (per-company)
+- Cada empresa tem sua própria ordenação independente
+- Ordem pode ser personalizada via `/empresas/:empresaId/pilares/reordenar`
 
 **Justificativa:**
-- Permite organização lógica de pilares para exibição
-- Manutenção de ordem consistente em interfaces
+- Empresas diferentes priorizam pilares diferentes
+- Ordenação global (`Pilar.ordem`) é apenas referência visual
 
-**Arquivo:** [pilares.service.ts](../../backend/src/modules/pilares/pilares.service.ts#L53)
+**Arquivo:** [pilares-empresa.service.ts](../../backend/src/modules/pilares-empresa/pilares-empresa.service.ts#L50)
 
 ---
 
@@ -507,87 +646,92 @@ if (rotiasCount > 0) {
 
 ---
 
-### 5.6. Reordenação em Transação Atômica
+### 5.6. Auto-Associação de Pilares Padrão
 
-**Condição:** Sempre em reordenação
+**Condição:** Criação de nova empresa + `AUTO_ASSOCIAR_PILARES_PADRAO=true`
 
 **Comportamento:**
-- Todas as atualizações de ordem ocorrem em transação
-- Se uma falhar, todas são revertidas (rollback)
+- Sistema busca pilares com `modelo: true` e `ativo: true`
+- Cria PilarEmpresa automaticamente para cada pilar encontrado
+- Preserva ordem original do catálogo global
+
+**Configuração:**
+- Env var: `AUTO_ASSOCIAR_PILARES_PADRAO`
+- Default: `true`
+- Para desabilitar: `AUTO_ASSOCIAR_PILARES_PADRAO="false"`
+
+**Arquivo:** [empresas.service.ts](../../backend/src/modules/empresas/empresas.service.ts#L26-L51)
+
+---
+
+### 5.7. Cascata Lógica em Desativação de Pilar
+
+**Condição:** Pilar desativado (`pilar.ativo = false`)
+
+**Comportamento:**
+- PilarEmpresa.ativo **NÃO** é alterado (continua `true`)
+- Filtro de cascata: `WHERE pilar.ativo = true AND pilarEmpresa.ativo = true`
+- Pilar inativo automaticamente some de todas empresas
+- Se pilar for reativado, volta a aparecer automaticamente
 
 **Justificativa:**
-- Garantir consistência de ordem (evitar ordens duplicadas ou gaps)
+- Preserva histórico de vinculação
+- Permite reativação sem precisar revincular manualmente
 
-**Arquivo:** [pilares.service.ts](../../backend/src/modules/pilares/pilares.service.ts#L160)
-
----
-
-## 6. Ausências ou Ambiguidades
-
-### 6.1. Campo `modelo` Não Utilizado
-
-**Status:** ⚠️ NÃO UTILIZADO
-
-**Descrição:**
-- Modelo Pilar possui campo `modelo: Boolean`
-- Nenhum endpoint ou lógica utiliza este campo
-- Provável intenção: marcar pilares padrão do sistema
-
-**TODO:**
-- Implementar lógica de "pilar modelo" (templates)
-- Ou remover campo do schema se não for necessário
-- Documentar diferença entre pilar normal e pilar modelo
-
-**Arquivo:** [schema.prisma](../../backend/prisma/schema.prisma) (campo modelo)
+**Arquivo:** [pilares-empresa.service.ts](../../backend/src/modules/pilares-empresa/pilares-empresa.service.ts#L41)
 
 ---
 
-### 6.2. Reordenação Sem Auditoria
+## 6. Ausências ou Ambiguidades (ATUALIZADO)
 
-**Status:** ❌ NÃO AUDITADO
+### 6.1. Campo `modelo` Implementado
+
+**Status:** ✅ IMPLEMENTADO
 
 **Descrição:**
-- Método `reordenar()` não registra auditoria
-- Mudanças de ordem não ficam rastreadas
-- Não é possível saber quem reordenou ou quando
+- Campo `modelo` agora controla auto-associação de pilares
+- Pilares com `modelo: true` são automaticamente vinculados a novas empresas
+- Configurável via `AUTO_ASSOCIAR_PILARES_PADRAO`
 
-**TODO:**
-- Adicionar registro de auditoria em reordenação
-- Considerar registrar apenas uma auditoria para toda a operação (não uma por pilar)
+**Arquivo:** [empresas.service.ts](../../backend/src/modules/empresas/empresas.service.ts#L26-L51)
 
-**Arquivo:** [pilares.service.ts](../../backend/src/modules/pilares/pilares.service.ts#L153-L165)
+---
+
+### 6.2. Reordenação de Pilar Global Removida
+
+**Status:** ✅ RESOLVIDO
+
+**Descrição:**
+- Endpoint `POST /pilares/reordenar` foi **removido**
+- Campo `Pilar.ordem` agora é **opcional** (apenas referência visual)
+- Ordenação funcional acontece em `PilarEmpresa.ordem` (per-company)
+- Endpoint de reordenação movido para `/empresas/:id/pilares/reordenar`
+
+**Arquivo:** [pilares-empresa.service.ts](../../backend/src/modules/pilares-empresa/pilares-empresa.service.ts#L58-L118)
 
 ---
 
 ### 6.3. Validação de Ordem Duplicada
 
-**Status:** ⚠️ NÃO VALIDADA
+**Status:** ✅ NÃO APLICÁVEL
 
 **Descrição:**
-- Sistema permite criar/atualizar pilares com mesma ordem
-- Não há constraint unique em `ordem`
-- Pode haver conflitos em exibição
-
-**TODO:**
-- Decidir se ordem deve ser única
-- Ou permitir ordens duplicadas e ordenar por outro critério secundário (ex: nome)
-- Adicionar validação de ordem única se necessário
+- Campo `Pilar.ordem` é opcional e apenas referência
+- Não há necessidade de validar duplicatas
+- Ordenação funcional usa `PilarEmpresa.ordem` (validado por empresa)
 
 ---
 
-### 6.4. Reordenação Sem Validação de IDs Existentes
+### 6.4. Validação de IDs em Reordenação
 
-**Status:** ⚠️ SEM VALIDAÇÃO
+**Status:** ✅ IMPLEMENTADO
 
 **Descrição:**
-- Endpoint `reordenar()` não valida se IDs fornecidos existem
-- Se ID inválido for enviado, transação falha sem mensagem clara
-- Erro genérico do Prisma é retornado
+- Módulo PilaresEmpresa valida IDs antes de reordenar
+- Lança `NotFoundException` com mensagem clara se ID inválido
+- Valida que IDs pertencem à empresa especificada
 
-**TODO:**
-- Validar IDs antes de iniciar transação
-- Lançar NotFoundException se algum ID não existir
-- Retornar mensagem clara de qual ID é inválido
+**Arquivo:** [pilares-empresa.service.ts](../../backend/src/modules/pilares-empresa/pilares-empresa.service.ts#L70-L83)
 
 ---
 
@@ -607,48 +751,37 @@ if (rotiasCount > 0) {
 
 ---
 
-### 6.6. Empresas Vinculadas Não Verificadas em Desativação
+### 6.6. Cascata Lógica em Desativação
 
-**Status:** ⚠️ SEM VALIDAÇÃO
+**Status:** ✅ IMPLEMENTADO
 
 **Descrição:**
-- Sistema verifica rotinas ativas antes de desativar
-- NÃO verifica se há empresas ativas usando o pilar
-- Pode desativar pilar em uso por empresas
+- Desativar pilar NÃO altera `PilarEmpresa.ativo`
+- Filtro de cascata: `pilar.ativo = true AND pilarEmpresa.ativo = true`
+- Pilar desativado automaticamente some de todas empresas
+- Preserva histórico de vinculação
 
-**Comportamento atual:**
-- PilarEmpresa continua existindo mesmo com pilar inativo
-- Pode causar inconsistência em interfaces
-
-**TODO:**
-- Decidir se deve bloquear desativação se houver empresas ativas
-- Ou permitir desativação e marcar PilarEmpresa como inativo automaticamente
-- Documentar comportamento esperado
+**Arquivo:** [pilares-empresa.service.ts](../../backend/src/modules/pilares-empresa/pilares-empresa.service.ts#L41)
 
 ---
 
-### 6.7. Multi-Tenancy Não Implementado
+### 6.7. Multi-Tenancy Implementado
 
-**Status:** ❌ NÃO IMPLEMENTADO
+**Status:** ✅ IMPLEMENTADO
 
 **Descrição:**
-- Pilares são globais (não há empresaId em Pilar)
-- Não há isolamento multi-tenant
-- Todos os usuários veem os mesmos pilares
+- Módulo PilaresEmpresa implementa isolamento multi-tenant
+- Validação: `user.empresaId === empresaId` (exceto ADMINISTRADOR)
+- Cada empresa tem ordenação independente via `PilarEmpresa.ordem`
+- Pilares são catálogo global, vinculação é per-company
 
-**Comportamento atual:**
-- Pilares são compartilhados entre empresas via PilarEmpresa
-- Empresa escolhe quais pilares usar (vinculação)
-
-**Observação:**
-- Design é intencional (pilares são "catálogo global")
-- Não é bug, mas pode ser limitação futura
+**Arquivo:** [pilares-empresa.service.ts](../../backend/src/modules/pilares-empresa/pilares-empresa.service.ts#L19-L28)
 
 ---
 
-### 6.8. Soft Delete Inconsistente
+### 6.8. Soft Delete Consistente
 
-**Status:** ⚠️ AMBÍGUO
+**Status:** ✅ RESOLVIDO
 
 **Descrição:**
 - `findAll()` filtra por `ativo: true`
@@ -715,25 +848,39 @@ if (rotiasCount > 0) {
 | **R-PIL-006** | Reordenação em lote | ✅ Implementado |
 | **RA-PIL-001** | Bloqueio por rotinas ativas | ✅ Implementado |
 | **RA-PIL-002** | Restrição a ADMINISTRADOR | ✅ Implementado |
-| **RA-PIL-003** | Auditoria de operações | ⚠️ Parcial (sem reordenação) |
+| **RA-PIL-003** | Auditoria de operações CUD | ✅ Implementado |
 
-**Ausências críticas:**
-- ❌ Auditoria de reordenação
-- ❌ Paginação em listagem
-- ⚠️ Validação de empresas ativas em desativação
-- ⚠️ Campo `modelo` não utilizado
-- ⚠️ Reordenação sem validação de IDs
-- ⚠️ Soft delete inconsistente (findOne não filtra)
+**Módulo Empresas (Auto-Associação):**
+
+| ID | Descrição | Status |
+|----|-----------|--------|
+| **R-EMP-004** | Auto-associação de pilares padrão | ✅ Implementado |
+
+**Módulo PilaresEmpresa (Multi-Tenant):**
+
+| ID | Descrição | Status |
+|----|-----------|--------|
+| **R-PILEMP-001** | Listagem de pilares por empresa | ✅ Implementado |
+| **R-PILEMP-002** | Reordenação per-company | ✅ Implementado |
+| **RA-PILEMP-001** | Cascata lógica em desativação | ✅ Implementado |
+
+**Melhorias implementadas:**
+- ✅ Campo `modelo` com auto-associação
+- ✅ Reordenação movida para PilaresEmpresa
+- ✅ Validação de IDs em reordenação
+- ✅ Multi-tenancy implementado
+- ✅ Soft delete consistente (findOne filtra ativo)
+- ✅ Ordem com validação >= 1 em DTOs
 
 ---
 
-## 8. Fluxo de Operações
+## 8. Fluxo de Operações (ATUALIZADO)
 
 ### 8.1. Criação de Pilar
 
 ```
 1. ADMINISTRADOR envia POST /pilares
-2. DTO valida campos (nome, descricao, ordem)
+2. DTO valida campos (nome obrigatório, descrição e ordem opcionais)
 3. Service valida unicidade de nome
 4. Se nome duplicado → 409 Conflict
 5. Cria pilar com createdBy
@@ -743,31 +890,50 @@ if (rotiasCount > 0) {
 
 ---
 
-### 8.2. Desativação de Pilar
+### 8.2. Criação de Empresa (com Auto-Associação)
 
 ```
-1. ADMINISTRADOR envia DELETE /pilares/:id
-2. Service busca pilar (findOne)
-3. Se não existe → 404 Not Found
-4. Conta rotinas ativas vinculadas
-5. Se rotinas ativas > 0 → 409 Conflict
-6. Atualiza ativo: false
-7. Registra auditoria (DELETE)
-8. Retorna pilar desativado (200)
+1. ADMINISTRADOR envia POST /empresas
+2. Service cria empresa
+3. Se AUTO_ASSOCIAR_PILARES_PADRAO=true:
+   a. Busca pilares com modelo:true e ativo:true
+   b. Cria PilarEmpresa para cada pilar encontrado
+   c. Preserva ordem original (Pilar.ordem)
+4. Retorna empresa criada (201)
 ```
 
 ---
 
-### 8.3. Reordenação de Pilares
+### 8.3. Desativação de Pilar (com Cascata Lógica)
 
 ```
-1. ADMINISTRADOR envia POST /pilares/reordenar
-2. Service recebe array de {id, ordem}
-3. Cria array de updates
-4. Executa em transação atômica
-5. Se algum ID inválido → rollback + erro Prisma
-6. Retorna lista completa atualizada (findAll)
-7. ❌ Não registra auditoria
+1. ADMINISTRADOR envia DELETE /pilares/:id
+2. Service busca pilar ativo (findOne com filtro ativo:true)
+3. Se não existe ou inativo → 404 Not Found
+4. Conta rotinas ativas vinculadas
+5. Se rotinas ativas > 0 → 409 Conflict
+6. Atualiza ativo: false
+7. PilarEmpresa.ativo NÃO é alterado (cascata lógica)
+8. Pilar some automaticamente de todas empresas (via filtro)
+9. Registra auditoria (DELETE)
+10. Retorna pilar desativado (200)
+```
+
+---
+
+### 8.4. Reordenação de Pilares por Empresa
+
+```
+1. ADMINISTRADOR ou GESTOR envia POST /empresas/:empresaId/pilares/reordenar
+2. Service valida acesso multi-tenant
+3. Valida que IDs pertencem à empresa
+4. Se algum ID não pertence → 404 Not Found com lista de IDs inválidos
+5. DTO valida ordem >= 1
+6. Cria array de updates em PilarEmpresa
+7. Executa em transação atômica
+8. Se falhar → rollback completo
+9. Registra auditoria (UPDATE)
+10. Retorna lista atualizada (200)
 ```
 
 ---
@@ -795,24 +961,34 @@ if (rotiasCount > 0) {
 - Mediada por tabela PilarEmpresa
 
 **Comportamento:**
-- Empresas "escolhem" quais pilares usar
-- PilarEmpresa permite customização por empresa
-
-**Ausência:**
-- Desativação de pilar NÃO verifica empresas ativas (6.6)
+- Empresas "escolhem" quais pilares usar via vinculação
+- PilarEmpresa permite ordenação customizada por empresa
+- Cascata lógica: Pilar inativo = invisível para todas empresas
 
 **Arquivo:** [schema.prisma](../../backend/prisma/schema.prisma) (relation empresas)
 
 ---
 
-## 10. Referências
+## 10. Referências (ATUALIZADO)
 
-**Arquivos principais:**
+**Módulo Pilares:**
 - [pilares.service.ts](../../backend/src/modules/pilares/pilares.service.ts)
 - [pilares.controller.ts](../../backend/src/modules/pilares/pilares.controller.ts)
 - [create-pilar.dto.ts](../../backend/src/modules/pilares/dto/create-pilar.dto.ts)
 - [update-pilar.dto.ts](../../backend/src/modules/pilares/dto/update-pilar.dto.ts)
-- [schema.prisma](../../backend/prisma/schema.prisma) (Pilar, PilarEmpresa)
+- [pilares.module.ts](../../backend/src/modules/pilares/pilares.module.ts)
+
+**Módulo PilaresEmpresa:**
+- [pilares-empresa.service.ts](../../backend/src/modules/pilares-empresa/pilares-empresa.service.ts)
+- [pilares-empresa.controller.ts](../../backend/src/modules/pilares-empresa/pilares-empresa.controller.ts)
+- [reordenar-pilares.dto.ts](../../backend/src/modules/pilares-empresa/dto/reordenar-pilares.dto.ts)
+- [pilares-empresa.module.ts](../../backend/src/modules/pilares-empresa/pilares-empresa.module.ts)
+
+**Módulo Empresas (Auto-Associação):**
+- [empresas.service.ts](../../backend/src/modules/empresas/empresas.service.ts) (método create)
+
+**Schema:**
+- [schema.prisma](../../backend/prisma/schema.prisma) (Pilar, PilarEmpresa, RotinaEmpresa)
 
 **Dependências:**
 - AuditService (auditoria de operações)
@@ -820,10 +996,501 @@ if (rotiasCount > 0) {
 - JwtAuthGuard (autenticação)
 - RolesGuard (autorização por perfil)
 
+**Configuração:**
+- [.env](../../backend/.env) (`AUTO_ASSOCIAR_PILARES_PADRAO`)
+
+---
+
+## 11. Regras de Interface (Frontend)
+
+### UI-PIL-001: Tela de Listagem de Pilares
+
+**Descrição:** Interface administrativa para gerenciamento de pilares do sistema.
+
+**Acesso:** Apenas ADMINISTRADOR  
+**Rota:** `/pilares`  
+**Guard:** `AdminGuard`
+
+**Localização:** `frontend/src/app/views/pages/pilares/pilares-list/`
+
+**Campos Exibidos na Tabela:**
+
+| Coluna | Origem | Formato |
+|--------|--------|---------|
+| Nome | `pilar.nome` | Texto |
+| Descrição | `pilar.descricao` | Texto truncado (50 chars) + tooltip completo |
+| Tipo | `pilar.modelo` | Badge (Padrão/Customizado) |
+| Rotinas | `pilar._count.rotinas` | Número |
+| Empresas | `pilar._count.empresas` | Número |
+| Status | `pilar.ativo` | Badge (Ativo/Inativo) |
+| Ações | - | Botões Editar, Desativar/Reativar |
+
+**Funcionalidades:**
+- Busca em tempo real por nome (debounce 300ms)
+- Filtro por Status (Todos/Ativos/Inativos)
+- Filtro por Tipo (Todos/Padrão/Customizados)
+- Paginação (10 itens por página)
+- Ordenação automática (ver UI-PIL-004)
+- Exclusão individual (sem multi-select)
+
+**Endpoint:** `GET /pilares`
+
+---
+
+### UI-PIL-002: Badge de Tipo (Padrão vs Customizado)
+
+**Descrição:** Indicador visual do tipo de pilar.
+
+**Lógica:**
+```typescript
+if (pilar.modelo === true) {
+  badge = 'Padrão'
+  classe = 'bg-primary' // cor primária (azul)
+} else {
+  badge = 'Customizado'
+  classe = 'bg-secondary' // cor secundária (cinza)
+}
+```
+
+**Renderização:**
+```html
+<span class="badge bg-primary">Padrão</span>
+<span class="badge bg-secondary">Customizado</span>
+```
+
+**Arquivo:** `pilar-badge.component.ts` (reutilizável)
+
+---
+
+### UI-PIL-003: Contadores de Relacionamentos
+
+**Descrição:** Exibição de métricas de uso do pilar.
+
+**Colunas:**
+- **Rotinas:** `_count.rotinas` (quantidade de rotinas vinculadas)
+- **Empresas:** `_count.empresas` (quantidade de empresas usando)
+
+**Tooltip (hover):**
+```
+Marketing
+├─ 8 rotinas vinculadas
+└─ 5 empresas usando
+```
+
+**Utilidade:**
+- Informar impacto antes de desativar
+- Visibilidade de uso do pilar no sistema
+
+---
+
+### UI-PIL-004: Ordenação de Exibição
+
+**Descrição:** Lógica de ordenação na listagem.
+
+**Algoritmo:**
+```typescript
+pilares.sort((a, b) => {
+  // 1. Padrões primeiro
+  if (a.modelo && !b.modelo) return -1;
+  if (!a.modelo && b.modelo) return 1;
+  
+  // 2. Entre padrões: por ordem (se definida)
+  if (a.modelo && b.modelo) {
+    const ordemA = a.ordem ?? 9999;
+    const ordemB = b.ordem ?? 9999;
+    return ordemA - ordemB;
+  }
+  
+  // 3. Entre customizados: alfabético
+  return a.nome.localeCompare(b.nome);
+});
+```
+
+**Resultado esperado:**
+1. Estratégico (padrão, ordem: 1)
+2. Marketing (padrão, ordem: 2)
+3. Vendas (padrão, ordem: 3)
+4. Inovação (customizado, alfabético)
+5. Sustentabilidade (customizado, alfabético)
+
+---
+
+### UI-PIL-005: Formulário de Criação/Edição
+
+**Descrição:** Formulário para criar ou editar pilares.
+
+**Rotas:**
+- Criar: `/pilares/novo`
+- Editar: `/pilares/editar/:id`
+
+**Localização:** `frontend/src/app/views/pages/pilares/pilares-form/`
+
+**Campos:**
+
+**Nome** (obrigatório)
+- Validação: required, minLength(2), maxLength(100)
+- Validação assíncrona: nome único (debounce 300ms)
+- Erro: "Nome já cadastrado"
+
+**Descrição** (opcional)
+- Validação: maxLength(500)
+- Textarea com 3 linhas
+
+**Ordem** (opcional)
+- Validação: optional, min(1)
+- Input numérico
+- Help text: "Ordem de exibição (apenas para pilares padrão)"
+- Comportamento:
+  - Se `modelo === true`: sugerir próxima ordem disponível
+  - Se `modelo === false`: pode deixar vazio (null)
+
+**Pilar Padrão do Sistema** (boolean)
+- Checkbox
+- Help text: "Pilares padrão são auto-associados a novas empresas"
+- Default: `false`
+
+**Botões:**
+- Cancelar → Volta para `/pilares`
+- Salvar → POST (criar) ou PATCH (editar) + redirect
+
+**Endpoints:**
+- Criar: `POST /pilares`
+- Editar: `PATCH /pilares/:id`
+
+---
+
+### UI-PIL-006: Modal de Confirmação de Desativação
+
+**Descrição:** Confirmação antes de desativar pilar.
+
+**Trigger:** Click em botão "Desativar"
+
+**Validação Prévia:**
+```typescript
+const pilar = await GET /pilares/:id
+```
+
+**Se `_count.rotinas > 0`:**
+```
+❌ Não é possível desativar
+
+Este pilar possui X rotinas ativas vinculadas.
+Desative as rotinas primeiro.
+
+[Entendi]
+```
+
+**Se `_count.rotinas === 0`:**
+```
+⚠️ Confirmar Desativação
+
+Deseja desativar o pilar "Marketing"?
+
+Obs: Y empresas estão usando este pilar.
+Elas não poderão mais vê-lo após desativação.
+
+[Cancelar]  [Desativar]
+```
+
+**Ação ao confirmar:**
+```
+PATCH /pilares/:id
+{ ativo: false }
+```
+
+**Feedback:**
+```
+✅ Pilar desativado com sucesso
+```
+
+**Endpoint:** `PATCH /pilares/:id`
+
+---
+
+### UI-PIL-007: Filtros de Listagem
+
+**Descrição:** Filtros disponíveis na tela de listagem.
+
+**Status:**
+- Todos (sem filtro)
+- Ativos (`WHERE ativo = true`)
+- Inativos (`WHERE ativo = false`)
+
+**Tipo:**
+- Todos (sem filtro)
+- Padrão (`WHERE modelo = true`)
+- Customizados (`WHERE modelo = false`)
+
+**Busca:**
+- Campo de texto
+- Debounce 300ms
+- Case-insensitive
+- Busca no campo `nome`
+
+**Implementação:**
+- Filtragem client-side (após carregar dados)
+- Ou via query params para backend (futuro)
+
+---
+
+### UI-PIL-008: Permissões e Guards
+
+**Descrição:** Controle de acesso à funcionalidade.
+
+**Route Guard:**
+```typescript
+{
+  path: 'pilares',
+  canActivate: [AdminGuard],
+  children: [
+    { path: '', component: PilaresListComponent },
+    { path: 'novo', component: PilaresFormComponent },
+    { path: 'editar/:id', component: PilaresFormComponent }
+  ]
+}
+```
+
+**Comportamento:**
+- Se `perfil.codigo !== 'ADMINISTRADOR'`:
+  - Redirect para `/dashboard`
+  - Ou exibir: "Acesso negado. Apenas Administradores."
+
+**Menu Lateral:**
+- Item "Pilares" só visível se `perfil.codigo === 'ADMINISTRADOR'`
+
+---
+
+### UI-PIL-009: Ações por Linha da Tabela
+
+**Descrição:** Botões de ação disponíveis em cada linha.
+
+**Editar:**
+- Ícone: pencil
+- Ação: Navegar para `/pilares/editar/:id`
+- Sempre visível
+
+**Desativar:**
+- Ícone: trash
+- Ação: Abrir modal de confirmação (UI-PIL-006)
+- Visível apenas se `ativo === true`
+
+**Reativar:**
+- Ícone: check-circle
+- Ação: `PATCH /pilares/:id { ativo: true }`
+- Visível apenas se `ativo === false`
+- Feedback: "Pilar reativado com sucesso"
+
+---
+
+## 12. Mudanças Necessárias no Schema
+
+### SCHEMA-PIL-001: Campo `ordem` em Pilar Opcional
+
+**Situação Atual:**
+```prisma
+model Pilar {
+  ordem Int  // obrigatório
+}
+```
+
+**Mudança Necessária:**
+```prisma
+model Pilar {
+  ordem Int?  // opcional
+}
+```
+
+**Justificativa:**
+- Campo `ordem` só faz sentido para pilares padrão (modelo: true)
+- Pilares customizados não utilizam ordenação numérica
+- Permite valor null para customizados
+
+**Migration:**
+```sql
+ALTER TABLE pilares ALTER COLUMN ordem DROP NOT NULL;
+```
+
+**Impacto:**
+- Backend: Ajustar queries que usam `ordem`
+- Frontend: Tratar null no campo ordem
+- Seed: Pilares padrão devem ter ordem definida
+
+**Arquivo:** `backend/prisma/schema.prisma`
+
+---
+
+### SCHEMA-PIL-002: Adicionar Campo `ordem` em PilarEmpresa
+
+**Mudança Necessária:**
+```prisma
+model PilarEmpresa {
+  id          String   @id @default(uuid())
+  empresaId   String
+  pilarId     String
+  ordem       Int      // NOVO - obrigatório
+  ativo       Boolean  @default(true)
+  
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  createdBy   String?
+  updatedBy   String?
+  
+  // Relations
+  empresa     Empresa  @relation(...)
+  pilar       Pilar    @relation(...)
+  rotinasEmpresa RotinaEmpresa[]
+  evolucao       PilarEvolucao[]
+  
+  @@unique([empresaId, pilarId])
+  @@map("pilares_empresa")
+}
+```
+
+**Justificativa:**
+- Cada empresa pode ter ordem personalizada de pilares
+- Empresa A: [Vendas=1, Marketing=2, Estratégico=3]
+- Empresa B: [Estratégico=1, Pessoas=2, Marketing=3]
+- Permite customização por empresa
+
+**Migration:**
+```sql
+ALTER TABLE pilares_empresa ADD COLUMN ordem INT NOT NULL DEFAULT 1;
+
+-- Atualizar ordem baseada no pilar padrão (se existir)
+UPDATE pilares_empresa pe
+SET ordem = COALESCE(
+  (SELECT p.ordem FROM pilares p WHERE p.id = pe.pilar_id),
+  ROW_NUMBER() OVER (PARTITION BY pe.empresa_id ORDER BY pe.created_at)
+);
+```
+
+**Comportamento Default:**
+- Ao associar pilar padrão: usar `pilar.ordem` (se existir)
+- Ao criar pilar customizado: calcular próxima ordem disponível
+- Admin/Gestor pode reordenar depois
+
+**Impacto:**
+- Nova funcionalidade: Reordenar pilares por empresa
+- Endpoint futuro: `POST /empresas/:id/pilares/reordenar`
+
+---
+
+### SCHEMA-PIL-003: Adicionar Campo `ordem` em RotinaEmpresa
+
+**Mudança Necessária:**
+```prisma
+model RotinaEmpresa {
+  id            String      @id @default(uuid())
+  pilarEmpresaId String
+  rotinaId      String
+  ordem         Int         // NOVO - obrigatório
+  observacao    String?
+  
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  createdBy     String?
+  updatedBy     String?
+  
+  // Relations
+  pilarEmpresa   PilarEmpresa @relation(...)
+  rotina        Rotina      @relation(...)
+  notas         NotaRotina[]
+  
+  @@index([pilarEmpresaId])
+  @@index([rotinaId])
+  @@unique([pilarEmpresaId, rotinaId])
+  @@map("rotinas_empresa")
+}
+```
+
+**Justificativa:**
+- Cada empresa pode ter ordem personalizada de rotinas dentro de um pilar
+- Empresa A, Pilar Marketing: [Rotina1=1, Rotina2=2]
+- Empresa B, Pilar Marketing: [Rotina2=1, Rotina3=2] (ordem diferente)
+- Permite customização granular
+
+**Migration:**
+```sql
+ALTER TABLE rotinas_empresa ADD COLUMN ordem INT NOT NULL DEFAULT 1;
+
+-- Atualizar ordem baseada na rotina padrão (se existir)
+UPDATE rotinas_empresa re
+SET ordem = COALESCE(
+  (SELECT r.ordem FROM rotinas r WHERE r.id = re.rotina_id),
+  ROW_NUMBER() OVER (PARTITION BY re.pilar_empresa_id ORDER BY re.created_at)
+);
+```
+
+**Comportamento Default:**
+- Ao associar rotina padrão: usar `rotina.ordem` (se existir)
+- Ao criar rotina customizada: calcular próxima ordem disponível
+- Gestor pode reordenar depois
+
+**Impacto:**
+- Nova funcionalidade: Reordenar rotinas por empresa/pilar
+- Endpoint futuro: `POST /empresas/:id/pilares/:pilarId/rotinas/reordenar`
+
+---
+
+## 13. Status de Implementação (ATUALIZADO - 22/12/2024)
+
+**Backend - Módulo Pilares (Catálogo Global):**
+- ✅ CRUD completo implementado
+- ✅ Validações de segurança (RBAC)
+- ✅ Auditoria de operações CUD
+- ✅ Soft delete com filtro consistente
+- ✅ Validação de dependências (rotinas ativas)
+- ✅ Campo `ordem` opcional
+- ✅ Endpoint reordenar REMOVIDO
+
+**Backend - Módulo Empresas:**
+- ✅ Auto-associação de pilares padrão implementada
+- ✅ Flag `AUTO_ASSOCIAR_PILARES_PADRAO` configurável
+- ✅ Auditoria de criação
+
+**Backend - Módulo PilaresEmpresa (Multi-Tenant):**
+- ✅ Listagem de pilares por empresa
+- ✅ Reordenação per-company implementada
+- ✅ Validação multi-tenant
+- ✅ Cascata lógica em desativação
+- ✅ Auditoria completa
+- ✅ DTOs com validação >= 1
+
+**Backend - Schema:**
+- ✅ `Pilar.ordem` → Int? (opcional)
+- ✅ `PilarEmpresa.ordem` → Int (obrigatório)
+- ✅ `RotinaEmpresa.ordem` → Int (obrigatório)
+- ✅ Migrations aplicadas
+
+**Backend - Correções de Segurança:**
+- ✅ Validação de IDs em reordenação
+- ✅ findOne() filtra pilares inativos
+- ✅ Auditoria de reordenação (módulo PilaresEmpresa)
+- ✅ Multi-tenancy com validação estrita
+
+**Frontend (Pendente):**
+- ❌ Interface de listagem
+- ❌ Formulário criar/editar
+- ❌ Modal de confirmação
+- ❌ Filtros e busca
+- ❌ Guards de permissão
+- ❌ Integração com `/empresas/:id/pilares`
+
+---
+
+**Data de extração:** 21/12/2024  
+**Data de atualização:** 22/12/2024  
+**Agente:** Business Rules Extractor (Modo A - Reverse Engineering)  
+**Status:** ✅ Backend completo (3 módulos) | ⏳ Frontend pendente
+
 ---
 
 **Observação final:**  
-Este documento reflete APENAS o código IMPLEMENTADO.  
-Módulo Pilares possui CRUD completo + reordenação customizável.  
-Validações de dependência (rotinas ativas) garantem integridade.  
-Auditoria completa exceto reordenação.
+Este documento reflete o código IMPLEMENTADO nos módulos:
+- **Pilares** (catálogo global)
+- **PilaresEmpresa** (multi-tenant per-company)
+- **Empresas** (auto-associação)
+
+Todas as correções críticas de segurança foram implementadas.  
+Frontend segue especificações UI-PIL-001 a UI-PIL-009.  
+Schema changes completos conforme SCHEMA-PIL-001 a 003.

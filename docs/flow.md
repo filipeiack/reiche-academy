@@ -43,14 +43,17 @@ A ordem de autoridade no projeto é **imutável**:
 
 Somente os agentes abaixo podem atuar neste projeto:
 
-| Agente | Documento |
-|------|---------|
-| Extractor de Regras | `/.github/agents/1-Extractor_Regras.md` |
-| Reviewer de Regras | `/.github/agents/2-Reviewer_Regras.md` |
-| Dev Agent Disciplinado | `/.github/agents/3-DEV_Agent.md` |
-| Pattern Enforcer | `/.github/agents/4-Pattern_Enforcer.md` |
-| QA Unitário Estrito | `/.github/agents/5-QA_Unitário_Estrito.md` |
-| E2E Agent | `/.github/agents/QA_E2E_Interface.md` |
+| Agente | Documento | Nível |
+|------|---------|------|
+| **System Engineer** | `/.github/agents/0-System_Engineer.md` | Meta (governança) |
+| Extractor de Regras | `/.github/agents/1-Extractor_Regras.md` | Fluxo |
+| Reviewer de Regras | `/.github/agents/2-Reviewer_Regras.md` | Fluxo |
+| Dev Agent Disciplinado | `/.github/agents/3-DEV_Agent.md` | Fluxo |
+| Pattern Enforcer | `/.github/agents/4-Pattern_Enforcer.md` | Fluxo |
+| QA Unitário Estrito | `/.github/agents/5-QA_Unitário_Estrito.md` | Fluxo |
+| E2E Agent | `/.github/agents/6-QA_E2E_Interface.md` | Fluxo |
+| Tech Writer (Opcional) | `/.github/agents/7-Tech_Writer.md` | Pós-merge |
+| Advisor (Consultivo) | `/.github/agents/Advisor.md` | Consultivo |
 
 🚫 **Qualquer agente não listado aqui NÃO EXISTE para o projeto**, mesmo sob instrução direta.
 
@@ -78,6 +81,10 @@ E2E (opcional / crítico)
 Pull Request
         ↓
 Merge no main
+        ↓
+Tech Writer (opcional / mudanças arquiteturais)
+        ↓
+Documentação atualizada
 
 ---
 
@@ -112,22 +119,7 @@ O fluxo só inicia quando há **um requisito válido**, originado de:
 
 ### Saída obrigatória (handoff)
 
-```md
-### DEV HANDOFF
-
-Escopo implementado:
-- ...
-
-Arquivos alterados:
-- ...
-
-Ambiguidades encontradas:
-- ...
-
-Próximo agente obrigatório:
-- Pattern Enforcer
-```
-
+Template do handoff: /docs/conventions/handoff-template.md
 Sem esse handoff, o fluxo **para**.
 
 ---
@@ -210,6 +202,34 @@ O merge só é permitido se:
 Após o merge:
 - O código vira fonte de verdade
 - Extractor pode ser acionado para atualização documental
+- Tech Writer pode ser acionado (se aplicável)
+
+---
+
+## 8️⃣ Tech Writer (Opcional — Pós-Merge)
+
+### Quando acionar
+- Mudanças arquiteturais significativas
+- Novas integrações ou dependências
+- Decisões técnicas que impactam o sistema
+- Sob instrução explícita
+
+### Função
+- Documentar decisões arquiteturais (ADRs)
+- Atualizar `/docs/architecture`
+- Manter diagramas sincronizados
+- Registrar contexto e trade-offs
+
+### Restrições
+- ❌ Não decide arquitetura
+- ❌ Não altera código
+- ❌ Não cria regras de negócio
+- ✅ Apenas documenta decisões aprovadas
+
+### Saída
+- ADR em `/docs/adr/`
+- Atualização em `/docs/architecture` (quando aplicável)
+- Diagramas atualizados (quando aplicável)
 
 ---
 
@@ -219,6 +239,32 @@ Após o merge:
 - Nenhum agente assume papel não documentado
 - Nenhum teste valida intenção — apenas regra
 - Nenhuma exceção sem registro explícito
+
+---
+
+## 🔧 Manutenção da Estrutura (Meta-Nível)
+
+Fora do fluxo de desenvolvimento regular, existe o **System Engineer**:
+
+### System Engineer (Meta-Agente)
+
+**Função:** Manter e evoluir a estrutura de governança do projeto
+
+**Escopo:**
+- Criar/modificar definições de agentes
+- Atualizar FLOW.md
+- Manter DOCUMENTATION_AUTHORITY.md
+- Reorganizar estrutura documental normativa
+
+**Ativação:** Explícita apenas ("Atue como System Engineer")
+
+**Restrição Absoluta:** 
+- ❌ Nunca atua em código de produção
+- ❌ Nunca define regras de negócio
+- ❌ Nunca participa de PRs de features
+- ✅ Sempre requer aprovação humana
+
+**Documentação completa:** `/.github/agents/0-System_Engineer.md`
 
 ---
 
@@ -232,3 +278,7 @@ Este fluxo existe para:
 - permitir escala com segurança
 
 Se algo não está neste fluxo, não é permitido.
+
+**Meta-Princípio:**  
+O próprio fluxo pode evoluir, mas apenas através do System Engineer,
+com justificativa, documentação e aprovação humana explícita.

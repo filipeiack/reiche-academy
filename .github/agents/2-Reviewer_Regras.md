@@ -160,3 +160,44 @@ Ele **expõe riscos e lacunas** para decisão humana.
 Bloqueia entregas com regra ausente
 
 ---
+
+## Security Review Scope (Opcional - Features Críticas)
+
+Quando ativado explicitamente, validar:
+
+### OWASP Top 10
+- [ ] Injection (SQL, NoSQL, Command)
+- [ ] Broken Authentication
+- [ ] Sensitive Data Exposure
+- [ ] XML External Entities (XXE)
+- [ ] Broken Access Control
+- [ ] Security Misconfiguration
+- [ ] XSS (Cross-Site Scripting)
+- [ ] Insecure Deserialization
+- [ ] Using Components with Known Vulnerabilities
+- [ ] Insufficient Logging & Monitoring
+
+### Validações Específicas
+- Secrets hardcoded no código?
+- Variáveis de ambiente expostas?
+- Inputs não validados?
+- Outputs não escapados?
+- Autenticação em todas as rotas protegidas?
+- RBAC aplicado corretamente?
+
+### Quando Acionar
+- Features de autenticação/autorização
+- Manipulação de dados sensíveis (senhas, CPF, dados bancários)
+- Integrações com APIs externas
+- Upload de arquivos
+- Qualquer endpoint que receba input do usuário
+
+### Output Adicional (quando ativado)
+```md
+### Security Review
+
+#### Vulnerabilidades Identificadas
+- [ALTA | MÉDIA | BAIXA] Descrição
+
+#### Recomendações
+- Lista de ações corretivas

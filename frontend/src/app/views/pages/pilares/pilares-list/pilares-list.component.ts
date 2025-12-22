@@ -4,9 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import Swal from 'sweetalert2';
 import { PilaresService, Pilar } from '../../../../core/services/pilares.service';
-import { TranslatePipe } from '../../../../core/pipes/translate.pipe';
 import { NgbPaginationModule, NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
-import { SortableDirective } from '../../../../shared/directives/sortable.directive';
 import { PilarBadgeComponent } from '../../../../shared/components/pilar-badge/pilar-badge.component';
 
 @Component({
@@ -16,10 +14,8 @@ import { PilarBadgeComponent } from '../../../../shared/components/pilar-badge/p
     CommonModule,
     FormsModule,
     RouterLink,
-    TranslatePipe,
     NgbPaginationModule,
     NgbTooltipModule,
-    SortableDirective,
     PilarBadgeComponent
   ],
   templateUrl: './pilares-list.component.html',
