@@ -42,6 +42,17 @@ export class EmpresasService {
       throw new ConflictException('CNPJ já cadastrado');
     }
 
+    // RA-EMP-003: Validar unicidade de loginUrl
+    if (createEmpresaDto.loginUrl) {
+      const existingLoginUrl = await this.prisma.empresa.findFirst({
+        where: { loginUrl: createEmpresaDto.loginUrl },
+      });
+
+      if (existingLoginUrl) {
+        throw new ConflictException('loginUrl já está em uso por outra empresa');
+      }
+    }
+
     const created = await this.prisma.empresa.create({
       data: {
         ...createEmpresaDto,
@@ -176,6 +187,20 @@ export class EmpresasService {
 
       if (existingEmpresa) {
         throw new ConflictException('CNPJ já cadastrado em outra empresa');
+      }
+    }
+
+    // RA-EMP-003: Validar unicidade de loginUrl
+    if (updateEmpresaDto.loginUrl) {
+      const existingLoginUrl = await this.prisma.empresa.findFirst({
+        where: {
+          loginUrl: updateEmpresaDto.loginUrl,
+          id: { not: id },
+        },
+      });
+
+      if (existingLoginUrl) {
+        throw new ConflictException('loginUrl já está em uso por outra empresa');
       }
     }
 
