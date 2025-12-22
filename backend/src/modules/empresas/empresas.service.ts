@@ -3,14 +3,7 @@ import { PrismaService } from '../../common/prisma/prisma.service';
 import { CreateEmpresaDto } from './dto/create-empresa.dto';
 import { UpdateEmpresaDto } from './dto/update-empresa.dto';
 import { AuditService } from '../audit/audit.service';
-
-export interface RequestUser {
-  id: string;
-  perfil: { codigo: string; nivel: number };
-  empresaId: string | null;
-  nome: string;
-  email: string;
-}
+import { RequestUser } from '../../common/interfaces/request-user.interface';
 
 @Injectable()
 export class EmpresasService {

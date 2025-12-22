@@ -6,14 +6,7 @@ import * as path from 'path';
 import { AuditService } from '../audit/audit.service';
 import { CreateUsuarioDto } from './dto/create-usuario.dto';
 import { UpdateUsuarioDto } from './dto/update-usuario.dto';
-
-export interface RequestUser {
-  id: string;
-  perfil: { codigo: string; nivel: number };
-  empresaId: string | null;
-  nome: string;
-  email: string;
-}
+import { RequestUser } from '../../common/interfaces/request-user.interface';
 
 @Injectable()
 export class UsuariosService {
