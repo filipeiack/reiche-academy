@@ -91,6 +91,11 @@ O fluxo só inicia quando há **um requisito válido**, originado de:
 
 📌 **Código sem requisito documentado é inválido.**
 
+### Novas regras de negócio:
+→ Devem ser propostas via Rule Extractor (Mode B)
+→ Devem ser aprovadas explicitamente por humano
+→ Só então podem ser promovidas a documentação oficial
+
 ---
 
 ## 2️⃣ Implementação — Dev Agent Disciplinado

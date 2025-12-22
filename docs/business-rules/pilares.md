@@ -1,337 +1,829 @@
-# Regras de Negócio — Módulo PILARES
+# Regras de Negócio — Pilares
 
-**Data de extração**: 2025-12-21  
-**Escopo**: Definição de pilares de gestão e sua estrutura
+**Módulo:** Pilares  
+**Backend:** `backend/src/modules/pilares/`  
+**Frontend:** Não implementado  
+**Última extração:** 21/12/2024  
+**Agente:** Extractor de Regras
 
 ---
 
 ## 1. Visão Geral
 
-O módulo PILARES implementa:
-- CRUD de pilares (eixos temáticos de gestão)
-- Associação de pilares com empresas
-- Vinculação de rotinas a pilares
-- Ordenação hierárquica de pilares
-- Validação de dependências antes de deletar
-- Suporte a soft delete (desativação)
+O módulo Pilares é responsável por:
+- Gerenciar pilares do sistema (CRUD completo)
+- Ordenação customizável de pilares
+- Validação de dependências com rotinas ativas
+- Auditoria de operações em pilares
+- Vinculação de pilares a empresas (via PilarEmpresa)
 
-**Conceito**: Um "Pilar" é um tema de gestão (ex: "Estratégia e Governança"), que contém múltiplas "Rotinas" (ações/tarefas).
+**Entidades principais:**
+- Pilar (pilares do sistema)
+- PilarEmpresa (vínculo pilar-empresa)
+
+**Endpoints implementados:**
+- `POST /pilares` — Criar pilar (ADMINISTRADOR)
+- `GET /pilares` — Listar pilares ativos (todos)
+- `GET /pilares/:id` — Buscar pilar com rotinas (todos)
+- `PATCH /pilares/:id` — Atualizar pilar (ADMINISTRADOR)
+- `DELETE /pilares/:id` — Desativar pilar (ADMINISTRADOR)
+- `POST /pilares/reordenar` — Reordenar pilares (ADMINISTRADOR)
 
 ---
 
 ## 2. Entidades
 
-### 2.1 Pilar
-```
-- id: UUID (PK)
-- nome: String (UNIQUE) — nome do pilar (ex: "Estratégia e Governança")
-- descricao: String (nullable) — descrição detalhada
-- ordem: Int — posição na hierarquia (1, 2, 3, ...)
-- modelo: Boolean (default: false) — marca pilares template/modelo
-- ativo: Boolean (default: true) — marca soft delete
-- createdAt: DateTime — data de criação
-- updatedAt: DateTime — data da última atualização
-- createdBy: String (nullable) — ID do usuário que criou
-- updatedBy: String (nullable) — ID do usuário que atualizou
-- rotinas: Rotina[] — rotinas vinculadas
-- empresas: PilarEmpresa[] — relacionamento com empresas
-```
+### 2.1. Pilar
 
-### 2.2 Rotina
-```
-- id: UUID (PK)
-- nome: String — nome da rotina
-- descricao: String (nullable) — descrição
-- ordem: Int — posição dentro do pilar
-- modelo: Boolean (default: false) — marca como template
-- ativo: Boolean (default: true) — marca soft delete
-- pilarId: UUID (FK) — pilar ao qual pertence
-- pilar: Pilar — referência de relacionamento
-- createdAt: DateTime
-- updatedAt: DateTime
-- createdBy: String (nullable)
-- updatedBy: String (nullable)
-- rotinaEmpresas: RotinaEmpresa[] — execuções por empresa
-```
+**Localização:** `backend/prisma/schema.prisma`
 
-### 2.3 PilarEmpresa (Join Table)
-```
-- id: UUID (PK)
-- empresaId: UUID (FK) — empresa
-- empresa: Empresa — referência
-- pilarId: UUID (FK) — pilar
-- pilar: Pilar — referência
-- ativo: Boolean (default: true) — soft delete
-- createdAt: DateTime
-- updatedAt: DateTime
-- createdBy: String (nullable)
-- updatedBy: String (nullable)
-- rotinasEmpresa: RotinaEmpresa[] — execuções das rotinas deste pilar em esta empresa
-- evolucao: PilarEvolucao[] — histórico de evolução
-- UNIQUE constraint: (empresaId, pilarId)
-```
+| Campo | Tipo | Descrição |
+|-------|------|-----------|
+| id | String (UUID) | Identificador único |
+| nome | String (unique) | Nome do pilar (ex: "Estratégia e Governança") |
+| descricao | String? | Descrição detalhada do pilar |
+| ordem | Int | Ordem de exibição do pilar |
+| modelo | Boolean (default: false) | Indica se é pilar modelo (template) |
+| ativo | Boolean (default: true) | Soft delete flag |
+| createdAt | DateTime | Data de criação |
+| updatedAt | DateTime | Data da última atualização |
+| createdBy | String? | ID do usuário que criou |
+| updatedBy | String? | ID do usuário que atualizou |
+
+**Relações:**
+- `rotinas`: Rotina[] (rotinas vinculadas ao pilar)
+- `empresas`: PilarEmpresa[] (empresas que usam este pilar)
+
+**Índices:**
+- `nome` (unique)
+
+---
+
+### 2.2. PilarEmpresa
+
+**Localização:** `backend/prisma/schema.prisma`
+
+| Campo | Tipo | Descrição |
+|-------|------|-----------|
+| id | String (UUID) | Identificador único |
+| empresaId | String | FK para Empresa |
+| pilarId | String | FK para Pilar |
+| ativo | Boolean (default: true) | Soft delete flag |
+| createdAt | DateTime | Data de criação |
+| updatedAt | DateTime | Data da última atualização |
+| createdBy | String? | ID do usuário que criou |
+| updatedBy | String? | ID do usuário que atualizou |
+
+**Relações:**
+- `empresa`: Empresa (empresa associada)
+- `pilar`: Pilar (pilar associado)
+- `rotinasEmpresa`: RotinaEmpresa[] (rotinas vinculadas ao pilar na empresa)
+- `evolucao`: PilarEvolucao[] (histórico de evolução do pilar)
+
+**Índices:**
+- `[empresaId, pilarId]` (unique)
 
 ---
 
 ## 3. Regras Implementadas
 
-### 3.1 Criação de Pilar
+### R-PIL-001: Criação de Pilar com Nome Único
 
-**R-PIL-001**: Validação de nome
-- Nome obrigatório, string, 2-100 caracteres
-- Deve ser ÚNICO no sistema
-- Se nome já existe → `ConflictException("Já existe um pilar com este nome")`
+**Descrição:** Sistema valida que o nome do pilar é único antes de criar.
 
-**R-PIL-002**: Dados obrigatórios
-- `nome`: obrigatório
-- `ordem`: obrigatório, inteiro, mínimo 1
-- Descricao: opcional
+**Implementação:**
+- **Endpoint:** `POST /pilares` (restrito a ADMINISTRADOR)
+- **Método:** `PilaresService.create()`
+- **DTO:** CreatePilarDto
 
-**R-PIL-003**: Acesso restrito
-- Apenas `ADMINISTRADOR` pode criar pilar
-- Requer autenticação JWT + `JwtAuthGuard` + `RolesGuard`
+**Validação:**
+```typescript
+const existingPilar = await this.prisma.pilar.findUnique({
+  where: { nome: createPilarDto.nome },
+});
 
-**R-PIL-004**: Auditoria
-- `createdBy` registra ID do usuário
-- `createdAt` preenchido automaticamente
-- `AuditService.log()` chamado com `acao: CREATE`
+if (existingPilar) {
+  throw new ConflictException('Já existe um pilar com este nome');
+}
+```
 
-**R-PIL-005**: Modelo de pilar
-- Campo `modelo` permite marcar pilar como template
-- Usado para cópia/clonagem em outras empresas
-- Não há endpoint de cópia (apenas flag armazenada)
+**Validação de DTO:**
+- `nome`: string, required, 2-100 caracteres
+- `descricao`: string, optional, 0-500 caracteres
+- `ordem`: number, required, >= 1
 
-### 3.2 Leitura de Pilar
+**Auditoria:**
+- Registra criação em tabela de auditoria
+- Ação: CREATE
+- Dados completos do pilar criado
 
-**R-PIL-006**: Listagem com filtro
-- Endpoint `GET /pilares` retorna apenas pilares ativos
-- Ordenado por `ordem ASC`
-- Inclui contagem de rotinas e empresas associadas
+**Arquivo:** [pilares.service.ts](../../backend/src/modules/pilares/pilares.service.ts#L11-L41)
 
-**R-PIL-007**: Acesso de leitura
-- Permitido para: ADMINISTRADOR, CONSULTOR, GESTOR, COLABORADOR, LEITURA
-- Requer autenticação JWT
+---
 
-**R-PIL-008**: Busca por ID
-- Inclui relacionamentos:
-  - `rotinas` (apenas ativas, ordenadas por ordem)
-  - `empresas` (com dados da empresa)
-- Se não encontrado → `NotFoundException("Pilar não encontrado")`
+### R-PIL-002: Listagem de Pilares Ativos com Contadores
 
-**R-PIL-009**: Contagem de referências
-- Retorna `_count` com totais de:
-  - `rotinas`: número de rotinas vinculadas
-  - `empresas`: número de empresas que usam este pilar
+**Descrição:** Endpoint retorna apenas pilares ativos, ordenados por `ordem`, incluindo contagem de rotinas e empresas.
 
-### 3.3 Atualização de Pilar
+**Implementação:**
+- **Endpoint:** `GET /pilares` (autenticado, todos os perfis)
+- **Método:** `PilaresService.findAll()`
 
-**R-PIL-010**: Validação de nome em update
-- Se novo nome fornecido, valida unicidade
-- Permite nome do próprio pilar (self)
-- Se nome duplicado em outro pilar → `ConflictException`
+**Filtro:**
+```typescript
+where: { ativo: true }
+```
 
-**R-PIL-011**: Campos atualizáveis
-- `nome`, `descricao`, `ordem`, `modelo`, `ativo`
+**Ordenação:**
+```typescript
+orderBy: { ordem: 'asc' }
+```
 
-**R-PIL-012**: Acesso restrito
-- Apenas `ADMINISTRADOR` pode atualizar
+**Include:**
+```typescript
+include: {
+  _count: {
+    select: {
+      rotinas: true,
+      empresas: true,
+    },
+  },
+}
+```
 
-**R-PIL-013**: Auditoria
-- `updatedBy` registra ID do usuário
-- `updatedAt` preenchido automaticamente
-- Estado antes e depois registrado
+**Retorno:** Pilares ordenados com:
+- Todos os campos do pilar
+- `_count.rotinas`: Quantidade de rotinas vinculadas
+- `_count.empresas`: Quantidade de empresas usando o pilar
 
-### 3.4 Soft Delete de Pilar
+**Arquivo:** [pilares.service.ts](../../backend/src/modules/pilares/pilares.service.ts#L43-L55)
 
-**R-PIL-014**: Validação de dependências
-- Verifica se pilar tem rotinas ATIVAS
-- Se sim → `ConflictException("Não é possível desativar um pilar que possui rotinas ativas")`
-- Permite desativar pilar com rotinas inativas
+---
 
-**R-PIL-015**: Operação de delete
-- Apenas marca `ativo: false`
-- Não remove registro fisicamente
-- Após delete, pilar não aparece em listagem
+### R-PIL-003: Busca de Pilar com Rotinas e Empresas
 
-**R-PIL-016**: Acesso restrito
-- Apenas `ADMINISTRADOR` pode deletar
+**Descrição:** Endpoint retorna pilar completo com rotinas ativas vinculadas e empresas.
 
-**R-PIL-017**: Auditoria
-- Registra como `acao: DELETE` no audit log
+**Implementação:**
+- **Endpoint:** `GET /pilares/:id` (autenticado, todos os perfis)
+- **Método:** `PilaresService.findOne()`
 
-### 3.5 Reordenação de Pilares
+**Include:**
+```typescript
+include: {
+  rotinas: {
+    where: { ativo: true },
+    orderBy: { ordem: 'asc' },
+  },
+  empresas: {
+    include: {
+      empresa: {
+        select: {
+          id: true,
+          nome: true,
+          cnpj: true,
+        },
+      },
+    },
+  },
+}
+```
 
-**R-PIL-018**: Endpoint de reordenação
-- `POST /pilares/reordenar` com payload: `{ ordens: [{ id, ordem }, ...] }`
-- Atualiza campo `ordem` para cada pilar
-- Transação atômica (tudo ou nada)
+**Retorno:**
+- Dados completos do pilar
+- Lista de rotinas ativas ordenadas
+- Lista de empresas vinculadas (via PilarEmpresa)
 
-**R-PIL-019**: Acesso
-- Apenas `ADMINISTRADOR`
+**Exceção:**
+- Lança `NotFoundException` se pilar não existir
 
-**R-PIL-020**: Atomicidade
-- Usa `prisma.$transaction()` para garantir consistência
-- Se falhar, nenhuma atualização é confirmada
+**Arquivo:** [pilares.service.ts](../../backend/src/modules/pilares/pilares.service.ts#L57-L81)
 
-**R-PIL-021**: Retorno
-- Retorna lista completa de pilares após reordenação
+---
 
-### 3.6 Relacionamento Pilar-Empresa
+### R-PIL-004: Atualização de Pilar com Validação de Nome Único
 
-**R-PIL-022**: Vinculação via tabela join
-- Empresa pode ter múltiplos pilares
-- Pilar pode estar em múltiplas empresas
-- Relacionamento através de `PilarEmpresa`
+**Descrição:** Sistema valida unicidade do nome ao atualizar, excluindo o próprio pilar.
 
-**R-PIL-023**: Unique constraint
-- Não pode haver duplicata de (empresaId, pilarId)
-- Garante um-para-um em nível de par
+**Implementação:**
+- **Endpoint:** `PATCH /pilares/:id` (restrito a ADMINISTRADOR)
+- **Método:** `PilaresService.update()`
+- **DTO:** UpdatePilarDto
 
-**R-PIL-024**: Soft delete no relacionamento
-- `PilarEmpresa.ativo` permite "desvinculação" sem deletar
-- Mas usado em tabela join, não na tabela de pilares
+**Validação:**
+```typescript
+if (updatePilarDto.nome) {
+  const existingPilar = await this.prisma.pilar.findFirst({
+    where: {
+      nome: updatePilarDto.nome,
+      id: { not: id },
+    },
+  });
+
+  if (existingPilar) {
+    throw new ConflictException('Já existe um pilar com este nome');
+  }
+}
+```
+
+**Validação de DTO:**
+- `nome`: string, optional, 2-100 caracteres
+- `descricao`: string, optional, 0-500 caracteres
+- `ordem`: number, optional, >= 1
+- `ativo`: boolean, optional
+
+**Auditoria:**
+- Registra estado antes e depois
+- Ação: UPDATE
+- Dados completos da mudança
+
+**Arquivo:** [pilares.service.ts](../../backend/src/modules/pilares/pilares.service.ts#L83-L117)
+
+---
+
+### R-PIL-005: Desativação de Pilar (Soft Delete)
+
+**Descrição:** Sistema desativa pilar (ativo: false) ao invés de deletar fisicamente.
+
+**Implementação:**
+- **Endpoint:** `DELETE /pilares/:id` (restrito a ADMINISTRADOR)
+- **Método:** `PilaresService.remove()`
+
+**Comportamento:**
+```typescript
+const after = await this.prisma.pilar.update({
+  where: { id },
+  data: {
+    ativo: false,
+    updatedBy: userId,
+  },
+});
+```
+
+**Auditoria:**
+- Registra estado antes e depois
+- Ação: DELETE (mas operação é UPDATE)
+- Dados completos da mudança
+
+**Arquivo:** [pilares.service.ts](../../backend/src/modules/pilares/pilares.service.ts#L119-L151)
+
+---
+
+### R-PIL-006: Reordenação de Pilares em Lote
+
+**Descrição:** Endpoint permite reordenar múltiplos pilares em uma única transação.
+
+**Implementação:**
+- **Endpoint:** `POST /pilares/reordenar` (restrito a ADMINISTRADOR)
+- **Método:** `PilaresService.reordenar()`
+
+**Input:**
+```typescript
+{
+  "ordens": [
+    { "id": "uuid-1", "ordem": 1 },
+    { "id": "uuid-2", "ordem": 2 },
+    { "id": "uuid-3", "ordem": 3 }
+  ]
+}
+```
+
+**Comportamento:**
+```typescript
+const updates = ordensIds.map((item) =>
+  this.prisma.pilar.update({
+    where: { id: item.id },
+    data: {
+      ordem: item.ordem,
+      updatedBy: userId,
+    },
+  }),
+);
+
+await this.prisma.$transaction(updates);
+```
+
+**Retorno:**
+- Lista completa de pilares reordenados (via `findAll()`)
+
+**Atomicidade:**
+- Todas as atualizações ocorrem em transação
+- Se uma falhar, todas falham (rollback)
+
+**Arquivo:** [pilares.service.ts](../../backend/src/modules/pilares/pilares.service.ts#L153-L165)
+
+---
+
+### RA-PIL-001: Validação de Rotinas Ativas Antes de Desativar
+
+**Descrição:** Sistema impede desativação de pilar se houver rotinas ativas vinculadas.
+
+**Implementação:**
+- **Método:** `PilaresService.remove()`
+
+**Validação:**
+```typescript
+const rotiasCount = await this.prisma.rotina.count({
+  where: {
+    pilarId: id,
+    ativo: true,
+  },
+});
+
+if (rotiasCount > 0) {
+  throw new ConflictException(
+    'Não é possível desativar um pilar que possui rotinas ativas',
+  );
+}
+```
+
+**Exceção:**
+- HTTP 409 Conflict se houver rotinas ativas
+- Mensagem clara do motivo do bloqueio
+
+**Justificativa:**
+- Integridade referencial lógica
+- Impede quebra de dependências ativas
+
+**Arquivo:** [pilares.service.ts](../../backend/src/modules/pilares/pilares.service.ts#L122-L134)
+
+---
+
+### RA-PIL-002: Restrição de CRUD a ADMINISTRADOR
+
+**Descrição:** Apenas usuários com perfil ADMINISTRADOR podem criar, atualizar, deletar ou reordenar pilares.
+
+**Implementação:**
+- **Decorator:** `@Roles('ADMINISTRADOR')`
+- **Guard:** RolesGuard
+- **Endpoints protegidos:**
+  - POST /pilares
+  - PATCH /pilares/:id
+  - DELETE /pilares/:id
+  - POST /pilares/reordenar
+
+**Exceção:**
+- GET /pilares e GET /pilares/:id são liberados para todos os perfis autenticados
+
+**Arquivo:** [pilares.controller.ts](../../backend/src/modules/pilares/pilares.controller.ts#L29-L79)
+
+---
+
+### RA-PIL-003: Auditoria Completa de Operações
+
+**Descrição:** Todas as operações CUD (Create, Update, Delete) são auditadas.
+
+**Implementação:**
+- **Serviço:** AuditService
+- **Entidade:** 'pilares'
+
+**Dados auditados:**
+- usuarioId, usuarioNome, usuarioEmail
+- entidade: 'pilares'
+- entidadeId: ID do pilar
+- acao: CREATE | UPDATE | DELETE
+- dadosAntes (em update/delete)
+- dadosDepois (em create/update/delete)
+
+**Cobertura:**
+- ✅ CREATE (criação de pilar)
+- ✅ UPDATE (atualização de pilar)
+- ✅ DELETE (desativação de pilar)
+- ❌ Reordenação NÃO é auditada
+
+**Arquivo:** [pilares.service.ts](../../backend/src/modules/pilares/pilares.service.ts#L32-L40)
 
 ---
 
 ## 4. Validações
 
-### 4.1 CreatePilarDto
-| Campo | Tipo | Validações | Obrigatório |
-|-------|------|-----------|------------|
-| nome | string | IsString(), IsNotEmpty(), Length(2,100) | ✓ |
-| descricao | string | IsString(), IsOptional(), Length(0,500) | ✗ |
-| ordem | integer | IsInt(), Min(1) | ✓ |
+### 4.1. CreatePilarDto
 
-### 4.2 UpdatePilarDto
-Mesmos campos que CreatePilarDto (todos opcionais) + `ativo` (IsBoolean, IsOptional).
+**Campos:**
+- `nome`: @IsString(), @IsNotEmpty(), @Length(2, 100)
+- `descricao`: @IsString(), @IsOptional(), @Length(0, 500)
+- `ordem`: @IsInt(), @Min(1)
+
+**Validações implementadas:**
+- Nome obrigatório, entre 2 e 100 caracteres
+- Descrição opcional, máximo 500 caracteres
+- Ordem obrigatória, mínimo 1
+
+**Arquivo:** [create-pilar.dto.ts](../../backend/src/modules/pilares/dto/create-pilar.dto.ts)
+
+---
+
+### 4.2. UpdatePilarDto
+
+**Campos:**
+- Herda todos os campos de CreatePilarDto como opcionais (PartialType)
+- `ativo`: @IsBoolean(), @IsOptional()
+
+**Validações implementadas:**
+- Todos os campos opcionais
+- Ativo permite ativação/desativação manual (além do soft delete)
+
+**Arquivo:** [update-pilar.dto.ts](../../backend/src/modules/pilares/dto/update-pilar.dto.ts)
 
 ---
 
 ## 5. Comportamentos Condicionais
 
-### 5.1 Fluxo de Criação
+### 5.1. Pilares Inativos Não Aparecem em Listagem
 
-```
-POST /pilares (requer ADMINISTRADOR)
-  ├─ Valida DTO
-  ├─ Nome já existe?
-  │  └─ Sim → ConflictException
-  ├─ Cria no banco
-  ├─ Log audit (acao: CREATE)
-  └─ Retorna pilar criado
-```
+**Condição:** `pilar.ativo === false`
 
-### 5.2 Fluxo de Atualização
+**Comportamento:**
+- Pilares inativos não são retornados em `findAll()`
+- Não aparecem em interfaces de seleção
 
-```
-PATCH /pilares/:id (requer ADMINISTRADOR)
-  ├─ Pilar existe?
-  │  └─ Não → NotFoundException
-  ├─ Se novo nome fornecido, valida unicidade
-  ├─ Atualiza no banco
-  ├─ Log audit (acao: UPDATE)
-  └─ Retorna pilar atualizado
-```
+**Exceção:**
+- `findOne()` não filtra por ativo (retorna pilar mesmo se inativo)
 
-### 5.3 Fluxo de Delete (Desativação)
+**Arquivo:** [pilares.service.ts](../../backend/src/modules/pilares/pilares.service.ts#L44-L45)
 
-```
-DELETE /pilares/:id (requer ADMINISTRADOR)
-  ├─ Pilar existe?
-  │  └─ Não → NotFoundException
-  ├─ Conta rotinas ativas
-  │  └─ > 0 → ConflictException("...possui rotinas ativas")
-  ├─ Marca ativo: false
-  ├─ Log audit (acao: DELETE)
-  └─ Retorna pilar desativado
-```
+---
 
-### 5.4 Fluxo de Reordenação
+### 5.2. Ordenação Customizável
 
-```
-POST /pilares/reordenar (requer ADMINISTRADOR)
-  ├─ Para cada { id, ordem }:
-  │  └─ UPDATE pilar.ordem = ordem
-  ├─ Transação atômica
-  ├─ Retorna findAll() (lista completa ordenada)
-  └─ (sem log audit individual - melhoria possível)
-```
+**Condição:** Sempre
+
+**Comportamento:**
+- Pilares sempre retornados ordenados por `ordem` (ascendente)
+- Ordem pode ser personalizada via endpoint `/pilares/reordenar`
+
+**Justificativa:**
+- Permite organização lógica de pilares para exibição
+- Manutenção de ordem consistente em interfaces
+
+**Arquivo:** [pilares.service.ts](../../backend/src/modules/pilares/pilares.service.ts#L53)
+
+---
+
+### 5.3. Rotinas Ativas Filtradas em Busca de Pilar
+
+**Condição:** `GET /pilares/:id`
+
+**Comportamento:**
+- Apenas rotinas com `ativo: true` são incluídas
+- Rotinas inativas existem mas não aparecem
+
+**Justificativa:**
+- Ocultar rotinas desativadas de usuários finais
+- Manter dados históricos sem poluir interface
+
+**Arquivo:** [pilares.service.ts](../../backend/src/modules/pilares/pilares.service.ts#L63-L66)
+
+---
+
+### 5.4. Validação de Nome Única Apenas se Nome Fornecido
+
+**Condição:** `updatePilarDto.nome` existe
+
+**Comportamento:**
+- Validação de unicidade só ocorre se nome for fornecido no update
+- Se nome não mudar, validação não é executada
+
+**Otimização:**
+- Evita query desnecessária ao banco
+
+**Arquivo:** [pilares.service.ts](../../backend/src/modules/pilares/pilares.service.ts#L85-L97)
+
+---
+
+### 5.5. Bloqueio de Desativação com Rotinas Ativas
+
+**Condição:** Pilar possui rotinas ativas
+
+**Comportamento:**
+- Sistema lança ConflictException
+- Desativação é bloqueada
+- Mensagem clara do motivo
+
+**Exceção:**
+- Se todas as rotinas estiverem inativas, desativação é permitida
+
+**Arquivo:** [pilares.service.ts](../../backend/src/modules/pilares/pilares.service.ts#L122-L134)
+
+---
+
+### 5.6. Reordenação em Transação Atômica
+
+**Condição:** Sempre em reordenação
+
+**Comportamento:**
+- Todas as atualizações de ordem ocorrem em transação
+- Se uma falhar, todas são revertidas (rollback)
+
+**Justificativa:**
+- Garantir consistência de ordem (evitar ordens duplicadas ou gaps)
+
+**Arquivo:** [pilares.service.ts](../../backend/src/modules/pilares/pilares.service.ts#L160)
 
 ---
 
 ## 6. Ausências ou Ambiguidades
 
-### 6.1 Funcionalidades Não Implementadas
+### 6.1. Campo `modelo` Não Utilizado
 
-⚠️ **Clonagem de pilares**:
-- Flag `modelo` existe mas não é usado
-- Sem endpoint para clonar pilar modelo em nova empresa
-- Sem "Pilar como template"
+**Status:** ⚠️ NÃO UTILIZADO
 
-⚠️ **Gerenciamento de rotinas**:
-- Rotinas são criadas via outro módulo (não em PILARES)
-- Sem endpoint para criar/editar/deletar rotinas em pilares
+**Descrição:**
+- Modelo Pilar possui campo `modelo: Boolean`
+- Nenhum endpoint ou lógica utiliza este campo
+- Provável intenção: marcar pilares padrão do sistema
 
-⚠️ **Validação de ciclos**:
-- Sem proteção contra pilar ser vinculado a si mesmo (na join table)
+**TODO:**
+- Implementar lógica de "pilar modelo" (templates)
+- Ou remover campo do schema se não for necessário
+- Documentar diferença entre pilar normal e pilar modelo
 
-⚠️ **Audit em reordenação**:
-- Reordenação não registra mudanças em auditoria
-- Múltiplas atualizações sem tracking
-
-### 6.2 Ambiguidades
-
-⚠️ **Campo modelo**:
-- Semântica não clara: é template para cópia? Apenas marcador?
-- Como se cria um pilar modelo vs. pilar normal?
-- Pode ser atualizado via DTO?
-
-⚠️ **Ordenação vs. Reordenação**:
-- Campo `ordem` pode ser atualizado via PATCH
-- Ou precisa usar endpoint POST /reordenar?
-- Ambos funcionam?
-
-⚠️ **Cascata de soft delete**:
-- Se pilar é desativado, rotinas não são desativadas automaticamente
-- Apenas `ativo` do pilar muda
-- Lógica inconsistente com relacionamento pilar-rotina
-
-⚠️ **Multi-tenant isolation**:
-- Pilares são globais (não por empresa)
-- GESTOR pode ver todos os pilares?
-- Sem validação de isolamento por tenant
+**Arquivo:** [schema.prisma](../../backend/prisma/schema.prisma) (campo modelo)
 
 ---
 
-## 7. Endpoints
+### 6.2. Reordenação Sem Auditoria
 
-| Método | Rota | Autenticação | Roles | Descrição |
-|--------|------|--------------|-------|-----------|
-| POST | `/pilares` | ✓ | ADMINISTRADOR | Criar novo pilar |
-| GET | `/pilares` | ✓ | ADM, CONS, GEST, COLAB, LEIT | Listar pilares ativos |
-| GET | `/pilares/:id` | ✓ | ADM, CONS, GEST, COLAB, LEIT | Buscar pilar com rotinas |
-| PATCH | `/pilares/:id` | ✓ | ADMINISTRADOR | Atualizar pilar |
-| DELETE | `/pilares/:id` | ✓ | ADMINISTRADOR | Soft delete (desativar) |
-| POST | `/pilares/reordenar` | ✓ | ADMINISTRADOR | Reordenar múltiplos pilares |
+**Status:** ❌ NÃO AUDITADO
 
----
+**Descrição:**
+- Método `reordenar()` não registra auditoria
+- Mudanças de ordem não ficam rastreadas
+- Não é possível saber quem reordenou ou quando
 
-## 8. Dependências
+**TODO:**
+- Adicionar registro de auditoria em reordenação
+- Considerar registrar apenas uma auditoria para toda a operação (não uma por pilar)
 
-- **NestJS** (`@nestjs/common`)
-- **Prisma** para ORM
-- **AuditService** para logging
-- **Módulo ROTINAS** (relacionamento)
+**Arquivo:** [pilares.service.ts](../../backend/src/modules/pilares/pilares.service.ts#L153-L165)
 
 ---
 
-## Resumo Executivo
+### 6.3. Validação de Ordem Duplicada
 
-✅ **CRUD completo** com validação de unicidade e dependências  
-✅ **Soft delete** protegido contra pilares com rotinas ativas  
-✅ **Reordenação transacional** para múltiplos pilares  
-✅ **Auditoria integrada** de todas as operações  
+**Status:** ⚠️ NÃO VALIDADA
 
-⚠️ **Não implementado**: Clonagem de pilares, gerenciamento de rotinas  
-⚠️ **Gap crítico**: Validação de isolamento multi-tenant não aplicada  
-⚠️ **Ambiguidade**: Semântica do campo `modelo` não implementada
+**Descrição:**
+- Sistema permite criar/atualizar pilares com mesma ordem
+- Não há constraint unique em `ordem`
+- Pode haver conflitos em exibição
+
+**TODO:**
+- Decidir se ordem deve ser única
+- Ou permitir ordens duplicadas e ordenar por outro critério secundário (ex: nome)
+- Adicionar validação de ordem única se necessário
+
+---
+
+### 6.4. Reordenação Sem Validação de IDs Existentes
+
+**Status:** ⚠️ SEM VALIDAÇÃO
+
+**Descrição:**
+- Endpoint `reordenar()` não valida se IDs fornecidos existem
+- Se ID inválido for enviado, transação falha sem mensagem clara
+- Erro genérico do Prisma é retornado
+
+**TODO:**
+- Validar IDs antes de iniciar transação
+- Lançar NotFoundException se algum ID não existir
+- Retornar mensagem clara de qual ID é inválido
+
+---
+
+### 6.5. Paginação Ausente em Listagem
+
+**Status:** ❌ NÃO IMPLEMENTADO
+
+**Descrição:**
+- Endpoint `GET /pilares` retorna todos os pilares ativos
+- Não há paginação, filtros ou busca
+- Pode ser problemático com muitos pilares
+
+**TODO:**
+- Implementar paginação (skip, take, cursor-based)
+- Adicionar filtros (busca por nome, modelo)
+- Considerar se número de pilares justifica paginação
+
+---
+
+### 6.6. Empresas Vinculadas Não Verificadas em Desativação
+
+**Status:** ⚠️ SEM VALIDAÇÃO
+
+**Descrição:**
+- Sistema verifica rotinas ativas antes de desativar
+- NÃO verifica se há empresas ativas usando o pilar
+- Pode desativar pilar em uso por empresas
+
+**Comportamento atual:**
+- PilarEmpresa continua existindo mesmo com pilar inativo
+- Pode causar inconsistência em interfaces
+
+**TODO:**
+- Decidir se deve bloquear desativação se houver empresas ativas
+- Ou permitir desativação e marcar PilarEmpresa como inativo automaticamente
+- Documentar comportamento esperado
+
+---
+
+### 6.7. Multi-Tenancy Não Implementado
+
+**Status:** ❌ NÃO IMPLEMENTADO
+
+**Descrição:**
+- Pilares são globais (não há empresaId em Pilar)
+- Não há isolamento multi-tenant
+- Todos os usuários veem os mesmos pilares
+
+**Comportamento atual:**
+- Pilares são compartilhados entre empresas via PilarEmpresa
+- Empresa escolhe quais pilares usar (vinculação)
+
+**Observação:**
+- Design é intencional (pilares são "catálogo global")
+- Não é bug, mas pode ser limitação futura
+
+---
+
+### 6.8. Soft Delete Inconsistente
+
+**Status:** ⚠️ AMBÍGUO
+
+**Descrição:**
+- `findAll()` filtra por `ativo: true`
+- `findOne()` NÃO filtra por ativo (retorna pilar inativo)
+- Comportamento inconsistente
+
+**Comportamento atual:**
+- Pode buscar pilar inativo diretamente por ID
+- Mas não aparece em listagens
+
+**TODO:**
+- Decidir se `findOne()` deve filtrar por ativo
+- Ou documentar que busca por ID ignora flag ativo (para auditoria)
+
+**Arquivo:** [pilares.service.ts](../../backend/src/modules/pilares/pilares.service.ts#L57-L81)
+
+---
+
+### 6.9. Reordenação Pode Causar Ordens Negativas ou Zero
+
+**Status:** ⚠️ SEM VALIDAÇÃO
+
+**Descrição:**
+- DTO de reordenação não valida valores de ordem
+- Possível enviar ordem negativa ou zero
+- CreatePilarDto exige ordem >= 1, mas reordenação não valida
+
+**TODO:**
+- Adicionar validação em DTO de reordenação
+- Ou validar dentro do método `reordenar()`
+- Garantir ordem sempre >= 1
+
+---
+
+### 6.10. findOne() Usado Internamente Pode Lançar NotFoundException
+
+**Status:** ⚠️ EFEITO COLATERAL
+
+**Descrição:**
+- `update()` e `remove()` chamam `findOne()` internamente
+- `findOne()` lança NotFoundException se pilar não existir
+- Comportamento correto, mas não documentado
+
+**Comportamento:**
+- Update/Delete de ID inválido retorna 404 (correto)
+- Mas lógica está "escondida" em `findOne()`
+
+**Observação:**
+- Não é bug, mas pode confundir manutenção futura
+
+**Arquivo:** [pilares.service.ts](../../backend/src/modules/pilares/pilares.service.ts#L85)
+
+---
+
+## 7. Sumário de Regras
+
+| ID | Descrição | Status |
+|----|-----------|--------|
+| **R-PIL-001** | Criação com nome único | ✅ Implementado |
+| **R-PIL-002** | Listagem de ativos com contadores | ✅ Implementado |
+| **R-PIL-003** | Busca com rotinas e empresas | ✅ Implementado |
+| **R-PIL-004** | Atualização com validação de nome | ✅ Implementado |
+| **R-PIL-005** | Soft delete | ✅ Implementado |
+| **R-PIL-006** | Reordenação em lote | ✅ Implementado |
+| **RA-PIL-001** | Bloqueio por rotinas ativas | ✅ Implementado |
+| **RA-PIL-002** | Restrição a ADMINISTRADOR | ✅ Implementado |
+| **RA-PIL-003** | Auditoria de operações | ⚠️ Parcial (sem reordenação) |
+
+**Ausências críticas:**
+- ❌ Auditoria de reordenação
+- ❌ Paginação em listagem
+- ⚠️ Validação de empresas ativas em desativação
+- ⚠️ Campo `modelo` não utilizado
+- ⚠️ Reordenação sem validação de IDs
+- ⚠️ Soft delete inconsistente (findOne não filtra)
+
+---
+
+## 8. Fluxo de Operações
+
+### 8.1. Criação de Pilar
+
+```
+1. ADMINISTRADOR envia POST /pilares
+2. DTO valida campos (nome, descricao, ordem)
+3. Service valida unicidade de nome
+4. Se nome duplicado → 409 Conflict
+5. Cria pilar com createdBy
+6. Registra auditoria (CREATE)
+7. Retorna pilar criado (201)
+```
+
+---
+
+### 8.2. Desativação de Pilar
+
+```
+1. ADMINISTRADOR envia DELETE /pilares/:id
+2. Service busca pilar (findOne)
+3. Se não existe → 404 Not Found
+4. Conta rotinas ativas vinculadas
+5. Se rotinas ativas > 0 → 409 Conflict
+6. Atualiza ativo: false
+7. Registra auditoria (DELETE)
+8. Retorna pilar desativado (200)
+```
+
+---
+
+### 8.3. Reordenação de Pilares
+
+```
+1. ADMINISTRADOR envia POST /pilares/reordenar
+2. Service recebe array de {id, ordem}
+3. Cria array de updates
+4. Executa em transação atômica
+5. Se algum ID inválido → rollback + erro Prisma
+6. Retorna lista completa atualizada (findAll)
+7. ❌ Não registra auditoria
+```
+
+---
+
+## 9. Relacionamentos
+
+### 9.1. Pilar → Rotina (1:N)
+
+**Descrição:**
+- Um pilar pode ter várias rotinas
+- Rotina pertence a um único pilar
+
+**Comportamento:**
+- Rotinas ativas impedem desativação do pilar (RA-PIL-001)
+- Rotinas incluídas em findOne() (apenas ativas)
+
+**Arquivo:** [schema.prisma](../../backend/prisma/schema.prisma) (relation rotinas)
+
+---
+
+### 9.2. Pilar → PilarEmpresa → Empresa (N:N)
+
+**Descrição:**
+- Relação many-to-many entre Pilar e Empresa
+- Mediada por tabela PilarEmpresa
+
+**Comportamento:**
+- Empresas "escolhem" quais pilares usar
+- PilarEmpresa permite customização por empresa
+
+**Ausência:**
+- Desativação de pilar NÃO verifica empresas ativas (6.6)
+
+**Arquivo:** [schema.prisma](../../backend/prisma/schema.prisma) (relation empresas)
+
+---
+
+## 10. Referências
+
+**Arquivos principais:**
+- [pilares.service.ts](../../backend/src/modules/pilares/pilares.service.ts)
+- [pilares.controller.ts](../../backend/src/modules/pilares/pilares.controller.ts)
+- [create-pilar.dto.ts](../../backend/src/modules/pilares/dto/create-pilar.dto.ts)
+- [update-pilar.dto.ts](../../backend/src/modules/pilares/dto/update-pilar.dto.ts)
+- [schema.prisma](../../backend/prisma/schema.prisma) (Pilar, PilarEmpresa)
+
+**Dependências:**
+- AuditService (auditoria de operações)
+- PrismaService (acesso ao banco)
+- JwtAuthGuard (autenticação)
+- RolesGuard (autorização por perfil)
+
+---
+
+**Observação final:**  
+Este documento reflete APENAS o código IMPLEMENTADO.  
+Módulo Pilares possui CRUD completo + reordenação customizável.  
+Validações de dependência (rotinas ativas) garantem integridade.  
+Auditoria completa exceto reordenação.

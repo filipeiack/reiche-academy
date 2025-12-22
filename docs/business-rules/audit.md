@@ -1,272 +1,740 @@
-# Regras de Negócio — Módulo AUDIT
+# Regras de Negócio — Audit
 
-**Data de extração**: 2025-12-21  
-**Escopo**: Auditoria e logging de mudanças em entidades
+**Módulo:** Audit (Auditoria)  
+**Backend:** `backend/src/modules/audit/`  
+**Frontend:** Não implementado  
+**Última extração:** 21/12/2024  
+**Agente:** Extractor de Regras
 
 ---
 
 ## 1. Visão Geral
 
-O módulo AUDIT implementa:
-- Registro de todas as operações CREATE, UPDATE, DELETE
-- Captura de estado anterior e posterior
-- Rastreamento de quem fez a mudança e quando
-- Sem endpoints públicos (apenas serviço interno)
-- Sem limpeza automática de histórico
+O módulo Audit é responsável por:
+- Registrar logs de auditoria de todas as operações CUD (Create, Update, Delete)
+- Armazenar estado antes e depois de mudanças
+- Registrar identificação do usuário responsável pela ação
+- Rastrear mudanças em todas as entidades do sistema
+
+**Entidades principais:**
+- AuditLog (logs de auditoria)
+
+**Endpoints implementados:**
+- ❌ NENHUM (módulo é apenas serviço interno)
+
+**Observação:** Módulo é **service-only**, sem controller ou endpoints públicos.
 
 ---
 
 ## 2. Entidades
 
-### 2.1 AuditLog
-```
-- id: UUID (PK)
-- usuarioId: String — ID do usuário que realizou a ação
-- usuarioNome: String — nome do usuário no momento da ação
-- usuarioEmail: String — email do usuário no momento da ação
-- entidade: String — nome da tabela/entidade afetada (ex: "empresas", "usuarios")
-- entidadeId: String — ID do registro afetado
-- acao: String (ENUM) — CREATE, UPDATE ou DELETE
-- dadosAntes: Json (nullable) — snapshot do estado anterior
-- dadosDepois: Json (nullable) — snapshot do estado posterior
-- createdAt: DateTime — momento da ação
-- Índices: (entidade, entidadeId), (usuarioId)
-```
+### 2.1. AuditLog
+
+**Localização:** `backend/prisma/schema.prisma`
+
+| Campo | Tipo | Descrição |
+|-------|------|-----------|
+| id | String (UUID) | Identificador único do log |
+| usuarioId | String | ID do usuário que executou a ação |
+| usuarioNome | String | Nome do usuário no momento da ação |
+| usuarioEmail | String | Email do usuário no momento da ação |
+| entidade | String | Nome da tabela/entidade afetada |
+| entidadeId | String | ID do registro afetado |
+| acao | String | Tipo de ação (CREATE, UPDATE, DELETE) |
+| dadosAntes | Json? | Estado anterior do registro (UPDATE/DELETE) |
+| dadosDepois | Json? | Estado posterior do registro (CREATE/UPDATE) |
+| createdAt | DateTime | Data/hora do registro de auditoria |
+
+**Índices:**
+- `[entidade, entidadeId]` (busca de histórico de um registro)
+- `[usuarioId]` (busca de ações de um usuário)
+
+**Características:**
+- Não possui relação direta com Usuario (apenas ID armazenado)
+- Não possui updatedAt (logs são imutáveis)
+- Não possui soft delete (logs nunca são deletados)
+- Dados de usuário são desnormalizados (nome/email armazenados para histórico)
 
 ---
 
 ## 3. Regras Implementadas
 
-### 3.1 Logging de Operações
+### R-AUD-001: Registro de Log de Auditoria
 
-**R-AUD-001**: Serviço de logging
-- Único método público: `async log(params: {...})`
-- Não retorna valor (fire-and-forget)
-- Parâmetros obrigatórios: usuarioId, usuarioNome, usuarioEmail, entidade, entidadeId, acao
-- Parâmetros opcionais: dadosAntes, dadosDepois
+**Descrição:** Serviço fornece método `log()` para registrar ações de auditoria.
 
-**R-AUD-002**: Ação suportadas
-- Valores válidos de `acao`: CREATE, UPDATE, DELETE
-- Sem validação de enum no serviço (String genérico)
-- Tipos esperados: string literal
+**Implementação:**
+- **Método:** `AuditService.log()`
+- **Uso:** Chamado por outros módulos (empresas, usuarios, pilares, rotinas)
 
-**R-AUD-003**: Rastreamento de identidade
-- Nome e email capturados NO MOMENTO DA AÇÃO (não consultados depois)
-- Permite auditoria mesmo se usuário for deletado
-- Não há FK para Usuario (apenas campos desnormalizados)
-
-**R-AUD-004**: Captura de estado
-- `dadosAntes`: snapshot do objeto ANTES da mudança
-- `dadosDepois`: snapshot do objeto DEPOIS da mudança
-- Ambos podem ser null (CREATE tem antes=null, DELETE tem depois=null)
-- Formato: JSON genérico (aceita qualquer estrutura)
-
-**R-AUD-005**: Timestamp
-- Preenchido automaticamente com `now()` no banco
-- Precisão: timestamp do banco de dados
-
-### 3.2 Invocação do Audit
-
-**R-AUD-006**: Responsabilidade do caller
-- Cada módulo (empresas, usuarios, etc.) é responsável por chamar `AuditService.log()`
-- Não há middleware automático
-- Não há interceptor global
-
-**R-AUD-007**: Padrão de integração
-Exemplo de uso (de empresas.service.ts):
+**Parâmetros obrigatórios:**
 ```typescript
-const before = await this.findOne(id);
-const after = await this.prisma.empresa.update(...);
+{
+  usuarioId: string,
+  usuarioNome: string,
+  usuarioEmail: string,
+  entidade: string,        // ex: 'empresas', 'usuarios', 'pilares', 'rotinas'
+  entidadeId: string,
+  acao: 'CREATE' | 'UPDATE' | 'DELETE',
+  dadosAntes?: any,        // Opcional (usado em UPDATE/DELETE)
+  dadosDepois?: any        // Opcional (usado em CREATE/UPDATE)
+}
+```
+
+**Comportamento:**
+```typescript
+await this.prisma.auditLog.create({
+  data: {
+    usuarioId: params.usuarioId,
+    usuarioNome: params.usuarioNome,
+    usuarioEmail: params.usuarioEmail,
+    entidade: params.entidade,
+    entidadeId: params.entidadeId,
+    acao: params.acao,
+    dadosAntes: params.dadosAntes ?? null,
+    dadosDepois: params.dadosDepois ?? null,
+  },
+});
+```
+
+**Cobertura de uso (baseado em grep):**
+- ✅ Empresas: CREATE, UPDATE, DELETE, logo upload, logo delete
+- ✅ Usuarios: CREATE, UPDATE, DELETE (soft), DELETE (hard), photo upload, photo delete
+- ✅ Pilares: CREATE, UPDATE, DELETE
+- ✅ Rotinas: CREATE, UPDATE, DELETE
+- ❌ Perfis: Não auditado (read-only)
+- ❌ Auth: Não auditado (login/logout não registrados)
+
+**Arquivo:** [audit.service.ts](../../backend/src/modules/audit/audit.service.ts#L8-L29)
+
+---
+
+### R-AUD-002: Desnormalização de Dados de Usuário
+
+**Descrição:** Sistema armazena nome e email do usuário diretamente no log, não apenas ID.
+
+**Implementação:**
+- **Campos:** `usuarioNome`, `usuarioEmail` (além de `usuarioId`)
+
+**Justificativa:**
+- Preservar identificação mesmo se usuário for deletado
+- Preservar nome/email no momento da ação (pode mudar depois)
+- Facilitar consultas de auditoria sem JOIN
+
+**Comportamento:**
+```typescript
+const user = await this.prisma.usuario.findUnique({ where: { id: userId } });
 await this.audit.log({
   usuarioId: userId,
-  usuarioNome: before.usuarios?.find(u => u.id === userId)?.nome ?? '',
-  usuarioEmail: before.usuarios?.find(u => u.id === userId)?.email ?? '',
-  entidade: 'empresas',
-  entidadeId: id,
-  acao: 'UPDATE',
+  usuarioNome: user?.nome ?? '',
+  usuarioEmail: user?.email ?? '',
+  // ...
+});
+```
+
+**Observação:**
+- Módulos chamadores são responsáveis por buscar dados do usuário
+- AuditService recebe dados já preparados
+
+**Arquivo:** [audit.service.ts](../../backend/src/modules/audit/audit.service.ts#L8-L29)
+
+---
+
+### R-AUD-003: Dados Antes/Depois Opcionais
+
+**Descrição:** Campos `dadosAntes` e `dadosDepois` são opcionais e salvos como `null` se não fornecidos.
+
+**Implementação:**
+```typescript
+dadosAntes: params.dadosAntes ?? null,
+dadosDepois: params.dadosDepois ?? null,
+```
+
+**Padrão de uso observado:**
+- **CREATE:** dadosAntes = null, dadosDepois = registro criado
+- **UPDATE:** dadosAntes = estado anterior, dadosDepois = estado posterior
+- **DELETE:** dadosAntes = estado anterior, dadosDepois = estado final (ativo: false)
+
+**Exemplo (DELETE soft):**
+```typescript
+const before = await this.findOne(id);  // { id, nome, ativo: true, ... }
+const after = await this.update({ ativo: false });  // { id, nome, ativo: false, ... }
+
+await this.audit.log({
+  acao: 'DELETE',
   dadosAntes: before,
   dadosDepois: after,
 });
 ```
 
-**R-AUD-008**: Tratamento de erros no logging
-- Se `AuditService.log()` falha, operação anterior (CREATE/UPDATE/DELETE) já foi confirmada
-- Sem rollback automático
-- Try-catch fica responsabilidade do caller
+**Arquivo:** [audit.service.ts](../../backend/src/modules/audit/audit.service.ts#L24-L25)
 
-**R-AUD-009**: Extração de identidade do caller
-- Nome e email são extraídos do objeto antes/depois ou do contexto
-- Padrão: `before.usuarios?.find(u => u.id === userId)?.nome ?? ''`
-- Se não encontrado, usa string vazia
-- Sem validação que nome/email são válidos
+---
 
-### 3.3 Janela de Auditoria
+### R-AUD-004: Logs São Imutáveis
 
-**R-AUD-010**: Dados persistidos
-- Apenas a operação é registrada
-- Dados anteriores e posteriores são JSON snapshots (não histórico completo)
-- Sem versionamento automático de campos
-- Sem diff entre versões (diff é calculado pelo consumer)
+**Descrição:** Modelo AuditLog não possui `updatedAt` ou métodos de update.
 
-**R-AUD-011**: Retenção
-- **IMPLEMENTADO**: Nenhuma
-- **NÃO IMPLEMENTADO**: Limpeza automática, arquivamento, ou compactação
-- Logs crescem indefinidamente
+**Implementação:**
+- Apenas operação CREATE implementada
+- Nenhum método de update/delete no service
+- Logs são registro histórico permanente
+
+**Comportamento:**
+- Uma vez criado, log nunca é modificado
+- Correções devem ser feitas via novo registro compensatório
+
+**Arquivo:** [audit.service.ts](../../backend/src/modules/audit/audit.service.ts)
 
 ---
 
 ## 4. Validações
 
-### 4.1 CreateAuditLogDto
-| Campo | Tipo | Validações | Obrigatório |
-|-------|------|-----------|------------|
-| usuarioId | string | IsUUID() | ✓ |
-| usuarioNome | string | IsString() | ✓ |
-| usuarioEmail | string | IsEmail() | ✓ |
-| entidade | string | IsString() | ✓ |
-| entidadeId | string | IsUUID() | ✓ |
-| acao | string | IsString(), enum: CREATE/UPDATE/DELETE | ✓ |
-| dadosAntes | object | IsObject(), IsOptional() | ✗ |
-| dadosDepois | object | IsObject(), IsOptional() | ✗ |
+### 4.1. CreateAuditLogDto
+
+**Campos:**
+- `usuarioId`: @IsUUID(), @IsNotEmpty()
+- `usuarioNome`: @IsString(), @IsNotEmpty()
+- `usuarioEmail`: @IsEmail(), @IsNotEmpty()
+- `entidade`: @IsString(), @IsNotEmpty()
+- `entidadeId`: @IsUUID(), @IsNotEmpty()
+- `acao`: @IsString(), @IsNotEmpty() (enum: CREATE, UPDATE, DELETE)
+- `dadosAntes`: @IsObject(), @IsOptional()
+- `dadosDepois`: @IsObject(), @IsOptional()
+
+**Validações implementadas:**
+- IDs devem ser UUIDs válidos
+- Email deve ser válido
+- Ação deve ser string (sem validação de enum)
+- Dados antes/depois devem ser objetos (se fornecidos)
+
+**Observação:**
+- DTO existe mas não é usado (serviço não tem controller)
+- Service recebe parâmetros diretos, não DTO validado
+
+**Arquivo:** [create-audit-log.dto.ts](../../backend/src/modules/audit/dto/create-audit-log.dto.ts)
 
 ---
 
 ## 5. Comportamentos Condicionais
 
-### 5.1 Fluxo de Criação de Entidade
+### 5.1. Dados Nulos Convertidos para null
 
-```
-POST /modulo (criar)
-  ├─ Valida DTO
-  ├─ Cria registro no banco
-  ├─ Chama AuditService.log({
-  │    acao: 'CREATE',
-  │    dadosAntes: null (ou {}),
-  │    dadosDepois: novoRegistro,
-  │  })
-  └─ Retorna novoRegistro
+**Condição:** `dadosAntes` ou `dadosDepois` não fornecidos
+
+**Comportamento:**
+```typescript
+dadosAntes: params.dadosAntes ?? null
 ```
 
-### 5.2 Fluxo de Atualização de Entidade
+**Justificativa:**
+- Garantir valor consistente no banco (null vs undefined)
+- Facilitar queries SQL
 
-```
-PATCH /modulo/:id (atualizar)
-  ├─ Busca estado anterior
-  ├─ Valida DTO
-  ├─ Atualiza no banco
-  ├─ Chama AuditService.log({
-  │    acao: 'UPDATE',
-  │    dadosAntes: estadoAnterior,
-  │    dadosDepois: novoEstado,
-  │  })
-  └─ Retorna novoEstado
+**Arquivo:** [audit.service.ts](../../backend/src/modules/audit/audit.service.ts#L24-L25)
+
+---
+
+### 5.2. Módulos Responsáveis por Buscar Dados do Usuário
+
+**Condição:** Sempre
+
+**Comportamento:**
+- AuditService NÃO busca dados do usuário
+- Módulo chamador deve buscar e fornecer nome/email
+
+**Exemplo (de outros módulos):**
+```typescript
+const user = await this.prisma.usuario.findUnique({ where: { id: userId } });
+await this.audit.log({
+  usuarioId: userId,
+  usuarioNome: user?.nome ?? '',
+  usuarioEmail: user?.email ?? '',
+  // ...
+});
 ```
 
-### 5.3 Fluxo de Deleção (Soft Delete)
+**Observação:**
+- Responsabilidade distribuída (não centralizada)
+- Duplicação de código em todos os módulos
 
-```
-DELETE /modulo/:id (deletar)
-  ├─ Busca estado anterior
-  ├─ Marca como inativo
-  ├─ Chama AuditService.log({
-  │    acao: 'DELETE',
-  │    dadosAntes: estadoAnterior,
-  │    dadosDepois: estadoFinal (com ativo=false),
-  │  })
-  └─ Retorna entidadeDesativada
-```
+**Arquivo:** [audit.service.ts](../../backend/src/modules/audit/audit.service.ts)
 
 ---
 
 ## 6. Ausências ou Ambiguidades
 
-### 6.1 Não Implementado
+### 6.1. Nenhum Endpoint de Consulta
 
-⚠️ **Endpoints públicos**:
-- Nenhum endpoint de query de audit log
-- Sem relatório de auditoria
-- Sem filtros (por data, usuário, entidade, ação)
-- Sem exportação de dados
+**Status:** ❌ NÃO IMPLEMENTADO
 
-⚠️ **Retenção**:
-- Sem política de limpeza de logs antigos
-- Sem arquivamento
-- Banco cresce indefinidamente
+**Descrição:**
+- Módulo não possui controller
+- Não há endpoints para consultar logs de auditoria
+- Dados ficam apenas no banco, sem interface de acesso
 
-⚠️ **Performance**:
-- Sem particionamento de tabela
-- Sem índices específicos para query (apenas índice em entidade+entidadeId)
-- Sem cache
-
-⚠️ **Conformidade**:
-- Sem assinatura digital (não prova integridade)
-- Sem criptografia de dados sensíveis
-- Sem GDPR "direito ao esquecimento" (dados não podem ser deletados)
-
-### 6.2 Ambiguidades
-
-⚠️ **Identidade do usuário**:
-- Nome e email capturados no momento, mas podem estar incorretos
-- Sem validação se esses campos correspondem ao usuarioId
-- Sem FK constraint
-
-⚠️ **Identidade da entidade**:
-- `entidade` é string genérico, sem enum
-- Sem validação se entidade existe
-- Convenção de nomes não é documentada
-
-⚠️ **Formato de dadosAntes/Depois**:
-- JSON genérico, sem schema
-- Pode conter dados sensíveis (senhas, tokens, etc.)
-- Sem redação/masking
-
-⚠️ **Atomicidade**:
-- Se operação é commitada mas audit.log() falha:
-  - Operação permanece (não há rollback)
-  - Sem alertas para operação não auditada
-  - Sem retry automático
-
-⚠️ **Controle de acesso**:
-- Sem endpoint de query (não há necessidade de RBAC)
-- Mas se houver, quem pode acessar logs?
-
-### 6.3 Integração Inconsistente
-
-⚠️ **Nem todos os módulos usam audit**:
-- `empresas.service.ts`: ✓ Usa audit em update(), remove(), vincularPilares()
-- `usuarios.service.ts`: Precisa validar
-- `pilares.service.ts`: Precisa validar
-- `rotinas.service.ts`: Precisa validar
-
-⚠️ **LoginHistory vs. AuditLog**:
-- Tentativas de login são registradas em `LoginHistory` (módulo auth)
-- Não usa `AuditService`
-- Dois sistemas de logging diferentes para operações diferentes
+**TODO:**
+- Implementar endpoints de consulta:
+  - GET /audit/logs (listar com filtros)
+  - GET /audit/logs/:id (buscar log específico)
+  - GET /audit/entity/:entidade/:id (histórico de um registro)
+  - GET /audit/user/:userId (ações de um usuário)
+- Implementar paginação
+- Implementar filtros (data, entidade, ação, usuário)
 
 ---
 
-## 7. Endpoints
+### 6.2. DTO Não Utilizado
 
-| Método | Rota | Autenticação | Roles | Descrição |
-|--------|------|--------------|-------|-----------|
-| — | — | — | — | Nenhum endpoint público (serviço interno) |
+**Status:** ⚠️ CÓDIGO MORTO
+
+**Descrição:**
+- CreateAuditLogDto existe mas nunca é usado
+- Service recebe parâmetros diretos, não validados
+- Validações do DTO são ignoradas
+
+**TODO:**
+- Remover DTO se não for usado
+- Ou implementar endpoints e usar DTO
+- Ou validar parâmetros no método `log()`
+
+**Arquivo:** [create-audit-log.dto.ts](../../backend/src/modules/audit/dto/create-audit-log.dto.ts)
 
 ---
 
-## 8. Dependências
+### 6.3. Validação de Enum de Ação Não Implementada
 
-- **NestJS** (`@nestjs/common`)
-- **Prisma** para ORM
-- **Nenhuma dependência de autenticação** (audit é chamado pelos controllers)
+**Status:** ⚠️ SEM VALIDAÇÃO
+
+**Descrição:**
+- Parâmetro `acao` é tipado como `'CREATE' | 'UPDATE' | 'DELETE'`
+- Mas não há validação em runtime
+- Possível passar valor inválido sem erro
+
+**Comportamento atual:**
+- TypeScript valida em compile time
+- Nenhuma validação em runtime
+
+**TODO:**
+- Adicionar validação de enum no service
+- Ou usar DTO com validação de enum
+- Lançar erro se ação inválida
 
 ---
 
-## Resumo Executivo
+### 6.4. Busca de Usuário Duplicada em Todos os Módulos
 
-✅ **Logging centralizado** de todas as operações (CREATE, UPDATE, DELETE)  
-✅ **Captura de estado completo** (antes e depois)  
-✅ **Rastreamento de identidade** mesmo se usuário for deletado  
+**Status:** ⚠️ DUPLICAÇÃO
 
-⚠️ **Não implementado**: Endpoints de query, retenção, conformidade  
-⚠️ **Gap crítico**: Sem integridade (se operação falha após commit, log fica órfão)  
-⚠️ **Ambiguidade**: Integração não é uniforme (alguns módulos usam, outros não)
+**Descrição:**
+- Cada módulo (empresas, usuarios, pilares, rotinas) busca dados do usuário
+- Código duplicado em ~17 lugares
+- Manutenção difícil
+
+**Código duplicado:**
+```typescript
+const user = await this.prisma.usuario.findUnique({ where: { id: userId } });
+await this.audit.log({
+  usuarioId: userId,
+  usuarioNome: user?.nome ?? '',
+  usuarioEmail: user?.email ?? '',
+  // ...
+});
+```
+
+**TODO:**
+- Centralizar busca de usuário no AuditService
+- Modificar método `log()` para receber apenas `userId`
+- Service busca nome/email internamente
+
+**Refatoração sugerida:**
+```typescript
+async log(params: {
+  userId: string,
+  entidade: string,
+  entidadeId: string,
+  acao: 'CREATE' | 'UPDATE' | 'DELETE',
+  dadosAntes?: any,
+  dadosDepois?: any,
+}) {
+  const user = await this.prisma.usuario.findUnique({ where: { id: userId } });
+  
+  await this.prisma.auditLog.create({
+    data: {
+      usuarioId: userId,
+      usuarioNome: user?.nome ?? 'Desconhecido',
+      usuarioEmail: user?.email ?? 'desconhecido@sistema',
+      // ...
+    },
+  });
+}
+```
+
+---
+
+### 6.5. Sem Tratamento de Erro em Log
+
+**Status:** ⚠️ SEM TRATAMENTO
+
+**Descrição:**
+- Método `log()` não trata erros
+- Se criação de log falhar, erro é propagado para módulo chamador
+- Pode interromper operação principal
+
+**Cenário problemático:**
+```
+1. Usuario cria empresa (sucesso)
+2. audit.log() falha (banco indisponível)
+3. Erro é lançado
+4. Empresa foi criada mas auditoria falhou
+```
+
+**TODO:**
+- Decidir estratégia de erro:
+  - Opção 1: Auditoria é crítica (falha interrompe operação)
+  - Opção 2: Auditoria é opcional (falha é logada mas não interrompe)
+- Implementar try/catch se auditoria for opcional
+- Logar erros de auditoria em sistema de monitoramento
+
+---
+
+### 6.6. Logs de Auth Não Implementados
+
+**Status:** ❌ NÃO IMPLEMENTADO
+
+**Descrição:**
+- Módulo Auth não usa AuditService
+- Login/logout não são auditados via AuditLog
+- Apenas LoginHistory (entidade separada) registra logins
+
+**Comportamento atual:**
+- LoginHistory registra tentativas de login (sucesso/falha)
+- Logout não é registrado em lugar nenhum
+- Password reset não é auditado
+
+**TODO:**
+- Definir se login/logout devem usar AuditLog
+- Ou manter LoginHistory separado (pode ser correto)
+- Auditar password reset (ação crítica)
+
+---
+
+### 6.7. Rotinas Não Auditam Reordenação
+
+**Status:** ❌ NÃO AUDITADO
+
+**Descrição:**
+- Método `reordenarPorPilar()` não registra auditoria
+- Mudanças de ordem não são rastreadas
+
+**TODO:**
+- Adicionar auditoria em reordenação
+- Registrar uma entrada para toda a operação (não uma por rotina)
+
+**Observação:**
+- Mesmo problema em Pilares (`reordenar()` não auditado)
+
+---
+
+### 6.8. Empresas Não Auditam Vinculação de Pilares
+
+**Status:** ⚠️ AUDITORIA PARCIAL
+
+**Descrição:**
+- Criação/deleção de PilarEmpresa não é auditada
+- Apenas operações diretas em Empresa são auditadas
+
+**TODO:**
+- Definir se vinculação de pilares deve ser auditada
+- Se sim, adicionar chamada a audit.log()
+
+---
+
+### 6.9. Dados JSON Não Validados
+
+**Status:** ⚠️ SEM VALIDAÇÃO
+
+**Descrição:**
+- `dadosAntes` e `dadosDepois` aceitam qualquer objeto
+- Não há validação de estrutura
+- Possível armazenar dados corrompidos ou muito grandes
+
+**TODO:**
+- Definir limite de tamanho para JSON
+- Validar estrutura básica (se necessário)
+- Considerar compressão para dados grandes
+
+---
+
+### 6.10. Sem Retenção de Dados Definida
+
+**Status:** ⚠️ NÃO DOCUMENTADO
+
+**Descrição:**
+- Logs nunca são deletados
+- Não há política de retenção
+- Tabela pode crescer indefinidamente
+
+**TODO:**
+- Definir política de retenção (ex: 2 anos)
+- Implementar rotina de limpeza (CRON job)
+- Considerar arquivamento de logs antigos
+- Implementar particionamento de tabela por data
+
+---
+
+### 6.11. Usuário Deletado Quebra Referência
+
+**Status:** ⚠️ SEM CONSTRAINT FK
+
+**Descrição:**
+- `usuarioId` não é FK (apenas String)
+- Se usuário for deletado, ID fica órfão
+- Intencional (para preservar histórico), mas não documentado
+
+**Comportamento atual:**
+- Nome/email preservados (desnormalização)
+- ID preservado mas pode não ter usuário correspondente
+
+**Observação:**
+- Design é correto (logs devem sobreviver a deleções)
+- Mas deveria estar documentado
+
+---
+
+## 7. Sumário de Regras
+
+| ID | Descrição | Status |
+|----|-----------|--------|
+| **R-AUD-001** | Registro de log via método `log()` | ✅ Implementado |
+| **R-AUD-002** | Desnormalização de dados de usuário | ✅ Implementado |
+| **R-AUD-003** | Dados antes/depois opcionais | ✅ Implementado |
+| **R-AUD-004** | Logs são imutáveis | ✅ Implementado |
+
+**Ausências críticas:**
+- ❌ Nenhum endpoint de consulta
+- ❌ Auditoria de login/logout
+- ❌ Auditoria de reordenação (pilares/rotinas)
+- ❌ Política de retenção de dados
+- ⚠️ DTO não utilizado (código morto)
+- ⚠️ Busca de usuário duplicada em todos os módulos
+- ⚠️ Sem tratamento de erro em log
+
+---
+
+## 8. Padrão de Uso Observado
+
+### 8.1. CREATE
+
+**Módulos chamadores:**
+```typescript
+const created = await this.prisma.entidade.create({ ... });
+
+const user = await this.prisma.usuario.findUnique({ where: { id: userId } });
+await this.audit.log({
+  usuarioId: userId,
+  usuarioNome: user?.nome ?? '',
+  usuarioEmail: user?.email ?? '',
+  entidade: 'entidades',
+  entidadeId: created.id,
+  acao: 'CREATE',
+  dadosDepois: created,  // Estado criado
+});
+```
+
+---
+
+### 8.2. UPDATE
+
+**Módulos chamadores:**
+```typescript
+const before = await this.findOne(id);
+const after = await this.prisma.entidade.update({ ... });
+
+const user = await this.prisma.usuario.findUnique({ where: { id: userId } });
+await this.audit.log({
+  usuarioId: userId,
+  usuarioNome: user?.nome ?? '',
+  usuarioEmail: user?.email ?? '',
+  entidade: 'entidades',
+  entidadeId: id,
+  acao: 'UPDATE',
+  dadosAntes: before,    // Estado anterior
+  dadosDepois: after,    // Estado posterior
+});
+```
+
+---
+
+### 8.3. DELETE (Soft)
+
+**Módulos chamadores:**
+```typescript
+const before = await this.findOne(id);
+const after = await this.prisma.entidade.update({
+  where: { id },
+  data: { ativo: false },
+});
+
+const user = await this.prisma.usuario.findUnique({ where: { id: userId } });
+await this.audit.log({
+  usuarioId: userId,
+  usuarioNome: user?.nome ?? '',
+  usuarioEmail: user?.email ?? '',
+  entidade: 'entidades',
+  entidadeId: id,
+  acao: 'DELETE',
+  dadosAntes: before,    // Estado ativo
+  dadosDepois: after,    // Estado inativo
+});
+```
+
+---
+
+## 9. Módulos que Usam Auditoria
+
+### 9.1. Empresas
+
+**Operações auditadas:**
+- ✅ CREATE (criação de empresa)
+- ✅ UPDATE (atualização de empresa)
+- ✅ DELETE (desativação de empresa)
+- ✅ Logo upload
+- ✅ Logo delete
+
+**Operações não auditadas:**
+- ❌ Vinculação de pilares (PilarEmpresa)
+
+---
+
+### 9.2. Usuarios
+
+**Operações auditadas:**
+- ✅ CREATE (criação de usuário)
+- ✅ UPDATE (atualização de usuário)
+- ✅ DELETE soft (desativação)
+- ✅ DELETE hard (deleção física)
+- ✅ Photo upload
+- ✅ Photo delete
+
+**Observação:**
+- Cobertura completa de todas as operações
+
+---
+
+### 9.3. Pilares
+
+**Operações auditadas:**
+- ✅ CREATE
+- ✅ UPDATE
+- ✅ DELETE
+
+**Operações não auditadas:**
+- ❌ Reordenação (`reordenar()`)
+
+---
+
+### 9.4. Rotinas
+
+**Operações auditadas:**
+- ✅ CREATE
+- ✅ UPDATE
+- ✅ DELETE
+
+**Operações não auditadas:**
+- ❌ Reordenação (`reordenarPorPilar()`)
+
+---
+
+### 9.5. Perfis
+
+**Operações auditadas:**
+- ❌ NENHUMA (módulo read-only, sem CRUD)
+
+---
+
+### 9.6. Auth
+
+**Operações auditadas:**
+- ❌ NENHUMA (usa LoginHistory separado)
+
+---
+
+## 10. Queries Úteis (Não Implementadas)
+
+### 10.1. Histórico de um Registro
+
+```sql
+SELECT * FROM audit_logs
+WHERE entidade = 'empresas'
+  AND entidadeId = 'uuid-da-empresa'
+ORDER BY createdAt DESC;
+```
+
+**Uso:** Visualizar todas as mudanças em um registro específico
+
+---
+
+### 10.2. Ações de um Usuário
+
+```sql
+SELECT * FROM audit_logs
+WHERE usuarioId = 'uuid-do-usuario'
+ORDER BY createdAt DESC
+LIMIT 50;
+```
+
+**Uso:** Rastrear ações de um usuário específico
+
+---
+
+### 10.3. Mudanças Recentes em uma Entidade
+
+```sql
+SELECT * FROM audit_logs
+WHERE entidade = 'usuarios'
+  AND createdAt >= NOW() - INTERVAL '7 days'
+ORDER BY createdAt DESC;
+```
+
+**Uso:** Monitorar mudanças recentes em uma tabela
+
+---
+
+### 10.4. Deleções em um Período
+
+```sql
+SELECT * FROM audit_logs
+WHERE acao = 'DELETE'
+  AND createdAt BETWEEN '2024-01-01' AND '2024-12-31'
+ORDER BY createdAt DESC;
+```
+
+**Uso:** Auditoria de deleções em um período
+
+---
+
+## 11. Referências
+
+**Arquivos principais:**
+- [audit.service.ts](../../backend/src/modules/audit/audit.service.ts)
+- [create-audit-log.dto.ts](../../backend/src/modules/audit/dto/create-audit-log.dto.ts)
+- [schema.prisma](../../backend/prisma/schema.prisma) (AuditLog)
+
+**Dependências:**
+- PrismaService (acesso ao banco)
+
+**Módulos dependentes:**
+- Empresas (5 chamadas a audit.log)
+- Usuarios (6 chamadas a audit.log)
+- Pilares (3 chamadas a audit.log)
+- Rotinas (3 chamadas a audit.log)
+
+---
+
+**Observação final:**  
+Este documento reflete APENAS o código IMPLEMENTADO.  
+Módulo Audit é **service-only** (sem controller ou endpoints).  
+Usado extensivamente por outros módulos para rastreabilidade.  
+Logs são imutáveis e preservam histórico completo de mudanças.  
+**Crítico:** Falta interface de consulta (logs existem mas não são acessíveis via API).

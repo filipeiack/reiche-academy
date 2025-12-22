@@ -1,412 +1,881 @@
-# Regras de Negócio — Módulo AUTH
+# Regras de Negócio — Auth
 
-**Data de extração**: 2025-12-21  
-**Escopo**: Autenticação, autorização e gerenciamento de sessão
+**Módulo:** Auth (Autenticação e Recuperação de Senha)  
+**Backend:** `backend/src/modules/auth/`  
+**Frontend:** Não implementado  
+**Última extração:** 21/12/2024  
+**Agente:** Extractor de Regras
 
 ---
 
 ## 1. Visão Geral
 
-O módulo AUTH implementa:
-- Autenticação local por email/senha com validação de credenciais
-- Geração e renovação de tokens JWT (access + refresh)
-- Reset de senha por email com tokens temporários
-- Auditoria de tentativas de login (sucesso e falha)
-- Autorização baseada em perfil (RBAC)
+O módulo Auth é responsável por:
+- Autenticação de usuários (login/logout)
+- Geração e renovação de tokens JWT
+- Recuperação de senha (forgot/reset password)
+- Auditoria de tentativas de login
+- Proteção de rotas por autenticação e perfis
+
+**Entidades principais:**
+- Usuario (referência de `modules/usuarios`)
+- PasswordReset (tokens de recuperação de senha)
+- LoginHistory (auditoria de tentativas de login)
+
+**Endpoints implementados:**
+- `POST /auth/login` — Autenticação de usuário
+- `POST /auth/refresh` — Renovação de access token
+- `POST /auth/forgot-password` — Solicitação de reset de senha
+- `POST /auth/reset-password` — Reset de senha com token
 
 ---
 
 ## 2. Entidades
 
-### 2.1 LoginHistory
-```
-- id: UUID (PK)
-- usuarioId: UUID (FK, nullable) — permite registrar tentativas com usuário não encontrado
-- email: String — email utilizado na tentativa
-- sucesso: Boolean — indica se autenticação foi bem-sucedida
-- motivoFalha: String (nullable) — descrição do erro se sucesso=false
-- ipAddress: String (nullable) — IP origem da tentativa
-- userAgent: String (nullable) — navegador/dispositivo origem
-- dispositivo: String (nullable) — tipo detectado (Mobile, Tablet, Desktop)
-- navegador: String (nullable) — navegador detectado (Chrome, Firefox, Edge, Safari, Opera, Outro)
-- createdAt: DateTime — momento da tentativa
-```
+### 2.1. PasswordReset
 
-### 2.2 PasswordReset
-```
-- id: UUID (PK)
-- token: String (UNIQUE) — token aleatório de 256 bits em hex
-- expiresAt: DateTime — momento de expiração
-- used: Boolean (default: false) — marca reutilização de token
-- usuarioId: UUID (FK) — usuário associado
-- createdAt: DateTime — momento de criação
-```
+**Localização:** `backend/prisma/schema.prisma`
+
+| Campo | Tipo | Descrição |
+|-------|------|-----------|
+| id | String (UUID) | Identificador único |
+| token | String (unique) | Token criptográfico de reset |
+| expiresAt | DateTime | Data/hora de expiração do token |
+| used | Boolean | Indica se token já foi utilizado |
+| usuarioId | String (FK) | Referência ao usuário |
+| createdAt | DateTime | Data de criação do token |
+
+**Relações:**
+- `usuario`: Usuario (onDelete: Cascade)
+
+**Índices:**
+- `token` (busca rápida por token)
+- `usuarioId` (busca por usuário)
+
+---
+
+### 2.2. LoginHistory
+
+**Localização:** `backend/prisma/schema.prisma`
+
+| Campo | Tipo | Descrição |
+|-------|------|-----------|
+| id | String (UUID) | Identificador único |
+| usuarioId | String? (FK) | Referência ao usuário (nullable) |
+| email | String | Email usado na tentativa de login |
+| sucesso | Boolean | Indica se login foi bem-sucedido |
+| motivoFalha | String? | Descrição da falha (se aplicável) |
+| ipAddress | String? | Endereço IP da requisição |
+| userAgent | String? | User-Agent do navegador/cliente |
+| dispositivo | String? | Tipo de dispositivo (Desktop/Mobile/Tablet) |
+| navegador | String? | Navegador identificado (Chrome/Edge/Firefox/Safari/Opera/Outro) |
+| createdAt | DateTime | Data da tentativa de login |
+
+**Relações:**
+- `usuario`: Usuario? (onDelete: SetNull)
+
+**Índices:**
+- `usuarioId`
+- `email`
+- `createdAt`
+- `sucesso`
 
 ---
 
 ## 3. Regras Implementadas
 
-### 3.1 Autenticação (Login)
+### R-AUTH-001: Autenticação com Email e Senha
 
-**R-AUTH-001**: Validação de credenciais
-- Email e senha são obrigatórios
-- Email deve ser válido (formato de email)
-- Sistema busca usuário por email
+**Descrição:** Usuário deve fornecer email e senha válidos para autenticar.
 
-**R-AUTH-002**: Rejeição de usuários inativos
-- Se usuário não encontrado → lança `UnauthorizedException` com mensagem genérica: "Credenciais inválidas"
-- Se usuário inativo → lança `UnauthorizedException` com mensagem genérica
-- Motivo real registrado em `LoginHistory` com `motivoFalha = "Credenciais inválidas"`
+**Implementação:**
+- **Endpoint:** `POST /auth/login`
+- **DTO:** `LoginDto` (email obrigatório e válido, senha obrigatória)
+- **Método:** `AuthService.validateUser()`
+- **Estratégia:** Passport Local Strategy
 
-**R-AUTH-003**: Validação de senha com Argon2
-- Senha armazenada utiliza hash Argon2
-- Validação usa `argon2.verify(hashArmazenado, senhaDigitada)`
-- Se senha inválida → lança `UnauthorizedException` com mensagem genérica
-- Motivo real: `motivoFalha = "Senha incorreta"`
+**Comportamento:**
+1. LocalStrategy recebe email e senha
+2. AuthService.validateUser() busca usuário por email
+3. Se usuário não existe ou inativo → UnauthorizedException
+4. Verifica senha com argon2.verify()
+5. Se senha incorreta → UnauthorizedException
+6. Se sucesso → retorna usuário sem senha
 
-**R-AUTH-004**: Geração de tokens JWT
-- **Access Token**: payload contém `{ sub: usuarioId, email, perfil, empresaId }`
-- **Refresh Token**: mesmo payload, assinado com `JWT_REFRESH_SECRET`, validade em `JWT_REFRESH_EXPIRATION` (padrão: 7 dias)
-- Ambos assinados com algoritmo configurado (padrão: HS256)
-- Tokens retornados ao cliente após sucesso de autenticação
+**Arquivo:** [auth.service.ts](../../backend/src/modules/auth/auth.service.ts#L22-L39)
 
-**R-AUTH-005**: Captura de contexto de login
-- IP origem extraído de `request.ip` ou header `x-forwarded-for` ou `socket.remoteAddress`
-- User-Agent extraído de header de mesmo nome
-- Dispositivo detectado automaticamente:
-  - "Mobile" se UA contiver: mobile, android, iphone
-  - "Tablet" se UA contiver: tablet, ipad
-  - "Desktop" caso contrário
-- Navegador detectado automaticamente:
-  - Edge se contiver: edg/, edge/
-  - Chrome se contiver: chrome/ (excluindo edge)
-  - Firefox se contiver: firefox/
-  - Safari se contiver: safari/ (excluindo chrome)
-  - Opera se contiver: opera/, opr/
-  - Outro caso contrário
+---
 
-**R-AUTH-006**: Registra TODAS as tentativas de login
-- Sucesso: `sucesso=true`, `motivoFalha=null`
-- Falha: `sucesso=false`, `motivoFalha` preenchido
-- Se falhar registro de auditoria → não bloqueia login (trata com try-catch)
-- Erros de auditoria apenas logados no console
+### R-AUTH-002: Validar Usuário Ativo
 
-### 3.2 Renovação de Token (Refresh)
+**Descrição:** Apenas usuários com `ativo: true` podem autenticar.
 
-**R-AUTH-007**: Validação de refresh token
-- Token deve ter sido assinado com `JWT_REFRESH_SECRET`
-- Se inválido ou expirado → lanza `UnauthorizedException("Token inválido ou expirado")`
+**Implementação:**
+- Validação em `validateUser()`: `if (!usuario || !usuario.ativo)`
+- Se inativo → UnauthorizedException("Credenciais inválidas")
 
-**R-AUTH-008**: Validação de estado do usuário no refresh
-- Após validar JWT, sistema busca usuário por ID
-- Se usuário não existe ou está inativo → lança `UnauthorizedException("Token inválido")`
+**Arquivo:** [auth.service.ts](../../backend/src/modules/auth/auth.service.ts#L24-L28)
 
-**R-AUTH-009**: Emissão de novo par de tokens
-- Ao renovar, sistema chama `login()` novamente
-- Novos access + refresh tokens são gerados
-- Não realiza auditoria no refresh (auditoria ocorre apenas no login inicial)
+---
 
-### 3.3 Reset de Senha
+### R-AUTH-003: Hash de Senha com Argon2
 
-**R-AUTH-010**: Solicitar reset (forgot-password)
-- Email obrigatório e em formato válido
-- Se usuário não encontrado → retorna mensagem genérica: "Se o email existir, você receberá instruções"
-- Não diferencia email existente de não existente (segurança contra enumeração)
+**Descrição:** Senhas são armazenadas com hash argon2 (não plaintext).
 
-**R-AUTH-011**: Token de reset
-- Gerado com `randomBytes(32).toString('hex')` — 256 bits em hexadecimal
-- Válido por **15 minutos** a partir da criação
-- Armazenado em `PasswordReset` com `used=false`
-- Campo `token` tem índice UNIQUE para evitar duplicatas
+**Implementação:**
+- **Método:** `AuthService.hashPassword()`
+- **Biblioteca:** `argon2`
+- **Uso:** Criação de usuário e reset de senha
 
-**R-AUTH-012**: Envio de email com link de reset
-- Link construído como: `${FRONTEND_URL}/auth/reset-password?token=${token}`
-- Email contém nome do usuário e link de reset
-- Se falhar envio de email → erro propagado (operação não completada)
+**Arquivo:** [auth.service.ts](../../backend/src/modules/auth/auth.service.ts#L93-L95)
 
-**R-AUTH-013**: Rejeição se usuário inativo
-- Se usuário existe mas está inativo → lanza `BadRequestException("Usuário inativo")`
+---
 
-**R-AUTH-014**: Validação e aplicação do reset (reset-password)
-- Token obrigatório
-- Nova senha obrigatória com validações (ver seção 4)
-- Token deve existir em `PasswordReset`
-- Se não encontrado → `BadRequestException("Token inválido ou expirado")`
+### R-AUTH-004: Geração de Access Token e Refresh Token
 
-**R-AUTH-015**: Detecção de reutilização de token
-- Se `used=true` → `BadRequestException("Este link já foi utilizado")`
+**Descrição:** Ao autenticar, sistema gera access token (JWT) e refresh token.
 
-**R-AUTH-016**: Validação de expiração
-- Se `now() > expiresAt` → `BadRequestException("Token expirado. Solicite um novo link de recuperação.")`
+**Implementação:**
+- **Endpoint:** `POST /auth/login`
+- **Método:** `AuthService.login()`
 
-**R-AUTH-017**: Atualização de senha
-- Nova senha é hasheada com Argon2 antes de persistir
-- Campo `senha` do usuário é atualizado
-- Token marcado como `used=true`
-- Email de confirmação enviado ao usuário
+**Payload do JWT:**
+```typescript
+{
+  sub: usuario.id,
+  email: usuario.email,
+  perfil: usuario.perfil.codigo || usuario.perfil,
+  empresaId: usuario.empresaId
+}
+```
 
-**R-AUTH-018**: Fallback em falha de notificação
-- Se email de confirmação falhar → erro propagado (não silencia a falha)
+**Tokens gerados:**
+1. **Access Token:**
+   - Secret: `JWT_SECRET`
+   - Expiração: configurável (padrão: 15m)
+   
+2. **Refresh Token:**
+   - Secret: `JWT_REFRESH_SECRET`
+   - Expiração: configurável (padrão: 7d)
 
-### 3.4 Autorização (RBAC)
+**Retorno do login:**
+```json
+{
+  "accessToken": "eyJhbGciOiJIUzI1...",
+  "refreshToken": "eyJhbGciOiJIUzI1...",
+  "usuario": {
+    "id": "uuid",
+    "email": "user@example.com",
+    "nome": "Nome Usuario",
+    "cargo": "Cargo",
+    "perfil": { ... },
+    "empresaId": "uuid",
+    "empresa": { ... },
+    "fotoUrl": "url"
+  }
+}
+```
 
-**R-AUTH-019**: Guard de roles
-- `RolesGuard` valida se usuário possui perfil requerido
-- Se rota não tem `@Roles()` → acesso permitido (sem restrição)
-- Se usuário não autenticado (`!user`) → acesso negado
-- Se perfil do usuário não está na lista de roles requeridos → acesso negado
+**Arquivo:** [auth.service.ts](../../backend/src/modules/auth/auth.service.ts#L41-L71)
 
-**R-AUTH-020**: Extração de perfil do token
-- Perfil extraído do JWT payload como `payload.perfil`
-- Comparação case-sensitive com roles requeridas
+---
 
-### Frontend (Implementado)
+### R-AUTH-005: Renovação de Token (Refresh)
 
-**F-AUTH-001**: Armazenamento de sessão
-- Login salva `accessToken`, `refreshToken` e `usuario` em `localStorage` se "remember" for true; caso contrário, em `sessionStorage`
-- Chaves: `access_token`, `refresh_token`, `current_user`
-- `currentUser$`: `BehaviorSubject<Usuario|null>` mantido pelo `AuthService`
+**Descrição:** Cliente pode renovar access token usando refresh token válido.
 
-**F-AUTH-002**: Renovação automática do token
-- Timer de 110 minutos renova token chamando `POST /auth/refresh`
-- Em falha de refresh, executa `logout()` e limpa armazenamento
+**Implementação:**
+- **Endpoint:** `POST /auth/refresh`
+- **DTO:** `RefreshTokenDto` (refreshToken obrigatório)
+- **Método:** `AuthService.refreshToken()`
 
-**F-AUTH-003**: Customização de login por empresa
-- Rota `auth/login/:loginUrl` carrega empresa via `GET /empresas/by-login-url/:loginUrl`
-- Se `logoUrl` inicia com `/`, concatena `environment.backendUrl` para exibir
-- Em erro, mantém logo padrão `assets/images/logo_reiche_academy.png`
+**Comportamento:**
+1. Verifica refresh token com `JWT_REFRESH_SECRET`
+2. Extrai payload (userId, email, perfil, empresaId)
+3. Busca usuário por ID
+4. Se usuário não existe ou inativo → UnauthorizedException
+5. Gera novo par de tokens (access + refresh)
+6. Retorna mesma estrutura do login
 
-**F-AUTH-004**: Fluxos de Forgot/Reset Password
-- Forgot: formulário valida `email` (required + email) e chama `POST /auth/forgot-password`
-- Reset: obtém `token` de `queryParams`; valida `novaSenha` com regex idêntica ao backend e confirmação de senha; exibe indicador de força (fraca/média/forte)
-- Em sucesso do reset, navega para `/auth/login` após 3s
+**Exceções:**
+- Token inválido → UnauthorizedException("Token inválido ou expirado")
+- Usuário inativo → UnauthorizedException("Token inválido")
+
+**Arquivo:** [auth.service.ts](../../backend/src/modules/auth/auth.service.ts#L73-L89)
+
+---
+
+### R-AUTH-006: Solicitar Reset de Senha (Forgot Password)
+
+**Descrição:** Usuário pode solicitar reset de senha fornecendo email.
+
+**Implementação:**
+- **Endpoint:** `POST /auth/forgot-password`
+- **DTO:** `ForgotPasswordDto` (email obrigatório e válido)
+- **Método:** `AuthService.forgotPassword()`
+
+**Comportamento:**
+1. Busca usuário por email
+2. Se usuário não existe → retorna sucesso genérico (segurança)
+3. Se usuário inativo → BadRequestException("Usuário inativo")
+4. Gera token aleatório (32 bytes hex)
+5. Define expiração: 15 minutos
+6. Salva registro em `password_resets`
+7. Monta link de reset: `{FRONTEND_URL}/auth/reset-password?token={token}`
+8. Envia email via `EmailService.sendPasswordResetEmail()`
+9. Retorna mensagem genérica
+
+**Mensagem padrão (segurança):**
+```
+"Se o email existir, você receberá instruções para redefinir sua senha."
+```
+
+**Arquivo:** [auth.service.ts](../../backend/src/modules/auth/auth.service.ts#L100-L139)
+
+---
+
+### R-AUTH-007: Token de Reset Expira em 15 Minutos
+
+**Descrição:** Tokens de recuperação de senha expiram após 15 minutos.
+
+**Implementação:**
+```typescript
+const expiresAt = new Date();
+expiresAt.setMinutes(expiresAt.getMinutes() + 15);
+```
+
+**Arquivo:** [auth.service.ts](../../backend/src/modules/auth/auth.service.ts#L118-L119)
+
+---
+
+### R-AUTH-008: Reset de Senha com Token
+
+**Descrição:** Usuário pode redefinir senha fornecendo token válido e nova senha.
+
+**Implementação:**
+- **Endpoint:** `POST /auth/reset-password`
+- **DTO:** `ResetPasswordDto` (token + novaSenha)
+- **Método:** `AuthService.resetPassword()`
+
+**Comportamento:**
+1. Busca registro de `password_resets` por token (include usuario)
+2. Se não existe → BadRequestException("Token inválido ou expirado")
+3. Verifica se já foi usado (`used: true`) → BadRequestException("Este link já foi utilizado")
+4. Verifica expiração (`new Date() > expiresAt`) → BadRequestException("Token expirado...")
+5. Faz hash da nova senha com argon2
+6. Atualiza `usuario.senha` no banco
+7. Marca token como usado (`used: true`)
+8. Envia email de confirmação via `EmailService.sendPasswordChangedEmail()`
+9. Retorna `{ message: "Senha alterada com sucesso!" }`
+
+**Arquivo:** [auth.service.ts](../../backend/src/modules/auth/auth.service.ts#L144-L186)
+
+---
+
+### R-AUTH-009: Validação de Senha Forte (Reset)
+
+**Descrição:** Nova senha em reset deve cumprir critérios de complexidade.
+
+**Implementação:**
+- **DTO:** `ResetPasswordDto`
+- **Validações:**
+  - Mínimo 8 caracteres (`@MinLength(8)`)
+  - Pelo menos 1 letra maiúscula
+  - Pelo menos 1 letra minúscula
+  - Pelo menos 1 número
+  - Pelo menos 1 caractere especial (`@$!%*?&`)
+
+**Regex:**
+```typescript
+@Matches(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]/, {
+  message: 'A senha deve conter pelo menos uma letra maiúscula, uma minúscula, um número e um caractere especial (@$!%*?&)',
+})
+```
+
+**Arquivo:** [reset-password.dto.ts](../../backend/src/modules/auth/dto/reset-password.dto.ts#L10-L17)
+
+---
+
+### R-AUTH-010: Auditoria de Login (Sucesso e Falha)
+
+**Descrição:** Sistema registra TODAS as tentativas de login (sucesso e falha) para auditoria.
+
+**Implementação:**
+- **Método privado:** `AuthService.registrarLogin()`
+- **Tabela:** `login_history`
+
+**Chamadas:**
+1. Usuário não existe/inativo → registra falha
+2. Senha incorreta → registra falha
+3. Login bem-sucedido → registra sucesso
+
+**Dados registrados:**
+- `usuarioId`: ID do usuário (null se não existe)
+- `email`: Email usado na tentativa
+- `sucesso`: true/false
+- `motivoFalha`: "Credenciais inválidas" | "Senha incorreta" | null
+- `ipAddress`: IP da requisição (req.ip ou x-forwarded-for)
+- `userAgent`: User-Agent do cliente
+- `dispositivo`: "Desktop" | "Mobile" | "Tablet"
+- `navegador`: "Chrome" | "Edge" | "Firefox" | "Safari" | "Opera" | "Outro"
+- `createdAt`: Timestamp da tentativa
+
+**Arquivo:** [auth.service.ts](../../backend/src/modules/auth/auth.service.ts#L191-L245)
+
+---
+
+### R-AUTH-011: Detecção de Dispositivo e Navegador
+
+**Descrição:** Sistema identifica dispositivo e navegador via User-Agent.
+
+**Implementação:**
+- Parse básico em `registrarLogin()`
+
+**Dispositivo:**
+- Contém "mobile", "android", "iphone" → "Mobile"
+- Contém "tablet", "ipad" → "Tablet"
+- Caso contrário → "Desktop"
+
+**Navegador:**
+- Contém "edg/" ou "edge/" → "Edge"
+- Contém "chrome/" (exceto Edge) → "Chrome"
+- Contém "firefox/" → "Firefox"
+- Contém "safari/" (exceto Chrome) → "Safari"
+- Contém "opera/" ou "opr/" → "Opera"
+- Caso contrário → "Outro"
+
+**Arquivo:** [auth.service.ts](../../backend/src/modules/auth/auth.service.ts#L209-L231)
+
+---
+
+### R-AUTH-012: Envio de Email de Recuperação (Mock)
+
+**Descrição:** Sistema "envia" email de recuperação de senha (atualmente apenas log).
+
+**Implementação:**
+- **Serviço:** `EmailService.sendPasswordResetEmail()`
+- **Comportamento atual:** Registra no console (Logger)
+- **Produção (TODO):** Integrar com SendGrid/AWS SES/Nodemailer
+
+**Dados do email:**
+- Para: `to` (email do usuário)
+- Nome: `nome` (nome do usuário)
+- Link: `resetLink` (URL com token)
+- Expira em: 15 minutos (informativo)
+
+**Arquivo:** [email.service.ts](../../backend/src/modules/auth/email.service.ts#L14-L41)
+
+---
+
+### R-AUTH-013: Envio de Email de Confirmação de Troca (Mock)
+
+**Descrição:** Sistema "envia" email confirmando troca de senha.
+
+**Implementação:**
+- **Serviço:** `EmailService.sendPasswordChangedEmail()`
+- **Comportamento atual:** Registra no console (Logger)
+- **Produção (TODO):** Integrar com provedor de email
+
+**Dados do email:**
+- Para: `to` (email do usuário)
+- Nome: `nome` (nome do usuário)
+- Mensagem: "Sua senha foi alterada com sucesso!"
+
+**Arquivo:** [email.service.ts](../../backend/src/modules/auth/email.service.ts#L47-L59)
+
+---
+
+### R-AUTH-014: Proteção de Rotas com JWT
+
+**Descrição:** Rotas protegidas exigem JWT válido no header Authorization.
+
+**Implementação:**
+- **Guard:** `JwtAuthGuard` (extends AuthGuard('jwt'))
+- **Strategy:** `JwtStrategy` (Passport JWT)
+- **Uso:** `@UseGuards(JwtAuthGuard)` em controllers
+
+**Extração do token:**
+- Header: `Authorization: Bearer {token}`
+- Strategy: `ExtractJwt.fromAuthHeaderAsBearerToken()`
+
+**Validação:**
+- Verifica assinatura com `JWT_SECRET`
+- Verifica expiração (`ignoreExpiration: false`)
+- Extrai payload e injeta em `req.user`:
+  ```typescript
+  {
+    id: payload.sub,
+    email: payload.email,
+    perfil: payload.perfil,
+    empresaId: payload.empresaId
+  }
+  ```
+
+**Arquivo:** [jwt.strategy.ts](../../backend/src/modules/auth/strategies/jwt.strategy.ts)
+
+---
+
+### R-AUTH-015: Proteção de Rotas por Perfil (Roles)
+
+**Descrição:** Rotas podem exigir perfis específicos para acesso.
+
+**Implementação:**
+- **Decorator:** `@Roles(...roles: Role[])`
+- **Guard:** `RolesGuard`
+- **Perfis disponíveis:** ADMINISTRADOR | CONSULTOR | GESTOR | COLABORADOR | LEITURA
+
+**Uso:**
+```typescript
+@Roles('ADMINISTRADOR', 'GESTOR')
+@UseGuards(JwtAuthGuard, RolesGuard)
+@Get('rota-protegida')
+metodo() { ... }
+```
+
+**Comportamento:**
+1. RolesGuard extrai perfis exigidos via Reflector
+2. Se nenhum perfil exigido → permite acesso
+3. Extrai perfil do `req.user` (injetado por JwtAuthGuard)
+4. Se usuário não tem perfil → bloqueia
+5. Se perfil do usuário está na lista de exigidos → permite
+6. Caso contrário → bloqueia
+
+**Arquivo:** [roles.guard.ts](../../backend/src/modules/auth/guards/roles.guard.ts)
+
+---
+
+### R-AUTH-016: Local Strategy com IP e User-Agent
+
+**Descrição:** Estratégia de autenticação local captura IP e User-Agent para auditoria.
+
+**Implementação:**
+- **Strategy:** `LocalStrategy` (Passport Local)
+- **Config:** `passReqToCallback: true` (acessa req no validate)
+- **Campos:** `usernameField: 'email'`, `passwordField: 'senha'`
+
+**Comportamento:**
+1. Extrai IP: `req.ip || req.headers['x-forwarded-for'] || req.socket.remoteAddress`
+2. Extrai User-Agent: `req.headers['user-agent']`
+3. Chama `AuthService.validateUser(email, senha, ip, userAgent)`
+4. Se validação falha → UnauthorizedException
+5. Se sucesso → retorna usuário (injetado em req.user)
+
+**Arquivo:** [local.strategy.ts](../../backend/src/modules/auth/strategies/local.strategy.ts)
+
+---
+
+### R-AUTH-017: Falha de Auditoria Não Bloqueia Login
+
+**Descrição:** Se registro de auditoria falhar, login continua normalmente.
+
+**Implementação:**
+- Método `registrarLogin()` é try/catch
+- Em caso de erro → loga no console, mas não lança exceção
+
+**Justificativa:** Auditoria é importante, mas não crítica ao ponto de bloquear autenticação.
+
+**Arquivo:** [auth.service.ts](../../backend/src/modules/auth/auth.service.ts#L237-L244)
 
 ---
 
 ## 4. Validações
 
-### 4.1 LoginDto
-| Campo | Tipo | Validações | Obrigatório |
-|-------|------|-----------|------------|
-| email | string | IsEmail() | ✓ |
-| senha | string | IsString() | ✓ |
+### 4.1. LoginDto
 
-### 4.2 ResetPasswordDto
-| Campo | Tipo | Validações | Obrigatório |
-|-------|------|-----------|------------|
-| token | string | IsString() | ✓ |
-| novaSenha | string | MinLength(8), Matches(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]/) | ✓ |
+**Arquivo:** [login.dto.ts](../../backend/src/modules/auth/dto/login.dto.ts)
 
-**Requisitos de nova senha**:
-- Mínimo 8 caracteres
-- Pelo menos 1 letra maiúscula
-- Pelo menos 1 letra minúscula
-- Pelo menos 1 número
-- Pelo menos 1 caractere especial (@$!%*?&)
+| Campo | Validações |
+|-------|-----------|
+| email | `@IsEmail()`, `@IsNotEmpty()` |
+| senha | `@IsString()`, `@IsNotEmpty()` |
 
-### 4.5 Frontend Forms
-- Login: `email` (required + email), `senha` (required + minLength(6)), `remember` (boolean)
-- Forgot Password: `email` (required + email)
-- Reset Password: `novaSenha` (required + minLength(8) + regex de complexidade), `confirmarSenha` (required), validação de mismatch manual
+---
 
-### 4.3 ForgotPasswordDto
-| Campo | Tipo | Validações | Obrigatório |
-|-------|------|-----------|------------|
-| email | string | IsEmail() | ✓ |
+### 4.2. ForgotPasswordDto
 
-### 4.4 RefreshTokenDto
-| Campo | Tipo | Validações | Obrigatório |
-|-------|------|-----------|------------|
-| refreshToken | string | IsString() | ✓ |
+**Arquivo:** [forgot-password.dto.ts](../../backend/src/modules/auth/dto/forgot-password.dto.ts)
+
+| Campo | Validações |
+|-------|-----------|
+| email | `@IsEmail()`, `@IsNotEmpty()` |
+
+**Mensagens customizadas:**
+- Email inválido: "Email inválido"
+- Email obrigatório: "Email é obrigatório"
+
+---
+
+### 4.3. ResetPasswordDto
+
+**Arquivo:** [reset-password.dto.ts](../../backend/src/modules/auth/dto/reset-password.dto.ts)
+
+| Campo | Validações |
+|-------|-----------|
+| token | `@IsNotEmpty()`, `@IsString()` |
+| novaSenha | `@IsNotEmpty()`, `@MinLength(8)`, `@Matches(regex)` |
+
+**Regex de senha forte:**
+- `^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]`
+- Exige: minúscula, maiúscula, número, caractere especial
+
+---
+
+### 4.4. RefreshTokenDto
+
+**Arquivo:** [refresh-token.dto.ts](../../backend/src/modules/auth/dto/refresh-token.dto.ts)
+
+| Campo | Validações |
+|-------|-----------|
+| refreshToken | `@IsString()`, `@IsNotEmpty()` |
 
 ---
 
 ## 5. Comportamentos Condicionais
 
-### 5.1 Fluxo de Login
+### 5.1. Login de Usuário Inativo
 
-```
-POST /auth/login (email, senha)
-  ↓
-  ├─ Email válido? (format)
-  │  └─ Não → erro de validação
-  ├─ Usuário existe com email?
-  │  └─ Não → registra LoginHistory (motivoFalha="Credenciais inválidas")
-  │        → retorna UnauthorizedException
-  ├─ Usuário está ativo?
-  │  └─ Não → registra LoginHistory (motivoFalha="Credenciais inválidas")
-  │        → retorna UnauthorizedException
-  ├─ Senha válida (Argon2)?
-  │  └─ Não → registra LoginHistory (motivoFalha="Senha incorreta")
-  │        → retorna UnauthorizedException
-  └─ ✓ Login bem-sucedido
-     ├─ Gera access token
-     ├─ Gera refresh token
-     ├─ Registra LoginHistory (sucesso=true)
-     └─ Retorna { accessToken, refreshToken, usuario }
-```
+**Condição:** `usuario.ativo === false`
 
-### 5.2 Fluxo de Forgot Password
+**Comportamento:**
+1. Registra tentativa falhada com motivo "Credenciais inválidas"
+2. Lança UnauthorizedException("Credenciais inválidas")
+3. Não revela que usuário existe mas está inativo (segurança)
 
+**Arquivo:** [auth.service.ts](../../backend/src/modules/auth/auth.service.ts#L24-L28)
+
+---
+
+### 5.2. Email Não Existe em Forgot Password
+
+**Condição:** Email fornecido não está cadastrado
+
+**Comportamento:**
+1. NÃO revela que email não existe (segurança)
+2. Retorna mensagem genérica de sucesso
+3. Não envia email (obvio)
+
+**Mensagem:**
 ```
-POST /auth/forgot-password (email)
-  ↓
-  ├─ Email válido?
-  │  └─ Não → erro de validação
-  ├─ Usuário existe?
-  │  └─ Não → retorna mensagem genérica
-  ├─ Usuário está ativo?
-  │  └─ Não → BadRequestException("Usuário inativo")
-  └─ ✓ Token criado e email enviado
-     ├─ Gera token aleatório (256 bits hex)
-     ├─ Define expiração em +15 minutos
-     ├─ Salva PasswordReset
-     ├─ Envia email com link
-     └─ Retorna mensagem genérica
+"Se o email existir, você receberá instruções para redefinir sua senha."
 ```
 
-### 5.3 Fluxo de Reset Password
+**Justificativa:** Previne enumeração de emails cadastrados.
 
-```
-POST /auth/reset-password (token, novaSenha)
-  ↓
-  ├─ Token e senha obrigatórios?
-  │  └─ Não → erro de validação
-  ├─ Senha válida (política)?
-  │  └─ Não → erro de validação
-  ├─ Token existe?
-  │  └─ Não → BadRequestException
-  ├─ Token já foi usado?
-  │  └─ Sim → BadRequestException("Este link já foi utilizado")
-  ├─ Token expirou?
-  │  └─ Sim → BadRequestException("Token expirado...")
-  └─ ✓ Senha atualizada
-     ├─ Hash nova senha com Argon2
-     ├─ Atualiza usuario.senha
-     ├─ Marca PasswordReset.used = true
-     ├─ Envia email de confirmação
-     └─ Retorna mensagem de sucesso
-```
+**Arquivo:** [auth.service.ts](../../backend/src/modules/auth/auth.service.ts#L107-L109)
 
-### 5.4 Fluxo de Refresh Token
+---
 
-```
-POST /auth/refresh (refreshToken)
-  ↓
-  ├─ Token presente no corpo?
-  │  └─ Não → erro de validação
-  ├─ JWT assinatura válida (JWT_REFRESH_SECRET)?
-  │  └─ Não → UnauthorizedException
-  ├─ JWT expirado?
-  │  └─ Sim → UnauthorizedException
-  ├─ Usuário existe?
-  │  └─ Não → UnauthorizedException("Token inválido")
-  ├─ Usuário está ativo?
-  │  └─ Não → UnauthorizedException("Token inválido")
-  └─ ✓ Novo par gerado
-     ├─ Chama login(usuario)
-     ├─ Gera novo access + refresh
-     └─ Retorna nova sessão
+### 5.3. Usuário Inativo em Forgot Password
 
-### 5.5 Frontend: Renovação Automática
+**Condição:** Email existe, mas `usuario.ativo === false`
 
-```
-AuthService.initializeTokenRefresh()
-  ├─ setInterval(110 min)
-  ├─ isLoggedIn && refreshToken presente?
-  │  └─ Sim → POST /auth/refresh e setSession()
-  └─ Em erro → logout()
-```
-```
+**Comportamento:**
+1. Lança BadRequestException("Usuário inativo")
+2. NÃO gera token
+3. NÃO envia email
+
+**Arquivo:** [auth.service.ts](../../backend/src/modules/auth/auth.service.ts#L111-L113)
+
+---
+
+### 5.4. Token de Reset Já Usado
+
+**Condição:** `passwordReset.used === true`
+
+**Comportamento:**
+1. Lança BadRequestException("Este link já foi utilizado")
+2. NÃO permite reutilização de token
+
+**Arquivo:** [auth.service.ts](../../backend/src/modules/auth/auth.service.ts#L155-L157)
+
+---
+
+### 5.5. Token de Reset Expirado
+
+**Condição:** `new Date() > passwordReset.expiresAt`
+
+**Comportamento:**
+1. Lança BadRequestException("Token expirado. Solicite um novo link de recuperação.")
+2. NÃO permite reset com token expirado
+
+**Arquivo:** [auth.service.ts](../../backend/src/modules/auth/auth.service.ts#L160-L162)
+
+---
+
+### 5.6. Refresh Token com Usuário Inativo
+
+**Condição:** Token válido, mas `usuario.ativo === false`
+
+**Comportamento:**
+1. Lança UnauthorizedException("Token inválido")
+2. NÃO revela que usuário está inativo
+3. NÃO renova token
+
+**Arquivo:** [auth.service.ts](../../backend/src/modules/auth/auth.service.ts#L80-L82)
+
+---
+
+### 5.7. RolesGuard sem Roles Exigidos
+
+**Condição:** Rota não usa decorator `@Roles(...)` ou array vazio
+
+**Comportamento:**
+1. Permite acesso (não restringe)
+2. Assume que apenas autenticação JWT é suficiente
+
+**Arquivo:** [roles.guard.ts](../../backend/src/modules/auth/guards/roles.guard.ts#L11-L13)
 
 ---
 
 ## 6. Ausências ou Ambiguidades
 
-### 6.1 Segurança
+### 6.1. Email Não Implementado (Mock)
 
-⚠️ **IMPLEMENTAÇÃO DETECTADA**:
-- Armazenamento de senha: Argon2 ✓
-- HTTPS/TLS: Não verificável em código (responsabilidade de infraestrutura)
-- Rate limiting em tentativas de login: **NÃO IMPLEMENTADO**
-- Rate limiting em forgot-password: **NÃO IMPLEMENTADO**
-- Rate limiting em reset-password: **NÃO IMPLEMENTADO**
+**Status:** ❌ NÃO IMPLEMENTADO
 
-⚠️ **GAPS CRÍTICOS**:
-1. Nenhuma proteção contra força bruta em login
-2. Nenhuma proteção contra abuso de endpoints de reset (alguém pode solicitar reset para múltiplos emails)
-3. Tokens não possuem mecanismo de revogação (logout não invalida tokens existentes)
-4. Refresh token armazenado apenas em cliente (sem validação adicional no servidor)
+**Descrição:**
+- `EmailService` apenas loga no console
+- Produção exige integração com provedor real (SendGrid, AWS SES, Nodemailer)
 
-### 6.2 Auditoria
+**TODO:**
+- Configurar SMTP ou serviço de terceiros
+- Implementar templates HTML para emails
+- Adicionar retry em caso de falha
 
-**IMPLEMENTADO**:
-- Registro de IP e User-Agent
-- Detecção de navegador e dispositivo
-- Histórico de sucessos e falhas
-
-**NÃO IMPLEMENTADO**:
-- Retenção de histórico (sem política de limpeza)
-- Alertas para atividades suspeitas (múltiplas falhas, IPs diferentes, etc.)
-- Logout (não cancela tokens ativos)
-
-### 6.3 Email
-
-**IMPLEMENTADO**:
-- Envio de link de reset
-- Envio de confirmação de mudança
-
-**NÃO IMPLEMENTADO**:
-- Confirmação de email na criação de conta
-- Notificação de login em novo dispositivo
-- Autenticação multi-fator (2FA)
-
-### 6.4 Configurações
-
-**EXIGIDAS MAS NÃO VALIDADAS**:
-- `JWT_SECRET` — deve existir
-- `JWT_REFRESH_SECRET` — deve existir
-- `JWT_REFRESH_EXPIRATION` — padrão: 7d
-- `FRONTEND_URL` — padrão: http://localhost:4200
-
-Nenhuma validação se essas variáveis existem na inicialização do módulo.
-
-### 6.5 Contexto Multi-tenant
-
-**NÃO ABORDADO EM AUTH**:
-- O campo `empresaId` é incluído no JWT mas não há validação de isolamento por tenant
-- Qualquer usuário de tenant A pode acessar dados de tenant B se tiver o token
-- Validação de multi-tenant deve ser implementada em módulos específicos (empresas, usuarios, etc.)
+**Arquivo:** [email.service.ts](../../backend/src/modules/auth/email.service.ts)
 
 ---
 
-## 7. Endpoints
+### 6.2. Rate Limiting em Login
 
-| Método | Rota | Autenticação | Roles | Descrição |
-|--------|------|--------------|-------|-----------|
-| POST | `/auth/login` | ❌ | — | Autenticar com email/senha |
-| POST | `/auth/refresh` | ❌ | — | Renovar access token |
-| POST | `/auth/forgot-password` | ❌ | — | Solicitar reset de senha |
-| POST | `/auth/reset-password` | ❌ | — | Aplicar novo reset de senha |
+**Status:** ❌ NÃO IMPLEMENTADO
 
----
+**Descrição:**
+- Sistema não limita tentativas de login
+- Vulnerável a brute force
 
-## 8. Dependências
-
-- **NestJS** (`@nestjs/common`, `@nestjs/jwt`, `@nestjs/config`)
-- **Passport** (`@nestjs/passport`, `passport-jwt`, `passport-local`)
-- **Argon2** para hashing de senha
-- **Prisma** para persistência
-- **EmailService** para notificações
+**TODO:**
+- Implementar rate limiting (ex: 5 tentativas por IP/15min)
+- Usar throttler do NestJS ou biblioteca externa
+- Registrar bloqueios em LoginHistory
 
 ---
 
-## Resumo Executivo
+### 6.3. Bloqueio de Conta Após N Tentativas
 
-✅ **Autenticação local robusta** com hashing Argon2 e validação forte de senha  
-✅ **JWT com refresh tokens** para sessões estendidas  
-✅ **Reset de senha seguro** com tokens temporários e expiração  
-✅ **Auditoria de tentativas** com contexto de IP, dispositivo, navegador  
+**Status:** ❌ NÃO IMPLEMENTADO
 
-⚠️ **Não implementado**: Rate limiting, revogação de tokens, 2FA, confirmação de email  
-⚠️ **Gap crítico**: Multi-tenant validation não ocorre em AUTH (delegada a outros módulos)
+**Descrição:**
+- Usuário não é bloqueado automaticamente após múltiplas falhas
+- Auditoria está disponível (LoginHistory), mas sem ação automática
+
+**TODO:**
+- Implementar lógica de bloqueio temporário
+- Adicionar campo `blockedUntil` em Usuario
+- Notificar usuário via email em caso de bloqueio
+
+---
+
+### 6.4. Logout (Invalidação de Token)
+
+**Status:** ❌ NÃO IMPLEMENTADO
+
+**Descrição:**
+- Não existe endpoint de logout
+- Tokens não são invalidados centralmente
+- Cliente deve descartar tokens localmente
+
+**TODO:**
+- Implementar blacklist de tokens (Redis)
+- Criar endpoint `POST /auth/logout`
+- Invalidar refresh token no banco
+
+---
+
+### 6.5. Two-Factor Authentication (2FA)
+
+**Status:** ❌ NÃO IMPLEMENTADO
+
+**Descrição:**
+- Sistema não suporta autenticação em dois fatores
+
+**TODO:**
+- Implementar TOTP (Time-based One-Time Password)
+- Adicionar campos `twoFactorEnabled`, `twoFactorSecret` em Usuario
+- Criar endpoint de verificação de código
+
+---
+
+### 6.6. FRONTEND_URL Configurável
+
+**Status:** ⚠️ AMBÍGUO
+
+**Descrição:**
+- Link de reset usa variável de ambiente `FRONTEND_URL`
+- Padrão: `http://localhost:4200`
+- Documentação não especifica comportamento em múltiplos ambientes
+
+**TODO:**
+- Documentar configuração de `FRONTEND_URL` por ambiente
+- Validar se link está acessível antes de enviar email
+
+---
+
+### 6.7. Limpeza de Tokens Expirados
+
+**Status:** ❌ NÃO IMPLEMENTADO
+
+**Descrição:**
+- Tokens expirados permanecem no banco indefinidamente
+- Não há cron job de limpeza
+
+**TODO:**
+- Implementar job periódico (ex: diário)
+- Deletar registros de `password_resets` com `expiresAt < now()`
+- Considerar também limpar `login_history` antigo (ex: > 90 dias)
+
+---
+
+### 6.8. Validação de Senha Forte em Criação de Usuário
+
+**Status:** ⚠️ AMBÍGUO
+
+**Descrição:**
+- Reset de senha exige senha forte (R-AUTH-009)
+- Criação de usuário NÃO valida complexidade (módulo usuarios)
+- Inconsistência entre fluxos
+
+**TODO:**
+- Validar se `CreateUsuarioDto` também exige senha forte
+- Aplicar mesmas regras de complexidade em ambos os fluxos
+
+---
+
+### 6.9. Tempo de Expiração de Tokens Configurável
+
+**Status:** ⚠️ PARCIALMENTE DOCUMENTADO
+
+**Descrição:**
+- Access token e refresh token usam variáveis de ambiente
+- Código mostra padrão: 7d para refresh
+- Não documenta padrão de access token
+
+**Variáveis esperadas:**
+- `JWT_SECRET`
+- `JWT_REFRESH_SECRET`
+- `JWT_REFRESH_EXPIRATION` (default: '7d')
+- (Access token expiration — não explícito)
+
+**TODO:**
+- Documentar todas as variáveis de ambiente
+- Especificar valor padrão de access token expiration
+
+---
+
+### 6.10. Tratamento de Erros em Parse de User-Agent
+
+**Status:** ⚠️ SEM VALIDAÇÃO
+
+**Descrição:**
+- Parse de User-Agent assume formato padrão
+- Sem tratamento de valores inesperados ou malformados
+
+**Comportamento atual:**
+- Se user-agent não identificado → dispositivo/navegador = null
+- Não valida tamanho máximo do campo
+
+**TODO:**
+- Adicionar validação de tamanho máximo (prevenir overflow)
+- Tratar user-agents maliciosos ou muito longos
+
+---
+
+### 6.11. Cascade Delete em PasswordReset
+
+**Status:** ✅ IMPLEMENTADO (Observação)
+
+**Descrição:**
+- Se usuário é deletado, seus tokens de reset são deletados em cascata
+- **Comportamento:** `onDelete: Cascade`
+
+**Observação:**
+- Usuários usam soft delete (`ativo: false`)
+- Cascade só afeta delete físico (raro)
+
+---
+
+### 6.12. SetNull em LoginHistory
+
+**Status:** ✅ IMPLEMENTADO (Observação)
+
+**Descrição:**
+- Se usuário é deletado, `loginHistory.usuarioId` vira null
+- **Comportamento:** `onDelete: SetNull`
+
+**Observação:**
+- Mantém histórico mesmo após exclusão do usuário
+- Permite auditoria de contas deletadas
+
+---
+
+## 7. Sumário de Regras
+
+| ID | Descrição | Status |
+|----|-----------|--------|
+| **R-AUTH-001** | Autenticação com email e senha | ✅ Implementado |
+| **R-AUTH-002** | Validar usuário ativo | ✅ Implementado |
+| **R-AUTH-003** | Hash de senha com argon2 | ✅ Implementado |
+| **R-AUTH-004** | Geração de access/refresh tokens | ✅ Implementado |
+| **R-AUTH-005** | Renovação de token | ✅ Implementado |
+| **R-AUTH-006** | Solicitar reset de senha | ✅ Implementado |
+| **R-AUTH-007** | Token expira em 15 minutos | ✅ Implementado |
+| **R-AUTH-008** | Reset de senha com token | ✅ Implementado |
+| **R-AUTH-009** | Validação de senha forte (reset) | ✅ Implementado |
+| **R-AUTH-010** | Auditoria de login | ✅ Implementado |
+| **R-AUTH-011** | Detecção de dispositivo/navegador | ✅ Implementado |
+| **R-AUTH-012** | Envio de email de recuperação | ⚠️ Mock (TODO: produção) |
+| **R-AUTH-013** | Envio de email de confirmação | ⚠️ Mock (TODO: produção) |
+| **R-AUTH-014** | Proteção de rotas com JWT | ✅ Implementado |
+| **R-AUTH-015** | Proteção de rotas por perfil | ✅ Implementado |
+| **R-AUTH-016** | Local strategy com IP/User-Agent | ✅ Implementado |
+| **R-AUTH-017** | Falha de auditoria não bloqueia login | ✅ Implementado |
+
+**Ausências críticas:**
+- ❌ Rate limiting em login
+- ❌ Bloqueio de conta após N tentativas
+- ❌ Logout (invalidação de token)
+- ❌ Two-Factor Authentication (2FA)
+- ❌ Limpeza de tokens expirados (cron)
+
+---
+
+## 8. Referências
+
+**Arquivos principais:**
+- [auth.service.ts](../../backend/src/modules/auth/auth.service.ts)
+- [auth.controller.ts](../../backend/src/modules/auth/auth.controller.ts)
+- [email.service.ts](../../backend/src/modules/auth/email.service.ts)
+- [schema.prisma](../../backend/prisma/schema.prisma) (PasswordReset, LoginHistory)
+
+**DTOs:**
+- [login.dto.ts](../../backend/src/modules/auth/dto/login.dto.ts)
+- [forgot-password.dto.ts](../../backend/src/modules/auth/dto/forgot-password.dto.ts)
+- [reset-password.dto.ts](../../backend/src/modules/auth/dto/reset-password.dto.ts)
+- [refresh-token.dto.ts](../../backend/src/modules/auth/dto/refresh-token.dto.ts)
+
+**Guards e Strategies:**
+- [jwt-auth.guard.ts](../../backend/src/modules/auth/guards/jwt-auth.guard.ts)
+- [roles.guard.ts](../../backend/src/modules/auth/guards/roles.guard.ts)
+- [local-auth.guard.ts](../../backend/src/modules/auth/guards/local-auth.guard.ts)
+- [jwt.strategy.ts](../../backend/src/modules/auth/strategies/jwt.strategy.ts)
+- [local.strategy.ts](../../backend/src/modules/auth/strategies/local.strategy.ts)
+
+**Decorators:**
+- [roles.decorator.ts](../../backend/src/modules/auth/decorators/roles.decorator.ts)
+
+---
+
+**Observação final:**  
+Este documento reflete APENAS o código IMPLEMENTADO.  
+Regras inferidas, comportamentos não documentados ou recursos futuros  
+foram marcados como ausências/ambiguidades.
