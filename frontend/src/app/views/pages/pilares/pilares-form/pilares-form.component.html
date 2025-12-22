@@ -1,0 +1,134 @@
+<div class="mb-2 align-items-center gap-2 d-flex justify-content-between flex-wrap">
+  <nav aria-label="breadcrumb">
+    <ol class="breadcrumb breadcrumb-arrow mb-1">
+      <li class="breadcrumb-item">
+        <a [routerLink]="['/pilares']" class="text-decoration-none">Pilares</a>
+      </li>
+      <li class="breadcrumb-item active" aria-current="page">
+        {{ isEditMode ? 'Editar' : 'Novo' }}
+      </li>
+    </ol>
+  </nav>
+</div>
+
+<div class="row">
+  <div class="col-md-8 col-lg-6 mx-auto stretch-card">
+    <div class="card">
+      <div class="card-body">
+        <h6 class="card-title mb-4">
+          {{ isEditMode ? 'Editar Pilar' : 'Novo Pilar' }}
+        </h6>
+
+        @if (loading) {
+        <div class="text-center py-5">
+          <div class="spinner-border text-primary" role="status">
+            <span class="visually-hidden">Carregando...</span>
+          </div>
+        </div>
+        } @else {
+        <form [formGroup]="form" (ngSubmit)="onSubmit()">
+          
+          <!-- Nome -->
+          <div class="mb-3">
+            <label for="nome" class="form-label">
+              Nome <span class="text-danger">*</span>
+            </label>
+            <input 
+              type="text" 
+              class="form-control" 
+              id="nome"
+              formControlName="nome"
+              [class.is-invalid]="isFieldInvalid('nome')"
+              placeholder="Ex: Estratégia e Governança">
+            @if (isFieldInvalid('nome')) {
+              <div class="invalid-feedback">
+                {{ getFieldError('nome') }}
+              </div>
+            }
+          </div>
+
+          <!-- Descrição -->
+          <div class="mb-3">
+            <label for="descricao" class="form-label">
+              Descrição
+            </label>
+            <textarea 
+              class="form-control" 
+              id="descricao"
+              formControlName="descricao"
+              [class.is-invalid]="isFieldInvalid('descricao')"
+              rows="3"
+              placeholder="Descrição detalhada do pilar..."></textarea>
+            <div class="form-text">Máximo 500 caracteres</div>
+            @if (isFieldInvalid('descricao')) {
+              <div class="invalid-feedback">
+                {{ getFieldError('descricao') }}
+              </div>
+            }
+          </div>
+
+          <!-- Pilar Padrão do Sistema (checkbox) -->
+          <div class="mb-3">
+            <div class="form-check">
+              <input 
+                class="form-check-input" 
+                type="checkbox" 
+                id="modelo"
+                formControlName="modelo">
+              <label class="form-check-label" for="modelo">
+                Pilar Padrão do Sistema
+              </label>
+            </div>
+            <div class="form-text">
+              Pilares padrão são auto-associados a novas empresas
+            </div>
+          </div>
+
+          <!-- Ordem (opcional) -->
+          <div class="mb-3">
+            <label for="ordem" class="form-label">
+              Ordem de Exibição
+            </label>
+            <input 
+              type="number" 
+              class="form-control" 
+              id="ordem"
+              formControlName="ordem"
+              [class.is-invalid]="isFieldInvalid('ordem')"
+              min="1"
+              placeholder="Ex: 1, 2, 3...">
+            <div class="form-text">
+              Ordem de exibição (apenas para pilares padrão). Deixe vazio para pilares customizados.
+            </div>
+            @if (isFieldInvalid('ordem')) {
+              <div class="invalid-feedback">
+                {{ getFieldError('ordem') }}
+              </div>
+            }
+          </div>
+
+          <!-- Botões -->
+          <div class="d-flex gap-2 justify-content-end">
+            <button 
+              type="button" 
+              class="btn btn-secondary"
+              (click)="handleCancel()"
+              [disabled]="submitting">
+              Cancelar
+            </button>
+            <button 
+              type="submit" 
+              class="btn btn-primary"
+              [disabled]="submitting || form.invalid">
+              @if (submitting) {
+                <span class="spinner-border spinner-border-sm me-2" role="status"></span>
+              }
+              {{ isEditMode ? 'Salvar Alterações' : 'Criar Pilar' }}
+            </button>
+          </div>
+        </form>
+        }
+      </div>
+    </div>
+  </div>
+</div>
