@@ -86,7 +86,7 @@ export class EmpresasController {
 
   @ApiBearerAuth()
   @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles('ADMINISTRADOR', 'CONSULTOR', 'GESTOR', 'COLABORADOR', 'LEITURA')
+  @Roles('ADMINISTRADOR', 'GESTOR', 'COLABORADOR', 'LEITURA')
   @Get(':id')
   @ApiOperation({ summary: 'Buscar empresa por ID' })
   @ApiResponse({ status: 200, description: 'Empresa encontrada' })
@@ -97,7 +97,7 @@ export class EmpresasController {
 
   @ApiBearerAuth()
   @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles('ADMINISTRADOR', 'CONSULTOR', 'GESTOR')
+  @Roles('ADMINISTRADOR', 'GESTOR')
   @Patch(':id')
   @ApiOperation({ summary: 'Atualizar empresa' })
   @ApiResponse({ status: 200, description: 'Empresa atualizada' })
@@ -111,7 +111,7 @@ export class EmpresasController {
 
   @ApiBearerAuth()
   @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles('ADMINISTRADOR', 'CONSULTOR')
+  @Roles('ADMINISTRADOR')
   @Delete(':id')
   @ApiOperation({ summary: 'Desativar empresa' })
     @ApiResponse({ status: 200, description: 'Empresa desativada' })
@@ -122,7 +122,7 @@ export class EmpresasController {
     @Post(':id/pilares')
     @ApiBearerAuth()
     @UseGuards(JwtAuthGuard, RolesGuard)
-    @Roles('ADMINISTRADOR', 'CONSULTOR', 'GESTOR')
+    @Roles('ADMINISTRADOR', 'GESTOR')
     @ApiOperation({ summary: 'Vincular pilares à empresa' })
     vincularPilares(
       @Param('id') id: string,
@@ -135,7 +135,7 @@ export class EmpresasController {
   @Post(':id/logo')
   @ApiBearerAuth()
   @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles('ADMINISTRADOR', 'CONSULTOR', 'GESTOR')
+  @Roles('ADMINISTRADOR', 'GESTOR')
   @ApiOperation({ summary: 'Upload de logotipo da empresa' })
   @ApiConsumes('multipart/form-data')
   @UseInterceptors(
@@ -174,7 +174,7 @@ export class EmpresasController {
   @Delete(':id/logo')
   @ApiBearerAuth()
   @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles('ADMINISTRADOR', 'CONSULTOR', 'GESTOR')
+  @Roles('ADMINISTRADOR', 'GESTOR')
   @ApiOperation({ summary: 'Deletar logotipo da empresa' })
   async deleteLogo(@Param('id') id: string, @Request() req: ExpressRequest & { user: any }) {
     return this.empresasService.deleteLogo(id, req.user);
