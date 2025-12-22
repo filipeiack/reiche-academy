@@ -70,14 +70,4 @@ export class PilaresController {
   remove(@Param('id') id: string, @Request() req: ExpressRequest & { user: { id: string } }) {
     return this.pilaresService.remove(id, req.user.id);
   }
-
-  @Post('reordenar')
-  @Roles('ADMINISTRADOR')
-  @ApiOperation({ summary: 'Reordenar pilares' })
-  reordenar(
-    @Body('ordens') ordens: { id: string; ordem: number }[],
-    @Request() req: ExpressRequest & { user: { id: string } },
-  ) {
-    return this.pilaresService.reordenar(ordens, req.user.id);
-  }
 }

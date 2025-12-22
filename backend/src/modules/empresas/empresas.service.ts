@@ -53,6 +53,30 @@ export class EmpresasService {
       },
     });
 
+    // Auto-associar pilares padrão (modelo: true) à nova empresa
+    const autoAssociate = process.env.AUTO_ASSOCIAR_PILARES_PADRAO !== 'false';
+    
+    if (autoAssociate) {
+      const pilaresModelo = await this.prisma.pilar.findMany({
+        where: { 
+          modelo: true, 
+          ativo: true 
+        },
+        orderBy: { ordem: 'asc' },
+      });
+      
+      if (pilaresModelo.length > 0) {
+        await this.prisma.pilarEmpresa.createMany({
+          data: pilaresModelo.map((pilar, index) => ({
+            empresaId: created.id,
+            pilarId: pilar.id,
+            ordem: pilar.ordem ?? (index + 1),
+            createdBy: userId,
+          })),
+        });
+      }
+    }
+
     return created;
   }
 
@@ -259,9 +283,10 @@ export class EmpresasService {
     });
 
     // Cria novos vínculos
-    const vinculos = pilaresIds.map((pilarId) => ({
+    const vinculos = pilaresIds.map((pilarId, index) => ({
       empresaId,
       pilarId,
+      ordem: index + 1,
       createdBy: userId,
     }));
 

@@ -169,7 +169,7 @@ model Pilar {
   id          String   @id @default(uuid())
   nome        String   @unique
   descricao   String?
-  ordem       Int
+  ordem       Int?
   modelo      Boolean  @default(false)
   ativo       Boolean  @default(true)
   
@@ -182,6 +182,7 @@ model Pilar {
   rotinas     Rotina[]
   empresas    PilarEmpresa[]
   
+  @@unique([ordem]) 
   @@map("pilares")
 }
 
@@ -189,7 +190,7 @@ model Rotina {
   id          String   @id @default(uuid())
   nome        String
   descricao   String?
-  ordem       Int
+  ordem       Int?
   modelo      Boolean  @default(false)
   ativo       Boolean  @default(true)
   
@@ -216,6 +217,7 @@ model PilarEmpresa {
   pilarId     String
   pilar       Pilar    @relation(fields: [pilarId], references: [id])
   
+  ordem       Int
   ativo       Boolean  @default(true)
   
   createdAt   DateTime @default(now())
@@ -240,7 +242,9 @@ model RotinaEmpresa {
   rotinaId      String
   rotina        Rotina      @relation(fields: [rotinaId], references: [id])
   
+  ordem         Int
   observacao    String?
+  ativo         Boolean  @default(true)
   
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt

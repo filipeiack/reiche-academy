@@ -116,7 +116,24 @@ export class UsuariosService {
   }
 
   async findById(id: string, requestUser: RequestUser) {
-    const usuario = await this.prisma.usuario.findUnique({
+    const usuario = await this.findByIdInternal(id);
+
+    if (!usuario) {
+      throw new NotFoundException('Usuário não encontrado');
+    }
+
+    // RA-001: Validar acesso multi-tenant
+    this.validateTenantAccess(usuario, requestUser, 'visualizar');
+
+    return usuario;
+  }
+
+  /**
+   * Método interno sem validação multi-tenant
+   * Usado por auth.service no refresh token
+   */
+  async findByIdInternal(id: string) {
+    return this.prisma.usuario.findUnique({
       where: { id },
       select: {
         id: true,
@@ -139,15 +156,6 @@ export class UsuariosService {
         updatedAt: true,
       },
     });
-
-    if (!usuario) {
-      throw new NotFoundException('Usuário não encontrado');
-    }
-
-    // RA-001: Validar acesso multi-tenant
-    this.validateTenantAccess(usuario, requestUser, 'visualizar');
-
-    return usuario;
   }
 
   async findByEmail(email: string) {

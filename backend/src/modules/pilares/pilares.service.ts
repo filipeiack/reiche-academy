@@ -6,6 +6,7 @@ import { AuditService } from '../audit/audit.service';
 
 @Injectable()
 export class PilaresService {
+  auditService: any;
   constructor(private prisma: PrismaService, private audit: AuditService) {}
 
   async create(createPilarDto: CreatePilarDto, userId: string) {
@@ -54,8 +55,11 @@ export class PilaresService {
   }
 
   async findOne(id: string) {
-    const pilar = await this.prisma.pilar.findUnique({
-      where: { id },
+    const pilar = await this.prisma.pilar.findFirst({
+      where: { 
+        id,
+        ativo: true,
+      },
       include: {
         rotinas: {
           where: { ativo: true },
@@ -159,21 +163,5 @@ export class PilaresService {
     });
 
     return after;
-  }
-
-  async reordenar(ordensIds: { id: string; ordem: number }[], userId: string) {
-    const updates = ordensIds.map((item) =>
-      this.prisma.pilar.update({
-        where: { id: item.id },
-        data: {
-          ordem: item.ordem,
-          updatedBy: userId,
-        },
-      }),
-    );
-
-    await this.prisma.$transaction(updates);
-
-    return this.findAll();
   }
 }

@@ -79,7 +79,7 @@ export class AuthService {
         secret: this.configService.get('JWT_REFRESH_SECRET'),
       });
 
-      const usuario = await this.usuariosService.findById(payload.sub);
+      const usuario = await this.usuariosService.findByIdInternal(payload.sub);
       
       if (!usuario || !usuario.ativo) {
         throw new UnauthorizedException('Token inválido');
