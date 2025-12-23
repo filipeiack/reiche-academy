@@ -359,7 +359,10 @@ export class EmpresasFormComponent implements OnInit {
   loadUsuariosAssociados(empresaId: string): void {
     this.usersService.getAll().subscribe({
       next: (usuarios) => {
+        console.log('📊 Usuários retornados do backend:', usuarios);
+        console.log('📊 Primeiro usuário com telefone?', usuarios[0]?.telefone);
         this.usuariosAssociados = usuarios.filter(u => u.empresaId === empresaId);
+        console.log('📊 Usuários associados filtrados:', this.usuariosAssociados);
       },
       error: (err) => {
         console.error('Erro ao carregar usuários associados:', err);

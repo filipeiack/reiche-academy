@@ -199,19 +199,15 @@
                                 <tbody>
                                     @for (usuario of (isEditMode ? usuariosAssociados : usuariosPendentesAssociacao); track usuario.id) {
                                     <tr>
-                                        <td>
-                                            <div class="text-muted">
-                                                <span>{{ usuario.nome }}</span>
-                                            </div>
-                                        </td>
-                                        <td class="text-muted">{{ usuario.cargo }}</td>
-                                        <td class="text-muted">{{ usuario.telefone }}</td>
+                                        <td class="text-muted small">{{ usuario.nome }}</td>
+                                        <td class="text-muted small">{{ usuario.cargo }}</td>
+                                        <td class="text-muted small">{{ usuario.telefone }}</td>
                                         <td>
                                             @if (isPerfilObject(usuario.perfil)) {
-                                            <span class="badge bg-info">{{ usuario.perfil.nome }}</span>
+                                            <span class="badge bg-info small">{{ usuario.perfil.nome }}</span>
                                             }
                                         </td>
-                                        <td class="text-muted text-end">
+                                        <td class="text-muted text-end small">
                                             @if (!isPerfilCliente) {
                                             <button type="button" class="btn btn-icon text-danger"
                                                 (click)="desassociarUsuario(usuario)" title="Desassociar usuário">
