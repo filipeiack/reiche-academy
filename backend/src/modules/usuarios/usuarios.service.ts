@@ -238,9 +238,11 @@ export class UsuariosService {
     // RA-001: Validar isolamento multi-tenant
     this.validateTenantAccess(before, requestUser, 'editar');
 
-    // RA-002: Bloquear auto-edição de campos privilegiados
+    // RA-002: Bloquear auto-edição de campos privilegiados (exceto para ADMINISTRADOR)
     const isSelfEdit = id === requestUser.id;
-    if (isSelfEdit) {
+    const isAdmin = requestUser.perfil.codigo === 'ADMINISTRADOR';
+    
+    if (isSelfEdit && !isAdmin) {
       const forbiddenFields = ['perfilId', 'empresaId', 'ativo'];
       const attemptingForbidden = forbiddenFields.some(field => (data as any)[field] !== undefined);
       

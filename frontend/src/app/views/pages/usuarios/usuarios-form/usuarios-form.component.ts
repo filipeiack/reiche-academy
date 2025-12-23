@@ -216,23 +216,42 @@ export class UsuariosFormComponent implements OnInit {
     const formValue = this.form.value;
 
     if (this.isEditMode && this.usuarioId) {
-      // Atualizar usuário
-      const updateData: UpdateUsuarioRequest = {
-        nome: formValue.nome || '',
-        telefone: formValue.telefone || '',
-        email: formValue.email || '',
-        cargo: formValue.cargo || '',
-        empresaId: formValue.empresaId || null,
-        perfilId: formValue.perfilId || '',
-        ativo: formValue.ativo || true
-      };
+      // Atualizar usuário - enviar apenas campos modificados
+      const updateData: Partial<UpdateUsuarioRequest> = {};
+
+      // Campos regulares - enviar apenas se foram modificados
+      if (this.form.get('nome')?.dirty && formValue.nome) {
+        updateData.nome = formValue.nome;
+      }
+      if (this.form.get('email')?.dirty && formValue.email) {
+        updateData.email = formValue.email;
+      }
+      if (this.form.get('telefone')?.dirty) {
+        updateData.telefone = formValue.telefone || '';
+      }
+      if (this.form.get('cargo')?.dirty) {
+        updateData.cargo = formValue.cargo || '';
+      }
+
+      // Campos privilegiados - enviar apenas se foram alterados
+      if (this.form.get('perfilId')?.dirty && formValue.perfilId) {
+        updateData.perfilId = formValue.perfilId;
+      }
+      if (this.form.get('empresaId')?.dirty) {
+        updateData.empresaId = formValue.empresaId || null;
+      }
+      if (this.form.get('ativo')?.dirty) {
+        if (typeof formValue.ativo === 'boolean') {
+          updateData.ativo = formValue.ativo;
+        }
+      }
 
       // Incluir senha somente se foi preenchida
       if (formValue.senha && formValue.senha.trim()) {
         updateData.senha = formValue.senha;
       }
 
-      this.usersService.update(this.usuarioId, updateData).subscribe({
+      this.usersService.update(this.usuarioId, updateData as UpdateUsuarioRequest).subscribe({
         next: () => {
           this.showToast('Usuário atualizado com sucesso!', 'success');
           this.loading = false;

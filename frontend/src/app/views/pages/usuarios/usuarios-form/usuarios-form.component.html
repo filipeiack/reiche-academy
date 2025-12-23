@@ -223,9 +223,9 @@
         @if (!modalMode) {
         <div class="col-md-4">
             <div class="card mb-3">
-                <div class="card-header">
+                <!-- <div class="card-header">
                     <h3 class="card-title">{{ "USERS.AVATAR" | translate }}</h3>
-                </div>
+                </div> -->
                 <div class="card-body text-center">
                     <div class="mb-3 d-flex justify-content-center">
                         @if (previewUrl || fotoUrl) {
@@ -267,22 +267,40 @@
 
             <div class="card">
                 <div class="card-header">
-                    <h3 class="card-title">{{ "COMMON.INFO" | translate }}</h3>
+                    <h3 class="card-title">{{ "COMMON.INSTRUCTIONS" | translate }}</h3>
                 </div>
                 <div class="card-body">
                     <p class="text-muted mb-2">
-                        @if (isEditMode) { Edite as informações do usuário e clique em
-                        "Atualizar" para salvar as mudanças. } @else { Preencha todos os
-                        campos obrigatórios (marcados com *) para criar um novo usuário. }
+                        @if (isEditMode) {
+                        {{ 'USERS.INFO.EDIT' | translate }}
+                        } @else {
+                        {{ 'USERS.INFO.CREATE' | translate }}
+                        }
                     </p>
 
-                    <h5 class="text-sm font-semibold mb-2">Perfis disponíveis:</h5>
-                    <ul class="text-muted text-sm">
-                        <li><strong>Administrador:</strong> Equipe Reiche Academy - Acesso total ao sistema, sem vinculação a empresa</li>
-                        <li><strong>Gestor:</strong> Empresa cliente - Gerencia diagnósticos da própria empresa, pode editar seus dados</li>
-                        <li><strong>Colaborador:</strong> Empresa cliente - Acessa diagnósticos da própria empresa, pode editar seus dados</li>
-                        <li><strong>Leitura:</strong> Empresa cliente - Apenas visualização de dados da própria empresa</li>
+                    <hr class="my-3">
+                    
+                    <h6 class="mb-2">{{ 'USERS.INFO.PROFILES_TITLE' | translate }}</h6>
+                    <ul class="small text-muted mb-2">
+                        <li><strong>{{ 'USERS.INFO.ADMIN' | translate }}:</strong> {{ 'USERS.INFO.ADMIN_DESC' | translate }}</li>
+                        <li><strong>{{ 'USERS.INFO.MANAGER' | translate }}:</strong> {{ 'USERS.INFO.MANAGER_DESC' | translate }}</li>
+                        <li><strong>{{ 'USERS.INFO.COLLABORATOR' | translate }}:</strong> {{ 'USERS.INFO.COLLABORATOR_DESC' | translate }}</li>
+                        <li><strong>{{ 'USERS.INFO.READONLY' | translate }}:</strong> {{ 'USERS.INFO.READONLY_DESC' | translate }}</li>
                     </ul>
+                    
+                    <h6 class="mb-2 mt-3">{{ 'USERS.INFO.FIELDS_GUIDE' | translate }}</h6>
+                    <ul class="small text-muted mb-2">
+                        <li><strong>{{ 'USERS.INFO.AVATAR' | translate }}:</strong> {{ 'USERS.INFO.AVATAR_TIP' | translate }}</li>
+                        <li><strong>{{ 'USERS.INFO.PASSWORD' | translate }}:</strong> {{ 'USERS.INFO.PASSWORD_TIP' | translate }}</li>
+                        <li><strong>{{ 'USERS.INFO.COMPANY' | translate }}:</strong> {{ 'USERS.INFO.COMPANY_TIP' | translate }}</li>
+                    </ul>
+                    
+                    <div class="alert alert-warning p-2 mb-0">
+                        <small>
+                            <strong>{{ 'USERS.INFO.SECURITY' | translate }}:</strong>
+                            {{ 'USERS.INFO.SECURITY_DESC' | translate }}
+                        </small>
+                    </div>
                 </div>
             </div>
         </div>

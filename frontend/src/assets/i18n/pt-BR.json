@@ -69,7 +69,7 @@
     "LOADING": "Carregando...",
     "ITEMS": "itens",
     "ACTIONS": "Ações",
-    "INFO": "Informações",
+    "INSTRUCTIONS": "Instruções",
     "ACTIVE": "Ativo",
     "INACTIVE": "Inativo",
     "NO_DATA": "Nenhum registro encontrado",
@@ -111,7 +111,25 @@
     "CREATE": "Criar Empresa",
     "EDIT": "Editar Empresa",
     "ADD": "Adicionar Empresa",
-    "DETAILS": "Detalhes da Empresa"
+    "DETAILS": "Detalhes da Empresa",
+    "INFO": {
+      "CREATE": "Preencha todos os campos obrigatórios (marcados com *) para criar uma nova empresa.",
+      "EDIT": "Edite as informações da empresa e clique em 'Atualizar' para salvar as mudanças.",
+      "WHAT_ARE": "O que são Empresas?",
+      "DESCRIPTION": "Cada empresa possui acesso isolado e personalizado ao sistema (multi-tenant), com seus próprios usuários, dados e configurações visuais.",
+      "FIELDS_GUIDE": "Orientações de Preenchimento",
+      "LOGIN_URL_TIP": "Define a URL personalizada de acesso: /login/{loginUrl}. Use apenas letras minúsculas, números e hífen, sem espaços.",
+      "LOGO": "Logotipo",
+      "LOGO_TIP": "Exibido na tela de login personalizada da empresa. Formatos aceitos: JPG, PNG, WebP (máx 5MB). Dimensão recomendada: 300x115px.",
+      "BUSINESS_TYPE_TIP": "Opcional. Classifica o segmento de atuação da empresa. Você pode criar novos tipos digitando.",
+      "USERS_MANAGEMENT": "Gestão de Usuários",
+      "USERS_DESC": "Você pode associar usuários à empresa de duas formas:",
+      "USERS_TIP_1": "Criar novos usuários diretamente pelo botão 'Criar Novo Usuário'",
+      "USERS_TIP_2": "Adicionar usuários já existentes através do campo de busca",
+      "USERS_TIP_3": "Usuários podem ser desassociados a qualquer momento (perfil Administrador)",
+      "MULTI_TENANT": "Multi-tenant",
+      "MULTI_TENANT_DESC": "Cada empresa possui isolamento completo de dados. Usuários de uma empresa não visualizam informações de outras empresas."
+    }
   },
   "USERS": {
     "AVATAR": "Avatar",
@@ -123,7 +141,29 @@
     "CREATE": "Criar Usuário",
     "EDIT": "Editar Usuário",
     "ADD": "Adicionar Usuário",
-    "DETAILS": "Detalhes do Usuário"
+    "DETAILS": "Detalhes do Usuário",
+    "INFO": {
+      "CREATE": "Preencha todos os campos obrigatórios (marcados com *) para criar um novo usuário.",
+      "EDIT": "Edite as informações do usuário e clique em 'Atualizar' para salvar as mudanças.",
+      "PROFILES_TITLE": "Perfis Disponíveis",
+      "ADMIN": "Administrador",
+      "ADMIN_DESC": "Equipe Reiche Academy - Acesso total ao sistema, sem vinculação a empresa específica",
+      "MANAGER": "Gestor",
+      "MANAGER_DESC": "Empresa cliente - Gerencia diagnósticos da própria empresa, pode editar seus dados",
+      "COLLABORATOR": "Colaborador",
+      "COLLABORATOR_DESC": "Empresa cliente - Acessa diagnósticos da própria empresa, pode editar seus dados",
+      "READONLY": "Leitura",
+      "READONLY_DESC": "Empresa cliente - Apenas visualização de dados da própria empresa",
+      "FIELDS_GUIDE": "Orientações de Preenchimento",
+      "AVATAR": "Avatar",
+      "AVATAR_TIP": "Opcional. Formatos aceitos: JPG, PNG, WebP (máx 5MB). Exibido na navbar e listagens.",
+      "PASSWORD": "Senha",
+      "PASSWORD_TIP": "Mínimo 6 caracteres. No modo edição, deixe em branco para manter a senha atual.",
+      "COMPANY": "Empresa Associada",
+      "COMPANY_TIP": "Usuários com perfil Cliente devem estar associados a uma empresa. Administradores não possuem empresa.",
+      "SECURITY": "Segurança",
+      "SECURITY_DESC": "Cada usuário acessa apenas dados da própria empresa. Senhas são criptografadas e não podem ser recuperadas."
+    }
   },
   "DASHBOARD": {
     "NEW_CUSTOMERS": "Novos Clientes",
@@ -138,5 +178,46 @@
     "WEEK": "Semana",
     "MONTH": "Mês",
     "YEAR": "Ano"
+  },
+  "PILARES": {
+    "NEW": "Novo Pilar",
+    "EDIT": "Editar Pilar",
+    "DETAILS": "Detalhes do Pilar",
+    "FIELDS": {
+      "NAME": "Nome",
+      "DESCRIPTION": "Descrição",
+      "ORDER": "Ordem",
+      "TYPE": "Tipo",
+      "CONFIGURATION": "Configuração",
+      "IS_MODEL": "Pilar Padrão"
+    },
+    "PLACEHOLDERS": {
+      "NAME": "Digite o nome do pilar",
+      "DESCRIPTION": "Descreva o objetivo deste pilar",
+      "ORDER": "Ordem de exibição"
+    },
+    "HELPERS": {
+      "MAX_CHARS": "Máximo de 500 caracteres",
+      "ORDER": "Define a ordem de exibição do pilar",
+      "MODEL": "Pilares padrão aparecem automaticamente para todas as empresas"
+    },
+    "FILTERS": {
+      "STATUS": "Filtrar por Status",
+      "TYPE": "Filtrar por Tipo"
+    },
+    "INFO": {
+      "CREATE": "Preencha os dados para criar um novo pilar. Pilares organizam as rotinas da metodologia.",
+      "EDIT": "Edite as informações do pilar. Alterações afetam todas as empresas que utilizam este pilar.",
+      "WHAT_ARE": "O que são Pilares?",
+      "DESCRIPTION": "Pilares são as categorias principais que estruturam a metodologia da Reiche Academy. Eles agrupam rotinas relacionadas e definem a organização visual do sistema.",
+      "FIELDS_GUIDE": "Orientações de Preenchimento",
+      "ORDER_TIP": "Opcional. Define a sequência de exibição. Deixe em branco para ordenação automática.",
+      "MODEL_TIP": "Quando ativo, este pilar aparece automaticamente para todas as empresas cadastradas.",
+      "ACTIVE_TIP": "Pilares inativos ficam ocultos mas mantêm seus dados preservados."
+    },
+    "DETAILS_INFO": {
+      "ROTINAS_COUNT": "Rotinas Vinculadas",
+      "EMPRESAS_COUNT": "Empresas Usando"
+    }
   }
 }

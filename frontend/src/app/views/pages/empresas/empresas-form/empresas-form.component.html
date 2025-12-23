@@ -191,6 +191,7 @@
                                     <tr>
                                         <th>Usuário</th>
                                         <th>Cargo</th>
+                                        <th>Telefone</th>
                                         <th>Perfil</th>
                                         <th class="text-end">Ações</th>
                                     </tr>
@@ -204,6 +205,7 @@
                                             </div>
                                         </td>
                                         <td class="text-muted">{{ usuario.cargo }}</td>
+                                        <td class="text-muted">{{ usuario.telefone }}</td>
                                         <td>
                                             @if (isPerfilObject(usuario.perfil)) {
                                             <span class="badge bg-info">{{ usuario.perfil.nome }}</span>
@@ -256,17 +258,17 @@
         <!-- Logo Sidebar -->
         <div class="col-md-4">
             <div class="card mb-3">
-                <div class="card-header">
+                <!-- <div class="card-header">
                     <h3 class="card-title">Logotipo da Empresa</h3>
-                </div>
+                </div> -->
                 <div class="card-body text-center">
                     <div class="mb-3 d-flex justify-content-center">
                         @if (previewUrl || logoUrl) {
                         <img [src]="previewUrl || logoUrl" alt="Logo da empresa" class="img-fluid rounded"
-                            style="max-height: 150px; max-width: 100%;">
+                            style="max-height: 140px; max-width: 100%;">
                         } @else {
                         <div class="d-flex align-items-center justify-content-center bg-light rounded text-muted"
-                            style="height: 150px; width: 300px;">
+                            style="height: 140px; width: 300px;">
                             <span>Imagem 300 x 115</span>
                         </div>
                         }
@@ -301,23 +303,47 @@
 
             <div class="card">
                 <div class="card-header">
-                    <h3 class="card-title">{{ "COMMON.INFO" | translate }}</h3>
+                    <h3 class="card-title">{{ "COMMON.INSTRUCTIONS" | translate }}</h3>
                 </div>
                 <div class="card-body">
                     <p class="text-muted mb-2">
                         @if (isEditMode) {
-                        Edite as informações da empresa e clique em "Atualizar" para salvar as mudanças.
+                        {{ 'COMPANIES.INFO.EDIT' | translate }}
                         } @else {
-                        Preencha todos os campos obrigatórios (marcados com *) para criar uma nova empresa.
+                        {{ 'COMPANIES.INFO.CREATE' | translate }}
                         }
                     </p>
-                    <p class="text-muted text-sm mb-2">
-                        <strong>Identificação do login:</strong> o valor deste campo será usado na URL de acesso da
-                        empresa: /login/{{ '{' }}loginUrl{{ '}' }}. Use apenas letras, números e hífen, sem espaços.
+                    
+                    <hr class="my-3">
+                    
+                    <h6 class="mb-2">{{ 'COMPANIES.INFO.WHAT_ARE' | translate }}</h6>
+                    <p class="small text-muted">
+                        {{ 'COMPANIES.INFO.DESCRIPTION' | translate }}
                     </p>
-                    <p class="text-muted text-sm mb-0">
-                        <strong>Dica:</strong> O logotipo será utilizado na tela de login personalizada da empresa.
+                    
+                    <h6 class="mb-2 mt-3">{{ 'COMPANIES.INFO.FIELDS_GUIDE' | translate }}</h6>
+                    <ul class="small text-muted mb-2">
+                        <li><strong>{{ 'COMPANIES.LOGIN_URL' | translate }}:</strong> {{ 'COMPANIES.INFO.LOGIN_URL_TIP' | translate }}</li>
+                        <li><strong>{{ 'COMPANIES.INFO.LOGO' | translate }}:</strong> {{ 'COMPANIES.INFO.LOGO_TIP' | translate }}</li>
+                        <li><strong>{{ 'COMPANIES.TIPO_NEGOCIO' | translate }}:</strong> {{ 'COMPANIES.INFO.BUSINESS_TYPE_TIP' | translate }}</li>
+                    </ul>
+                    
+                    <h6 class="mb-2 mt-3">{{ 'COMPANIES.INFO.USERS_MANAGEMENT' | translate }}</h6>
+                    <p class="small text-muted mb-2">
+                        {{ 'COMPANIES.INFO.USERS_DESC' | translate }}
                     </p>
+                    <ul class="small text-muted mb-2">
+                        <li>{{ 'COMPANIES.INFO.USERS_TIP_1' | translate }}</li>
+                        <li>{{ 'COMPANIES.INFO.USERS_TIP_2' | translate }}</li>
+                        <li>{{ 'COMPANIES.INFO.USERS_TIP_3' | translate }}</li>
+                    </ul>
+                    
+                    <div class="alert alert-info p-2 mb-0">
+                        <small>
+                            <strong>{{ 'COMPANIES.INFO.MULTI_TENANT' | translate }}:</strong>
+                            {{ 'COMPANIES.INFO.MULTI_TENANT_DESC' | translate }}
+                        </small>
+                    </div>
                 </div>
             </div>
         </div>

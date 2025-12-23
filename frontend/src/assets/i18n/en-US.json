@@ -73,7 +73,7 @@
     "LOADING": "Loading...",
     "ITEMS": "items",
     "ACTIONS": "Actions",
-    "INFO": "Information",
+    "INSTRUCTIONS": "Instructions",
     "ACTIVE": "Active",
     "INACTIVE": "Inactive",
     "NO_DATA": "No records found",
@@ -111,7 +111,29 @@
     "CARGO": "Position in Company",
     "STATUS": "Status",
     "CREATE": "Create User",
-    "EDIT": "Edit User"
+    "EDIT": "Edit User",
+    "INFO": {
+      "CREATE": "Fill in all required fields (marked with *) to create a new user.",
+      "EDIT": "Edit user information and click 'Update' to save changes.",
+      "PROFILES_TITLE": "Available Profiles",
+      "ADMIN": "Administrator",
+      "ADMIN_DESC": "Reiche Academy Team - Full system access, not linked to any specific company",
+      "MANAGER": "Manager",
+      "MANAGER_DESC": "Client company - Manages diagnostics for their own company, can edit their data",
+      "COLLABORATOR": "Collaborator",
+      "COLLABORATOR_DESC": "Client company - Accesses diagnostics for their own company, can edit their data",
+      "READONLY": "Read-only",
+      "READONLY_DESC": "Client company - View-only access to their own company's data",
+      "FIELDS_GUIDE": "Field Guidelines",
+      "AVATAR": "Avatar",
+      "AVATAR_TIP": "Optional. Accepted formats: JPG, PNG, WebP (max 5MB). Displayed in navbar and listings.",
+      "PASSWORD": "Password",
+      "PASSWORD_TIP": "Minimum 6 characters. In edit mode, leave blank to keep current password.",
+      "COMPANY": "Associated Company",
+      "COMPANY_TIP": "Users with Client profile must be associated with a company. Administrators have no company.",
+      "SECURITY": "Security",
+      "SECURITY_DESC": "Each user accesses only their own company's data. Passwords are encrypted and cannot be recovered."
+    }
   },
   "COMPANIES": {
     "NAME": "Company Name",
@@ -124,7 +146,25 @@
     "CREATE": "Create Company",
     "EDIT": "Edit Company",
     "ADD": "Add Company",
-    "DETAILS": "Company Details"
+    "DETAILS": "Company Details",
+    "INFO": {
+      "CREATE": "Fill in all required fields (marked with *) to create a new company.",
+      "EDIT": "Edit company information and click 'Update' to save changes.",
+      "WHAT_ARE": "What are Companies?",
+      "DESCRIPTION": "Companies represent client organizations registered on the platform. Each company has isolated and personalized system access (multi-tenant), with its own users, data, and visual settings.",
+      "FIELDS_GUIDE": "Field Guidelines",
+      "LOGIN_URL_TIP": "Defines the custom access URL: /login/{loginUrl}. Use only lowercase letters, numbers, and hyphens, no spaces.",
+      "LOGO": "Logo",
+      "LOGO_TIP": "Displayed on the company's custom login screen. Accepted formats: JPG, PNG, WebP (max 5MB). Recommended size: 300x115px.",
+      "BUSINESS_TYPE_TIP": "Optional. Classifies the company's business segment. You can create new types by typing.",
+      "USERS_MANAGEMENT": "User Management",
+      "USERS_DESC": "You can associate users with the company in two ways:",
+      "USERS_TIP_1": "Create new users directly through the 'Create New User' button",
+      "USERS_TIP_2": "Add existing users through the search field",
+      "USERS_TIP_3": "Users can be disassociated at any time (Administrator profile)",
+      "MULTI_TENANT": "Multi-tenant",
+      "MULTI_TENANT_DESC": "Each company has complete data isolation. Users from one company cannot view information from other companies."
+    }
   },
   "DASHBOARD": {
     "NEW_CUSTOMERS": "New Customers",
@@ -139,5 +179,46 @@
     "WEEK": "Week",
     "MONTH": "Month",
     "YEAR": "Year"
+  },
+  "PILARES": {
+    "NEW": "New Pillar",
+    "EDIT": "Edit Pillar",
+    "DETAILS": "Pillar Details",
+    "FIELDS": {
+      "NAME": "Name",
+      "DESCRIPTION": "Description",
+      "ORDER": "Order",
+      "TYPE": "Type",
+      "CONFIGURATION": "Configuration",
+      "IS_MODEL": "Default Pillar"
+    },
+    "PLACEHOLDERS": {
+      "NAME": "Enter pillar name",
+      "DESCRIPTION": "Describe the objective of this pillar",
+      "ORDER": "Display order"
+    },
+    "HELPERS": {
+      "MAX_CHARS": "Maximum of 500 characters",
+      "ORDER": "Defines the pillar display order",
+      "MODEL": "Default pillars appear automatically for all companies"
+    },
+    "FILTERS": {
+      "STATUS": "Filter by Status",
+      "TYPE": "Filter by Type"
+    },
+    "INFO": {
+      "CREATE": "Fill in the data to create a new pillar. Pillars organize methodology routines.",
+      "EDIT": "Edit pillar information. Changes affect all companies using this pillar.",
+      "WHAT_ARE": "What are Pillars?",
+      "DESCRIPTION": "Pillars are the main categories that structure the Reiche Academy methodology. They group related routines and define the system's visual organization.",
+      "FIELDS_GUIDE": "Field Guidelines",
+      "ORDER_TIP": "Optional. Defines the display sequence. Leave blank for automatic ordering.",
+      "MODEL_TIP": "When active, this pillar appears automatically for all registered companies.",
+      "ACTIVE_TIP": "Inactive pillars are hidden but their data remains preserved."
+    },
+    "DETAILS_INFO": {
+      "ROTINAS_COUNT": "Linked Routines",
+      "EMPRESAS_COUNT": "Companies Using"
+    }
   }
 }

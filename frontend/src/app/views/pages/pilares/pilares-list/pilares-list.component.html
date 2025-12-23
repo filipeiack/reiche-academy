@@ -89,10 +89,10 @@
                 
                 <!-- UI-PIL-002: Badge de Tipo -->
                 <td class="text-muted">
-                  <span class="badge" [ngClass]="{ 'bg-primary': pilar.modelo, 'bg-secondary black': !pilar.modelo }"
+                  <app-pilar-badge 
+                    [modelo]="pilar.modelo"
                     [title]="pilar.modelo ? 'Pilar padrão (auto-associado a novas empresas)' : 'Pilar customizado'">
-                    {{ pilar.modelo ? 'Padrão' : 'Customizado' }}
-                  </span>
+                  </app-pilar-badge>
                 </td>
                 
                 <td class="text-muted"> {{ pilar.ordem }} </td>

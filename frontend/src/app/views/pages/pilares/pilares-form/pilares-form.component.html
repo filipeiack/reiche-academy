@@ -124,12 +124,26 @@
         <div class="col-md-4">
             <div class="card">
                 <div class="card-header">
-                    <h3 class="card-title">{{ "COMMON.INFO" | translate }}</h3>
+                    <h3 class="card-title">{{ "COMMON.INSTRUCTIONS" | translate }}</h3>
                 </div>
                 <div class="card-body">
                     <p class="card-text">
                         {{ (isEditMode ? 'PILARES.INFO.EDIT' : 'PILARES.INFO.CREATE') | translate }}
                     </p>
+                    
+                    <hr class="my-3">
+                    
+                    <h6 class="mb-2">{{ 'PILARES.INFO.WHAT_ARE' | translate }}</h6>
+                    <p class="small text-muted">
+                        {{ 'PILARES.INFO.DESCRIPTION' | translate }}
+                    </p>
+                    
+                    <h6 class="mb-2 mt-3">{{ 'PILARES.INFO.FIELDS_GUIDE' | translate }}</h6>
+                    <ul class="small text-muted">
+                        <li><strong>{{ 'PILARES.FIELDS.ORDER' | translate }}:</strong> {{ 'PILARES.INFO.ORDER_TIP' | translate }}</li>
+                        <li><strong>{{ 'PILARES.FIELDS.IS_MODEL' | translate }}:</strong> {{ 'PILARES.INFO.MODEL_TIP' | translate }}</li>
+                        <li><strong>{{ 'COMMON.ACTIVE' | translate }}:</strong> {{ 'PILARES.INFO.ACTIVE_TIP' | translate }}</li>
+                    </ul>
                 </div>
             </div>
         </div>
