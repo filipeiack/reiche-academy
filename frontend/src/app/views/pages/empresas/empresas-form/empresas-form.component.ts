@@ -1,7 +1,7 @@
 import { Component, OnInit, ViewChild, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, ReactiveFormsModule, FormsModule, Validators } from '@angular/forms';
-import { Router, ActivatedRoute, RouterLink } from '@angular/router';
+import { Router, ActivatedRoute } from '@angular/router';
 import Swal from 'sweetalert2';
 import { EmpresasService, Empresa, CreateEmpresaRequest, UpdateEmpresaRequest, EstadoBrasil } from '../../../../core/services/empresas.service';
 import { UsersService } from '../../../../core/services/users.service';
@@ -16,7 +16,7 @@ import { UserAvatarComponent } from '../../../../shared/components/user-avatar/u
 @Component({
   selector: 'app-empresas-form',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, FormsModule, RouterLink, TranslatePipe, NgSelectModule, UsuarioModalComponent, UserAvatarComponent],
+  imports: [CommonModule, ReactiveFormsModule, FormsModule, TranslatePipe, NgSelectModule, UsuarioModalComponent, UserAvatarComponent],
   templateUrl: './empresas-form.component.html',
   styleUrl: './empresas-form.component.scss'
 })
