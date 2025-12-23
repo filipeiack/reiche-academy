@@ -29,7 +29,6 @@ describe('PilaresService', () => {
     id: 'pilar-2',
     nome: 'Inovação',
     descricao: 'Pilar customizado',
-    ordem: null,
     modelo: false,
     ativo: true,
     createdAt: '2024-12-22T00:00:00Z',
@@ -144,7 +143,7 @@ describe('PilaresService', () => {
 
       service.create(dto).subscribe((pilar) => {
         expect(pilar.modelo).toBe(false);
-        expect(pilar.ordem).toBeNull();
+        expect(pilar.ordem).toBeUndefined();
       });
 
       const req = httpMock.expectOne(apiUrl);
@@ -291,9 +290,9 @@ describe('PilaresService', () => {
       expect(typeof mockPilarCustomizado.modelo).toBe('boolean');
     });
 
-    it('campo ordem deve ser number ou null', () => {
+    it('campo ordem deve ser number ou undefined', () => {
       expect(typeof mockPilarPadrao.ordem).toBe('number');
-      expect(mockPilarCustomizado.ordem).toBeNull();
+      expect(mockPilarCustomizado.ordem).toBeUndefined();
     });
 
     it('_count deve ter rotinas e empresas', () => {
@@ -356,9 +355,9 @@ describe('PilaresService', () => {
   // ============================================================
 
   describe('Edge Cases', () => {
-    it('deve lidar com pilar sem ordem (null)', () => {
+    it('deve lidar com pilar sem ordem (undefined)', () => {
       service.findOne('pilar-2').subscribe((pilar) => {
-        expect(pilar.ordem).toBeNull();
+        expect(pilar.ordem).toBeUndefined();
       });
 
       const req = httpMock.expectOne(`${apiUrl}/pilar-2`);

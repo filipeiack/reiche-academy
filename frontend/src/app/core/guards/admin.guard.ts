@@ -21,6 +21,13 @@ export const adminGuard: CanActivateFn = (route, state) => {
   }
 
   const currentUser = JSON.parse(userJson);
+  
+  // Verificar se perfil existe
+  if (!currentUser.perfil) {
+    router.navigate(['/dashboard']);
+    return false;
+  }
+  
   const perfilCodigo = typeof currentUser.perfil === 'object' 
     ? currentUser.perfil.codigo 
     : currentUser.perfil;

@@ -9,13 +9,13 @@
 @import 'ngx-owl-carousel-o/lib/styles/scss/owl.theme.default';
 @import "animate.css/animate.min.css";
 @import "@ng-select/ng-select/themes/default.theme.css";
-@import "metismenujs/scss/metismenujs";
+// @import "metismenujs/dist/metismenujs.css"; // SCSS build error - styles loaded via plugin-overrides
 @import "dropzone/dist/dropzone.css";
 @import "quill/dist/quill.snow.css";
-@import "@rg-software/angular-archwizard/styles/archwizard";
-@import "@siemens/ngx-datatable/index";
-@import "@siemens/ngx-datatable/themes/bootstrap";
-@import "@siemens/ngx-datatable/assets/icons";
+// @import "@rg-software/angular-archwizard/styles/archwizard"; // Not used - commented for test execution
+// @import "@siemens/ngx-datatable/index"; // Not used - commented for test execution
+// @import "@siemens/ngx-datatable/themes/bootstrap"; // Commented out due to SCSS build error
+// @import "@siemens/ngx-datatable/assets/icons"; // Commented out due to SCSS build error
 
 // NobleUI styles for LTR layout
 @import "./styles/styles.scss";

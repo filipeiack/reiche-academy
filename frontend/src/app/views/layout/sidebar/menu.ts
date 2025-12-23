@@ -39,7 +39,7 @@ export const MENU: MenuItem[] = [
   },
   {
     label: 'MENU.PILARES',
-    icon: 'anchor',
+    icon: 'layers',
     link: '/pilares'
   },
   {

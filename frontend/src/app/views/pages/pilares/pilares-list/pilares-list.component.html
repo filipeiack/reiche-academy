@@ -4,7 +4,7 @@
       <li class="breadcrumb-item">
         <i class="input-icon" data-feather="layers" style="width: 16px; height: 16px"></i>
       </li>
-      <li class="breadcrumb-item active" aria-current="page">
+      <li class="breadcrumb-item active text-primary" aria-current="page">
         Pilares
       </li>
     </ol>
@@ -22,7 +22,7 @@
       <div class="card-body">
         <!-- UI-PIL-007: Filtros -->
         <div class="row mb-3">
-          <div class="col-md-4">
+          <div class="col-md-6">
             <div class="input-icon search-inline">
               <span class="input-icon-addon">
                 <i class="feather icon-search"></i>
@@ -37,19 +37,27 @@
           </div>
 
           <div class="col-md-3">
-            <select class="form-select" [(ngModel)]="statusFilter" (ngModelChange)="onStatusFilterChange($event)">
-              <option value="all">Todos os Status</option>
-              <option value="active">Ativos</option>
-              <option value="inactive">Inativos</option>
-            </select>
+            <ng-select
+              [items]="statusOptions"
+              bindLabel="label"
+              bindValue="value"
+              placeholder="{{ 'PILARES.FILTERS.STATUS' | translate }}"
+              [(ngModel)]="statusFilter"
+              (ngModelChange)="onStatusFilterChange($event)"
+              [clearable]="false">
+            </ng-select>
           </div>
 
           <div class="col-md-3">
-            <select class="form-select" [(ngModel)]="tipoFilter" (ngModelChange)="onTipoFilterChange($event)">
-              <option value="all">Todos os Tipos</option>
-              <option value="modelo">Padrão</option>
-              <option value="customizado">Customizados</option>
-            </select>
+            <ng-select
+              [items]="tipoOptions"
+              bindLabel="label"
+              bindValue="value"
+              placeholder="{{ 'PILARES.FILTERS.TYPE' | translate }}"
+              [(ngModel)]="tipoFilter"
+              (ngModelChange)="onTipoFilterChange($event)"
+              [clearable]="false">
+            </ng-select>
           </div>
         </div>
 
@@ -65,8 +73,8 @@
             <thead>
               <tr>
                 <th scope="col">Nome</th>
-                <th scope="col">Descrição</th>
                 <th scope="col">Tipo</th>
+                <th scope="col">Ordem</th>
                 <th scope="col" class="text-center">Rotinas</th>
                 <th scope="col" class="text-center">Empresas</th>
                 <th scope="col">Status</th>
@@ -77,44 +85,29 @@
               @for (pilar of paginatedPilares; track pilar.id) {
               <tr>
                 <!-- Nome -->
-                <td>
-                  <strong>{{ pilar.nome }}</strong>
-                </td>
-                
-                <!-- Descrição com truncate e tooltip - UI-PIL-001 -->
-                <td class="text-muted">
-                  @if (pilar.descricao) {
-                    <span 
-                      [ngbTooltip]="pilar.descricao" 
-                      placement="top">
-                      {{ truncate(pilar.descricao, 50) }}
-                    </span>
-                  } @else {
-                    <span class="text-muted fst-italic">—</span>
-                  }
-                </td>
+                <td> {{ pilar.nome }} </td>
                 
                 <!-- UI-PIL-002: Badge de Tipo -->
-                <td>
-                  <app-pilar-badge 
-                    [modelo]="pilar.modelo"
+                <td class="text-muted">
+                  <span class="badge" [ngClass]="{ 'bg-primary': pilar.modelo, 'bg-secondary black': !pilar.modelo }"
                     [title]="pilar.modelo ? 'Pilar padrão (auto-associado a novas empresas)' : 'Pilar customizado'">
-                  </app-pilar-badge>
+                    {{ pilar.modelo ? 'Padrão' : 'Customizado' }}
+                  </span>
                 </td>
                 
+                <td class="text-muted"> {{ pilar.ordem }} </td>
+
                 <!-- UI-PIL-003: Contadores -->
-                <td class="text-center">
-                  <span 
-                    class="badge bg-info"
+                <td class="text-muted text-center">
+                  <span
                     [ngbTooltip]="pilar.nome + '\n├─ ' + (pilar._count?.rotinas || 0) + ' rotinas vinculadas\n└─ ' + (pilar._count?.empresas || 0) + ' empresas usando'"
                     placement="top">
                     {{ pilar._count?.rotinas || 0 }}
                   </span>
                 </td>
                 
-                <td class="text-center">
+                <td class="text-muted text-center">
                   <span 
-                    class="badge bg-success"
                     [ngbTooltip]="pilar.nome + '\n├─ ' + (pilar._count?.rotinas || 0) + ' rotinas vinculadas\n└─ ' + (pilar._count?.empresas || 0) + ' empresas usando'"
                     placement="top">
                     {{ pilar._count?.empresas || 0 }}
@@ -122,10 +115,8 @@
                 </td>
                 
                 <!-- Status -->
-                <td>
-                  <span 
-                    class="badge" 
-                    [ngClass]="pilar.ativo ? 'bg-success' : 'bg-danger'">
+                <td class="text-muted">
+                  <span>
                     {{ pilar.ativo ? 'Ativo' : 'Inativo' }}
                   </span>
                 </td>
@@ -133,6 +124,14 @@
                 <!-- UI-PIL-009: Ações por linha -->
                 <td class="text-nowrap">
                   <div class="btn-group btn-group-sm" role="group">
+                    <!-- Detalhes -->
+                    <button
+                      class="btn btn-icon text-primary"
+                      (click)="openDetailsOffcanvas(pilar.id, detailsOffcanvas)"
+                      [title]="'Detalhes do pilar' | translate">
+                      <i class="feather icon-info"></i>
+                    </button>
+                    
                     <!-- Editar (sempre visível) -->
                     <button 
                       class="btn btn-icon text-secondary" 
@@ -191,3 +190,67 @@
     </div>
   </div>
 </div>
+
+<!-- Offcanvas de Detalhes do Pilar -->
+<ng-template #detailsOffcanvas let-offcanvas>
+  <div class="offcanvas-header">
+    <h5 class="offcanvas-title">{{ 'PILARES.DETAILS' | translate }}</h5>
+    <button type="button" class="btn-close text-reset" (click)="offcanvas.dismiss()"></button>
+  </div>
+  <div class="offcanvas-body">
+    @if (loadingDetails) {
+    <div class="text-center py-5">
+      <div class="spinner-border text-primary" role="status">
+        <span class="visually-hidden">{{ 'COMMON.LOADING' | translate }}</span>
+      </div>
+      <p class="text-muted mt-3">{{ 'COMMON.LOADING' | translate }}...</p>
+    </div>
+    } @else if (selectedPilar) {
+    <div class="mb-4">
+      <h4 class="mb-2">{{ selectedPilar.nome }}</h4>
+      @if (selectedPilar.descricao) {
+        <!-- <p class="text-muted">{{ selectedPilar.descricao }}</p> -->
+      }
+      <span class="badge" [ngClass]="{ 'bg-success': selectedPilar.ativo, 'bg-danger': !selectedPilar.ativo }">
+        {{ selectedPilar.ativo ? ('COMMON.ACTIVE' | translate) : ('COMMON.INACTIVE' | translate) }}
+      </span>
+    </div>
+
+    <div class="card mb-3">
+      <div class="card-body">
+        <h6 class="card-title mb-3">{{ 'COMMON.BASIC_INFO' | translate }}</h6>
+        @if (selectedPilar.descricao) {
+        <div class="mb-3">
+          <span class="text-muted small">{{ 'PILARES.FIELDS.DESCRIPTION' | translate }}</span>
+          <div class="mt-1">{{ selectedPilar.descricao }}</div>
+        </div>
+        }
+        <div class="mb-2">
+          <span class="text-muted small">{{ 'PILARES.FIELDS.TYPE' | translate }}</span>
+          <div>{{ selectedPilar.modelo ? 'Padrão' : 'Customizado' }}</div>
+        </div>
+        @if (selectedPilar.ordem) {
+        <div class="mb-2">
+          <span class="text-muted small">{{ 'PILARES.FIELDS.ORDER' | translate }}</span>
+          <div>{{ selectedPilar.ordem }}</div>
+        </div>
+        }
+        <div class="mb-2">
+          <span class="text-muted small">{{ 'PILARES.DETAILS.ROTINAS_COUNT' | translate }}</span>
+          <div>{{ selectedPilar._count?.rotinas || 0 }} rotinas vinculadas</div>
+        </div>
+        <div class="mb-0">
+          <span class="text-muted small">{{ 'PILARES.DETAILS.EMPRESAS_COUNT' | translate }}</span>
+          <div>{{ selectedPilar._count?.empresas || 0 }} empresas usando</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="d-grid gap-2">
+      <button type="button" class="btn btn-primary" [routerLink]="['/pilares', selectedPilar.id, 'editar']" (click)="offcanvas.dismiss()">
+        <i class="feather icon-edit"></i> {{ 'BUTTONS.EDIT' | translate }}
+      </button>
+    </div>
+    }
+  </div>
+</ng-template>

@@ -1,11 +1,13 @@
-import { Component, OnInit, inject } from '@angular/core';
+import { Component, OnInit, inject, TemplateRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import Swal from 'sweetalert2';
 import { PilaresService, Pilar } from '../../../../core/services/pilares.service';
-import { NgbPaginationModule, NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
+import { NgbPaginationModule, NgbTooltipModule, NgbOffcanvas, NgbOffcanvasModule } from '@ng-bootstrap/ng-bootstrap';
+import { NgSelectModule } from '@ng-select/ng-select';
 import { PilarBadgeComponent } from '../../../../shared/components/pilar-badge/pilar-badge.component';
+import { TranslatePipe } from '../../../../core/pipes/translate.pipe';
 
 @Component({
   selector: 'app-pilares-list',
@@ -16,13 +18,17 @@ import { PilarBadgeComponent } from '../../../../shared/components/pilar-badge/p
     RouterLink,
     NgbPaginationModule,
     NgbTooltipModule,
-    PilarBadgeComponent
+    NgSelectModule,
+    NgbOffcanvasModule,
+    PilarBadgeComponent,
+    TranslatePipe
   ],
   templateUrl: './pilares-list.component.html',
   styleUrl: './pilares-list.component.scss'
 })
 export class PilaresListComponent implements OnInit {
   private pilaresService = inject(PilaresService);
+  private offcanvas = inject(NgbOffcanvas);
 
   pilares: Pilar[] = [];
   filteredPilares: Pilar[] = [];
@@ -34,9 +40,26 @@ export class PilaresListComponent implements OnInit {
   statusFilter: 'all' | 'active' | 'inactive' = 'all';
   tipoFilter: 'all' | 'modelo' | 'customizado' = 'all';
 
+  // Opções para ng-select
+  statusOptions = [
+    { value: 'all', label: 'Todos os Status' },
+    { value: 'active', label: 'Ativos' },
+    { value: 'inactive', label: 'Inativos' }
+  ];
+
+  tipoOptions = [
+    { value: 'all', label: 'Todos os Tipos' },
+    { value: 'modelo', label: 'Padrão' },
+    { value: 'customizado', label: 'Customizados' }
+  ];
+
   // Paginação
   currentPage = 1;
   pageSize = 10;
+
+  // Offcanvas de detalhes
+  selectedPilar: Pilar | null = null;
+  loadingDetails = false;
 
   ngOnInit(): void {
     this.loadPilares();
@@ -177,7 +200,6 @@ export class PilaresListComponent implements OnInit {
         const empresasUsando = pilarDetalhado._count?.empresas || 0;
         
         Swal.fire({
-          icon: 'warning',
           title: 'Confirmar Desativação',
           html: `
             Deseja desativar o pilar <strong>"${pilar.nome}"</strong>?
@@ -243,5 +265,21 @@ export class PilaresListComponent implements OnInit {
   truncate(text: string | undefined, length: number): string {
     if (!text) return '';
     return text.length > length ? text.substring(0, length) + '...' : text;
+  }
+
+  openDetailsOffcanvas(id: string, content: TemplateRef<any>): void {
+    this.loadingDetails = true;
+    this.selectedPilar = null;
+    this.offcanvas.open(content, { position: 'end' });
+    this.pilaresService.findOne(id).subscribe({
+      next: (pilar) => {
+        this.selectedPilar = pilar;
+        this.loadingDetails = false;
+      },
+      error: () => {
+        this.loadingDetails = false;
+        this.showToast('Erro ao carregar detalhes', 'error');
+      }
+    });
   }
 }

@@ -4,11 +4,12 @@ import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router, ActivatedRoute, RouterLink } from '@angular/router';
 import Swal from 'sweetalert2';
 import { PilaresService, Pilar, CreatePilarDto, UpdatePilarDto } from '../../../../core/services/pilares.service';
+import { TranslatePipe } from '../../../../core/pipes/translate.pipe';
 
 @Component({
   selector: 'app-pilares-form',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, RouterLink],
+  imports: [CommonModule, ReactiveFormsModule, RouterLink, TranslatePipe],
   templateUrl: './pilares-form.component.html',
   styleUrl: './pilares-form.component.scss'
 })
@@ -23,7 +24,8 @@ export class PilaresFormComponent implements OnInit {
     nome: ['', [Validators.required, Validators.minLength(2), Validators.maxLength(100)]],
     descricao: ['', [Validators.maxLength(500)]],
     ordem: [null as number | null, [Validators.min(1)]],
-    modelo: [false]
+    modelo: [false],
+    ativo: [true]
   });
 
   isEditMode = false;
@@ -71,8 +73,9 @@ export class PilaresFormComponent implements OnInit {
         this.form.patchValue({
           nome: pilar.nome,
           descricao: pilar.descricao || '',
-          ordem: pilar.ordem || null,
-          modelo: pilar.modelo
+          ordem: pilar.ordem ?? null,
+          modelo: pilar.modelo,
+          ativo: pilar.ativo
         });
         this.loading = false;
       },
@@ -118,8 +121,8 @@ export class PilaresFormComponent implements OnInit {
     const dto: CreatePilarDto = {
       nome: data.nome!,
       descricao: data.descricao || undefined,
-      ordem: data.ordem || undefined,
-      modelo: data.modelo || false
+      ordem: data.ordem ?? undefined,
+      modelo: data.modelo ?? false
     };
 
     this.pilaresService.create(dto).subscribe({
@@ -139,8 +142,9 @@ export class PilaresFormComponent implements OnInit {
     const dto: UpdatePilarDto = {
       nome: data.nome || undefined,
       descricao: data.descricao || undefined,
-      ordem: data.ordem || undefined,
-      modelo: data.modelo
+      ordem: data.ordem === null || data.ordem === '' ? null : data.ordem,
+      modelo: data.modelo ?? undefined,
+      ativo: data.ativo ?? undefined
     };
 
     this.pilaresService.update(id, dto).subscribe({

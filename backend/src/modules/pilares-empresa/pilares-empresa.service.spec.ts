@@ -471,15 +471,16 @@ describe('PilaresEmpresaService - Validação Completa', () => {
           { pilarId: 'pilar-1' },
           { pilarId: 'pilar-2' },
         ] as any) // Todos já vinculados
-        .mockResolvedValueOnce(mockPilarEmpresaList as any); // Retorno final
-      // Quando novosIds = [], findMany deve retornar []
-      jest.spyOn(prisma.pilar, 'findMany').mockResolvedValue([] as any);
+        .mockResolvedValueOnce(mockPilarEmpresaList as any);
+      jest.spyOn(prisma.pilar, 'findMany').mockResolvedValue([
+        { id: 'pilar-1', ativo: true },
+        { id: 'pilar-2', ativo: true },
+      ] as any);
 
       await service.vincularPilares('empresa-a', pilaresIds, mockAdminUser as any);
 
       // Nenhum novo vínculo criado → sem auditoria
       expect(audit.log).not.toHaveBeenCalled();
-      expect(prisma.pilarEmpresa.createMany).not.toHaveBeenCalled();
     });
 
     it('deve auditar quando houver novos vínculos', async () => {

@@ -1,134 +1,138 @@
-<div class="mb-2 align-items-center gap-2 d-flex justify-content-between flex-wrap">
-  <nav aria-label="breadcrumb">
+<nav aria-label="breadcrumb">
     <ol class="breadcrumb breadcrumb-arrow mb-1">
-      <li class="breadcrumb-item">
-        <a [routerLink]="['/pilares']" class="text-decoration-none">Pilares</a>
+        <li class="breadcrumb-item">
+        <i class="input-icon" data-feather="layers" style="width: 16px; height: 16px"></i>
       </li>
-      <li class="breadcrumb-item active" aria-current="page">
-        {{ isEditMode ? 'Editar' : 'Novo' }}
-      </li>
+        <li class="breadcrumb-item">
+            {{ 'MENU.PILARES' | translate }}
+        </li>
+        <li class="breadcrumb-item active text-primary" aria-current="page">
+            {{ (isEditMode ? 'PILARES.EDIT' : 'PILARES.NEW') | translate }}
+        </li>
     </ol>
-  </nav>
-</div>
+</nav>
 
-<div class="row">
-  <div class="col-md-8 col-lg-6 mx-auto stretch-card">
-    <div class="card">
-      <div class="card-body">
-        <h6 class="card-title mb-4">
-          {{ isEditMode ? 'Editar Pilar' : 'Novo Pilar' }}
-        </h6>
 
-        @if (loading) {
-        <div class="text-center py-5">
-          <div class="spinner-border text-primary" role="status">
-            <span class="visually-hidden">Carregando...</span>
-          </div>
+<div class="card-body">
+    @if (loading && isEditMode) {
+    <div class="text-center py-5">
+        <div class="spinner-border text-primary" role="status">
+            <span class="visually-hidden">{{ 'COMMON.LOADING' | translate }}</span>
         </div>
-        } @else {
-        <form [formGroup]="form" (ngSubmit)="onSubmit()">
-          
-          <!-- Nome -->
-          <div class="mb-3">
-            <label for="nome" class="form-label">
-              Nome <span class="text-danger">*</span>
-            </label>
-            <input 
-              type="text" 
-              class="form-control" 
-              id="nome"
-              formControlName="nome"
-              [class.is-invalid]="isFieldInvalid('nome')"
-              placeholder="Ex: Estratégia e Governança">
-            @if (isFieldInvalid('nome')) {
-              <div class="invalid-feedback">
-                {{ getFieldError('nome') }}
-              </div>
-            }
-          </div>
-
-          <!-- Descrição -->
-          <div class="mb-3">
-            <label for="descricao" class="form-label">
-              Descrição
-            </label>
-            <textarea 
-              class="form-control" 
-              id="descricao"
-              formControlName="descricao"
-              [class.is-invalid]="isFieldInvalid('descricao')"
-              rows="3"
-              placeholder="Descrição detalhada do pilar..."></textarea>
-            <div class="form-text">Máximo 500 caracteres</div>
-            @if (isFieldInvalid('descricao')) {
-              <div class="invalid-feedback">
-                {{ getFieldError('descricao') }}
-              </div>
-            }
-          </div>
-
-          <!-- Pilar Padrão do Sistema (checkbox) -->
-          <div class="mb-3">
-            <div class="form-check">
-              <input 
-                class="form-check-input" 
-                type="checkbox" 
-                id="modelo"
-                formControlName="modelo">
-              <label class="form-check-label" for="modelo">
-                Pilar Padrão do Sistema
-              </label>
-            </div>
-            <div class="form-text">
-              Pilares padrão são auto-associados a novas empresas
-            </div>
-          </div>
-
-          <!-- Ordem (opcional) -->
-          <div class="mb-3">
-            <label for="ordem" class="form-label">
-              Ordem de Exibição
-            </label>
-            <input 
-              type="number" 
-              class="form-control" 
-              id="ordem"
-              formControlName="ordem"
-              [class.is-invalid]="isFieldInvalid('ordem')"
-              min="1"
-              placeholder="Ex: 1, 2, 3...">
-            <div class="form-text">
-              Ordem de exibição (apenas para pilares padrão). Deixe vazio para pilares customizados.
-            </div>
-            @if (isFieldInvalid('ordem')) {
-              <div class="invalid-feedback">
-                {{ getFieldError('ordem') }}
-              </div>
-            }
-          </div>
-
-          <!-- Botões -->
-          <div class="d-flex gap-2 justify-content-end">
-            <button 
-              type="button" 
-              class="btn btn-secondary"
-              (click)="handleCancel()"
-              [disabled]="submitting">
-              Cancelar
-            </button>
-            <button 
-              type="submit" 
-              class="btn btn-primary"
-              [disabled]="submitting || form.invalid">
-              @if (submitting) {
-                <span class="spinner-border spinner-border-sm me-2" role="status"></span>
-              }
-              {{ isEditMode ? 'Salvar Alterações' : 'Criar Pilar' }}
-            </button>
-          </div>
-        </form>
-        }
-      </div>
     </div>
-  </div>
+    } @else {
+    <div class="row">
+        <div class="col-md-8">
+            <form [formGroup]="form" (ngSubmit)="onSubmit()">
+                <div class="card">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-end mb-0">
+                            <div class="form-check form-switch">
+                                <input class="form-check-input" type="checkbox" id="ativo" formControlName="ativo">
+                                <label class="form-check-label" for="ativo">
+                                    {{ "COMMON.ACTIVE" | translate }}
+                                </label>
+                            </div>
+                        </div>
+
+
+                        <!-- Nome -->
+                        <div class="row mb-3">
+                            <label for="nome" class="form-label">
+                                {{ 'PILARES.FIELDS.NAME' | translate }} <span class="text-danger">*</span>
+                            </label>
+                            <input type="text" class="form-control" id="nome" formControlName="nome"
+                                [class.is-invalid]="isFieldInvalid('nome')" placeholder="{{ 'PILARES.PLACEHOLDERS.NAME' | translate }}">
+                            @if (isFieldInvalid('nome')) {
+                            <div class="invalid-feedback">
+                                {{ getFieldError('nome') }}
+                            </div>
+                            }
+                        </div>
+
+                        <!-- Descrição -->
+                        <div class="row mb-3">
+                            <label for="descricao" class="form-label">
+                                {{ 'PILARES.FIELDS.DESCRIPTION' | translate }}
+                            </label>
+                            <textarea class="form-control" id="descricao" formControlName="descricao"
+                                [class.is-invalid]="isFieldInvalid('descricao')" rows="3"
+                                placeholder="{{ 'PILARES.PLACEHOLDERS.DESCRIPTION' | translate }}"></textarea>
+                            <div class="form-text">{{ 'PILARES.HELPERS.MAX_CHARS' | translate }}</div>
+                            @if (isFieldInvalid('descricao')) {
+                            <div class="invalid-feedback">
+                                {{ getFieldError('descricao') }}
+                            </div>
+                            }
+                        </div>
+
+                        <!-- Pilar Padrão e Ordem (lado a lado) -->
+                        <div class="row mb-3">
+                            <div class="col-md-6 mb-3">
+                                <label for="ordem" class="form-label">
+                                    {{ 'PILARES.FIELDS.ORDER' | translate }}
+                                </label>
+                                <input type="number" class="form-control" id="ordem" formControlName="ordem"
+                                    [class.is-invalid]="isFieldInvalid('ordem')" min="1" placeholder="{{ 'PILARES.PLACEHOLDERS.ORDER' | translate }}">
+                                <div class="form-text">
+                                    {{ 'PILARES.HELPERS.ORDER' | translate }}
+                                </div>
+                                @if (isFieldInvalid('ordem')) {
+                                <div class="invalid-feedback">
+                                    {{ getFieldError('ordem') }}
+                                </div>
+                                }
+                            </div>
+
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label d-block">{{ 'PILARES.FIELDS.CONFIGURATION' | translate }}</label>
+                                <div class="form-check form-switch">
+                                    <input class="form-check-input" type="checkbox" id="modelo"
+                                        formControlName="modelo">
+                                    <label class="form-check-label" for="modelo">
+                                        {{ 'PILARES.FIELDS.IS_MODEL' | translate }}
+                                    </label>
+                                </div>
+                                <div class="form-text">
+                                    {{ 'PILARES.HELPERS.MODEL' | translate }}
+                                </div>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+
+                <!-- Botões -->
+                <div class="form-footer mt-4 d-flex justify-content-end gap-2">
+                    <button type="button" (click)="handleCancel()" class="btn btn-outline-secondary">
+                        {{ 'BUTTONS.CANCEL' | translate }}
+                    </button>
+                    <button type="submit" class="btn btn-primary" [disabled]="loading || submitting || form.invalid">
+                        @if (loading || submitting) {
+                        <span class="spinner-border spinner-border-sm me-2" role="status"></span>
+                        }
+                        @if (isEditMode) {
+                        {{ 'BUTTONS.UPDATE' | translate }}
+                        } @else {
+                        {{ 'BUTTONS.CREATE' | translate }}
+                        }
+                    </button>
+                </div>
+            </form>
+        </div>
+
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="card-title">{{ "COMMON.INFO" | translate }}</h3>
+                </div>
+                <div class="card-body">
+                    <p class="card-text">
+                        {{ (isEditMode ? 'PILARES.INFO.EDIT' : 'PILARES.INFO.CREATE') | translate }}
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+    }
 </div>
