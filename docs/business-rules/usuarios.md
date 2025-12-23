@@ -4,6 +4,7 @@
 **Backend:** `backend/src/modules/usuarios/`  
 **Frontend:** Não implementado  
 **Última extração:** 21/12/2024  
+**Última atualização:** 23/12/2024 (pós-Reviewer de Regras)  
 **Agente:** Extractor de Regras
 
 ---
@@ -139,15 +140,21 @@ const hashedPassword = await argon2.hash(data.senha);
 
 ---
 
-### R-USU-003: Senha Mínima de 6 Caracteres
+### R-USU-003: Validação de Senha Forte
 
-**Descrição:** Senha deve ter no mínimo 6 caracteres.
+**Descrição:** Senha deve atender requisitos de segurança: mínimo 8 caracteres, incluindo letra maiúscula, letra minúscula, número e caractere especial.
 
 **Implementação:**
 - **DTO:** `CreateUsuarioDto`
-- **Validação:** `@MinLength(6)`
+- **Validações:** 
+  - `@MinLength(8)` — Mínimo 8 caracteres
+  - `@Matches(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])/)` — Complexidade
 
-**Arquivo:** [create-usuario.dto.ts](../../backend/src/modules/usuarios/dto/create-usuario.dto.ts#L19-L21)
+**Mensagem de erro:** "A senha deve conter letra maiúscula, minúscula, número e caractere especial"
+
+**Justificativa:** Alinhado com OWASP Password Guidelines para segurança aprimorada.
+
+**Arquivo:** [create-usuario.dto.ts](../../backend/src/modules/usuarios/dto/create-usuario.dto.ts#L19-L29)
 
 ---
 
@@ -319,7 +326,31 @@ where: {
 - empresa (id, nome, cnpj, logoUrl)
 - senha (para validação de login)
 
-**Arquivo:** [usuarios.service.ts](../../backend/src/modules/usuarios/usuarios.service.ts#L186-L204)
+**Arquivo:** [usuarios.service.ts](../../backend/src/modules/usuarios/usuarios.service.ts#L164-L182)
+
+---
+
+### R-USU-012B: Busca de Usuário por ID (Interno, Sem Validação Multi-Tenant)
+
+**Descrição:** Método interno que busca usuário por ID sem aplicar validação de isolamento multi-tenant.
+
+**Implementação:**
+- **Método:** `findByIdInternal()`
+- **Uso:** Módulo Auth (refresh token), delegação interna em `findById()`
+
+**⚠️ Importante:** Este método **bypassa validação multi-tenant** (RA-001) intencionalmente.
+
+**Justificativa:** 
+- Necessário para o módulo Auth validar refresh tokens sem contexto de empresa
+- Usado como delegação interna por `findById()` que aplica validação posteriormente
+
+**Dados incluídos:**
+- Usuário completo com perfil e empresa
+- **Não** aplica `validateTenantAccess()`
+
+**Restrição de uso:** Apenas para uso interno (não exposto em controller).
+
+**Arquivo:** [usuarios.service.ts](../../backend/src/modules/usuarios/usuarios.service.ts#L127-L162)
 
 ---
 
@@ -596,6 +627,40 @@ if (!file) {
 - RA-004 (elevação de perfil)
 
 **Arquivo:** [usuarios.controller.ts](../../backend/src/modules/usuarios/usuarios.controller.ts#L63-L64)
+
+---
+
+### R-USU-030: Validação de Unicidade de Email em Update
+
+**Descrição:** Ao atualizar email de usuário, sistema valida se novo email já está em uso por outro usuário.
+
+**Implementação:**
+- **Método:** `update()`
+- **Validação:** Executada apenas se email for fornecido e diferente do atual
+
+**Comportamento:**
+1. Verifica se `data.email` foi fornecido
+2. Verifica se email é diferente do atual: `data.email !== before.email`
+3. Busca usuário existente com novo email: `findByEmail(data.email)`
+4. Se encontrado **e** não for o próprio usuário → ConflictException("Email já cadastrado por outro usuário")
+5. Se não encontrado ou for o próprio usuário → permite atualização
+
+**Código:**
+```typescript
+if (data.email && data.email !== before.email) {
+  const existingUser = await this.findByEmail(data.email);
+  
+  if (existingUser && existingUser.id !== id) {
+    throw new ConflictException('Email já cadastrado por outro usuário');
+  }
+}
+```
+
+**Justificativa:** Garante unicidade de email também em atualizações, complementando R-USU-001 (criação).
+
+**Arquivo:** [usuarios.service.ts](../../backend/src/modules/usuarios/usuarios.service.ts#L280-L284)
+
+**Testes:** `deve lançar ConflictException se tentar atualizar para email já existente` (usuarios.service.spec.ts)
 
 ---
 
