@@ -50,8 +50,8 @@ export class UsuariosService {
     }
 
     // Verificar se está tentando criar/editar perfil com nível superior (menor número = maior poder)
-    if (targetPerfil.nivel < requestUser.perfil.nivel) {
-      throw new ForbiddenException(`Você não pode ${action} usuário com perfil superior ao seu`);
+    if (targetPerfil.nivel <= requestUser.perfil.nivel) {
+      throw new ForbiddenException(`Você não pode ${action} usuário com perfil superior ou igual ao seu`);
     }
   }
 
@@ -65,8 +65,14 @@ export class UsuariosService {
     }
   }
 
-  async findAll() {
+  async findAll(requestUser?: RequestUser) {
+    // RA-011: ADMINISTRADOR vê todos, outros perfis veem apenas da própria empresa
+    const where = requestUser?.perfil?.codigo !== 'ADMINISTRADOR' && requestUser?.empresaId
+      ? { empresaId: requestUser.empresaId }
+      : {};
+
     return this.prisma.usuario.findMany({
+      where,
       select: {
         id: true,
         email: true,
@@ -90,7 +96,10 @@ export class UsuariosService {
     });
   }
 
-  async findDisponiveis() {
+  async findDisponiveis(requestUser?: RequestUser) {
+    // RA-011: ADMINISTRADOR vê todos, outros perfis veem apenas da própria empresa
+    // Nota: usuários disponíveis sempre têm empresaId: null, então o filtro adicional não é necessário
+    // mas mantemos o parâmetro para consistência com outros métodos
     return this.prisma.usuario.findMany({
       where: {
         empresaId: null,
@@ -119,25 +128,8 @@ export class UsuariosService {
     });
   }
 
-  async findById(id: string, requestUser: RequestUser) {
-    const usuario = await this.findByIdInternal(id);
-
-    if (!usuario) {
-      throw new NotFoundException('Usuário não encontrado');
-    }
-
-    // RA-001: Validar acesso multi-tenant
-    this.validateTenantAccess(usuario, requestUser, 'visualizar');
-
-    return usuario;
-  }
-
-  /**
-   * Método interno sem validação multi-tenant
-   * Usado por auth.service no refresh token
-   */
-  async findByIdInternal(id: string) {
-    return this.prisma.usuario.findUnique({
+  async findById(id: string, requestUser: RequestUser, action: string = 'visualizar') {
+    const usuario = await this.prisma.usuario.findUnique({
       where: { id },
       select: {
         id: true,
@@ -161,6 +153,15 @@ export class UsuariosService {
         updatedAt: true,
       },
     });
+
+    if (!usuario) {
+      throw new NotFoundException('Usuário não encontrado');
+    }
+
+    // RA-001: Validar acesso multi-tenant
+    this.validateTenantAccess(usuario, requestUser, action);
+
+    return usuario;
   }
 
   async findByEmail(email: string) {
@@ -226,9 +227,9 @@ export class UsuariosService {
     });
 
     await this.audit.log({
-      usuarioId: created.id,
-      usuarioNome: created.nome,
-      usuarioEmail: created.email,
+      usuarioId: requestUser.id,
+      usuarioNome: requestUser.nome,
+      usuarioEmail: requestUser.email,
       entidade: 'usuarios',
       entidadeId: created.id,
       acao: 'CREATE',
@@ -314,7 +315,7 @@ export class UsuariosService {
   }
 
   async remove(id: string, requestUser: RequestUser) {
-    const before = await this.findById(id, requestUser);
+    const before = await this.findById(id, requestUser, 'editar');
     
     const after = await this.prisma.usuario.update({
       where: { id },
@@ -336,7 +337,7 @@ export class UsuariosService {
   }
 
   async hardDelete(id: string, requestUser: RequestUser) {
-    const usuario = await this.findById(id, requestUser);
+    const usuario = await this.findById(id, requestUser, 'editar');
 
     // Delete profile photo if exists
     if (usuario.fotoUrl) {
@@ -344,19 +345,21 @@ export class UsuariosService {
       this.deleteFileIfExists(filePath);
     }
 
+    const result = await this.prisma.usuario.delete({
+      where: { id },
+    });
+
     await this.audit.log({
-      usuarioId: usuario.id,
-      usuarioNome: usuario.nome,
-      usuarioEmail: usuario.email,
+      usuarioId: requestUser.id,
+      usuarioNome: requestUser.nome,
+      usuarioEmail: requestUser.email,
       entidade: 'usuarios',
       entidadeId: id,
       acao: 'DELETE',
       dadosAntes: { ...usuario, senha: '[REDACTED]' },
     });
 
-    return this.prisma.usuario.delete({
-      where: { id },
-    });
+    return result;
   }
 
   async updateProfilePhoto(id: string, fotoUrl: string, requestUser: RequestUser) {

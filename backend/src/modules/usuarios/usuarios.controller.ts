@@ -13,7 +13,7 @@ import {
   Request,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
-import { ApiTags, ApiOperation, ApiBearerAuth, ApiConsumes, ApiBody } from '@nestjs/swagger';
+import { ApiTags, ApiOperation, ApiBearerAuth, ApiConsumes, ApiBody, ApiResponse } from '@nestjs/swagger';
 import { diskStorage, StorageEngine } from 'multer';
 import { extname } from 'path';
 import * as fs from 'fs';
@@ -23,6 +23,7 @@ import { UpdateUsuarioDto } from './dto/update-usuario.dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../auth/guards/roles.guard';
 import { Roles } from '../auth/decorators/roles.decorator';
+import { RequestUser } from '../../common/interfaces/request-user.interface';
 
 @ApiTags('usuarios')
 @ApiBearerAuth()
@@ -34,55 +35,75 @@ export class UsuariosController {
   @Post()
   @Roles('ADMINISTRADOR')
   @ApiOperation({ summary: 'Criar novo usuário' })
-  create(@Body() createUsuarioDto: CreateUsuarioDto, @Request() req: any) {
+  @ApiResponse({ status: 201, description: 'Usuário criado com sucesso' })
+  @ApiResponse({ status: 409, description: 'Email já cadastrado' })
+  @ApiResponse({ status: 403, description: 'Sem permissão para criar perfil superior' })
+  create(@Body() createUsuarioDto: CreateUsuarioDto, @Request() req: { user: RequestUser }) {
     return this.usuariosService.create(createUsuarioDto, req.user);
   }
 
   @Get()
   @Roles('ADMINISTRADOR')
   @ApiOperation({ summary: 'Listar todos os usuários' })
-  findAll() {
-    return this.usuariosService.findAll();
+  @ApiResponse({ status: 200, description: 'Lista de usuários retornada com sucesso' })
+  findAll(@Request() req: { user: RequestUser }) {
+    return this.usuariosService.findAll(req.user);
   }
 
   @Get('disponiveis/empresa')
   @Roles('ADMINISTRADOR')
   @ApiOperation({ summary: 'Buscar usuários disponíveis (sem empresa associada)' })
-  findDisponiveis() {
-    return this.usuariosService.findDisponiveis();
+  @ApiResponse({ status: 200, description: 'Lista de usuários disponíveis retornada com sucesso' })
+  findDisponiveis(@Request() req: { user: RequestUser }) {
+    return this.usuariosService.findDisponiveis(req.user);
   }
 
   @Get(':id')
   @Roles('ADMINISTRADOR', 'GESTOR', 'COLABORADOR', 'LEITURA')
   @ApiOperation({ summary: 'Buscar usuário por ID' })
-  findOne(@Param('id') id: string, @Request() req: any) {
+  @ApiResponse({ status: 200, description: 'Usuário encontrado com sucesso' })
+  @ApiResponse({ status: 404, description: 'Usuário não encontrado' })
+  @ApiResponse({ status: 403, description: 'Sem permissão para visualizar usuário de outra empresa' })
+  findOne(@Param('id') id: string, @Request() req: { user: RequestUser }) {
     return this.usuariosService.findById(id, req.user);
   }
 
   @Patch(':id')
   @Roles('ADMINISTRADOR', 'GESTOR', 'COLABORADOR')
   @ApiOperation({ summary: 'Atualizar usuário' })
-  update(@Param('id') id: string, @Body() updateUsuarioDto: UpdateUsuarioDto, @Request() req: any) {
+  @ApiResponse({ status: 200, description: 'Usuário atualizado com sucesso' })
+  @ApiResponse({ status: 404, description: 'Usuário não encontrado' })
+  @ApiResponse({ status: 409, description: 'Email já cadastrado por outro usuário' })
+  @ApiResponse({ status: 403, description: 'Sem permissão para editar campos privilegiados ou perfil superior' })
+  update(@Param('id') id: string, @Body() updateUsuarioDto: UpdateUsuarioDto, @Request() req: { user: RequestUser }) {
     return this.usuariosService.update(id, updateUsuarioDto, req.user);
   }
 
   @Delete(':id')
   @Roles('ADMINISTRADOR')
   @ApiOperation({ summary: 'Deletar usuário permanentemente' })
-  remove(@Param('id') id: string, @Request() req: any) {
+  @ApiResponse({ status: 200, description: 'Usuário deletado com sucesso' })
+  @ApiResponse({ status: 404, description: 'Usuário não encontrado' })
+  remove(@Param('id') id: string, @Request() req: { user: RequestUser }) {
     return this.usuariosService.hardDelete(id, req.user);
   }
 
   @Patch(':id/inativar')
   @Roles('ADMINISTRADOR')
   @ApiOperation({ summary: 'Inativar usuário' })
-  inactivate(@Param('id') id: string, @Request() req: any) {
+  @ApiResponse({ status: 200, description: 'Usuário inativado com sucesso' })
+  @ApiResponse({ status: 404, description: 'Usuário não encontrado' })
+  inactivate(@Param('id') id: string, @Request() req: { user: RequestUser }) {
     return this.usuariosService.remove(id, req.user);
   }
 
   @Post(':id/foto')
   @Roles('ADMINISTRADOR', 'GESTOR', 'COLABORADOR')
   @ApiOperation({ summary: 'Upload de foto de perfil' })
+  @ApiResponse({ status: 200, description: 'Foto atualizada com sucesso' })
+  @ApiResponse({ status: 400, description: 'Arquivo inválido ou não enviado' })
+  @ApiResponse({ status: 403, description: 'Sem permissão para alterar foto de outro usuário' })
+  @ApiResponse({ status: 404, description: 'Usuário não encontrado' })
   @ApiConsumes('multipart/form-data')
   @ApiBody({
     schema: {
@@ -120,7 +141,7 @@ export class UsuariosController {
   async uploadProfilePhoto(
     @Param('id') id: string,
     @UploadedFile() file: Express.Multer.File,
-    @Request() req: any,
+    @Request() req: { user: RequestUser },
   ) {
     if (!file) {
       throw new BadRequestException('Nenhuma imagem foi enviada');
@@ -133,7 +154,10 @@ export class UsuariosController {
   @Delete(':id/foto')
   @Roles('ADMINISTRADOR', 'GESTOR', 'COLABORADOR')
   @ApiOperation({ summary: 'Deletar foto de perfil' })
-  async deleteProfilePhoto(@Param('id') id: string, @Request() req: any) {
+  @ApiResponse({ status: 200, description: 'Foto deletada com sucesso' })
+  @ApiResponse({ status: 404, description: 'Usuário não encontrado' })
+  @ApiResponse({ status: 403, description: 'Sem permissão para deletar foto de outro usuário' })
+  async deleteProfilePhoto(@Param('id') id: string, @Request() req: { user: RequestUser }) {
     return this.usuariosService.deleteProfilePhoto(id, req.user);
   }
 }
