@@ -2,6 +2,7 @@ import { Injectable, NotFoundException, ConflictException } from '@nestjs/common
 import { PrismaService } from '../../common/prisma/prisma.service';
 import { CreatePilarDto } from './dto/create-pilar.dto';
 import { UpdatePilarDto } from './dto/update-pilar.dto';
+import { RequestUser } from '../../common/interfaces/request-user.interface';
 import { AuditService } from '../audit/audit.service';
 
 @Injectable()
@@ -9,7 +10,7 @@ export class PilaresService {
   auditService: any;
   constructor(private prisma: PrismaService, private audit: AuditService) {}
 
-  async create(createPilarDto: CreatePilarDto, userId: string) {
+  async create(createPilarDto: CreatePilarDto, requestUser: RequestUser) {
     const existingPilar = await this.prisma.pilar.findUnique({
       where: { nome: createPilarDto.nome },
     });
@@ -18,18 +19,27 @@ export class PilaresService {
       throw new ConflictException('Já existe um pilar com este nome');
     }
 
+    // GAP-001: Validação de ordem duplicada
+    if (createPilarDto.ordem !== undefined && createPilarDto.ordem !== null) {
+      const existingOrdem = await this.prisma.pilar.findUnique({
+        where: { ordem: createPilarDto.ordem },
+      });
+      if (existingOrdem) {
+        throw new ConflictException('Já existe um pilar com esta ordem');
+      }
+    }
+
     const created = await this.prisma.pilar.create({
       data: {
         ...createPilarDto,
-        createdBy: userId,
+        createdBy: requestUser.id,
       },
     });
 
-    const user = await this.prisma.usuario.findUnique({ where: { id: userId } });
     await this.audit.log({
-      usuarioId: userId,
-      usuarioNome: user?.nome ?? '',
-      usuarioEmail: user?.email ?? '',
+      usuarioId: requestUser.id,
+      usuarioNome: requestUser.nome,
+      usuarioEmail: requestUser.email,
       entidade: 'pilares',
       entidadeId: created.id,
       acao: 'CREATE',
@@ -86,7 +96,7 @@ export class PilaresService {
     return pilar;
   }
 
-  async update(id: string, updatePilarDto: UpdatePilarDto, userId: string) {
+  async update(id: string, updatePilarDto: UpdatePilarDto, requestUser: RequestUser) {
     const before = await this.findOne(id);
 
     if (updatePilarDto.nome) {
@@ -102,19 +112,31 @@ export class PilaresService {
       }
     }
 
+    // GAP-001: Validação de ordem duplicada
+    if (updatePilarDto.ordem !== undefined && updatePilarDto.ordem !== null) {
+      const existingOrdem = await this.prisma.pilar.findFirst({
+        where: {
+          ordem: updatePilarDto.ordem,
+          id: { not: id },
+        },
+      });
+      if (existingOrdem) {
+        throw new ConflictException('Já existe um pilar com esta ordem');
+      }
+    }
+
     const after = await this.prisma.pilar.update({
       where: { id },
       data: {
         ...updatePilarDto,
-        updatedBy: userId,
+        updatedBy: requestUser.id,
       },
     });
 
-    const user = await this.prisma.usuario.findUnique({ where: { id: userId } });
     await this.audit.log({
-      usuarioId: userId,
-      usuarioNome: user?.nome ?? '',
-      usuarioEmail: user?.email ?? '',
+      usuarioId: requestUser.id,
+      usuarioNome: requestUser.nome,
+      usuarioEmail: requestUser.email,
       entidade: 'pilares',
       entidadeId: id,
       acao: 'UPDATE',
@@ -125,7 +147,7 @@ export class PilaresService {
     return after;
   }
 
-  async remove(id: string, userId: string) {
+  async remove(id: string, requestUser: RequestUser) {
     const before = await this.findOne(id);
 
     // Verifica se há rotinas ativas vinculadas
@@ -146,15 +168,14 @@ export class PilaresService {
       where: { id },
       data: {
         ativo: false,
-        updatedBy: userId,
+        updatedBy: requestUser.id,
       },
     });
 
-    const user = await this.prisma.usuario.findUnique({ where: { id: userId } });
     await this.audit.log({
-      usuarioId: userId,
-      usuarioNome: user?.nome ?? '',
-      usuarioEmail: user?.email ?? '',
+      usuarioId: requestUser.id,
+      usuarioNome: requestUser.nome,
+      usuarioEmail: requestUser.email,
       entidade: 'pilares',
       entidadeId: id,
       acao: 'DELETE',

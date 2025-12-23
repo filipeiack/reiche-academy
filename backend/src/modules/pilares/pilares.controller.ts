@@ -14,6 +14,7 @@ import { ApiTags, ApiOperation, ApiBearerAuth, ApiResponse } from '@nestjs/swagg
 import { PilaresService } from './pilares.service';
 import { CreatePilarDto } from './dto/create-pilar.dto';
 import { UpdatePilarDto } from './dto/update-pilar.dto';
+import { RequestUser } from '../../common/interfaces/request-user.interface';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../auth/guards/roles.guard';
 import { Roles } from '../auth/decorators/roles.decorator';
@@ -29,8 +30,8 @@ export class PilaresController {
   @Roles('ADMINISTRADOR')
   @ApiOperation({ summary: 'Criar novo pilar' })
   @ApiResponse({ status: 201, description: 'Pilar criado com sucesso' })
-  create(@Body() createPilarDto: CreatePilarDto, @Request() req: ExpressRequest & { user: { id: string } }) {
-    return this.pilaresService.create(createPilarDto, req.user.id);
+  create(@Body() createPilarDto: CreatePilarDto, @Request() req: { user: RequestUser }) {
+    return this.pilaresService.create(createPilarDto, req.user);
   }
 
   @Get()
@@ -57,9 +58,9 @@ export class PilaresController {
   update(
     @Param('id') id: string,
     @Body() updatePilarDto: UpdatePilarDto,
-    @Request() req: ExpressRequest & { user: { id: string } },
+    @Request() req: { user: RequestUser },
   ) {
-    return this.pilaresService.update(id, updatePilarDto, req.user.id);
+    return this.pilaresService.update(id, updatePilarDto, req.user);
   }
 
   @Delete(':id')
@@ -67,7 +68,7 @@ export class PilaresController {
   @ApiOperation({ summary: 'Desativar pilar' })
   @ApiResponse({ status: 200, description: 'Pilar desativado' })
   @ApiResponse({ status: 404, description: 'Pilar não encontrado' })
-  remove(@Param('id') id: string, @Request() req: ExpressRequest & { user: { id: string } }) {
-    return this.pilaresService.remove(id, req.user.id);
+  remove(@Param('id') id: string, @Request() req: { user: RequestUser }) {
+    return this.pilaresService.remove(id, req.user);
   }
 }
