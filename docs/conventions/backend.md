@@ -1,225 +1,264 @@
 # Convenções - Backend (NestJS)
 
+**Status**: Documentação baseada em código existente  
+**Última atualização**: 2025-12-23
+
+---
+
 ## 1. Estrutura de Módulos
 
 ### Padrão Observado
 
 Cada módulo de negócio segue a estrutura:
+
 ```
 src/modules/{nome-modulo}/
 ├── {nome}.module.ts          # Declaração do módulo
-├── {nome}.controller.ts       # Endpoints HTTP
-├── {nome}.service.ts          # Lógica de negócio
-├── dto/                       # Data Transfer Objects
+├── {nome}.controller.ts      # Endpoints HTTP
+├── {nome}.service.ts         # Lógica de negócio
+├── {nome}.service.spec.ts    # Testes unitários do service
+├── dto/                      # Data Transfer Objects
 │   ├── create-{nome}.dto.ts
 │   └── update-{nome}.dto.ts
 └── (opcional) guards/, decorators/, strategies/
 ```
 
-**Módulos existentes no projeto**:
-- `usuarios/` - Gestão de usuários
-- `empresas/` - Gestão de empresas
-- `auth/` - Autenticação JWT
-- `pilares/` - Gestão de pilares
-- `rotinas/` - Gestão de rotinas
-- `diagnosticos/` - Gestão de diagnósticos
-- `audit/` - Log de auditoria
-- `perfis/` - Gestão de perfis de usuário
+**Onde aparece**:
+- `/backend/src/modules/usuarios/`
+- `/backend/src/modules/empresas/`
+- `/backend/src/modules/pilares/`
+- `/backend/src/modules/rotinas/`
+- `/backend/src/modules/auth/`
+- `/backend/src/modules/audit/`
+- `/backend/src/modules/perfis/`
+- `/backend/src/modules/diagnosticos/`
+- `/backend/src/modules/pilares-empresa/`
 
-**Arquivo**: `src/app.module.ts`  
-**Consistência**: **CONSISTENTE**
-
-### Módulo Raiz
-
-```typescript
-@Module({
-  imports: [
-    ConfigModule.forRoot({ isGlobal: true, envFilePath: '.env' }),
-    ThrottlerModule.forRoot([{ ttl: 60000, limit: 10 }]),
-    PrismaModule,
-    AuthModule,
-    UsuariosModule,
-    // ... outros módulos
-  ],
-})
-export class AppModule {}
-```
-
-**Característico**:
-- ConfigModule global
-- ThrottlerModule para rate limiting (60s, 10 requisições)
-- PrismaModule injetado como dependência
+**Grau de consistência**: CONSISTENTE
 
 ---
 
 ## 2. Controllers
 
-### Padrão Observado
+### Padrão de Estrutura
 
-Controllers são finos e delegam lógica para services.
-
-**Arquivo exemplo**: `src/modules/usuarios/usuarios.controller.ts`
+**Onde aparece**: Todos os arquivos `*.controller.ts`
 
 ```typescript
-@ApiTags('usuarios')
+@ApiTags('nome-recurso')
 @ApiBearerAuth()
 @UseGuards(JwtAuthGuard, RolesGuard)
-@Controller('usuarios')
-export class UsuariosController {
-  constructor(private readonly usuariosService: UsuariosService) {}
+@Controller('nome-recurso')
+export class NomeController {
+  constructor(private readonly nomeService: NomeService) {}
 
   @Post()
   @Roles('ADMINISTRADOR')
-  @ApiOperation({ summary: 'Criar novo usuário' })
-  create(@Body() createUsuarioDto: CreateUsuarioDto) {
-    return this.usuariosService.create(createUsuarioDto);
+  @ApiOperation({ summary: 'Descrição da operação' })
+  create(@Body() createDto: CreateDto) {
+    return this.nomeService.create(createDto);
   }
-
+  
+  @Get()
+  @Roles('ADMINISTRADOR', 'GESTOR')
+  @ApiOperation({ summary: 'Listar todos' })
+  findAll() {
+    return this.nomeService.findAll();
+  }
+  
   @Get(':id')
-  @Roles('ADMINISTRADOR', 'GESTOR', 'COLABORADOR', 'LEITURA')
-  @ApiOperation({ summary: 'Buscar usuário por ID' })
-  findOne(@Param('id') id: string) {
-    return this.usuariosService.findById(id);
-  }
-
-  @Patch(':id')
   @Roles('ADMINISTRADOR', 'GESTOR', 'COLABORADOR')
-  @ApiOperation({ summary: 'Atualizar usuário' })
-  update(@Param('id') id: string, @Body() updateUsuarioDto: UpdateUsuarioDto) {
-    return this.usuariosService.update(id, updateUsuarioDto);
+  @ApiOperation({ summary: 'Buscar por ID' })
+  findOne(@Param('id') id: string) {
+    return this.nomeService.findById(id);
   }
-
+  
+  @Patch(':id')
+  @Roles('ADMINISTRADOR', 'GESTOR')
+  @ApiOperation({ summary: 'Atualizar' })
+  update(@Param('id') id: string, @Body() updateDto: UpdateDto) {
+    return this.nomeService.update(id, updateDto);
+  }
+  
   @Delete(':id')
   @Roles('ADMINISTRADOR')
-  @ApiOperation({ summary: 'Deletar usuário' })
+  @ApiOperation({ summary: 'Deletar' })
   remove(@Param('id') id: string) {
-    return this.usuariosService.hardDelete(id);
+    return this.nomeService.hardDelete(id);
   }
-
+  
   @Patch(':id/inativar')
   @Roles('ADMINISTRADOR')
-  @ApiOperation({ summary: 'Inativar usuário' })
+  @ApiOperation({ summary: 'Inativar (soft delete)' })
   inactivate(@Param('id') id: string) {
-    return this.usuariosService.remove(id);
+    return this.nomeService.remove(id);
   }
 }
 ```
 
-**Padrões observados**:
+**Convenções aplicadas**:
 
-| Aspecto | Padrão | Exemplo |
-|---------|--------|---------|
-| **Decorator de Rota** | `@Controller('nome-recurso')` (kebab-case) | `@Controller('usuarios')` |
-| **Decoradores API** | Todos endpoints têm `@ApiTags()`, `@ApiOperation()`, `@ApiBearerAuth()` | Visto acima |
-| **Guards** | `@UseGuards(JwtAuthGuard, RolesGuard)` aplicado ao controller | Todos os controllers |
-| **Autorização** | `@Roles('PERFIL')` por endpoint (pode ter múltiplos perfis) | `@Roles('ADMINISTRADOR', 'GESTOR')` |
-| **Métodos CRUD** | POST (create), GET (findAll/findOne), PATCH (update), DELETE (remove) | Padrão REST |
-| **Parâmetros** | DTOs tipados com `@Body()`, IDs com `@Param('id')` | `CreateUsuarioDto`, `UpdateUsuarioDto` |
-| **Soft Delete** | Endpoint separado `PATCH /:id/inativar` + `DELETE /:id` (hard delete) | Visto acima |
+| Aspecto | Padrão |
+|---------|--------|
+| Decorator `@Controller()` | Nome do recurso em kebab-case |
+| Documentação Swagger | `@ApiTags()`, `@ApiOperation()`, `@ApiBearerAuth()` sempre presentes |
+| Autenticação | `@UseGuards(JwtAuthGuard, RolesGuard)` aplicado no nível do controller |
+| Autorização | `@Roles()` por endpoint, aceita múltiplos perfis |
+| Verbos HTTP | POST (create), GET (findAll/findOne), PATCH (update), DELETE (remove) |
+| Parâmetros | DTOs tipados com `@Body()`, IDs com `@Param('id')` |
+| Injeção | Constructor com `private readonly nomeService: NomeService` |
 
-**Consistência**: **CONSISTENTE**
+**Exemplos reais**:
+- `/backend/src/modules/usuarios/usuarios.controller.ts` (140 linhas)
+- `/backend/src/modules/empresas/empresas.controller.ts` (183 linhas)
+- `/backend/src/modules/pilares/pilares.controller.ts`
+
+**Grau de consistência**: CONSISTENTE
 
 ---
 
 ## 3. Services
 
-### Padrão Observado
+### Padrão de Estrutura
 
-Services contêm toda a lógica de negócio. Injetam dependências (Prisma, Audit, outros serviços).
-
-**Arquivo exemplo**: `src/modules/usuarios/usuarios.service.ts` (331 linhas)
+**Onde aparece**: Todos os arquivos `*.service.ts`
 
 ```typescript
 @Injectable()
-export class UsuariosService {
-  constructor(private prisma: PrismaService, private audit: AuditService) {}
+export class NomeService {
+  private readonly logger = new Logger(NomeService.name);
+  
+  constructor(
+    private prisma: PrismaService,
+    private audit: AuditService
+  ) {}
 
   async findAll() {
-    return this.prisma.usuario.findMany({
+    return this.prisma.entidade.findMany({
       select: {
         id: true,
-        email: true,
-        nome: true,
-        // ... campos
+        campo1: true,
+        // ... campos necessários (nunca senha)
       },
     });
   }
 
-  async create(data: any) {
-    const existingUser = await this.findByEmail(data.email);
+  async findById(id: string) {
+    const item = await this.prisma.entidade.findUnique({
+      where: { id },
+      select: { /* campos */ },
+    });
     
-    if (existingUser) {
+    if (!item) {
+      throw new NotFoundException('Recurso não encontrado');
+    }
+    
+    return item;
+  }
+
+  async create(data: CreateDto, requestUser: RequestUser) {
+    // 1. Validações de negócio
+    const existing = await this.findByEmail(data.email);
+    if (existing) {
       throw new ConflictException('Email já cadastrado');
     }
-
+    
+    // 2. Transformações (ex: hash de senha)
     const hashedPassword = await argon2.hash(data.senha);
     
-    const created = await this.prisma.usuario.create({
+    // 3. Criação
+    const created = await this.prisma.entidade.create({
       data: { ...data, senha: hashedPassword },
-      select: { /* select fields */ },
+      select: { /* campos */ },
     });
-
+    
+    // 4. Auditoria
+    await this.audit.log({
+      entidade: 'ENTIDADE',
+      acao: 'CREATE',
+      entidadeId: created.id,
+      usuarioId: requestUser.id,
+    });
+    
     return created;
   }
 
-  async update(id: string, data: any) {
-    // validações...
-    return this.prisma.usuario.update({
+  async update(id: string, data: UpdateDto, requestUser: RequestUser) {
+    await this.findById(id); // valida existência
+    
+    // validações adicionais...
+    
+    const updated = await this.prisma.entidade.update({
       where: { id },
       data,
-      select: { /* select fields */ },
+      select: { /* campos */ },
     });
+    
+    await this.audit.log({
+      entidade: 'ENTIDADE',
+      acao: 'UPDATE',
+      entidadeId: id,
+      usuarioId: requestUser.id,
+    });
+    
+    return updated;
   }
 
   async remove(id: string) {
-    // soft delete: ativo = false
-    return this.prisma.usuario.update({
+    // Soft delete: marcar como inativo
+    return this.prisma.entidade.update({
       where: { id },
       data: { ativo: false },
     });
   }
 
   async hardDelete(id: string) {
-    // delete real
-    return this.prisma.usuario.delete({
+    // Delete físico
+    return this.prisma.entidade.delete({
       where: { id },
     });
   }
 }
 ```
 
-**Padrões observados**:
+**Convenções aplicadas**:
 
-| Aspecto | Padrão | Observação |
-|---------|--------|-----------|
-| **Decorator** | `@Injectable()` | Sempre presente |
-| **Injeção** | Constructor com `private` | Visto sempre |
-| **Métodos** | `async/await` (Promises) | Código 100% assíncrono |
-| **Validação** | Feita no serviço antes de ação (verificação de existência, conflitos) | Throw exceptions |
-| **Hash de Senha** | Argon2 (nunca bcrypt) | `await argon2.hash(data.senha)` |
-| **Select Seletivo** | Usa `.select()` para retornar apenas campos necessários | Não retorna `senha` |
-| **Soft Delete** | Campo `ativo: boolean` (update com ativo=false) | Método `remove()` |
-| **Hard Delete** | Método separado `hardDelete()` | Delete real do BD |
-| **Auditoria** | Service injeta `AuditService` (não observado log em todos os métodos) | Implementação parcial |
+| Aspecto | Padrão |
+|---------|--------|
+| Decorator | `@Injectable()` sempre presente |
+| Logger | `private readonly logger = new Logger(NomeService.name)` |
+| Injeção | Constructor com `private` para dependências |
+| Métodos | `async/await` (100% assíncrono) |
+| Hash de Senha | `argon2` (nunca bcrypt) |
+| Select Seletivo | Sempre usa `.select()`, nunca retorna `senha` |
+| Validações | Feitas no service antes de ações (throw exceptions) |
+| Exceptions | `NotFoundException`, `ConflictException`, `ForbiddenException` |
+| Soft Delete | Método `remove()` marca `ativo: false` |
+| Hard Delete | Método separado `hardDelete()` |
+| Auditoria | Chamada após operações (CREATE, UPDATE, DELETE) |
+| RequestUser | Parâmetro `requestUser: RequestUser` para rastreabilidade |
 
-**Consistência**: **CONSISTENTE**
+**Exemplos reais**:
+- `/backend/src/modules/usuarios/usuarios.service.ts` (472 linhas)
+- `/backend/src/modules/empresas/empresas.service.ts`
+- `/backend/src/modules/pilares/pilares.service.ts`
+
+**Grau de consistência**: CONSISTENTE
 
 ---
 
 ## 4. DTOs (Data Transfer Objects)
 
-### Padrão Observado
+### Padrão de Estrutura
 
-DTOs usam `class-validator` para validação automática pelo NestJS.
-
-**Arquivo**: `src/modules/usuarios/dto/create-usuario.dto.ts`
+**Onde aparece**: Todos os arquivos em `*/dto/*.dto.ts`
 
 ```typescript
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { IsEmail, IsNotEmpty, IsString, Length, IsUUID, IsOptional, MinLength } from 'class-validator';
+import { IsEmail, IsNotEmpty, IsString, Length, IsUUID, IsOptional, MinLength, Matches } from 'class-validator';
 
 export class CreateUsuarioDto {
-  @ApiProperty({ example: 'joao@reiche.com' })
+  @ApiProperty({ example: 'joao.silva@reiche.com.br' })
   @IsEmail()
   @IsNotEmpty()
   email: string;
@@ -230,10 +269,13 @@ export class CreateUsuarioDto {
   @Length(2, 100)
   nome: string;
 
-  @ApiProperty({ example: 'senha123' })
+  @ApiProperty({ example: 'SenhaForte1@' })
   @IsString()
   @IsNotEmpty()
-  @MinLength(6)
+  @MinLength(8)
+  @Matches(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]/, {
+    message: 'A senha deve conter pelo menos uma letra maiúscula, uma minúscula, um número e um caractere especial (@$!%*?&)',
+  })
   senha: string;
 
   @ApiPropertyOptional({ example: '(11) 98765-4321' })
@@ -241,67 +283,487 @@ export class CreateUsuarioDto {
   @IsOptional()
   telefone?: string;
 
-  @ApiProperty({ example: 'uuid-perfil' })
+  @ApiProperty({ example: 'uuid-do-perfil' })
   @IsUUID()
   @IsNotEmpty()
   perfilId: string;
 }
+
+export class UpdateUsuarioDto {
+  @ApiPropertyOptional()
+  @IsEmail()
+  @IsOptional()
+  email?: string;
+
+  @ApiPropertyOptional()
+  @IsString()
+  @IsOptional()
+  nome?: string;
+  
+  // ... demais campos opcionais
+}
 ```
 
-**Padrões observados**:
+**Convenções aplicadas**:
 
-| Aspecto | Padrão | Observação |
-|---------|--------|-----------|
-| **Arquivo** | `create-{entidade}.dto.ts`, `update-{entidade}.dto.ts` | Kebab-case, pluraliza a entidade |
-| **Export** | Named export (não default) | `export class CreateUsuarioDto` |
-| **Decoradores Swagger** | `@ApiProperty()` e `@ApiPropertyOptional()` | Sempre com `example` |
-| **Validadores** | Decoradores do `class-validator` | `@IsEmail()`, `@IsNotEmpty()`, etc |
-| **Campos Opcionais** | `@IsOptional()` + `?` no TypeScript | Telefone é opcional |
-| **Validações Comuns** | Length, MinLength, IsEmail, IsUUID, IsString | Sem custom validators observados |
-| **Sem Métodos** | DTOs são apenas data holders | Nenhum método visto |
+| Aspecto | Padrão |
+|---------|--------|
+| Nomenclatura | `Create{Nome}Dto`, `Update{Nome}Dto` (PascalCase) |
+| Validadores | `class-validator` decorators (`@IsEmail`, `@IsNotEmpty`, etc.) |
+| Documentação | `@ApiProperty()` para campos obrigatórios, `@ApiPropertyOptional()` para opcionais |
+| Examples | Sempre incluídos no `@ApiProperty({ example: '...' })` |
+| Validação de Senha | Regex com requisitos explícitos (maiúscula, minúscula, número, especial) |
+| Campos Opcionais | Tipo `field?: string` + decorator `@IsOptional()` |
+| UUIDs | Validação com `@IsUUID()` |
 
-**Consistência**: **CONSISTENTE**
+**Exemplos reais**:
+- `/backend/src/modules/usuarios/dto/create-usuario.dto.ts` (46 linhas)
+- `/backend/src/modules/usuarios/dto/update-usuario.dto.ts`
+- `/backend/src/modules/empresas/dto/create-empresa.dto.ts`
+
+**Grau de consistência**: CONSISTENTE
 
 ---
 
-## 5. Tratamento de Erros
+## 5. Autenticação e Autorização (Guards)
+
+### Padrão de Implementação
+
+**Onde aparece**:
+- `/backend/src/modules/auth/guards/jwt-auth.guard.ts`
+- `/backend/src/modules/auth/guards/roles.guard.ts`
+- `/backend/src/modules/auth/guards/local-auth.guard.ts`
+
+**JwtAuthGuard** (autenticação):
+```typescript
+@Injectable()
+export class JwtAuthGuard extends AuthGuard('jwt') {}
+```
+
+**RolesGuard** (autorização):
+```typescript
+@Injectable()
+export class RolesGuard implements CanActivate {
+  constructor(private reflector: Reflector) {}
+
+  canActivate(context: ExecutionContext): boolean {
+    const requiredRoles = this.reflector.get<Role[]>(ROLES_KEY, context.getHandler());
+    if (!requiredRoles || requiredRoles.length === 0) {
+      return true; // Sem restrição
+    }
+    
+    const request = context.switchToHttp().getRequest();
+    const user = request.user;
+    
+    if (!user || !user.perfil) return false;
+    
+    const perfilCodigo = typeof user.perfil === 'object' 
+      ? user.perfil.codigo 
+      : user.perfil;
+      
+    return requiredRoles.includes(perfilCodigo);
+  }
+}
+```
+
+**Convenções aplicadas**:
+
+| Aspecto | Padrão |
+|---------|--------|
+| Autenticação | `@UseGuards(JwtAuthGuard)` aplicado no controller |
+| Autorização | `@UseGuards(RolesGuard)` após JwtAuthGuard |
+| Decorator de Roles | `@Roles('ADMINISTRADOR', 'GESTOR')` por endpoint |
+| Perfis Disponíveis | ADMINISTRADOR, GESTOR, COLABORADOR, LEITURA |
+| Retorno de Guards | `boolean` (true = autorizado, false = bloqueado) |
+| Request User | `request.user` contém dados do usuário autenticado |
+
+**Grau de consistência**: CONSISTENTE
+
+---
+
+## 6. Interface RequestUser
+
+### Padrão Observado
+
+**Onde aparece**: `/backend/src/common/interfaces/request-user.interface.ts`
+
+```typescript
+export interface RequestUser {
+  id: string;
+  email: string;
+  nome: string;
+  empresaId: string | null;
+  perfil: {
+    id: string;
+    codigo: string;
+    nome: string;
+    nivel: number;
+  };
+}
+```
+
+**Uso**:
+- Parâmetro em métodos de service para rastreabilidade
+- Validação de regras de negócio (multi-tenant, hierarquia de perfis)
+- Auditoria
+
+**Grau de consistência**: CONSISTENTE (introduzido recentemente, uso crescente)
+
+---
+
+## 7. Regras de Validação Multi-Tenant
+
+### Padrão Observado
+
+**Onde aparece**: Services de `usuarios`, `empresas`
+
+```typescript
+private validateTenantAccess(
+  targetUsuario: { empresaId: string | null }, 
+  requestUser: RequestUser, 
+  action: string
+) {
+  // ADMINISTRADOR tem acesso global
+  if (requestUser.perfil?.codigo === 'ADMINISTRADOR') {
+    return;
+  }
+
+  // Outros perfis só acessam recursos da mesma empresa
+  if (targetUsuario.empresaId !== requestUser.empresaId) {
+    throw new ForbiddenException(`Você não pode ${action} usuários de outra empresa`);
+  }
+}
+```
+
+**Convenções aplicadas**:
+
+| Aspecto | Padrão |
+|---------|--------|
+| Validação de Tenant | Método privado `validateTenantAccess()` |
+| Exceção ADMINISTRADOR | Sempre tem acesso global |
+| Outros Perfis | Isolamento por `empresaId` |
+| Exception | `ForbiddenException` com mensagem descritiva |
+
+**Exemplos reais**:
+- `/backend/src/modules/usuarios/usuarios.service.ts` (linhas 24-34)
+
+**Grau de consistência**: PARCIAL (implementado em usuários, empresas; falta em outros módulos)
+
+---
+
+## 8. Hierarquia de Perfis (Elevation Protection)
+
+### Padrão Observado
+
+```typescript
+private async validateProfileElevation(
+  targetPerfilId: string, 
+  requestUser: RequestUser, 
+  action: string
+) {
+  // ADMINISTRADOR pode criar/editar qualquer perfil
+  if (requestUser.perfil?.codigo === 'ADMINISTRADOR') {
+    return;
+  }
+
+  // Buscar perfil alvo
+  const targetPerfil = await this.prisma.perfilUsuario.findUnique({
+    where: { id: targetPerfilId },
+  });
+
+  if (!targetPerfil) {
+    throw new NotFoundException('Perfil não encontrado');
+  }
+
+  // Impedir criação/edição de perfil superior ou igual
+  if (targetPerfil.nivel <= requestUser.perfil.nivel) {
+    throw new ForbiddenException(
+      `Você não pode ${action} usuário com perfil ${targetPerfil.nome}`
+    );
+  }
+}
+```
+
+**Convenções aplicadas**:
+
+| Aspecto | Padrão |
+|---------|--------|
+| Validação | Método privado `validateProfileElevation()` |
+| Hierarquia | Baseada no campo `nivel` (menor = mais poder) |
+| Regra | Usuário não pode criar/editar perfis de nível superior ou igual |
+| Exception | `ForbiddenException` |
+
+**Exemplos reais**:
+- `/backend/src/modules/usuarios/usuarios.service.ts` (linhas 39-56)
+
+**Grau de consistência**: PARCIAL (implementado em usuários; não necessário em outros módulos)
+
+---
+
+## 9. Auditoria
+
+### Padrão Observado
+
+**Onde aparece**: `/backend/src/modules/audit/audit.service.ts`
+
+```typescript
+await this.audit.log({
+  entidade: 'USUARIO',
+  acao: 'CREATE',
+  entidadeId: created.id,
+  usuarioId: requestUser.id,
+  detalhes: { campo: 'valor' }, // opcional
+});
+```
+
+**Convenções aplicadas**:
+
+| Aspecto | Padrão |
+|---------|--------|
+| Chamada | `await this.audit.log()` após CREATE, UPDATE, DELETE |
+| Entidade | Enum ou string maiúscula (ex: 'USUARIO', 'EMPRESA') |
+| Ação | CREATE, UPDATE, DELETE, INACTIVATE, etc. |
+| Usuário | Sempre rastreia quem executou (`requestUser.id`) |
+| Detalhes | Campo opcional JSON para contexto adicional |
+
+**Exemplos reais**:
+- `/backend/src/modules/usuarios/usuarios.service.ts`
+- `/backend/src/modules/empresas/empresas.service.ts`
+
+**Grau de consistência**: CONSISTENTE
+
+---
+
+## 10. Soft Delete vs Hard Delete
+
+### Padrão Observado
+
+**Soft Delete** (padrão preferido):
+```typescript
+async remove(id: string) {
+  return this.prisma.entidade.update({
+    where: { id },
+    data: { ativo: false },
+  });
+}
+```
+
+**Hard Delete** (operação administrativa):
+```typescript
+async hardDelete(id: string) {
+  return this.prisma.entidade.delete({
+    where: { id },
+  });
+}
+```
+
+**Convenções aplicadas**:
+
+| Aspecto | Padrão |
+|---------|--------|
+| Soft Delete | Método `remove()`, marca `ativo: false` |
+| Hard Delete | Método `hardDelete()`, usa Prisma `.delete()` |
+| Endpoint Soft | `PATCH /:id/inativar` |
+| Endpoint Hard | `DELETE /:id` |
+| Perfil Necessário | Apenas ADMINISTRADOR |
+
+**Grau de consistência**: CONSISTENTE
+
+---
+
+## 11. Tratamento de Erros
 
 ### Padrões Observados
 
-Usa exceções do NestJS (`@nestjs/common`).
+**Exceptions utilizadas**:
 
-**Exceções observadas no código**:
-- `NotFoundException` - Recurso não encontrado (GET 404)
-- `ConflictException` - Conflito (ex: email duplicado, POST 409)
-- `UnauthorizedException` - Credenciais inválidas (GET 401)
-- `BadRequestException` - Entrada inválida (GET 400)
+| Exception | Quando Usar | Código HTTP |
+|-----------|-------------|-------------|
+| `NotFoundException` | Recurso não encontrado | 404 |
+| `ConflictException` | Violação de unicidade (email duplicado, etc.) | 409 |
+| `ForbiddenException` | Sem permissão para ação | 403 |
+| `BadRequestException` | Dados inválidos | 400 |
+| `UnauthorizedException` | Não autenticado | 401 |
 
-**Exemplo**:
+**Exemplos reais**:
 ```typescript
 if (!usuario) {
   throw new NotFoundException('Usuário não encontrado');
 }
 
-if (existingUser) {
+if (existingEmail) {
   throw new ConflictException('Email já cadastrado');
 }
 
-if (!isPasswordValid) {
-  throw new UnauthorizedException('Credenciais inválidas');
+if (!hasPermission) {
+  throw new ForbiddenException('Você não pode executar esta ação');
 }
 ```
 
-**Padrões observados**:
+**Grau de consistência**: CONSISTENTE
 
-| Aspecto | Padrão | Observação |
-|---------|--------|-----------|
-| **Biblioteca** | `@nestjs/common` | Sempre |
-| **Lançamento** | `throw new NestJsException()` | Nunca Error() genérico |
-| **Mensagem** | Sempre em português | Mensagens de erro em PT-BR |
-| **Mapping Automático** | NestJS converte para HTTP status automaticamente | NotFoundException → 404 |
+---
 
-**Inconsistências**:
-- Global error handler **NÃO CONSOLIDADO** (nenhum exception filter observado)
+## 12. Upload de Arquivos
+
+### Padrão Observado
+
+**Onde aparece**:
+- `/backend/src/modules/usuarios/usuarios.controller.ts` (upload de avatar)
+- `/backend/src/modules/empresas/empresas.controller.ts` (upload de logo)
+
+```typescript
+@Patch(':id/avatar')
+@UseInterceptors(
+  FileInterceptor('avatar', {
+    storage: diskStorage({
+      destination: './public/images/avatars',
+      filename: (req, file, cb) => {
+        const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1e9);
+        cb(null, `avatar-${uniqueSuffix}${extname(file.originalname)}`);
+      },
+    }),
+    fileFilter: (req, file, cb) => {
+      if (!file.mimetype.match(/\/(jpg|jpeg|png|gif)$/)) {
+        return cb(new BadRequestException('Apenas imagens são permitidas'), false);
+      }
+      cb(null, true);
+    },
+  })
+)
+@ApiConsumes('multipart/form-data')
+uploadAvatar(@Param('id') id: string, @UploadedFile() file: Express.Multer.File) {
+  return this.usuariosService.updateAvatar(id, file);
+}
+```
+
+**Convenções aplicadas**:
+
+| Aspecto | Padrão |
+|---------|--------|
+| Interceptor | `FileInterceptor('campo')` |
+| Storage | `diskStorage()` em `/public/images/{tipo}` |
+| Filename | `{tipo}-{timestamp}-{random}{ext}` |
+| Filtro | Validação de tipo MIME (apenas imagens) |
+| API Doc | `@ApiConsumes('multipart/form-data')` |
+| Decorator | `@UploadedFile() file: Express.Multer.File` |
+
+**Grau de consistência**: CONSISTENTE
+
+---
+
+## 13. Prisma ORM
+
+### Padrões Observados
+
+**Uso de Select**:
+```typescript
+return this.prisma.usuario.findMany({
+  select: {
+    id: true,
+    email: true,
+    nome: true,
+    cargo: true,
+    ativo: true,
+    perfil: {
+      select: {
+        id: true,
+        codigo: true,
+        nome: true,
+      },
+    },
+    empresa: {
+      select: {
+        id: true,
+        nomeFantasia: true,
+      },
+    },
+  },
+});
+```
+
+**Convenções aplicadas**:
+
+| Aspecto | Padrão |
+|---------|--------|
+| Select | Sempre explícito, nunca retornar tudo |
+| Senha | NUNCA incluída no select |
+| Relações | Nested select para incluir dados relacionados |
+| Contadores | `_count: { relacao: true }` para estatísticas |
+| Where | UUIDs com `{ id }`, emails com `{ email }` |
+
+**Grau de consistência**: CONSISTENTE
+
+---
+
+## 14. Endpoints Públicos (Sem Autenticação)
+
+### Padrão Observado
+
+**Onde aparece**: `/backend/src/modules/empresas/empresas.controller.ts`
+
+```typescript
+// Endpoints públicos DEVEM vir ANTES de rotas com :id para não serem interceptados
+
+// Endpoint público para buscar customização por CNPJ (sem autenticação)
+@Get('customization/:cnpj')
+@ApiOperation({ summary: 'Buscar customização da empresa por CNPJ (público)' })
+@ApiResponse({ status: 200, description: 'Customização encontrada' })
+@ApiResponse({ status: 404, description: 'Empresa não encontrada' })
+async getCustomizationByCnpj(@Param('cnpj') cnpj: string) {
+  return this.empresasService.findByCnpj(cnpj);
+}
+
+// Endpoint público para buscar empresa por loginUrl (sem autenticação)
+@Get('by-login-url/:loginUrl')
+@ApiOperation({ summary: 'Buscar empresa por loginUrl (público)' })
+async getByLoginUrl(@Param('loginUrl') loginUrl: string) {
+  return this.empresasService.findByLoginUrl(loginUrl);
+}
+
+// Rotas protegidas vêm depois
+@ApiBearerAuth()
+@UseGuards(JwtAuthGuard, RolesGuard)
+
+@Get(':id')
+@Roles('ADMINISTRADOR', 'GESTOR')
+// ...
+```
+
+**Convenções aplicadas**:
+
+| Aspecto | Padrão |
+|---------|--------|
+| Ordem | Endpoints públicos ANTES de rotas com `:id` |
+| Sem Guards | Não usa `@UseGuards()` |
+| Sem Auth | Não usa `@ApiBearerAuth()` |
+| Documentação | Comentário explícito: `// público (sem autenticação)` |
+
+**Grau de consistência**: CONSISTENTE (nos poucos casos onde se aplica)
+
+---
+
+## Limitações e Inconsistências Atuais
+
+### Áreas sem Padrão Consolidado
+
+1. **Paginação**: Não há padrão consistente implementado nos endpoints de listagem
+2. **Filtros**: Não há padrão para query params de filtro
+3. **Ordenação**: Não implementado no backend (feito no frontend)
+4. **Rate Limiting**: ThrottlerModule configurado globalmente (60s, 10 req), mas não testado em cenários de carga
+5. **Logging**: Logger declarado nos services mas uso inconsistente
+6. **Internacionalização**: Mensagens de erro em português, sem i18n
+7. **Versionamento de API**: Não implementado (sem `/v1`, `/v2`)
+8. **Testes E2E**: Removidos, não há padrão definido
+
+### Pontos que Precisam Decisão Futura
+
+- Implementar paginação padronizada?
+- Adicionar filtros dinâmicos (query builder)?
+- Internacionalizar mensagens de erro?
+- Versionar API?
+- Reativar testes E2E com padrão definido?
+- Padronizar logs estruturados?
 
 **Consistência**: **PARCIAL** (exceções específicas, sem handler global)
 

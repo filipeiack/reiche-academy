@@ -1,23 +1,28 @@
 # Convenções - Naming (Nomenclatura)
 
+**Status**: Documentação baseada em código existente  
+**Última atualização**: 2025-12-23
+
+---
+
 ## 1. Padrões de Nomes - Visão Geral
 
 | Contexto | Padrão | Exemplo |
 |----------|--------|---------|
 | **Classes** | PascalCase | `UsuariosService`, `CreateUsuarioDto` |
 | **Arquivos de Classe** | kebab-case | `usuarios.service.ts`, `create-usuario.dto.ts` |
-| **Variáveis/Propriedades** | camelCase | `userName`, `isActive`, `currentUser` |
+| **Variáveis/Propriedades** | camelCase | `selectedUsuarios`, `loadingDetails` |
 | **Constantes** | UPPER_SNAKE_CASE | `API_URL`, `TOKEN_KEY` |
-| **Enums** | UPPER_CASE (sem acento) | `ALTO`, `MEDIO`, `BAIXO` |
-| **Funções** | camelCase | `findById()`, `validateUser()` |
-| **Métodos Private** | camelCase com prefixo `private` | `private validateInput()` |
-| **Métodos Async** | camelCase com prefixo verbal | `async findAll()` |
-| **Rotas** | kebab-case | `/usuarios`, `/usuarios/novo` |
-| **Interfaces** | PascalCase | `Usuario`, `CreateUsuarioDto` |
-| **Componentes Angular** | PascalCase + Component | `UsuariosFormComponent` |
-| **Seletores Component** | kebab-case com `app-` | `app-usuarios-form` |
+| **Enums (valores)** | SCREAMING_SNAKE_CASE | `ADMINISTRADOR`, `GESTOR`, `COLABORADOR` |
+| **Funções/Métodos** | camelCase | `findById()`, `loadUsuarios()`, `onSubmit()` |
+| **Métodos Private** | camelCase com `private` | `private validateInput()` |
+| **Métodos Async** | camelCase com prefixo verbal | `async findAll()`, `async loadUsuarios()` |
+| **Rotas (backend)** | kebab-case | `/usuarios`, `/usuarios/:id` |
+| **Interfaces** | PascalCase | `Usuario`, `Empresa`, `RequestUser` |
+| **Componentes Angular** | PascalCase + Component | `UsuariosListComponent`, `UsuariosFormComponent` |
+| **Seletores Component** | kebab-case com `app-` | `app-usuarios-list`, `app-usuarios-form` |
 
-**Consistência Global**: **CONSISTENTE**
+**Grau de consistência**: CONSISTENTE
 
 ---
 
@@ -32,16 +37,31 @@
 - `auth.service.ts` → `AuthService`
 - `empresas.service.ts` → `EmpresasService`
 - `audit.service.ts` → `AuditService`
+- `pilares.service.ts` → `PilaresService`
 
-**Padrão**:
 ```typescript
+// Arquivo: usuarios.service.ts
 @Injectable()
 export class UsuariosService {
-  // Sempre no singular no tipo + plural no nome do arquivo
+  constructor(private prisma: PrismaService) {}
+  
+  async findAll() { }
+  async findById(id: number) { }
+  async create(dto: CreateUsuarioDto) { }
+  async update(id: number, dto: UpdateUsuarioDto) { }
+  async remove(id: number) { }
+  async hardDelete(id: number) { }
 }
 ```
 
-**Consistência**: **CONSISTENTE**
+**Observações**:
+- Nome do arquivo: plural, kebab-case (`usuarios.service.ts`)
+- Nome da classe: plural, PascalCase (`UsuariosService`)
+- Métodos: camelCase, verbos em inglês
+
+**Grau de consistência**: CONSISTENTE
+
+---
 
 ### Controllers
 
@@ -50,55 +70,359 @@ export class UsuariosService {
 **Arquivos observados**:
 - `usuarios.controller.ts` → `UsuariosController`
 - `auth.controller.ts` → `AuthController`
+- `empresas.controller.ts` → `EmpresasController`
 
-**Padrão**:
 ```typescript
+// Arquivo: usuarios.controller.ts
 @Controller('usuarios')
+@ApiTags('usuarios')
 export class UsuariosController {
-  // Sempre plural na rota, PascalCase na classe
+  constructor(private readonly usuariosService: UsuariosService) {}
+  
+  @Get()
+  findAll() { }
+  
+  @Get(':id')
+  findOne(@Param('id') id: string) { }
+  
+  @Post()
+  create(@Body() createDto: CreateUsuarioDto) { }
+  
+  @Patch(':id')
+  update(@Param('id') id: string, @Body() updateDto: UpdateUsuarioDto) { }
+  
+  @Delete(':id')
+  remove(@Param('id') id: string) { }
 }
 ```
 
-**Consistência**: **CONSISTENTE**
+**Observações**:
+- Decorator `@Controller`: plural, kebab-case (`'usuarios'`)
+- Nome da classe: plural, PascalCase (`UsuariosController`)
+- Métodos HTTP: verbos em inglês padrão (`findAll`, `findOne`, `create`, `update`, `remove`)
 
-### Modules
+**Grau de consistência**: CONSISTENTE
 
-**Padrão**: `{Entidade}Module`
+---
 
-**Arquivos observados**:
-- `usuarios.module.ts` → `UsuariosModule`
-- `auth.module.ts` → `AuthModule`
-
-**Padrão**:
-```typescript
-@Module({
-  controllers: [UsuariosController],
-  providers: [UsuariosService],
-})
-export class UsuariosModule {}
-```
-
-**Consistência**: **CONSISTENTE**
-
-### DTOs
+### DTOs (Data Transfer Objects)
 
 **Padrão**: `Create{Entidade}Dto`, `Update{Entidade}Dto`
 
 **Arquivos observados**:
 - `create-usuario.dto.ts` → `CreateUsuarioDto`
 - `update-usuario.dto.ts` → `UpdateUsuarioDto`
-- `forgot-password.dto.ts` → `ForgotPasswordDto`
+- `create-empresa.dto.ts` → `CreateEmpresaDto`
+- `update-empresa.dto.ts` → `UpdateEmpresaDto`
 
-**Padrão**:
 ```typescript
 // Arquivo: create-usuario.dto.ts
 export class CreateUsuarioDto {
   @ApiProperty()
+  @IsString()
+  nome: string;
+
+  @ApiProperty()
   @IsEmail()
   email: string;
-  // ...
+
+  @ApiProperty()
+  @IsString()
+  senha: string;
+
+  @ApiProperty({ enum: Perfil })
+  @IsEnum(Perfil)
+  perfil: Perfil;
+
+  @ApiProperty()
+  @IsInt()
+  empresaId: number;
 }
 ```
+
+```typescript
+// Arquivo: update-usuario.dto.ts
+export class UpdateUsuarioDto extends PartialType(CreateUsuarioDto) {}
+```
+
+**Observações**:
+- Nome do arquivo: `create-`/`update-` + entidade singular + `.dto.ts`
+- Nome da classe: `Create`/`Update` + entidade singular + `Dto`
+- Propriedades: camelCase
+
+**Grau de consistência**: CONSISTENTE
+
+---
+
+### Interfaces
+
+**Padrão**: PascalCase, nome descritivo
+
+**Arquivos observados**:
+- `RequestUser` (interface para usuário autenticado)
+- `Usuario` (modelo de domínio)
+- `Empresa` (modelo de domínio)
+
+```typescript
+export interface RequestUser {
+  userId: number;
+  email: string;
+  perfil: Perfil;
+  empresaId: number;
+}
+```
+
+**Grau de consistência**: CONSISTENTE
+
+---
+
+### Enums
+
+**Padrão**: Valores em SCREAMING_SNAKE_CASE
+
+**Arquivo observado**: `@prisma/client` (gerado)
+
+```typescript
+enum Perfil {
+  ADMINISTRADOR = 'ADMINISTRADOR',
+  GESTOR = 'GESTOR',
+  COLABORADOR = 'COLABORADOR',
+}
+```
+
+**Observações**:
+- Valores: SCREAMING_SNAKE_CASE, sem acentos
+- Mesmo padrão para todos os enums
+
+**Grau de consistência**: CONSISTENTE
+
+---
+
+### Métodos - Padrões Comuns
+
+| Operação | Padrão Backend | Exemplo |
+|----------|---------------|---------|
+| Listar todos | `findAll()` | `async findAll()` |
+| Buscar por ID | `findById(id)` ou `findOne(id)` | `async findById(id: number)` |
+| Criar | `create(dto)` | `async create(dto: CreateUsuarioDto)` |
+| Atualizar | `update(id, dto)` | `async update(id: number, dto: UpdateUsuarioDto)` |
+| Deletar (soft) | `remove(id)` | `async remove(id: number)` |
+| Deletar (hard) | `hardDelete(id)` | `async hardDelete(id: number)` |
+
+**Grau de consistência**: CONSISTENTE
+
+---
+
+## 3. Frontend - Componentes e Services
+
+### Componentes
+
+**Padrão**: `{Nome}{Tipo}Component`
+
+**Arquivos observados**:
+- `usuarios-list.component.ts` → `UsuariosListComponent`
+- `usuarios-form.component.ts` → `UsuariosFormComponent`
+- `pilares-list.component.ts` → `PilaresListComponent`
+
+```typescript
+// Arquivo: usuarios-list.component.ts
+@Component({
+  selector: 'app-usuarios-list',
+  templateUrl: './usuarios-list.component.html',
+  styleUrls: ['./usuarios-list.component.scss']
+})
+export class UsuariosListComponent implements OnInit {
+  selectedUsuarios: number[] = [];
+  loadingDetails: boolean = false;
+  
+  ngOnInit(): void {
+    this.loadUsuarios();
+  }
+  
+  loadUsuarios(): void { }
+  onSubmit(): void { }
+  handleCancel(): void { }
+}
+```
+
+**Observações**:
+- Arquivo: kebab-case com sufixo `.component.ts`
+- Classe: PascalCase com sufixo `Component`
+- Selector: `app-` + kebab-case
+- Propriedades: camelCase
+- Métodos: camelCase, verbos descritivos
+
+**Grau de consistência**: CONSISTENTE
+
+---
+
+### Services
+
+**Padrão**: `{Nome}Service`
+
+**Arquivos observados**:
+- `users.service.ts` → `UsersService`
+- `auth.service.ts` → `AuthService`
+- `pilares.service.ts` → `PilaresService`
+
+```typescript
+// Arquivo: users.service.ts
+@Injectable({
+  providedIn: 'root'
+})
+export class UsersService {
+  private apiUrl = `${environment.apiUrl}/usuarios`;
+  
+  constructor(private http: HttpClient) {}
+  
+  listar(): Observable<Usuario[]> { }
+  buscarPorId(id: number): Observable<Usuario> { }
+  criar(usuario: CreateUsuarioDto): Observable<Usuario> { }
+  atualizar(id: number, usuario: UpdateUsuarioDto): Observable<Usuario> { }
+  deletar(id: number): Observable<void> { }
+}
+```
+
+**Observações**:
+- Arquivo: kebab-case com sufixo `.service.ts`
+- Classe: PascalCase com sufixo `Service`
+- Métodos: camelCase, português ou inglês (INCONSISTENTE)
+
+**Grau de consistência**: PARCIAL (idioma dos métodos varia)
+
+---
+
+### Propriedades de Componente
+
+| Tipo de Propriedade | Padrão | Exemplo |
+|---------------------|--------|---------|
+| Arrays | plural, camelCase | `usuarios`, `pilares` |
+| Booleanos | prefixo `is`/`has`/`loading` | `isLoading`, `hasPermission`, `loadingDetails` |
+| Selecionados | prefixo `selected` | `selectedUsuarios`, `selectedIds` |
+| Formulários | sufixo `Form` | `usuarioForm`, `empresaForm` |
+| Observables | sufixo `$` | `usuarios$`, `loading$` |
+
+**Grau de consistência**: CONSISTENTE
+
+---
+
+### Métodos de Componente
+
+| Tipo de Método | Padrão | Exemplo |
+|----------------|--------|---------|
+| Lifecycle | Angular padrão | `ngOnInit()`, `ngOnDestroy()` |
+| Carregar dados | prefixo `load` | `loadUsuarios()`, `loadDetails()` |
+| Event handlers | prefixo `on` ou `handle` | `onSubmit()`, `handleCancel()` |
+| Toggle | prefixo `toggle` | `toggleSelection()` |
+| Navegação | prefixo `navigate` | `navigateToEdit()` |
+
+**Grau de consistência**: CONSISTENTE
+
+---
+
+## 4. Rotas e Endpoints
+
+### Backend (NestJS)
+
+**Padrão**: kebab-case, plural
+
+```typescript
+@Controller('usuarios')          // /usuarios
+@Controller('empresas')          // /empresas
+@Controller('pilares')           // /pilares
+@Controller('pilares-empresa')   // /pilares-empresa
+```
+
+**Endpoints**:
+```
+GET    /usuarios
+GET    /usuarios/:id
+POST   /usuarios
+PATCH  /usuarios/:id
+DELETE /usuarios/:id
+DELETE /usuarios/:id/hard
+```
+
+**Grau de consistência**: CONSISTENTE
+
+---
+
+### Frontend (Angular)
+
+**Padrão**: kebab-case
+
+```typescript
+const routes: Routes = [
+  { path: 'usuarios', component: UsuariosListComponent },
+  { path: 'usuarios/novo', component: UsuariosFormComponent },
+  { path: 'usuarios/:id', component: UsuariosFormComponent },
+];
+```
+
+**Grau de consistência**: CONSISTENTE
+
+---
+
+## 5. Arquivos de Teste
+
+### Backend
+
+**Padrão**: `{nome}.spec.ts`
+
+- `usuarios.service.spec.ts`
+- `usuarios.controller.spec.ts`
+
+**Grau de consistência**: CONSISTENTE
+
+---
+
+### Frontend
+
+**Padrão**: `{nome}.spec.ts`
+
+- `pilares.service.spec.ts`
+- `usuarios-list.component.spec.ts`
+
+**Grau de consistência**: CONSISTENTE
+
+---
+
+## 6. Constantes e Configurações
+
+### Backend
+
+```typescript
+// Constantes em UPPER_SNAKE_CASE
+const API_VERSION = 'v1';
+const DEFAULT_PAGE_SIZE = 10;
+```
+
+### Frontend
+
+```typescript
+// Constantes em UPPER_SNAKE_CASE
+export const API_BASE_URL = 'http://localhost:3000';
+export const TOKEN_KEY = 'auth_token';
+```
+
+**Grau de consistência**: CONSISTENTE
+
+---
+
+## Resumo de Consistência
+
+| Categoria | Grau de Consistência | Observação |
+|-----------|----------------------|-----------|
+| **Classes Backend** | CONSISTENTE | PascalCase + sufixo (Service, Controller, Module) |
+| **Arquivos Backend** | CONSISTENTE | kebab-case |
+| **DTOs** | CONSISTENTE | Create/Update + entidade + Dto |
+| **Métodos Backend** | CONSISTENTE | camelCase, verbos em inglês |
+| **Enums** | CONSISTENTE | SCREAMING_SNAKE_CASE |
+| **Classes Frontend** | CONSISTENTE | PascalCase + sufixo (Component, Service) |
+| **Arquivos Frontend** | CONSISTENTE | kebab-case |
+| **Métodos Frontend** | PARCIAL | camelCase, mas idioma varia (PT/EN) |
+| **Rotas** | CONSISTENTE | kebab-case, plural |
+| **Constantes** | CONSISTENTE | UPPER_SNAKE_CASE |
 
 **Padrão de Nomes de Propriedades em DTOs**:
 - camelCase (não snake_case)

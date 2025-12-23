@@ -1,6 +1,175 @@
 # Convenções - Testes
 
-## 1. Testes Unitários (Frontend)
+**Status**: Documentação baseada em código existente  
+**Última atualização**: 2025-12-23
+
+---
+
+## 1. Backend - Testes Unitários
+
+### Framework
+
+**Arquivo**: `backend/package.json`
+
+```json
+"devDependencies": {
+  "jest": "^29.7.0",
+  "@types/jest": "^29.5.8",
+  "ts-jest": "^29.1.1",
+  "@nestjs/testing": "^10.3.0"
+}
+```
+
+**Framework**: Jest 29.7 + NestJS Testing
+
+**Grau de consistência**: CONSISTENTE
+
+---
+
+### Estrutura de Testes
+
+**Padrão observado**: `usuarios.service.spec.ts` (976 linhas)
+
+```typescript
+import { Test, TestingModule } from '@nestjs/testing';
+import { UsuariosService } from './usuarios.service';
+import { PrismaService } from '../../common/prisma/prisma.service';
+import { AuditService } from '../audit/audit.service';
+
+describe('UsuariosService', () => {
+  let service: UsuariosService;
+  let prisma: PrismaService;
+  let auditService: AuditService;
+
+  const mockPrismaService = {
+    usuario: {
+      findMany: jest.fn(),
+      findUnique: jest.fn(),
+      create: jest.fn(),
+      update: jest.fn(),
+      delete: jest.fn(),
+    },
+    empresa: {
+      findUnique: jest.fn(),
+    },
+  };
+
+  const mockAuditService = {
+    logAction: jest.fn(),
+  };
+
+  beforeEach(async () => {
+    const module: TestingModule = await Test.createTestingModule({
+      providers: [
+        UsuariosService,
+        {
+          provide: PrismaService,
+          useValue: mockPrismaService,
+        },
+        {
+          provide: AuditService,
+          useValue: mockAuditService,
+        },
+      ],
+    }).compile();
+
+    service = module.get<UsuariosService>(UsuariosService);
+    prisma = module.get<PrismaService>(PrismaService);
+    auditService = module.get<AuditService>(AuditService);
+
+    jest.clearAllMocks();
+  });
+
+  // Testes...
+});
+```
+
+**Padrões observados**:
+
+| Aspecto | Padrão | Observação |
+|---------|--------|-----------|
+| **Describe principal** | `describe('ServiceName', () => {})` | Agrupa todos os testes do service |
+| **Describe por regra** | `describe('RN-001: Nome da Regra', () => {})` | Agrupa testes de uma regra de negócio |
+| **Nome do teste** | `it('deve comportamento esperado', () => {})` | BDD-style, português |
+| **Setup** | `beforeEach(async () => { })` | Recria módulo antes de cada teste |
+| **Mocks** | `useValue: mockPrismaService` | Mock de dependências com jest.fn() |
+| **Assertions** | `expect(result).toBe()`, `expect(mock).toHaveBeenCalled()` | Jest matchers |
+| **Clear mocks** | `jest.clearAllMocks()` | Limpa mocks no beforeEach |
+| **Async** | `async/await` | Para operações assíncronas |
+| **Error testing** | `await expect(fn()).rejects.toThrow()` | Para testar exceções |
+
+**Grau de consistência**: CONSISTENTE
+
+---
+
+### Exemplo Completo - Teste de Regra de Negócio
+
+**Arquivo**: `backend/src/modules/usuarios/usuarios.service.spec.ts`
+
+```typescript
+describe('RN-001: Email deve ser único', () => {
+  it('deve lançar ConflictException ao criar usuário com email duplicado', async () => {
+    const createDto: CreateUsuarioDto = {
+      nome: 'João Silva',
+      email: 'joao@example.com',
+      senha: 'Senha@123',
+      perfil: Perfil.GESTOR,
+      empresaId: 1,
+    };
+
+    mockPrismaService.usuario.findUnique.mockResolvedValue({
+      id: 999,
+      email: 'joao@example.com',
+    });
+
+    await expect(service.create(createDto, mockUser)).rejects.toThrow(
+      ConflictException,
+    );
+
+    expect(mockPrismaService.usuario.findUnique).toHaveBeenCalledWith({
+      where: { email: 'joao@example.com' },
+    });
+  });
+});
+```
+
+**Grau de consistência**: CONSISTENTE
+
+---
+
+### Padrões de Mock
+
+#### PrismaService Mock
+
+```typescript
+const mockPrismaService = {
+  usuario: {
+    findMany: jest.fn(),
+    findUnique: jest.fn(),
+    create: jest.fn(),
+    update: jest.fn(),
+    delete: jest.fn(),
+  },
+  empresa: {
+    findUnique: jest.fn(),
+  },
+  // ... outros models
+};
+```
+
+#### AuditService Mock
+
+```typescript
+const mockAuditService = {
+  logAction: jest.fn(),
+};
+```
+
+**Grau de consistência**: CONSISTENTE
+
+---
+
+## 2. Frontend - Testes Unitários
 
 ### Framework
 
@@ -17,39 +186,39 @@
 
 **Framework**: Jasmine 5.2 + Karma 6.4 (padrão Angular)
 
-### Padrão Observado
+**Grau de consistência**: CONSISTENTE
 
-**Arquivo**: `src/app/app.component.spec.ts`
+---
+
+### Estrutura de Testes
+
+**Padrão observado**: `pilares.service.spec.ts` (409 linhas)
 
 ```typescript
 import { TestBed } from '@angular/core/testing';
-import { AppComponent } from './app.component';
+import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
+import { PilaresService } from './pilares.service';
+import { Pilar } from '../models/pilar.model';
 
-describe('AppComponent', () => {
-  beforeEach(async () => {
-    await TestBed.configureTestingModule({
-      imports: [AppComponent],
-    }).compileComponents();
+describe('PilaresService', () => {
+  let service: PilaresService;
+  let httpMock: HttpTestingController;
+
+  beforeEach(() => {
+    TestBed.configureTestingModule({
+      imports: [HttpClientTestingModule],
+      providers: [PilaresService],
+    });
+
+    service = TestBed.inject(PilaresService);
+    httpMock = TestBed.inject(HttpTestingController);
   });
 
-  it('should create the app', () => {
-    const fixture = TestBed.createComponent(AppComponent);
-    const app = fixture.componentInstance;
-    expect(app).toBeTruthy();
+  afterEach(() => {
+    httpMock.verify();
   });
 
-  it(`should have the 'demo1' title`, () => {
-    const fixture = TestBed.createComponent(AppComponent);
-    const app = fixture.componentInstance;
-    expect(app.title).toEqual('demo1');
-  });
-
-  it('should render title', () => {
-    const fixture = TestBed.createComponent(AppComponent);
-    fixture.detectChanges();
-    const compiled = fixture.nativeElement as HTMLElement;
-    expect(compiled.querySelector('h1')?.textContent).toContain('Hello, demo1');
-  });
+  // Testes...
 });
 ```
 
@@ -57,47 +226,108 @@ describe('AppComponent', () => {
 
 | Aspecto | Padrão | Observação |
 |---------|--------|-----------|
-| **Describe** | `describe('ComponentName', () => {})` | Agrupa testes |
-| **Setup** | `beforeEach(async () => { })` com `TestBed.configureTestingModule()` | Padrão |
-| **Fixture** | `TestBed.createComponent(Component)` | Cria instância do componente |
-| **Assertions** | `expect(value).toBeTruthy()`, `expect(value).toEqual('string')` | Jasmine matchers |
-| **Detection de Mudanças** | `fixture.detectChanges()` | Trigger change detection |
-| **Nomes de Testes** | `it('should criar/deletar/atualizar...')` | BDD-style |
-| **Nativo DOM** | `fixture.nativeElement` | Acesso ao DOM |
-| **Mocks** | **NÃO OBSERVADO** | HttpClientTestingModule não visto |
-| **Async** | `async/await` em beforeEach | Para componentes com async |
+| **Describe** | `describe('ServiceName', () => {})` | Agrupa testes do service |
+| **Setup** | `beforeEach(() => { })` | Configura TestBed antes de cada teste |
+| **HTTP Testing** | `HttpClientTestingModule` + `HttpTestingController` | Para testar requisições HTTP |
+| **Inject** | `TestBed.inject(Service)` | Injeta dependências |
+| **Verify** | `httpMock.verify()` | Verifica que não há requisições pendentes |
+| **Nome do teste** | `it('deve comportamento esperado', () => {})` | BDD-style, português |
+| **Assertions** | `expect(result).toBe()`, `expect(array.length).toBe()` | Jasmine matchers |
 
-**Consistência**: **CONSISTENTE** (poucos testes, padrão claro)
+**Grau de consistência**: CONSISTENTE
 
-### Backend - Testes Unitários
+---
 
-**Arquivo**: `backend/package.json`
+### Exemplo Completo - Teste de Service
 
-```json
-"devDependencies": {
-  "jest": "^29.7.0",
-  "@types/jest": "^29.5.8",
-  "ts-jest": "^29.1.1",
-  "@nestjs/testing": "^10.3.0"
-}
-```
-
-**Framework**: Jest (não Jasmine)
-
-**Padrão esperado** (não observado em código):
+**Arquivo**: `frontend/src/app/features/pilares/services/pilares.service.spec.ts`
 
 ```typescript
-import { Test, TestingModule } from '@nestjs/testing';
-import { UsuariosService } from './usuarios.service';
-import { PrismaService } from '../../common/prisma/prisma.service';
+describe('PilaresService', () => {
+  let service: PilaresService;
+  let httpMock: HttpTestingController;
 
-describe('UsuariosService', () => {
-  let service: UsuariosService;
-  let prisma: PrismaService;
+  beforeEach(() => {
+    TestBed.configureTestingModule({
+      imports: [HttpClientTestingModule],
+      providers: [PilaresService],
+    });
 
-  beforeEach(async () => {
-    const module: TestingModule = await Test.createTestingModule({
-      providers: [
+    service = TestBed.inject(PilaresService);
+    httpMock = TestBed.inject(HttpTestingController);
+  });
+
+  afterEach(() => {
+    httpMock.verify();
+  });
+
+  it('deve ser criado', () => {
+    expect(service).toBeTruthy();
+  });
+
+  describe('listar', () => {
+    it('deve retornar array de pilares', () => {
+      const mockPilares: Pilar[] = [
+        { id: 1, nome: 'Pilar 1', descricao: 'Desc 1' },
+        { id: 2, nome: 'Pilar 2', descricao: 'Desc 2' },
+      ];
+
+      service.listar().subscribe((pilares) => {
+        expect(pilares.length).toBe(2);
+        expect(pilares).toEqual(mockPilares);
+      });
+
+      const req = httpMock.expectOne(`${service['apiUrl']}/pilares`);
+      expect(req.request.method).toBe('GET');
+      req.flush(mockPilares);
+    });
+  });
+});
+```
+
+**Grau de consistência**: CONSISTENTE
+
+---
+
+## 3. E2E - Testes End-to-End
+
+### Framework
+
+**Arquivo**: `frontend/playwright.config.ts`
+
+```typescript
+import { defineConfig, devices } from '@playwright/test';
+
+export default defineConfig({
+  testDir: './e2e',
+  fullyParallel: true,
+  forbidOnly: !!process.env.CI,
+  retries: process.env.CI ? 2 : 0,
+  workers: process.env.CI ? 1 : undefined,
+  reporter: 'html',
+  use: {
+    baseURL: 'http://localhost:4200',
+    trace: 'on-first-retry',
+  },
+  projects: [
+    {
+      name: 'chromium',
+      use: { ...devices['Desktop Chrome'] },
+    },
+  ],
+  webServer: {
+    command: 'npm run start',
+    url: 'http://localhost:4200',
+    reuseExistingServer: !process.env.CI,
+  },
+});
+```
+
+**Framework**: Playwright (configurado)
+
+**Status atual**: SEM TESTES IMPLEMENTADOS
+
+**Grau de consistência**: NÃO APLICÁVEL (sem testes)
         UsuariosService,
         {
           provide: PrismaService,
