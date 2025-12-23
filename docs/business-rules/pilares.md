@@ -59,6 +59,14 @@ O módulo Pilares é responsável por:
 
 **Índices:**
 - `nome` (unique)
+- `ordem` (unique) ⚠️
+
+**⚠️ Observação sobre constraint `@@unique([ordem])`:**
+- Schema atual possui constraint de unicidade em `ordem`
+- Pode causar erro se dois pilares tiverem mesma ordem
+- Campo `ordem` é opcional (Int?) mas constraint exige valores únicos quando não-null
+- **Recomendação futura:** Considerar remover constraint ou tornar ordem obrigatória
+- **Comportamento atual:** Ordem null é permitida (não viola unique), mas valores duplicados não-null são bloqueados
 
 ---
 
@@ -504,6 +512,78 @@ await this.prisma.$transaction(updates);
 
 ---
 
+### R-PILEMP-003: Vinculação Incremental de Pilares à Empresa
+
+**Descrição:** Endpoint permite vincular novos pilares a uma empresa sem remover os existentes (adição incremental).
+
+**Implementação:**
+- **Endpoint:** `POST /empresas/:empresaId/pilares/vincular` (ADMINISTRADOR, GESTOR)
+- **Módulo:** PilaresEmpresaService
+- **Método:** `vincularPilares()`
+
+**Input:**
+```typescript
+{
+  "pilaresIds": ["uuid-pilar-1", "uuid-pilar-2"]
+}
+```
+
+**Validação:**
+1. Multi-tenant: Usuário pode acessar empresaId?
+2. Pilares existem e estão ativos?
+3. Filtra IDs já vinculados (evita duplicatas)
+
+**Comportamento:**
+```typescript
+// Filtrar pilares já vinculados
+const jaVinculados = await this.prisma.pilarEmpresa.findMany({
+  where: {
+    empresaId,
+    pilarId: { in: pilaresIds },
+  },
+});
+
+const novosIds = pilaresIds.filter(id => !jaVinculados.includes(id));
+
+// Calcular próxima ordem disponível
+const maxOrdem = await this.prisma.pilarEmpresa.findFirst({
+  where: { empresaId },
+  orderBy: { ordem: 'desc' },
+});
+
+const proximaOrdem = (maxOrdem?.ordem ?? 0) + 1;
+
+// Criar novos vínculos (INCREMENTAL)
+await this.prisma.pilarEmpresa.createMany({
+  data: novosIds.map((pilarId, index) => ({
+    empresaId,
+    pilarId,
+    ordem: proximaOrdem + index,
+    createdBy: user.id,
+  })),
+});
+```
+
+**Auditoria:**
+- Entidade: `pilares_empresa`
+- Acao: `UPDATE`
+- EntidadeId: empresaId
+
+**Retorno:**
+```typescript
+{
+  vinculados: number,       // Quantidade de novos vínculos
+  ignorados: string[],      // IDs já vinculados
+  pilares: PilarEmpresa[]   // Lista atualizada
+}
+```
+
+**Perfis autorizados:** ADMINISTRADOR, GESTOR
+
+**Arquivo:** [pilares-empresa.service.ts](../../backend/src/modules/pilares-empresa/pilares-empresa.service.ts#L120-L203)
+
+---
+
 ### RA-PILEMP-001: Cascata Lógica em Desativação de Pilar
 
 **Descrição:** Quando um pilar é desativado (Pilar.ativo = false), ele automaticamente some de todas empresas via filtro de cascata.
@@ -538,16 +618,6 @@ await this.prisma.$transaction(updates);
 - Ordem opcional, mínimo 1 se fornecido
 - Modelo opcional (default: false)
 
-**Campos:**
-- `nome`: @IsString(), @IsNotEmpty(), @Length(2, 100)
-- `descricao`: @IsString(), @IsOptional(), @Length(0, 500)
-- `ordem`: @IsInt(), @Min(1)
-
-**Validações implementadas:**
-- Nome obrigatório, entre 2 e 100 caracteres
-- Descrição opcional, máximo 500 caracteres
-- Ordem obrigatória, mínimo 1
-
 **Arquivo:** [create-pilar.dto.ts](../../backend/src/modules/pilares/dto/create-pilar.dto.ts)
 
 ---
@@ -563,6 +633,62 @@ await this.prisma.$transaction(updates);
 - Ativo permite ativação/desativação manual (além do soft delete)
 
 **Arquivo:** [update-pilar.dto.ts](../../backend/src/modules/pilares/dto/update-pilar.dto.ts)
+
+---
+
+### 4.3. ReordenarPilaresDto
+
+**Descrição:** DTO para reordenação de pilares por empresa.
+
+**Campos:**
+- `ordens`: Array de objetos OrdemPilarEmpresaDto
+
+**OrdemPilarEmpresaDto:**
+- `id`: @IsUUID() — ID do PilarEmpresa
+- `ordem`: @IsInt(), @Min(1) — Nova ordem (mínimo 1)
+
+**Validações implementadas:**
+- Array obrigatório com validação aninhada
+- ID deve ser UUID válido
+- Ordem obrigatória, inteiro >= 1
+- Cada item do array validado individualmente
+
+**Implementação:**
+```typescript
+export class OrdemPilarEmpresaDto {
+  @IsUUID()
+  id: string;
+
+  @IsInt()
+  @Min(1)
+  ordem: number;
+}
+
+export class ReordenarPilaresDto {
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => OrdemPilarEmpresaDto)
+  ordens: OrdemPilarEmpresaDto[];
+}
+```
+
+**Arquivo:** [reordenar-pilares.dto.ts](../../backend/src/modules/pilares-empresa/dto/reordenar-pilares.dto.ts)
+
+---
+
+### 4.4. VincularPilaresDto
+
+**Descrição:** DTO para vincular pilares a uma empresa.
+
+**Campos:**
+- `pilaresIds`: @IsArray(), @IsUUID({ each: true })
+
+**Validações implementadas:**
+- Array obrigatório de UUIDs
+- Cada ID validado como UUID
+- Array pode estar vazio (mas deve ser fornecido)
+
+**Arquivo:** [vincular-pilares.dto.ts](../../backend/src/modules/pilares-empresa/dto/vincular-pilares.dto.ts)
 
 ---
 
@@ -781,20 +907,32 @@ await this.prisma.$transaction(updates);
 
 ### 6.8. Soft Delete Consistente
 
-**Status:** ✅ RESOLVIDO
+**Status:** ✅ IMPLEMENTADO
 
 **Descrição:**
 - `findAll()` filtra por `ativo: true`
-- `findOne()` NÃO filtra por ativo (retorna pilar inativo)
-- Comportamento inconsistente
+- `findOne()` filtra por `ativo: true`
+- Pilares inativos retornam 404 Not Found
+- Comportamento consistente em toda a aplicação
 
-**Comportamento atual:**
-- Pode buscar pilar inativo diretamente por ID
-- Mas não aparece em listagens
+**Implementação:**
+```typescript
+async findOne(id: string) {
+  const pilar = await this.prisma.pilar.findFirst({
+    where: { 
+      id,
+      ativo: true,  // ✅ FILTRA POR ATIVO
+    },
+    // ...
+  });
 
-**TODO:**
-- Decidir se `findOne()` deve filtrar por ativo
-- Ou documentar que busca por ID ignora flag ativo (para auditoria)
+  if (!pilar) {
+    throw new NotFoundException('Pilar não encontrado');
+  }
+
+  return pilar;
+}
+```
 
 **Arquivo:** [pilares.service.ts](../../backend/src/modules/pilares/pilares.service.ts#L57-L81)
 
@@ -845,7 +983,6 @@ await this.prisma.$transaction(updates);
 | **R-PIL-003** | Busca com rotinas e empresas | ✅ Implementado |
 | **R-PIL-004** | Atualização com validação de nome | ✅ Implementado |
 | **R-PIL-005** | Soft delete | ✅ Implementado |
-| **R-PIL-006** | Reordenação em lote | ✅ Implementado |
 | **RA-PIL-001** | Bloqueio por rotinas ativas | ✅ Implementado |
 | **RA-PIL-002** | Restrição a ADMINISTRADOR | ✅ Implementado |
 | **RA-PIL-003** | Auditoria de operações CUD | ✅ Implementado |
@@ -862,6 +999,7 @@ await this.prisma.$transaction(updates);
 |----|-----------|--------|
 | **R-PILEMP-001** | Listagem de pilares por empresa | ✅ Implementado |
 | **R-PILEMP-002** | Reordenação per-company | ✅ Implementado |
+| **R-PILEMP-003** | Vinculação incremental de pilares | ✅ Implementado |
 | **RA-PILEMP-001** | Cascata lógica em desativação | ✅ Implementado |
 
 **Melhorias implementadas:**
@@ -1432,16 +1570,16 @@ SET ordem = COALESCE(
 
 ---
 
-## 13. Status de Implementação (ATUALIZADO - 22/12/2024)
+## 13. Status de Implementação (ATUALIZADO - 23/12/2024)
 
 **Backend - Módulo Pilares (Catálogo Global):**
 - ✅ CRUD completo implementado
 - ✅ Validações de segurança (RBAC)
 - ✅ Auditoria de operações CUD
-- ✅ Soft delete com filtro consistente
+- ✅ Soft delete com filtro consistente (findAll + findOne)
 - ✅ Validação de dependências (rotinas ativas)
 - ✅ Campo `ordem` opcional
-- ✅ Endpoint reordenar REMOVIDO
+- ✅ Endpoint reordenar REMOVIDO (movido para PilaresEmpresa)
 
 **Backend - Módulo Empresas:**
 - ✅ Auto-associação de pilares padrão implementada
@@ -1449,24 +1587,35 @@ SET ordem = COALESCE(
 - ✅ Auditoria de criação
 
 **Backend - Módulo PilaresEmpresa (Multi-Tenant):**
-- ✅ Listagem de pilares por empresa
-- ✅ Reordenação per-company implementada
+- ✅ Listagem de pilares por empresa (R-PILEMP-001)
+- ✅ Reordenação per-company implementada (R-PILEMP-002)
+- ✅ Vinculação incremental implementada (R-PILEMP-003)
 - ✅ Validação multi-tenant
-- ✅ Cascata lógica em desativação
+- ✅ Cascata lógica em desativação (RA-PILEMP-001)
 - ✅ Auditoria completa
-- ✅ DTOs com validação >= 1
+- ✅ DTOs com validação >= 1 (ReordenarPilaresDto, VincularPilaresDto)
 
 **Backend - Schema:**
 - ✅ `Pilar.ordem` → Int? (opcional)
+- ✅ `Pilar.ordem` → @@unique (constraint pode causar conflitos - ver seção 2.1)
 - ✅ `PilarEmpresa.ordem` → Int (obrigatório)
 - ✅ `RotinaEmpresa.ordem` → Int (obrigatório)
 - ✅ Migrations aplicadas
 
 **Backend - Correções de Segurança:**
 - ✅ Validação de IDs em reordenação
-- ✅ findOne() filtra pilares inativos
+- ✅ findOne() filtra pilares inativos (comportamento consistente)
 - ✅ Auditoria de reordenação (módulo PilaresEmpresa)
+- ✅ Auditoria de vinculação (módulo PilaresEmpresa)
 - ✅ Multi-tenancy com validação estrita
+
+**Documentação:**
+- ✅ Regra R-PIL-006 removida (não implementada)
+- ✅ Duplicação CreatePilarDto corrigida
+- ✅ Seção 6.8 atualizada (findOne filtra inativos)
+- ✅ Regra R-PILEMP-003 adicionada (vincular pilares)
+- ✅ Validação @Min(1) documentada em DTOs
+- ✅ Constraint @@unique([ordem]) documentada com observação
 
 **Frontend (Pendente):**
 - ❌ Interface de listagem
@@ -1479,9 +1628,10 @@ SET ordem = COALESCE(
 ---
 
 **Data de extração:** 21/12/2024  
-**Data de atualização:** 22/12/2024  
+**Data de atualização:** 23/12/2024  
 **Agente:** Business Rules Extractor (Modo A - Reverse Engineering)  
-**Status:** ✅ Backend completo (3 módulos) | ⏳ Frontend pendente
+**Última revisão:** Reviewer de Regras (23/12/2024)  
+**Status:** ✅ Backend completo (3 módulos) | ✅ Documentação atualizada | ⏳ Frontend pendente
 
 ---
 
@@ -1492,5 +1642,6 @@ Este documento reflete o código IMPLEMENTADO nos módulos:
 - **Empresas** (auto-associação)
 
 Todas as correções críticas de segurança foram implementadas.  
+Documentação validada e atualizada conforme REVIEWER-REPORT-pilares.md.  
 Frontend segue especificações UI-PIL-001 a UI-PIL-009.  
 Schema changes completos conforme SCHEMA-PIL-001 a 003.
