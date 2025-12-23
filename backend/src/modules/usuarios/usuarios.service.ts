@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException, ConflictException, ForbiddenException } from '@nestjs/common';
+import { Injectable, NotFoundException, ConflictException, ForbiddenException, Logger } from '@nestjs/common';
 import { PrismaService } from '../../common/prisma/prisma.service';
 import * as argon2 from 'argon2';
 import * as fs from 'fs';
@@ -10,6 +10,8 @@ import { RequestUser } from '../../common/interfaces/request-user.interface';
 
 @Injectable()
 export class UsuariosService {
+  private readonly logger = new Logger(UsuariosService.name);
+  
   constructor(private prisma: PrismaService, private audit: AuditService) {}
 
   /**
@@ -70,6 +72,7 @@ export class UsuariosService {
         email: true,
         nome: true,
         cargo: true,
+        telefone: true,
         perfil: {
           select: {
             id: true,
@@ -98,6 +101,7 @@ export class UsuariosService {
         email: true,
         nome: true,
         cargo: true,
+        telefone: true,
         perfil: {
           select: {
             id: true,
@@ -140,6 +144,7 @@ export class UsuariosService {
         email: true,
         nome: true,
         cargo: true,
+        telefone: true,
         perfil: {
           select: {
             id: true,
@@ -204,6 +209,7 @@ export class UsuariosService {
         email: true,
         nome: true,
         cargo: true,
+        telefone: true,
         perfil: {
           select: {
             id: true,
@@ -277,6 +283,7 @@ export class UsuariosService {
         email: true,
         nome: true,
         cargo: true,
+        telefone: true,
         perfil: {
           select: {
             id: true,
@@ -377,6 +384,7 @@ export class UsuariosService {
         email: true,
         nome: true,
         cargo: true,
+        telefone: true,
         perfil: {
           select: {
             id: true,
@@ -431,6 +439,7 @@ export class UsuariosService {
         email: true,
         nome: true,
         cargo: true,
+        telefone: true,
         perfil: {
           select: {
             id: true,

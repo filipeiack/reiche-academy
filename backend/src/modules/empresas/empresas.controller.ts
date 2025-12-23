@@ -75,9 +75,9 @@ export class EmpresasController {
   @Get()
   @ApiOperation({ summary: 'Listar empresas' })
   @ApiResponse({ status: 200, description: 'Lista de empresas' })
-  findAll(@Request() req: ExpressRequest & { user: { empresaId: string; perfil: string } }) {
+  findAll(@Request() req: ExpressRequest & { user: { empresaId: string; perfil: { codigo: string } } }) {
     // ADMINISTRADOR vê todas as empresas
-    if (req.user.perfil === 'ADMINISTRADOR') {
+    if (req.user.perfil.codigo === 'ADMINISTRADOR') {
       return this.empresasService.findAll();
     }
     // GESTOR vê apenas sua empresa

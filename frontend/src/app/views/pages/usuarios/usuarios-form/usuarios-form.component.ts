@@ -1,7 +1,7 @@
 import { Component, OnInit, Input, Output, EventEmitter, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
-import { Router, ActivatedRoute, RouterLink } from '@angular/router';
+import { Router, ActivatedRoute } from '@angular/router';
 import Swal from 'sweetalert2';
 import { UsersService, CreateUsuarioRequest, UpdateUsuarioRequest } from '../../../../core/services/users.service';
 import { Usuario } from '../../../../core/models/auth.model';
@@ -16,7 +16,7 @@ import { NgSelectModule } from '@ng-select/ng-select';
 @Component({
   selector: 'app-usuarios-form',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, RouterLink, TranslatePipe, UserAvatarComponent, NgSelectModule],
+  imports: [CommonModule, ReactiveFormsModule, TranslatePipe, UserAvatarComponent, NgSelectModule],
   templateUrl: './usuarios-form.component.html',
   styleUrl: './usuarios-form.component.scss'
 })
@@ -219,7 +219,7 @@ export class UsuariosFormComponent implements OnInit {
       // Atualizar usuário - enviar apenas campos modificados
       const updateData: Partial<UpdateUsuarioRequest> = {};
 
-      // Campos regulares - enviar apenas se foram modificados
+      // Campos de dados pessoais - enviar se foram alterados
       if (this.form.get('nome')?.dirty && formValue.nome) {
         updateData.nome = formValue.nome;
       }
@@ -466,6 +466,7 @@ export class UsuariosFormComponent implements OnInit {
       value = value.replace(/^(\d{2})(\d{5})(\d{0,4}).*/, '($1) $2-$3');
     }
     
-    this.form.patchValue({ telefone: value }, { emitEvent: false });
+    // Remover emitEvent: false para permitir que o campo seja marcado como dirty
+    this.form.patchValue({ telefone: value });
   }
 }

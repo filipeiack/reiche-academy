@@ -12,8 +12,11 @@ export class RolesGuard implements CanActivate {
       return true;
     }
     const request = context.switchToHttp().getRequest();
-    const user = request.user as { perfil?: Role } | undefined;
+    const user = request.user as { perfil?: { codigo: Role } | Role } | undefined;
     if (!user || !user.perfil) return false;
-    return requiredRoles.includes(user.perfil);
+    
+    // Suporta tanto perfil como objeto { codigo } quanto string direta (retrocompatibilidade)
+    const perfilCodigo = typeof user.perfil === 'object' ? user.perfil.codigo : user.perfil;
+    return requiredRoles.includes(perfilCodigo);
   }
 }
