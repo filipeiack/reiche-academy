@@ -243,6 +243,7 @@ model RotinaEmpresa {
   rotina        Rotina      @relation(fields: [rotinaId], references: [id])
   
   ordem         Int
+  donoRotina    String?
   observacao    String?
   ativo         Boolean  @default(true)
   
