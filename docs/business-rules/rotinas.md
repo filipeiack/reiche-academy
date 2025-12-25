@@ -359,7 +359,7 @@ await this.prisma.$transaction(updates);
 - ✅ CREATE (criação de rotina)
 - ✅ UPDATE (atualização de rotina)
 - ✅ DELETE (desativação de rotina)
-- ❌ Reordenação NÃO é auditada
+- ✅ REORDENAÇÃO (implementado 25/12/2024)
 
 **Arquivo:** [rotinas.service.ts](../../backend/src/modules/rotinas/rotinas.service.ts#L34-L42)
 
@@ -534,18 +534,31 @@ GET /rotinas?pilarId=uuid → Apenas rotinas do pilar uuid
 
 ### 6.2. Reordenação Sem Auditoria
 
-**Status:** ❌ NÃO AUDITADO
+**Status:** ✅ RESOLVIDO (25/12/2024)
 
 **Descrição:**
-- Método `reordenarPorPilar()` não registra auditoria
-- Mudanças de ordem não ficam rastreadas
-- Não é possível saber quem reordenou ou quando
+- ~~Método `reordenarPorPilar()` não registra auditoria~~
+- ~~Mudanças de ordem não ficam rastreadas~~
+- ~~Não é possível saber quem reordenou ou quando~~
 
-**TODO:**
-- Adicionar registro de auditoria em reordenação
-- Considerar registrar apenas uma auditoria para toda a operação (não uma por rotina)
+**ATUALIZAÇÃO:** Auditoria implementada com dados completos
 
-**Arquivo:** [rotinas.service.ts](../../backend/src/modules/rotinas/rotinas.service.ts#L141-L157)
+**Implementação:**
+```typescript
+// Auditoria registrada após transação de reordenação
+await this.audit.log({
+  usuarioId: userId,
+  usuarioNome: user?.nome ?? '',
+  usuarioEmail: user?.email ?? '',
+  entidade: 'rotinas',
+  entidadeId: pilarId,
+  acao: 'UPDATE',
+  dadosAntes: null,
+  dadosDepois: { acao: 'reordenacao', ordens: ordensIds },
+});
+```
+
+**Arquivo:** [rotinas.service.ts](../../backend/src/modules/rotinas/rotinas.service.ts#L193-L202)
 
 ---
 
@@ -725,11 +738,10 @@ GET /rotinas?pilarId=uuid → Apenas rotinas do pilar uuid
 | **R-ROT-005** | Soft delete | ✅ Implementado |
 | **R-ROT-006** | Reordenação por pilar | ✅ Implementado |
 | **RA-ROT-001** | Restrição a ADMINISTRADOR | ✅ Implementado |
-| **RA-ROT-002** | Auditoria de operações | ⚠️ Parcial (sem reordenação) |
+| **RA-ROT-002** | Auditoria de operações | ✅ Implementado |
 | **RA-ROT-003** | Validação de escopo em reordenação | ✅ Implementado |
 
 **Ausências críticas:**
-- ❌ Auditoria de reordenação
 - ❌ Paginação em listagem
 - ❌ Validação de nome único
 - ⚠️ Mudança de pilar sem validação de impacto
@@ -1333,24 +1345,26 @@ frontend/src/app/modules/rotinas/
 **Backend:**
 - ✅ CRUD completo implementado
 - ✅ Validações de segurança (RBAC)
-- ✅ Auditoria de operações CUD
+- ✅ Auditoria de operações CUD (incluindo reordenação)
 - ✅ Soft delete consistente
 - ✅ Reordenação por pilar
 - ✅ Filtro por pilar
 - ✅ Campo `modelo` implementado
 
 **Frontend:**
-- ⏳ **PENDENTE IMPLEMENTAÇÃO** - Regras aprovadas, aguardando Dev Agent
-- ⏳ Listagem de rotinas (UI-ROT-001)
-- ⏳ Filtro por pilar (UI-ROT-002)
-- ⏳ Formulário criar/editar (UI-ROT-004, UI-ROT-005)
-- ⏳ Drag-and-drop reordenação (UI-ROT-007)
-- ⏳ RBAC guards (UI-ROT-008)
+- ✅ **IMPLEMENTADO** (25/12/2024) - Todas as regras UI-ROT-001 a 008
+- ✅ Listagem de rotinas (UI-ROT-001)
+- ✅ Filtro por pilar (UI-ROT-002)
+- ✅ Badge "Modelo" (UI-ROT-003)
+- ✅ Formulário criar/editar (UI-ROT-004, UI-ROT-005)
+- ✅ Desativação com validação 409 (UI-ROT-006)
+- ✅ Drag-and-drop reordenação (UI-ROT-007)
+- ✅ RBAC guards (UI-ROT-008)
 
 **Backend Complementar:**
-- ⏳ **PENDENTE IMPLEMENTAÇÃO** - Regras aprovadas
-- ⏳ R-ROT-BE-001: Auto-associação de rotinas modelo via método explícito
-- ⏳ R-ROT-BE-002: Validação de dependência com bloqueio rígido (409)
+- ✅ **IMPLEMENTADO** (25/12/2024) - Todas as regras complementares
+- ✅ R-ROT-BE-001: Auto-associação de rotinas modelo via método explícito
+- ✅ R-ROT-BE-002: Validação de dependência com bloqueio rígido (409)
 
 **Decisões Aprovadas (25/12/2024):**
 - ✅ R-ROT-BE-001: Implementar auto-associação via método explícito (evitar triggers)
@@ -1361,22 +1375,23 @@ frontend/src/app/modules/rotinas/
 **Data de extração:** 21/12/2024  
 **Data de atualização:** 25/12/2024  
 **Data de aprovação:** 25/12/2024  
+**Data de implementação:** 25/12/2024  
 **Agente:** Business Rules Extractor (Modo A + Modo B)  
-**Status:** ✅ Backend base completo | ✅ Regras frontend/backend complementares APROVADAS | ⏳ Implementação pendente
+**Status:** ✅ Backend completo | ✅ Frontend completo | ✅ Backend complementar completo | ✅ IMPLEMENTAÇÃO CONCLUÍDA
 
 ---
 
 **Observação final:**  
 Este documento reflete:
-- **Backend base:** Código IMPLEMENTADO (extração modo A)
-- **Frontend:** Regras APROVADAS (extração modo B - aguardando implementação)
-- **Backend complementar:** Regras APROVADAS (R-ROT-BE-001 e R-ROT-BE-002)
+- **Backend base:** Código IMPLEMENTADO ✅ (extração modo A)
+- **Frontend:** Código IMPLEMENTADO ✅ (25/12/2024)
+- **Backend complementar:** Código IMPLEMENTADO ✅ (R-ROT-BE-001 e R-ROT-BE-002)
 - **Decisões tomadas:** Auto-associação via método explícito + Bloqueio rígido em desativação
 
-Frontend segue padrão estabelecido em [pilares.md](pilares.md#11-regras-de-interface-frontend).  
+Frontend implementado seguindo padrão estabelecido em [pilares.md](pilares.md#11-regras-de-interface-frontend).  
 
 **Próximo passo:** Seguir fluxo oficial:  
-1. Dev Agent → Implementar frontend (UI-ROT-001 a 008) e backend complementar (R-ROT-BE-001 e 002)
-2. Pattern Enforcer → Validar conformidade  
-3. QA Unitário → Criar testes independentes  
-4. E2E Agent → Validar fluxo completo
+1. ✅ Dev Agent → Frontend e backend complementar implementados
+2. ✅ Pattern Enforcer → Conformidade validada (100%)
+3. ⏳ QA Unitário → Criar testes independentes  
+4. ⏳ E2E Agent → Validar fluxo completo
