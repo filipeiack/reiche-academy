@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { Router, ActivatedRoute, RouterLink } from '@angular/router';
@@ -15,6 +15,12 @@ import { PilaresService, Pilar } from '../../../../core/services/pilares.service
   styleUrls: ['./rotina-form.component.scss']
 })
 export class RotinaFormComponent implements OnInit {
+  private fb = inject(FormBuilder);
+  private rotinasService = inject(RotinasService);
+  private pilaresService = inject(PilaresService);
+  private router = inject(Router);
+  private route = inject(ActivatedRoute);
+
   form!: FormGroup;
   pilares: Pilar[] = [];
   
@@ -23,14 +29,6 @@ export class RotinaFormComponent implements OnInit {
   loading = false;
   submitting = false;
   error: string | null = null;
-  
-  constructor(
-    private fb: FormBuilder,
-    private rotinasService: RotinasService,
-    private pilaresService: PilaresService,
-    private router: Router,
-    private route: ActivatedRoute,
-  ) {}
 
   ngOnInit(): void {
     this.buildForm();

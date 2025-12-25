@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { FormsModule } from '@angular/forms';
@@ -26,6 +26,10 @@ import { HttpErrorResponse } from '@angular/common/http';
   styleUrls: ['./rotinas-list.component.scss']
 })
 export class RotinasListComponent implements OnInit {
+  private rotinasService = inject(RotinasService);
+  private pilaresService = inject(PilaresService);
+  private modalService = inject(NgbModal);
+
   rotinas: Rotina[] = [];
   rotinasFiltered: Rotina[] = [];
   pilares: Pilar[] = [];
@@ -42,12 +46,6 @@ export class RotinasListComponent implements OnInit {
   
   // Drag and drop
   isDragging = false;
-  
-  constructor(
-    private rotinasService: RotinasService,
-    private pilaresService: PilaresService,
-    private modalService: NgbModal,
-  ) {}
 
   ngOnInit(): void {
     this.loadPilares();

@@ -176,6 +176,20 @@ export class PilaresEmpresaService {
         data: novosVinculos,
       });
 
+      // Buscar IDs dos PilarEmpresa criados (createMany não retorna IDs)
+      const pilaresEmpresaCriados = await this.prisma.pilarEmpresa.findMany({
+        where: {
+          empresaId,
+          pilarId: { in: novosIds },
+        },
+        select: { id: true },
+      });
+
+      // Auto-associar rotinas modelo para cada PilarEmpresa criado
+      for (const pe of pilaresEmpresaCriados) {
+        await this.autoAssociarRotinasModelo(pe.id, user);
+      }
+
       // Auditoria
       const userRecord = await this.prisma.usuario.findUnique({ where: { id: user.id } });
       await this.audit.log({

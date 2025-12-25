@@ -191,6 +191,19 @@ export class RotinasService {
 
     await this.prisma.$transaction(updates);
 
+    // Auditoria
+    const user = await this.prisma.usuario.findUnique({ where: { id: userId } });
+    await this.audit.log({
+      usuarioId: userId,
+      usuarioNome: user?.nome ?? '',
+      usuarioEmail: user?.email ?? '',
+      entidade: 'rotinas',
+      entidadeId: pilarId,
+      acao: 'UPDATE',
+      dadosAntes: null,
+      dadosDepois: { acao: 'reordenacao', ordens: ordensIds },
+    });
+
     return this.findAll(pilarId);
   }
 }
