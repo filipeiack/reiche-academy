@@ -56,6 +56,17 @@ export const routes: Routes = [
       }
     ]
   },
+  {
+    path: 'rotinas',
+    component: BaseComponent,
+    canActivate: [authGuard],
+    children: [
+      {
+        path: '',
+        loadChildren: () => import('./views/pages/rotinas/rotinas.routes').then(m => m.ROTINAS_ROUTES)
+      }
+    ]
+  },
   // Rota wildcard para login customizado - DEVE SER A ÚLTIMA!
   // Captura qualquer URL não reconhecida e trata como loginUrl
   {

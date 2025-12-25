@@ -199,4 +199,74 @@ export class PilaresEmpresaService {
       pilares: pilaresAtualizados,
     };
   }
+
+  /**
+   * Auto-associar rotinas modelo a PilarEmpresa recém-criado
+   * Implementa R-ROT-BE-001
+   * 
+   * Chamado após criar novo vínculo PilarEmpresa
+   * Busca todas as rotinas com modelo: true do pilar
+   * Cria RotinaEmpresa para cada rotina modelo encontrada
+   */
+  async autoAssociarRotinasModelo(
+    pilarEmpresaId: string,
+    user: RequestUser,
+  ): Promise<void> {
+    // Buscar PilarEmpresa com pilar e suas rotinas modelo
+    const pilarEmpresa = await this.prisma.pilarEmpresa.findUnique({
+      where: { id: pilarEmpresaId },
+      include: {
+        pilar: {
+          include: {
+            rotinas: {
+              where: {
+                modelo: true,
+                ativo: true,
+              },
+            },
+          },
+        },
+      },
+    });
+
+    if (!pilarEmpresa) {
+      throw new NotFoundException('PilarEmpresa não encontrado');
+    }
+
+    const rotinasModelo = pilarEmpresa.pilar.rotinas;
+
+    if (rotinasModelo.length === 0) {
+      // Sem rotinas modelo para associar
+      return;
+    }
+
+    // Criar RotinaEmpresa para cada rotina modelo
+    const rotinaEmpresaData = rotinasModelo.map((rotina) => ({
+      pilarEmpresaId: pilarEmpresa.id,
+      rotinaId: rotina.id,
+      createdBy: user.id,
+    }));
+
+    await this.prisma.rotinaEmpresa.createMany({
+      data: rotinaEmpresaData,
+      skipDuplicates: true, // Evita erro se já existir
+    });
+
+    // Auditoria
+    const userRecord = await this.prisma.usuario.findUnique({ where: { id: user.id } });
+    await this.audit.log({
+      usuarioId: user.id,
+      usuarioNome: userRecord?.nome ?? '',
+      usuarioEmail: userRecord?.email ?? '',
+      entidade: 'pilares_empresa',
+      entidadeId: pilarEmpresaId,
+      acao: 'UPDATE',
+      dadosAntes: null,
+      dadosDepois: {
+        acao: 'auto_associacao_rotinas_modelo',
+        rotinasAssociadas: rotinaEmpresaData.length,
+        rotinasIds: rotinasModelo.map(r => r.id),
+      },
+    });
+  }
 }

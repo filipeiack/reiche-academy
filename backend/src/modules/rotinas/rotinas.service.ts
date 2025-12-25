@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException, ConflictException } from '@nestjs/common';
 import { PrismaService } from '../../common/prisma/prisma.service';
 import { CreateRotinaDto } from './dto/create-rotina.dto';
 import { UpdateRotinaDto } from './dto/update-rotina.dto';
@@ -117,6 +117,39 @@ export class RotinasService {
 
   async remove(id: string, userId: string) {
     const before = await this.findOne(id);
+
+    // R-ROT-BE-002: Validar se rotina está em uso por empresas
+    const rotinaEmpresasEmUso = await this.prisma.rotinaEmpresa.findMany({
+      where: { rotinaId: id },
+      include: {
+        pilarEmpresa: {
+          include: {
+            empresa: {
+              select: {
+                id: true,
+                nome: true,
+              },
+            },
+          },
+        },
+      },
+    });
+
+    if (rotinaEmpresasEmUso.length > 0) {
+      const empresasAfetadas = rotinaEmpresasEmUso.map(
+        (re) => ({
+          id: re.pilarEmpresa.empresa.id,
+          nome: re.pilarEmpresa.empresa.nome,
+        })
+      );
+
+      // Bloqueio rígido com 409 Conflict + lista de empresas
+      throw new ConflictException({
+        message: 'Não é possível desativar esta rotina pois está em uso por empresas',
+        empresasAfetadas,
+        totalEmpresas: empresasAfetadas.length,
+      });
+    }
 
     const after = await this.prisma.rotina.update({
       where: { id },
