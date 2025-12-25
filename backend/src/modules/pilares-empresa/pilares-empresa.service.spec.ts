@@ -79,11 +79,15 @@ describe('PilaresEmpresaService - Validação Completa', () => {
             pilarEmpresa: {
               findMany: jest.fn(),
               findFirst: jest.fn(),
+              findUnique: jest.fn(),
               update: jest.fn(),
               createMany: jest.fn(),
             },
             pilar: {
               findMany: jest.fn(),
+            },
+            rotinaEmpresa: {
+              createMany: jest.fn(),
             },
             usuario: {
               findUnique: jest.fn(),
@@ -103,6 +107,13 @@ describe('PilaresEmpresaService - Validação Completa', () => {
     service = module.get<PilaresEmpresaService>(PilaresEmpresaService);
     prisma = module.get<PrismaService>(PrismaService);
     audit = module.get<AuditService>(AuditService);
+    
+    // Mock padrão para autoAssociarRotinasModelo (chamado em vincularPilares)
+    // Retorna pilar sem rotinas modelo para não interferir nos testes existentes
+    jest.spyOn(prisma.pilarEmpresa, 'findUnique').mockResolvedValue({
+      id: 'pe-default',
+      pilar: { id: 'p-default', rotinas: [] }
+    } as any);
   });
 
   afterEach(() => {
@@ -592,6 +603,231 @@ describe('PilaresEmpresaService - Validação Completa', () => {
       await expect(
         service.vincularPilares('empresa-a', pilaresIds, mockAdminUser as any),
       ).rejects.toThrow('Pilares não encontrados ou inativos: pilar-inativo');
+    });
+  });
+
+  /**
+   * TESTES PRIORITÁRIOS - autoAssociarRotinasModelo
+   * Validação de R-ROT-BE-001: Auto-associação de rotinas modelo
+   * Correção #2 do PATTERN-REPORT-rotinas-revalidation.md
+   */
+  describe('autoAssociarRotinasModelo() - R-ROT-BE-001', () => {
+    beforeEach(() => {
+      jest.clearAllMocks();
+    });
+
+    it('deve criar RotinaEmpresa para todas as rotinas modelo do pilar', async () => {
+      const mockPilarEmpresa = {
+        id: 'pe-123',
+        empresaId: 'empresa-a',
+        pilarId: 'pilar-1',
+        pilar: {
+          id: 'pilar-1',
+          nome: 'Estratégia',
+          rotinas: [
+            { id: 'rotina-1', nome: 'Rotina Modelo 1', modelo: true, ativo: true, ordem: 1 },
+            { id: 'rotina-2', nome: 'Rotina Modelo 2', modelo: true, ativo: true, ordem: 2 },
+            { id: 'rotina-3', nome: 'Rotina Modelo 3', modelo: true, ativo: true, ordem: 3 },
+          ],
+        },
+      };
+
+      const mockUser = {
+        id: 'user-123',
+        email: 'user@test.com',
+        nome: 'Test User',
+      };
+
+      jest.spyOn(prisma.pilarEmpresa, 'findUnique').mockResolvedValue(mockPilarEmpresa as any);
+      jest.spyOn(prisma.rotinaEmpresa, 'createMany').mockResolvedValue({ count: 3 } as any);
+      jest.spyOn(prisma.usuario, 'findUnique').mockResolvedValue(mockUser as any);
+
+      await service.autoAssociarRotinasModelo('pe-123', mockUser as any);
+
+      // Verificar que buscou PilarEmpresa com include correto
+      expect(prisma.pilarEmpresa.findUnique).toHaveBeenCalledWith({
+        where: { id: 'pe-123' },
+        include: {
+          pilar: {
+            include: {
+              rotinas: {
+                where: {
+                  modelo: true,
+                  ativo: true,
+                },
+              },
+            },
+          },
+        },
+      });
+
+      // Verificar que criou RotinaEmpresa para cada rotina modelo
+      expect(prisma.rotinaEmpresa.createMany).toHaveBeenCalledWith({
+        data: [
+          { pilarEmpresaId: 'pe-123', rotinaId: 'rotina-1', ordem: 1, createdBy: 'user-123' },
+          { pilarEmpresaId: 'pe-123', rotinaId: 'rotina-2', ordem: 2, createdBy: 'user-123' },
+          { pilarEmpresaId: 'pe-123', rotinaId: 'rotina-3', ordem: 3, createdBy: 'user-123' },
+        ],
+        skipDuplicates: true,
+      });
+
+      // Verificar auditoria
+      expect(audit.log).toHaveBeenCalledWith({
+        usuarioId: 'user-123',
+        usuarioNome: 'Test User',
+        usuarioEmail: 'user@test.com',
+        entidade: 'pilares_empresa',
+        entidadeId: 'pe-123',
+        acao: 'UPDATE',
+        dadosAntes: null,
+        dadosDepois: {
+          acao: 'auto_associacao_rotinas_modelo',
+          rotinasAssociadas: 3,
+          rotinasIds: ['rotina-1', 'rotina-2', 'rotina-3'],
+        },
+      });
+    });
+
+    it('deve retornar sem criar nada se não houver rotinas modelo', async () => {
+      const mockPilarEmpresaSemRotinas = {
+        id: 'pe-456',
+        empresaId: 'empresa-a',
+        pilarId: 'pilar-2',
+        pilar: {
+          id: 'pilar-2',
+          nome: 'Marketing',
+          rotinas: [], // Sem rotinas modelo
+        },
+      };
+
+      const mockUser = { id: 'user-123' };
+
+      jest.spyOn(prisma.pilarEmpresa, 'findUnique').mockResolvedValue(mockPilarEmpresaSemRotinas as any);
+
+      await service.autoAssociarRotinasModelo('pe-456', mockUser as any);
+
+      // Não deve criar RotinaEmpresa
+      expect(prisma.rotinaEmpresa.createMany).not.toHaveBeenCalled();
+
+      // Não deve registrar auditoria
+      expect(audit.log).not.toHaveBeenCalled();
+    });
+
+    it('deve lançar NotFoundException se PilarEmpresa não existir', async () => {
+      const mockUser = { id: 'user-123' };
+
+      jest.spyOn(prisma.pilarEmpresa, 'findUnique').mockResolvedValue(null);
+
+      await expect(
+        service.autoAssociarRotinasModelo('pe-inexistente', mockUser as any),
+      ).rejects.toThrow(NotFoundException);
+
+      await expect(
+        service.autoAssociarRotinasModelo('pe-inexistente', mockUser as any),
+      ).rejects.toThrow('PilarEmpresa não encontrado');
+    });
+
+    it('deve usar skipDuplicates: true para evitar erro se RotinaEmpresa já existir', async () => {
+      const mockPilarEmpresa = {
+        id: 'pe-789',
+        empresaId: 'empresa-a',
+        pilarId: 'pilar-3',
+        pilar: {
+          id: 'pilar-3',
+          nome: 'Vendas',
+          rotinas: [
+            { id: 'rotina-4', nome: 'Rotina Já Associada', modelo: true, ativo: true },
+          ],
+        },
+      };
+
+      const mockUser = {
+        id: 'user-123',
+        email: 'user@test.com',
+        nome: 'Test User',
+      };
+
+      jest.spyOn(prisma.pilarEmpresa, 'findUnique').mockResolvedValue(mockPilarEmpresa as any);
+      jest.spyOn(prisma.rotinaEmpresa, 'createMany').mockResolvedValue({ count: 0 } as any); // 0 = já existia
+      jest.spyOn(prisma.usuario, 'findUnique').mockResolvedValue(mockUser as any);
+
+      await service.autoAssociarRotinasModelo('pe-789', mockUser as any);
+
+      // Verificar que chamou createMany com skipDuplicates
+      expect(prisma.rotinaEmpresa.createMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          skipDuplicates: true,
+        }),
+      );
+    });
+
+    it('deve filtrar rotinas inativas (modelo: true, ativo: false)', async () => {
+      const mockPilarEmpresa = {
+        id: 'pe-999',
+        empresaId: 'empresa-a',
+        pilarId: 'pilar-4',
+        pilar: {
+          id: 'pilar-4',
+          nome: 'Operações',
+          rotinas: [
+            { id: 'rotina-5', nome: 'Rotina Ativa', modelo: true, ativo: true, ordem: 1 },
+            // rotina-6 (inativa) não deve aparecer no resultado do WHERE
+          ],
+        },
+      };
+
+      const mockUser = {
+        id: 'user-123',
+        email: 'user@test.com',
+        nome: 'Test User',
+      };
+
+      jest.spyOn(prisma.pilarEmpresa, 'findUnique').mockResolvedValue(mockPilarEmpresa as any);
+      jest.spyOn(prisma.rotinaEmpresa, 'createMany').mockResolvedValue({ count: 1 } as any);
+      jest.spyOn(prisma.usuario, 'findUnique').mockResolvedValue(mockUser as any);
+
+      await service.autoAssociarRotinasModelo('pe-999', mockUser as any);
+
+      // Deve criar apenas 1 RotinaEmpresa (rotina ativa)
+      expect(prisma.rotinaEmpresa.createMany).toHaveBeenCalledWith({
+        data: [
+          { pilarEmpresaId: 'pe-999', rotinaId: 'rotina-5', ordem: 1, createdBy: 'user-123' },
+        ],
+        skipDuplicates: true,
+      });
+    });
+
+    it('deve incluir where correto ao buscar rotinas (modelo: true, ativo: true)', async () => {
+      const mockPilarEmpresa = {
+        id: 'pe-111',
+        pilar: {
+          rotinas: [],
+        },
+      };
+
+      const mockUser = { id: 'user-123' };
+
+      jest.spyOn(prisma.pilarEmpresa, 'findUnique').mockResolvedValue(mockPilarEmpresa as any);
+
+      await service.autoAssociarRotinasModelo('pe-111', mockUser as any);
+
+      // Verificar WHERE clause para rotinas modelo ativas
+      expect(prisma.pilarEmpresa.findUnique).toHaveBeenCalledWith(
+        expect.objectContaining({
+          include: expect.objectContaining({
+            pilar: expect.objectContaining({
+              include: expect.objectContaining({
+                rotinas: expect.objectContaining({
+                  where: {
+                    modelo: true,
+                    ativo: true,
+                  },
+                }),
+              }),
+            }),
+          }),
+        }),
+      );
     });
   });
 });

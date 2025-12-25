@@ -255,9 +255,10 @@ export class PilaresEmpresaService {
     }
 
     // Criar RotinaEmpresa para cada rotina modelo
-    const rotinaEmpresaData = rotinasModelo.map((rotina) => ({
+    const rotinaEmpresaData = rotinasModelo.map((rotina, index) => ({
       pilarEmpresaId: pilarEmpresa.id,
       rotinaId: rotina.id,
+      ordem: rotina.ordem ?? (index + 1), // Fallback: usar índice sequencial se ordem null
       createdBy: user.id,
     }));
 
