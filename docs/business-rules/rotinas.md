@@ -850,14 +850,467 @@ GET /rotinas?pilarId=uuid → Apenas rotinas do pilar uuid
 
 ---
 
-## 11. Referências
+## 11. Regras de Interface (Frontend)
 
-**Arquivos principais:**
+**Status:** ✅ **APROVADAS** - Decisão em 25/12/2024
+
+**Última atualização:** 25/12/2024  
+**Agente:** Extractor de Regras (Mode B - Rule Proposal)  
+**Aprovação:** Usuário (25/12/2024)
+
+---
+
+### UI-ROT-001: Listagem de Rotinas Ativas
+
+**Descrição:** Sistema exibe apenas rotinas ativas, ordenadas por pilar e campo `ordem`.
+
+**Acesso:** Todos os perfis autenticados  
+**Rota:** `/rotinas`  
+**Guard:** `AuthGuard`
+
+**Localização:** `frontend/src/app/modules/rotinas/components/rotinas-list/`
+
+**Campos Exibidos na Tabela:**
+
+| Coluna | Origem | Formato |
+|--------|--------|---------|
+| Nome | `rotina.nome` | Texto |
+| Descrição | `rotina.descricao` | Texto truncado (50 chars) + tooltip |
+| Pilar | `rotina.pilar.nome` | Texto |
+| Tipo | `rotina.modelo` | Badge (Modelo/Customizada) |
+| Ordem | `rotina.ordem` | Número (nullable) |
+| Ações | - | Botões (apenas ADMINISTRADOR) |
+
+**Funcionalidades:**
+- Agrupamento visual por pilar
+- Filtro por pilar (dropdown)
+- Contador: "X rotinas encontradas no pilar Y"
+- Ordenação automática: `pilar.ordem ASC`, depois `rotina.ordem ASC`
+- Badge "Modelo" para `modelo: true`
+
+**Cenários:**
+- **Happy Path:** Lista carregada com rotinas ativas de todos os pilares
+- **Vazio:** Mensagem "Nenhuma rotina cadastrada"
+- **Erro API:** Mensagem de erro com botão retry
+
+**Restrições:**
+- Rotinas inativas não aparecem
+- Apenas rotinas de pilares ativos são exibidas
+
+**Endpoint:** `GET /rotinas?pilarId=uuid`
+
+**Referência Backend:** [R-ROT-002](#r-rot-002-listagem-de-rotinas-ativas)
+
+---
+
+### UI-ROT-002: Filtro de Rotinas por Pilar
+
+**Descrição:** Interface permite filtrar rotinas por pilar específico.
+
+**Componente:** `RotinaFilterComponent`
+
+**Interface:**
+- Dropdown com lista de pilares ativos
+- Opção "Todos os Pilares" (padrão)
+- Ao selecionar: recarregar lista via API
+- Contador dinâmico: "X rotinas encontradas"
+
+**Endpoints:**
+- `GET /pilares` (popular dropdown)
+- `GET /rotinas?pilarId=uuid` (filtrar)
+
+**Cenários:**
+- **Happy Path:** Filtro aplicado, lista atualizada
+- **Sem resultados:** "Nenhuma rotina neste pilar"
+- **Erro API:** Toast de erro, manter estado anterior
+
+**Referência Backend:** [R-ROT-002](#r-rot-002-listagem-de-rotinas-ativas)
+
+---
+
+### UI-ROT-003: Badge Visual "Modelo"
+
+**Descrição:** Rotinas com `modelo: true` exibem badge distintivo.
+
+**Lógica:**
+```typescript
+if (rotina.modelo === true) {
+  badge = 'Modelo'
+  classe = 'bg-primary' // azul
+  tooltip = 'Rotina padrão do sistema'
+} else {
+  // Sem badge
+}
+```
+
+**Renderização:**
+```html
+<span class="badge bg-primary" 
+      [tooltip]="'Rotina padrão do sistema'">
+  Modelo
+</span>
+```
+
+**Arquivo:** `rotina-badge.component.ts` (reutilizável)
+
+---
+
+### UI-ROT-004: Formulário de Criação de Rotina
+
+**Descrição:** ADMINISTRADOR pode criar nova rotina vinculada a um pilar.
+
+**Acesso:** Apenas ADMINISTRADOR  
+**Rota:** `/rotinas/novo`  
+**Guard:** `AdminGuard`
+
+**Localização:** `frontend/src/app/modules/rotinas/components/rotina-form/`
+
+**Campos:**
+
+**Nome** (obrigatório)
+- Validação: required, minLength(2), maxLength(200)
+- Trim automático
+
+**Pilar** (obrigatório)
+- Dropdown com pilares ativos
+- Endpoint: `GET /pilares`
+
+**Descrição** (opcional)
+- Textarea, maxLength(500)
+
+**Ordem** (opcional)
+- Input numérico, min(1)
+- Help text: "Ordem de exibição dentro do pilar"
+
+**Modelo** (checkbox)
+- Default: false
+- Help text: "Rotinas modelo são auto-associadas a novas empresas"
+
+**Botões:**
+- Cancelar → `/rotinas`
+- Salvar → `POST /rotinas` + redirect
+
+**Cenários:**
+- **Happy Path:** Toast "Rotina criada com sucesso" → redirect
+- **Erro validação:** Mensagens inline
+- **Erro backend (409):** Toast "Erro ao criar rotina"
+- **Erro rede:** Toast "Erro de conexão"
+
+**Endpoint:** `POST /rotinas`
+
+**Referência Backend:** [R-ROT-001](#r-rot-001-criação-de-rotina-com-validação-de-pilar)
+
+---
+
+### UI-ROT-005: Edição de Rotina Existente
+
+**Descrição:** ADMINISTRADOR pode editar rotina (exceto pilarId).
+
+**Acesso:** Apenas ADMINISTRADOR  
+**Rota:** `/rotinas/editar/:id`  
+**Guard:** `AdminGuard`
+
+**Interface:**
+- Modal ou página de edição
+- Campos editáveis: nome, descrição, ordem, modelo
+- Campo **não editável**: Pilar (apenas exibição)
+- Validações idênticas à criação
+
+**Cenários:**
+- **Happy Path:** Toast "Rotina atualizada" → fechar modal
+- **Erro 404:** "Rotina não encontrada"
+- **Erro 403:** "Sem permissão"
+
+**Endpoint:** `PATCH /rotinas/:id`
+
+**Referência Backend:** [R-ROT-004](#r-rot-004-atualização-de-rotina)
+
+---
+
+### UI-ROT-006: Desativação de Rotina (Soft Delete)
+
+**Descrição:** ADMINISTRADOR pode desativar rotina.
+
+**Acesso:** Apenas ADMINISTRADOR  
+**Trigger:** Botão "Desativar" ou ícone lixeira
+
+**Modal de Confirmação:**
+```
+⚠️ Desativar rotina?
+
+A rotina "[nome]" será desativada.
+Esta ação pode ser revertida.
+
+[Cancelar]  [Desativar]
+```
+
+**Se rotina em uso por empresas (validação backend):**
+```
+⚠️ Rotina em Uso
+
+Esta rotina está em uso por X empresa(s):
+- Empresa A
+- Empresa B
+
+Deseja desativar mesmo assim?
+
+[Cancelar]  [Ainda assim desativar]
+```
+
+**Cenários:**
+- **Happy Path:** Toast "Rotina desativada" → remove da lista
+- **Erro 409:** "Não é possível desativar" (se backend bloquear)
+- **Erro 404:** "Rotina não encontrada"
+
+**Endpoint:** `DELETE /rotinas/:id`
+
+**Decisão:** ✅ Backend bloqueia desativação se rotina em uso (409 Conflict)
+
+**Referência Backend:** [R-ROT-BE-002](#r-rot-be-002-validação-de-dependência-em-desativação), [R-ROT-006](#r-rot-006-desativação-de-rotina-soft-delete)
+
+---
+
+### UI-ROT-007: Reordenação de Rotinas (Drag-and-Drop)
+
+**Descrição:** ADMINISTRADOR pode reordenar rotinas dentro do mesmo pilar.
+
+**Acesso:** Apenas ADMINISTRADOR  
+**Condição:** Filtro por pilar ativo
+
+**Interface:**
+- Ícone arrastar (⋮⋮) ao lado de cada rotina
+- Feedback visual ao arrastar (cursor, placeholder)
+- Ao soltar: chamada API automática
+- Toast: "Ordem atualizada com sucesso"
+
+**Cenários:**
+- **Happy Path:** Ordem salva, lista atualizada
+- **Erro API:** Reverter ordem, toast "Erro ao reordenar"
+- **Sem filtro:** Reordenação desabilitada, tooltip "Selecione um pilar"
+
+**Restrições:**
+- Apenas dentro do mesmo pilar (não move entre pilares)
+- Apenas ADMINISTRADOR vê controles
+
+**Endpoint:** `POST /rotinas/pilar/:pilarId/reordenar`  
+**Body:** `{ ordemRotinas: [{ id, ordem }] }`
+
+**Referência Backend:** [R-ROT-007](#r-rot-007-reordenação-de-rotinas-por-pilar)
+
+---
+
+### UI-ROT-008: Proteção de Acesso por Perfil (RBAC)
+
+**Descrição:** Apenas ADMINISTRADOR pode entrar na tela de Rotinas e visualizar/criar/editar/desativar/reordenar.
+
+**Route Guard:**
+```typescript
+{
+  path: 'rotinas',
+  canActivate: [AuthGuard],
+  children: [
+    { path: '', component: RotinasListComponent },
+    { 
+      path: 'novo', 
+      component: RotinaFormComponent,
+      canActivate: [AdminGuard] 
+    },
+    { 
+      path: 'editar/:id', 
+      component: RotinaFormComponent,
+      canActivate: [AdminGuard] 
+    }
+  ]
+}
+```
+
+**Comportamento Visual:**
+- **ADMINISTRADOR:** Vê botões "Nova Rotina", "Editar", "Desativar", drag-and-drop
+- **Outros perfis:** Não acessa a tela.
+- **Tentativa acesso direto:** Redirect ou mensagem "Acesso negado"
+
+**Menu Lateral:**
+- Item "Rotinas" visível para todos
+- Submenu "Nova Rotina" apenas para ADMINISTRADOR
+
+**Referência Backend:** Guards ADMINISTRADOR em todos endpoints de escrita
+
+---
+
+## 12. Regras Backend Complementares
+
+**Status:** ✅ **APROVADAS** - Decisão em 25/12/2024
+
+---
+
+### R-ROT-BE-001: Auto-associação de Rotinas Modelo
+
+**Descrição:** Quando empresa vincular PilarEmpresa, rotinas com `modelo: true` devem ser auto-criadas em RotinaEmpresa.
+
+**Condição:** Novo registro em PilarEmpresa (empresa vincula pilar).
+
+**Comportamento Esperado:**
+1. **Método explícito:** `PilaresEmpresaService.vincularPilares()` deve chamar método auxiliar `autoAssociarRotinasModelo(pilarEmpresaId, pilarId)`
+2. Query: `SELECT * FROM rotinas WHERE pilarId = :pilarId AND modelo = true AND ativo = true`
+3. Para cada rotina modelo:
+   ```typescript
+   createMany({
+     data: rotinas.map((r, index) => ({
+       pilarEmpresaId: novoPilarEmpresaId,
+       rotinaId: r.id,
+       ordem: r.ordem ?? index + 1,
+       ativo: true
+     }))
+   })
+   ```
+4. Auditoria: registrar criação em batch
+
+**Cenários:**
+- **Happy Path:** Rotinas modelo auto-associadas
+- **Sem rotinas modelo:** Apenas PilarEmpresa criado
+- **Duplicata:** Ignorar (constraint unique)
+
+**Impacto Técnico:**
+- Módulo: `PilaresEmpresaService`
+- Método principal: `vincularPilares()`
+- Método auxiliar: `autoAssociarRotinasModelo(pilarEmpresaId, pilarId)` (CRIAR)
+- Tabelas: `rotinas`, `rotinas_empresa`
+
+**Decisão:** ✅ **APROVADO** - Implementar auto-associação via método explícito
+
+**Observação:** Evitar uso de triggers de banco de dados para facilitar rastreabilidade e manutenção futura.
+
+**Referência Similar:** [empresas.md](empresas.md#R-EMP-004) (auto-associação de pilares)
+
+---
+
+### R-ROT-BE-002: Validação de Dependência em Desativação
+
+**Descrição:** Sistema valida se rotina possui RotinaEmpresa ativa antes de desativar e bloqueia a operação se houver uso ativo.
+
+**Condição:** ADMINISTRADOR tenta `DELETE /rotinas/:id`.
+
+**Comportamento Implementado (Bloqueio Rígido):**
+1. Query: `SELECT COUNT(*) FROM rotinas_empresa WHERE rotinaId = :id AND ativo = true`
+2. Se count > 0:
+   - `409 Conflict`
+   - Mensagem: `"Não é possível desativar rotina em uso por X empresa(s)"`
+   - Body: `{ empresasAfetadas: [{ id, nome }] }`
+3. Query detalhada para listar empresas:
+   ```typescript
+   const empresasAfetadas = await prisma.rotinaEmpresa.findMany({
+     where: { rotinaId: id, ativo: true },
+     include: {
+       pilarEmpresa: {
+         include: { empresa: { select: { id: true, nome: true } } }
+       }
+     }
+   })
+   ```
+
+**Cenários:**
+- **Sem uso:** Desativa normalmente (soft delete)
+- **Em uso:** Bloqueia com erro 409 + lista de empresas
+- **Erro query:** 500 Internal Server Error
+
+**Decisão:** ✅ **APROVADO** - Bloqueio rígido (Opção 1)
+
+**Impacto Técnico:**
+- Módulo: `RotinasService`
+- Método: `remove()` (modificar para adicionar validação)
+- Query: JOIN com empresas para listar nomes
+- Exceptions: ConflictException
+
+**Referência Similar:** [pilares.md](pilares.md#R-PIL-006)
+
+---
+
+## 13. Estrutura Frontend Proposta
+
+```
+frontend/src/app/modules/rotinas/
+├── rotinas.module.ts
+├── rotinas-routing.module.ts
+├── components/
+│   ├── rotinas-list/
+│   │   ├── rotinas-list.component.ts
+│   │   ├── rotinas-list.component.html
+│   │   └── rotinas-list.component.scss
+│   ├── rotina-form/
+│   │   ├── rotina-form.component.ts
+│   │   ├── rotina-form.component.html
+│   │   └── rotina-form.component.scss
+│   └── rotina-filter/
+│       ├── rotina-filter.component.ts
+│       ├── rotina-filter.component.html
+│       └── rotina-filter.component.scss
+├── services/
+│   └── rotinas.service.ts
+├── models/
+│   ├── rotina.model.ts
+│   └── rotina-form.model.ts
+└── guards/
+    └── admin.guard.ts (ou reutilizar guard global)
+```
+
+---
+
+## 14. Testes Frontend Sugeridos (E2E)
+
+### Teste 1: Listagem de Rotinas
+- **Dado** que existem 5 rotinas ativas no pilar "Estratégico"
+- **Quando** acesso `/rotinas`
+- **Então** devo ver 5 rotinas ordenadas por `ordem`
+
+### Teste 2: Filtro por Pilar
+- **Dado** que existem rotinas em 3 pilares diferentes
+- **Quando** filtro por pilar "Financeiro"
+- **Então** devo ver apenas rotinas do pilar "Financeiro"
+
+### Teste 3: Criar Rotina (ADMINISTRADOR)
+- **Dado** que sou ADMINISTRADOR
+- **Quando** preencho formulário válido e salvo
+- **Então** devo ver toast "Rotina criada com sucesso"
+- **E** rotina aparece na listagem
+
+### Teste 4: Editar Rotina (ADMINISTRADOR)
+- **Dado** que sou ADMINISTRADOR
+- **Quando** edito nome e salvo
+- **Então** devo ver toast "Rotina atualizada"
+- **E** nome atualizado na lista
+
+### Teste 5: Desativar Rotina (ADMINISTRADOR)
+- **Dado** que sou ADMINISTRADOR
+- **Quando** clico em "Desativar" e confirmo
+- **Então** rotina deve desaparecer da listagem
+
+### Teste 6: Acesso Negado (GESTOR)
+- **Dado** que sou GESTOR
+- **Quando** acesso `/rotinas`
+- **Então** devo ver apenas visualização
+- **E** não devo ver botões de ação
+
+### Teste 7: Reordenar Rotinas (ADMINISTRADOR)
+- **Dado** que filtrei rotinas do pilar "Estratégico"
+- **Quando** arrasto rotina da posição 3 para posição 1
+- **Então** devo ver ordem atualizada
+- **E** nova ordem deve persistir após reload
+
+---
+
+## 15. Referências
+
+**Arquivos Backend:**
 - [rotinas.service.ts](../../backend/src/modules/rotinas/rotinas.service.ts)
 - [rotinas.controller.ts](../../backend/src/modules/rotinas/rotinas.controller.ts)
 - [create-rotina.dto.ts](../../backend/src/modules/rotinas/dto/create-rotina.dto.ts)
 - [update-rotina.dto.ts](../../backend/src/modules/rotinas/dto/update-rotina.dto.ts)
 - [schema.prisma](../../backend/prisma/schema.prisma) (Rotina, RotinaEmpresa)
+
+**Arquivos Frontend (A Implementar):**
+- [rotinas.module.ts](../../frontend/src/app/modules/rotinas/rotinas.module.ts)
+- [rotinas.service.ts](../../frontend/src/app/modules/rotinas/services/rotinas.service.ts)
+- [rotinas-list.component.ts](../../frontend/src/app/modules/rotinas/components/rotinas-list/)
 
 **Dependências:**
 - AuditService (auditoria de operações)
@@ -869,11 +1322,61 @@ GET /rotinas?pilarId=uuid → Apenas rotinas do pilar uuid
 - Pilares (rotina pertence a pilar)
 - Empresas (via RotinaEmpresa e PilarEmpresa)
 
+**Padrões a seguir:**
+- [docs/conventions/frontend.md](../conventions/frontend.md)
+- [docs/business-rules/pilares.md](pilares.md#11-regras-de-interface-frontend) (referência)
+
+---
+
+## 16. Status de Implementação
+
+**Backend:**
+- ✅ CRUD completo implementado
+- ✅ Validações de segurança (RBAC)
+- ✅ Auditoria de operações CUD
+- ✅ Soft delete consistente
+- ✅ Reordenação por pilar
+- ✅ Filtro por pilar
+- ✅ Campo `modelo` implementado
+
+**Frontend:**
+- ⏳ **PENDENTE IMPLEMENTAÇÃO** - Regras aprovadas, aguardando Dev Agent
+- ⏳ Listagem de rotinas (UI-ROT-001)
+- ⏳ Filtro por pilar (UI-ROT-002)
+- ⏳ Formulário criar/editar (UI-ROT-004, UI-ROT-005)
+- ⏳ Drag-and-drop reordenação (UI-ROT-007)
+- ⏳ RBAC guards (UI-ROT-008)
+
+**Backend Complementar:**
+- ⏳ **PENDENTE IMPLEMENTAÇÃO** - Regras aprovadas
+- ⏳ R-ROT-BE-001: Auto-associação de rotinas modelo via método explícito
+- ⏳ R-ROT-BE-002: Validação de dependência com bloqueio rígido (409)
+
+**Decisões Aprovadas (25/12/2024):**
+- ✅ R-ROT-BE-001: Implementar auto-associação via método explícito (evitar triggers)
+- ✅ R-ROT-BE-002: Bloqueio rígido - erro 409 se rotina em uso
+
+---
+
+**Data de extração:** 21/12/2024  
+**Data de atualização:** 25/12/2024  
+**Data de aprovação:** 25/12/2024  
+**Agente:** Business Rules Extractor (Modo A + Modo B)  
+**Status:** ✅ Backend base completo | ✅ Regras frontend/backend complementares APROVADAS | ⏳ Implementação pendente
+
 ---
 
 **Observação final:**  
-Este documento reflete APENAS o código IMPLEMENTADO.  
-Módulo Rotinas possui CRUD completo + reordenação por pilar.  
-Validações de pilar garantem integridade referencial.  
-Auditoria completa exceto reordenação.  
-Filtro por pilar permite listagens customizadas.
+Este documento reflete:
+- **Backend base:** Código IMPLEMENTADO (extração modo A)
+- **Frontend:** Regras APROVADAS (extração modo B - aguardando implementação)
+- **Backend complementar:** Regras APROVADAS (R-ROT-BE-001 e R-ROT-BE-002)
+- **Decisões tomadas:** Auto-associação via método explícito + Bloqueio rígido em desativação
+
+Frontend segue padrão estabelecido em [pilares.md](pilares.md#11-regras-de-interface-frontend).  
+
+**Próximo passo:** Seguir fluxo oficial:  
+1. Dev Agent → Implementar frontend (UI-ROT-001 a 008) e backend complementar (R-ROT-BE-001 e 002)
+2. Pattern Enforcer → Validar conformidade  
+3. QA Unitário → Criar testes independentes  
+4. E2E Agent → Validar fluxo completo
