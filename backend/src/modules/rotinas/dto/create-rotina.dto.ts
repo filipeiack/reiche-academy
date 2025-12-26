@@ -1,5 +1,5 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { IsNotEmpty, IsString, Length, IsInt, Min, IsOptional, IsUUID } from 'class-validator';
+import { IsNotEmpty, IsString, Length, IsInt, Min, IsOptional, IsUUID, IsBoolean } from 'class-validator';
 
 export class CreateRotinaDto {
   @ApiProperty({ example: 'Planejamento Estratégico Anual' })
@@ -19,6 +19,11 @@ export class CreateRotinaDto {
   @Min(1)
   @IsOptional()
   ordem?: number;
+
+  @ApiPropertyOptional({ example: false })
+  @IsBoolean()
+  @IsOptional()
+  modelo?: boolean;
 
   @ApiProperty({ example: 'uuid-do-pilar' })
   @IsUUID()
