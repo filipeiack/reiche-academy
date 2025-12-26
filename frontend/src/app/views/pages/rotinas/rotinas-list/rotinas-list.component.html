@@ -1,168 +1,134 @@
-<div class="container-fluid">
-  <!-- Breadcrumb -->
-  <div class="row mb-4">
-    <div class="col-12">
-      <div class="d-flex justify-content-between align-items-center">
-        <div>
-          <h1 class="h3 mb-0">
-            <i class="bi bi-list-check me-2"></i>
-            Rotinas
-          </h1>
-          <p class="text-muted mb-0">{{ rotinasCountText }}</p>
+<div class="mb-2 align-items-center gap-2 d-flex justify-content-between flex-wrap">
+  <nav aria-label="breadcrumb">
+    <ol class="breadcrumb breadcrumb-arrow mb-1">
+      <li class="breadcrumb-item">
+        <i class="input-icon" data-feather="repeat" style="width: 16px; height: 16px"></i>
+      </li>
+      <li class="breadcrumb-item active text-primary" aria-current="page">
+        Rotinas
+      </li>
+    </ol>
+  </nav>
+
+  <button type="button" class="btn btn-primary btn-icon-text btn-xs" [routerLink]="['/rotinas/novo']">
+    <i class="feather icon-plus btn-icon-prepend"></i>
+    Nova Rotina
+  </button>
+</div>
+
+<!-- Filtros -->
+<div class="row mb-3">
+  <div class="col-md-4">
+    <label for="pilarFilter" class="form-label">Filtrar por Pilar</label>
+    <select id="pilarFilter" class="form-select" [(ngModel)]="pilarIdFiltro" (ngModelChange)="onFilterChange()">
+      <option [ngValue]="null">Todos os Pilares</option>
+      <option *ngFor="let pilar of pilares" [value]="pilar.id">
+        {{ pilar.nome }}
+      </option>
+    </select>
+  </div>
+  <div class="col-md-8">
+    <div class="alert alert-info mb-0" *ngIf="!canReorder">
+      <i class="bi bi-info-circle me-2"></i>
+      Selecione um pilar para habilitar a reordenação drag-and-drop
+    </div>
+    <div class="alert alert-success mb-0" *ngIf="canReorder">
+      <i class="bi bi-hand-index me-2"></i>
+      Arraste as rotinas para reordenar
+    </div>
+  </div>
+</div>
+
+<!-- Loading -->
+<div class="text-center py-5" *ngIf="loading">
+  <div class="spinner-border text-primary" role="status">
+    <span class="visually-hidden">Carregando...</span>
+  </div>
+</div>
+
+<!-- Error -->
+<div class="alert alert-danger" *ngIf="error && !loading">
+  <i class="bi bi-exclamation-triangle me-2"></i>
+  {{ error }}
+  <button class="btn btn-sm btn-outline-danger ms-3" (click)="retry()">
+    Tentar novamente
+  </button>
+</div>
+
+<!-- Table -->
+<div class="row" *ngIf="!loading && !error">
+  <div class="col-12">
+    <div class="card">
+      <div class="card-body">
+        <!-- Empty State -->
+        <div class="text-center py-5" *ngIf="totalRotinas === 0">
+          <i class="bi bi-inbox display-1 text-muted"></i>
+          <h5 class="mt-3">Nenhuma rotina cadastrada</h5>
+          <p class="text-muted">Comece criando sua primeira rotina</p>
+          <a routerLink="/rotinas/novo" class="btn btn-primary">
+            <i class="bi bi-plus-circle me-2"></i>
+            Nova Rotina
+          </a>
         </div>
-        <a routerLink="/rotinas/novo" class="btn btn-primary">
-          <i class="bi bi-plus-circle me-2"></i>
-          Nova Rotina
-        </a>
-      </div>
-    </div>
-  </div>
 
-  <!-- Filtros -->
-  <div class="row mb-3">
-    <div class="col-md-4">
-      <label for="pilarFilter" class="form-label">Filtrar por Pilar</label>
-      <select 
-        id="pilarFilter" 
-        class="form-select" 
-        [(ngModel)]="pilarIdFiltro" 
-        (ngModelChange)="onFilterChange()"
-      >
-        <option [ngValue]="null">Todos os Pilares</option>
-        <option *ngFor="let pilar of pilares" [value]="pilar.id">
-          {{ pilar.nome }}
-        </option>
-      </select>
-    </div>
-    <div class="col-md-8">
-      <div class="alert alert-info mb-0" *ngIf="!canReorder">
-        <i class="bi bi-info-circle me-2"></i>
-        Selecione um pilar para habilitar a reordenação drag-and-drop
-      </div>
-      <div class="alert alert-success mb-0" *ngIf="canReorder">
-        <i class="bi bi-hand-index me-2"></i>
-        Arraste as rotinas para reordenar
-      </div>
-    </div>
-  </div>
+        <!-- Table with Drag and Drop -->
+        <div class="table-responsive" *ngIf="totalRotinas > 0">
+          <table class="table table-hover align-middle">
+            <thead>
+              <tr>
+                <th *ngIf="canReorder" style="width: 40px;"></th>
+                <th>Nome</th>
+                <th>Descrição</th>
+                <th>Pilar</th>
+                <th>Tipo</th>
+                <th style="width: 80px;">Ordem</th>
+                <th style="width: 120px;">Ações</th>
+              </tr>
+            </thead>
+            <tbody cdkDropList [cdkDropListDisabled]="!canReorder" (cdkDropListDropped)="onDrop($event)">
+              <tr *ngFor="let rotina of paginatedRotinas" cdkDrag [cdkDragDisabled]="!canReorder">
+                <td *ngIf="canReorder" class="text-center">
+                  <i class="bi bi-grip-vertical text-muted" [class.cursor-grab]="canReorder" style="cursor: grab;">
+                  </i>
+                </td>
+                <td>
+                  <strong>{{ rotina.nome }}</strong>
+                </td>
+                <td>
+                  <span [ngbTooltip]="rotina.descricao || ''" placement="top" *ngIf="rotina.descricao">
+                    {{ truncateText(rotina.descricao, 50) }}
+                  </span>
+                  <span class="text-muted" *ngIf="!rotina.descricao">—</span>
+                </td>
+                <td>{{ rotina.pilar?.nome || '—' }}</td>
+                <td>
+                  <app-rotina-badge [modelo]="rotina.modelo"></app-rotina-badge>
+                </td>
+                <td class="text-center">
+                  {{ rotina.ordem || '—' }}
+                </td>
+                <td>
+                  <div class="btn-group btn-group-sm" role="group">
+                    <a [routerLink]="['/rotinas/editar', rotina.id]" class="btn btn-outline-primary"
+                      ngbTooltip="Editar">
+                      <i class="bi bi-pencil"></i>
+                    </a>
+                    <button class="btn btn-outline-danger" (click)="openDeleteModal(rotina, deleteModal)"
+                      ngbTooltip="Desativar">
+                      <i class="bi bi-trash"></i>
+                    </button>
+                  </div>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
 
-  <!-- Loading -->
-  <div class="text-center py-5" *ngIf="loading">
-    <div class="spinner-border text-primary" role="status">
-      <span class="visually-hidden">Carregando...</span>
-    </div>
-  </div>
-
-  <!-- Error -->
-  <div class="alert alert-danger" *ngIf="error && !loading">
-    <i class="bi bi-exclamation-triangle me-2"></i>
-    {{ error }}
-    <button class="btn btn-sm btn-outline-danger ms-3" (click)="retry()">
-      Tentar novamente
-    </button>
-  </div>
-
-  <!-- Table -->
-  <div class="row" *ngIf="!loading && !error">
-    <div class="col-12">
-      <div class="card">
-        <div class="card-body">
-          <!-- Empty State -->
-          <div class="text-center py-5" *ngIf="totalRotinas === 0">
-            <i class="bi bi-inbox display-1 text-muted"></i>
-            <h5 class="mt-3">Nenhuma rotina cadastrada</h5>
-            <p class="text-muted">Comece criando sua primeira rotina</p>
-            <a routerLink="/rotinas/novo" class="btn btn-primary">
-              <i class="bi bi-plus-circle me-2"></i>
-              Nova Rotina
-            </a>
-          </div>
-
-          <!-- Table with Drag and Drop -->
-          <div class="table-responsive" *ngIf="totalRotinas > 0">
-            <table class="table table-hover align-middle">
-              <thead>
-                <tr>
-                  <th *ngIf="canReorder" style="width: 40px;"></th>
-                  <th>Nome</th>
-                  <th>Descrição</th>
-                  <th>Pilar</th>
-                  <th>Tipo</th>
-                  <th style="width: 80px;">Ordem</th>
-                  <th style="width: 120px;">Ações</th>
-                </tr>
-              </thead>
-              <tbody 
-                cdkDropList 
-                [cdkDropListDisabled]="!canReorder"
-                (cdkDropListDropped)="onDrop($event)"
-              >
-                <tr 
-                  *ngFor="let rotina of paginatedRotinas" 
-                  cdkDrag
-                  [cdkDragDisabled]="!canReorder"
-                >
-                  <td *ngIf="canReorder" class="text-center">
-                    <i class="bi bi-grip-vertical text-muted" 
-                       [class.cursor-grab]="canReorder"
-                       style="cursor: grab;">
-                    </i>
-                  </td>
-                  <td>
-                    <strong>{{ rotina.nome }}</strong>
-                  </td>
-                  <td>
-                    <span 
-                      [ngbTooltip]="rotina.descricao || ''"
-                      placement="top"
-                      *ngIf="rotina.descricao"
-                    >
-                      {{ truncateText(rotina.descricao, 50) }}
-                    </span>
-                    <span class="text-muted" *ngIf="!rotina.descricao">—</span>
-                  </td>
-                  <td>{{ rotina.pilar?.nome || '—' }}</td>
-                  <td>
-                    <app-rotina-badge [modelo]="rotina.modelo"></app-rotina-badge>
-                  </td>
-                  <td class="text-center">
-                    {{ rotina.ordem || '—' }}
-                  </td>
-                  <td>
-                    <div class="btn-group btn-group-sm" role="group">
-                      <a 
-                        [routerLink]="['/rotinas/editar', rotina.id]" 
-                        class="btn btn-outline-primary"
-                        ngbTooltip="Editar"
-                      >
-                        <i class="bi bi-pencil"></i>
-                      </a>
-                      <button 
-                        class="btn btn-outline-danger"
-                        (click)="openDeleteModal(rotina, deleteModal)"
-                        ngbTooltip="Desativar"
-                      >
-                        <i class="bi bi-trash"></i>
-                      </button>
-                    </div>
-                  </td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
-
-          <!-- Pagination -->
-          <div class="d-flex justify-content-center mt-3" *ngIf="totalRotinas > pageSize">
-            <ngb-pagination
-              [(page)]="page"
-              [pageSize]="pageSize"
-              [collectionSize]="totalRotinas"
-              [maxSize]="5"
-              [rotate]="true"
-              [boundaryLinks]="true"
-            >
-            </ngb-pagination>
-          </div>
+        <!-- Pagination -->
+        <div class="d-flex justify-content-center mt-3" *ngIf="totalRotinas > pageSize">
+          <ngb-pagination [(page)]="page" [pageSize]="pageSize" [collectionSize]="totalRotinas" [maxSize]="5"
+            [rotate]="true" [boundaryLinks]="true">
+          </ngb-pagination>
         </div>
       </div>
     </div>

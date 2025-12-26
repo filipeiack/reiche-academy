@@ -2,8 +2,10 @@ import { Component, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { FormsModule } from '@angular/forms';
-import { NgbPagination, NgbTooltip, NgbModal } from '@ng-bootstrap/ng-bootstrap';
+import { NgbPaginationModule, NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
 import { CdkDragDrop, DragDropModule, moveItemInArray } from '@angular/cdk/drag-drop';
+import Swal from 'sweetalert2';
+import { NgSelectModule } from '@ng-select/ng-select';
 
 import { RotinasService, Rotina } from '../../../../core/services/rotinas.service';
 import { PilaresService, Pilar } from '../../../../core/services/pilares.service';
@@ -17,8 +19,9 @@ import { HttpErrorResponse } from '@angular/common/http';
     CommonModule,
     RouterLink,
     FormsModule,
-    NgbPagination,
-    NgbTooltip,
+    NgbPaginationModule,
+    NgbTooltipModule,
+    NgSelectModule,
     DragDropModule,
     RotinaBadgeComponent,
   ],
@@ -28,7 +31,6 @@ import { HttpErrorResponse } from '@angular/common/http';
 export class RotinasListComponent implements OnInit {
   private rotinasService = inject(RotinasService);
   private pilaresService = inject(PilaresService);
-  private modalService = inject(NgbModal);
 
   rotinas: Rotina[] = [];
   rotinasFiltered: Rotina[] = [];
@@ -39,6 +41,15 @@ export class RotinasListComponent implements OnInit {
   
   // Filtros
   pilarIdFiltro: string | null = null;
+  searchQuery = '';
+  
+  // Opções para ng-select (filtro de pilar)
+  get pilarOptions() {
+    return [
+      { value: null, label: 'Todos os Pilares' },
+      ...this.pilares.map(p => ({ value: p.id, label: p.nome }))
+    ];
+  }
   
   // Paginação
   page = 1;
@@ -50,6 +61,18 @@ export class RotinasListComponent implements OnInit {
   ngOnInit(): void {
     this.loadPilares();
     this.loadRotinas();
+  }
+
+  private showToast(title: string, icon: 'success' | 'error' | 'info' | 'warning', timer: number = 3000): void {
+    Swal.fire({
+      toast: true,
+      position: 'top-end',
+      showConfirmButton: false,
+      timer,
+      timerProgressBar: true,
+      title,
+      icon,
+    });
   }
 
   loadPilares(): void {
@@ -131,31 +154,36 @@ export class RotinasListComponent implements OnInit {
       next: (rotinasAtualizadas) => {
         this.rotinas = rotinasAtualizadas;
         this.rotinasFiltered = rotinasAtualizadas;
-        this.showSuccessToast('Ordem atualizada com sucesso');
+        this.showToast('Ordem atualizada com sucesso', 'success');
       },
       error: (error: HttpErrorResponse) => {
         this.loadRotinas(); // Reverter
-        this.showErrorToast('Erro ao reordenar rotinas');
+        this.showToast('Erro ao reordenar rotinas', 'error');
         console.error('Erro ao reordenar:', error);
       }
     });
   }
 
-  openDeleteModal(rotina: Rotina, content: any): void {
-    this.modalService.open(content, { centered: true }).result.then(
-      (result) => {
-        if (result === 'confirm') {
-          this.deleteRotina(rotina);
-        }
-      },
-      () => {} // Dismiss
-    );
+  confirmDesativar(rotina: Rotina): void {
+    Swal.fire({
+      title: 'Confirmar Desativação',
+      html: `Deseja desativar a rotina <strong>"${rotina.nome}"</strong>?`,
+      showCancelButton: true,
+      confirmButtonText: 'Desativar',
+      cancelButtonText: 'Cancelar',
+      confirmButtonColor: '#d33',
+      cancelButtonColor: '#6c757d'
+    }).then((result) => {
+      if (result.isConfirmed) {
+        this.deleteRotina(rotina);
+      }
+    });
   }
 
   deleteRotina(rotina: Rotina): void {
     this.rotinasService.remove(rotina.id).subscribe({
       next: () => {
-        this.showSuccessToast('Rotina desativada com sucesso');
+        this.showToast('Rotina desativada com sucesso', 'success');
         this.loadRotinas();
       },
       error: (error: HttpErrorResponse) => {
@@ -163,29 +191,30 @@ export class RotinasListComponent implements OnInit {
           const errorData = error.error;
           this.showConflictError(errorData);
         } else if (error.status === 404) {
-          this.showErrorToast('Rotina não encontrada');
+          this.showToast('Rotina não encontrada', 'error');
         } else {
-          this.showErrorToast('Erro ao desativar rotina');
+          this.showToast('Erro ao desativar rotina', 'error');
         }
         console.error('Erro ao deletar rotina:', error);
       }
     });
   }
 
-  showSuccessToast(message: string): void {
-    // Implementar toast service ou usar alert temporariamente
-    alert(message);
-  }
-
-  showErrorToast(message: string): void {
-    alert(message);
-  }
-
   showConflictError(errorData: any): void {
     const empresas = errorData.empresasAfetadas || [];
-    const empresasText = empresas.map((e: any) => e.nome).join(', ');
-    const message = `Não é possível desativar esta rotina.\n\nEla está em uso por ${errorData.totalEmpresas} empresa(s):\n${empresasText}`;
-    alert(message);
+    const empresasText = empresas.map((e: any) => `<li>${e.nome}</li>`).join('');
+    
+    Swal.fire({
+      icon: 'error',
+      title: 'Não é possível desativar',
+      html: `
+        Esta rotina está em uso por <strong>${errorData.totalEmpresas} empresa(s)</strong>:<br><br>
+        <ul style="text-align: left;">${empresasText}</ul>
+        <br>Remova o vínculo primeiro.
+      `,
+      confirmButtonText: 'Entendi',
+      confirmButtonColor: '#3085d6'
+    });
   }
 
   retry(): void {
