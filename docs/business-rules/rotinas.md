@@ -115,7 +115,7 @@ if (!pilar) {
 **Validação de DTO:**
 - `nome`: string, required, 2-200 caracteres
 - `descricao`: string, optional, 0-500 caracteres
-- `ordem`: number, required, >= 1
+- `ordem`: number, optional, >= 1
 - `pilarId`: UUID, required
 
 **Retorno:**
@@ -394,13 +394,13 @@ await this.prisma.$transaction(updates);
 **Campos:**
 - `nome`: @IsString(), @IsNotEmpty(), @Length(2, 200)
 - `descricao`: @IsString(), @IsOptional(), @Length(0, 500)
-- `ordem`: @IsInt(), @Min(1)
+- `ordem`: @IsInt(), @IsOptional(), @Min(1)
 - `pilarId`: @IsUUID(), @IsNotEmpty()
 
 **Validações implementadas:**
 - Nome obrigatório, entre 2 e 200 caracteres
 - Descrição opcional, máximo 500 caracteres
-- Ordem obrigatória, mínimo 1
+- Ordem opcional, mínimo 1 se valor fornecido
 - PilarId obrigatório e deve ser UUID válido
 
 **Arquivo:** [create-rotina.dto.ts](../../backend/src/modules/rotinas/dto/create-rotina.dto.ts)

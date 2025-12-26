@@ -44,7 +44,7 @@ export const MENU: MenuItem[] = [
   },
   {
     label: 'MENU.ROTINAS',
-    icon: 'activity',
+    icon: 'repeat',
     link: '/rotinas'
   },
   {

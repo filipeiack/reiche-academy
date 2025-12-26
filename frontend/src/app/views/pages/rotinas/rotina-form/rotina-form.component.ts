@@ -8,11 +8,12 @@ import { NgSelectModule } from '@ng-select/ng-select';
 
 import { RotinasService, CreateRotinaDto, UpdateRotinaDto } from '../../../../core/services/rotinas.service';
 import { PilaresService, Pilar } from '../../../../core/services/pilares.service';
+import { TranslatePipe } from "../../../../core/pipes/translate.pipe";
 
 @Component({
   selector: 'app-rotina-form',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, RouterLink, NgSelectModule],
+  imports: [CommonModule, ReactiveFormsModule, NgSelectModule, TranslatePipe],
   templateUrl: './rotina-form.component.html',
   styleUrls: ['./rotina-form.component.scss']
 })
@@ -30,7 +31,6 @@ export class RotinaFormComponent implements OnInit {
   isEditMode = false;
   loading = false;
   submitting = false;
-  error: string | null = null;
 
   ngOnInit(): void {
     this.buildForm();
@@ -72,8 +72,8 @@ export class RotinaFormComponent implements OnInit {
         this.pilares = pilares.filter(p => p.ativo);
       },
       error: (error: HttpErrorResponse) => {
-        console.error('Erro ao carregar pilares:', error);
-        this.error = 'Erro ao carregar pilares';
+        this.showToast('Erro ao carregar pilares', 'error');
+        this.loading = false;
       }
     });
   }
@@ -93,18 +93,17 @@ export class RotinaFormComponent implements OnInit {
         });
         
         // Desabilitar pilarId em modo de edição (conforme regra UI-ROT-005)
-        this.form.get('pilarId')?.disable();
-        
+        this.form.get('pilarId')?.disable();  
         this.loading = false;
       },
       error: (error: HttpErrorResponse) => {
         this.loading = false;
         if (error.status === 404) {
-          this.error = 'Rotina não encontrada';
+          this.showToast('Rotina não encontrada', 'error');
         } else {
-          this.error = 'Erro ao carregar rotina';
+          this.showToast('Erro ao carregar rotina', 'error');
         }
-        console.error('Erro ao carregar rotina:', error);
+        
       }
     });
   }
@@ -116,7 +115,6 @@ export class RotinaFormComponent implements OnInit {
     }
 
     this.submitting = true;
-    this.error = null;
 
     const formValue = this.form.getRawValue(); // getRawValue inclui campos desabilitados
     
@@ -168,7 +166,7 @@ export class RotinaFormComponent implements OnInit {
     
     this.rotinasService.update(this.rotinaId, updateData).subscribe({
       next: () => {
-        this.showSuccessToast('Rotina atualizada com sucesso');
+        this.showToast('Rotina atualizada com sucesso', 'success');
         this.router.navigate(['/rotinas']);
       },
       error: (error: HttpErrorResponse) => {
@@ -179,23 +177,19 @@ export class RotinaFormComponent implements OnInit {
   }
 
   handleError(error: HttpErrorResponse): void {
+
     if (error.status === 409) {
-      this.error = 'Erro de validação. Verifique os dados.';
+      this.showToast('Erro de validação. Verifique os dados.', 'error');
     } else if (error.status === 404) {
-      this.error = 'Rotina não encontrada';
+      this.showToast('Rotina não encontrada', 'error');
     } else if (error.status === 400) {
-      this.error = 'Dados inválidos. Verifique os campos.';
+      this.showToast('Dados inválidos. Verifique os campos.', 'error');
     } else {
-      this.error = 'Erro ao salvar rotina. Tente novamente.';
+      this.showToast('Erro ao salvar rotina. Tente novamente.', 'error');
     }
-    console.error('Erro ao salvar:', error);
   }
 
-  showSuccessToast(message: string): void {
-    alert(message);
-  }
-
-  cancel(): void {
+  handleCancel(): void {
     this.router.navigate(['/rotinas']);
   }
 

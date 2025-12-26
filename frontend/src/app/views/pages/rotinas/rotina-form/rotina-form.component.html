@@ -13,152 +13,149 @@
   </ol>
 </nav>
 
-
-<!-- Loading -->
-<div class="text-center py-5" *ngIf="loading">
-  <div class="spinner-border text-primary" role="status">
-    <span class="visually-hidden">Carregando...</span>
-  </div>
-</div>
-
-<!-- Error Alert -->
-<div class="alert alert-danger" *ngIf="error && !loading">
-  <i class="bi bi-exclamation-triangle me-2"></i>
-  {{ error }}
-</div>
-
 <!-- Form -->
-<div class="row" *ngIf="!loading">
-  <div class="col-lg-8">
-    <div class="card">
-      <div class="card-body">
-        <form [formGroup]="form" (ngSubmit)="onSubmit()">
-          <!-- Nome -->
-          <div class="mb-3">
-            <label for="nome" class="form-label">
-              Nome <span class="text-danger">*</span>
-            </label>
-            <input type="text" class="form-control" id="nome" formControlName="nome" [class.is-invalid]="nomeInvalid"
-              placeholder="Ex: Planejamento Estratégico Anual">
-            <div class="invalid-feedback" *ngIf="nomeInvalid">
-              <span *ngIf="form.get('nome')?.errors?.['required']">
-                Nome é obrigatório
-              </span>
-              <span *ngIf="form.get('nome')?.errors?.['minlength']">
-                Nome deve ter no mínimo 2 caracteres
-              </span>
-              <span *ngIf="form.get('nome')?.errors?.['maxlength']">
-                Nome deve ter no máximo 200 caracteres
-              </span>
-            </div>
-          </div>
-
-          <!-- Pilar -->
-          <div class="mb-3">
-            <label for="pilarId" class="form-label">
-              Pilar <span class="text-danger">*</span>
-            </label>
-            <select class="form-select" id="pilarId" formControlName="pilarId" [class.is-invalid]="pilarIdInvalid">
-              <option value="">Selecione um pilar</option>
-              <option *ngFor="let pilar of pilares" [value]="pilar.id">
-                {{ pilar.nome }}
-              </option>
-            </select>
-            <div class="form-text" *ngIf="isEditMode">
-              O pilar não pode ser alterado após a criação
-            </div>
-            <div class="invalid-feedback" *ngIf="pilarIdInvalid">
-              Pilar é obrigatório
-            </div>
-          </div>
-
-          <!-- Descrição -->
-          <div class="mb-3">
-            <label for="descricao" class="form-label">Descrição</label>
-            <textarea class="form-control" id="descricao" formControlName="descricao"
-              [class.is-invalid]="descricaoInvalid" rows="4" placeholder="Descrição detalhada da rotina..."></textarea>
-            <div class="form-text">
-              Máximo 500 caracteres
-            </div>
-            <div class="invalid-feedback" *ngIf="descricaoInvalid">
-              <span *ngIf="form.get('descricao')?.errors?.['maxlength']">
-                Descrição deve ter no máximo 500 caracteres
-              </span>
-            </div>
-          </div>
-
-          <!-- Ordem -->
-          <div class="mb-3">
-            <label for="ordem" class="form-label">Ordem</label>
-            <input type="number" class="form-control" id="ordem" formControlName="ordem"
-              [class.is-invalid]="ordemInvalid" placeholder="1" min="1">
-            <div class="form-text">
-              Ordem de exibição dentro do pilar (opcional)
-            </div>
-            <div class="invalid-feedback" *ngIf="ordemInvalid">
-              <span *ngIf="form.get('ordem')?.errors?.['min']">
-                Ordem deve ser no mínimo 1
-              </span>
-            </div>
-          </div>
-
-          <!-- Modelo -->
-          <div class="mb-3">
-            <div class="form-check">
-              <input class="form-check-input" type="checkbox" id="modelo" formControlName="modelo">
-              <label class="form-check-label" for="modelo">
-                Rotina Modelo
+<div class="card-body">
+  @if (loading && isEditMode) {
+  <div class="text-center py-5">
+    <div class="spinner-border text-primary" role="status">
+      <span class="visually-hidden">{{ 'COMMON.LOADING' | translate }}</span>
+    </div>
+  </div>
+  } @else {
+  <div class="row">
+    <div class="col-md-8">
+      <form [formGroup]="form" (ngSubmit)="onSubmit()">
+        <div class="card">
+          <div class="card-body">
+            <!-- Nome -->
+            <div class="mb-3">
+              <label for="nome" class="form-label">
+                Nome <span class="text-danger">*</span>
               </label>
+              <input type="text" class="form-control" id="nome" formControlName="nome" [class.is-invalid]="nomeInvalid"
+                placeholder="Ex: Planejamento Estratégico Anual">
+              <div class="invalid-feedback" *ngIf="nomeInvalid">
+                <span *ngIf="form.get('nome')?.errors?.['required']">
+                  Nome é obrigatório
+                </span>
+                <span *ngIf="form.get('nome')?.errors?.['minlength']">
+                  Nome deve ter no mínimo 2 caracteres
+                </span>
+                <span *ngIf="form.get('nome')?.errors?.['maxlength']">
+                  Nome deve ter no máximo 200 caracteres
+                </span>
+              </div>
             </div>
-            <div class="form-text">
-              Rotinas modelo são auto-associadas a novas empresas
-            </div>
-          </div>
 
-          <!-- Actions -->
-          <div class="d-flex gap-2">
-            <button type="submit" class="btn btn-primary" [disabled]="submitting || form.invalid">
-              <span *ngIf="!submitting">
-                <i class="bi bi-check-circle me-2"></i>
-                {{ isEditMode ? 'Salvar' : 'Criar' }}
-              </span>
-              <span *ngIf="submitting">
-                <span class="spinner-border spinner-border-sm me-2" role="status"></span>
-                Salvando...
-              </span>
-            </button>
-            <button type="button" class="btn btn-secondary" (click)="cancel()" [disabled]="submitting">
-              Cancelar
-            </button>
+            <!-- Pilar -->
+            <div class="mb-3">
+              <label for="pilarId" class="form-label">
+                Pilar <span class="text-danger">*</span>
+              </label>
+              <select class="form-select" id="pilarId" formControlName="pilarId" [class.is-invalid]="pilarIdInvalid">
+                <option value="">Selecione um pilar</option>
+                <option *ngFor="let pilar of pilares" [value]="pilar.id">
+                  {{ pilar.nome }}
+                </option>
+              </select>
+              <div class="form-text" *ngIf="isEditMode">
+                O pilar não pode ser alterado após a criação
+              </div>
+              <div class="invalid-feedback" *ngIf="pilarIdInvalid">
+                Pilar é obrigatório
+              </div>
+            </div>
+
+            <!-- Descrição -->
+            <div class="mb-3">
+              <label for="descricao" class="form-label">Descrição</label>
+              <textarea class="form-control" id="descricao" formControlName="descricao"
+                [class.is-invalid]="descricaoInvalid" rows="4"
+                placeholder="Descrição detalhada da rotina..."></textarea>
+              <div class="form-text">
+                Máximo 500 caracteres
+              </div>
+              <div class="invalid-feedback" *ngIf="descricaoInvalid">
+                <span *ngIf="form.get('descricao')?.errors?.['maxlength']">
+                  Descrição deve ter no máximo 500 caracteres
+                </span>
+              </div>
+            </div>
+
+            <!-- Ordem -->
+            <div class="mb-3">
+              <label for="ordem" class="form-label">Ordem</label>
+              <input type="number" class="form-control" id="ordem" formControlName="ordem"
+                [class.is-invalid]="ordemInvalid" placeholder="1" min="1">
+              <div class="form-text">
+                Ordem de exibição dentro do pilar (opcional)
+              </div>
+              <div class="invalid-feedback" *ngIf="ordemInvalid">
+                <span *ngIf="form.get('ordem')?.errors?.['min']">
+                  Ordem deve ser no mínimo 1
+                </span>
+              </div>
+            </div>
+
+            <!-- Modelo -->
+            <div class="mb-3">
+              <div class="form-check">
+                <input class="form-check-input" type="checkbox" id="modelo" formControlName="modelo">
+                <label class="form-check-label" for="modelo">
+                  Rotina Modelo
+                </label>
+              </div>
+              <div class="form-text">
+                Rotinas modelo são auto-associadas a novas empresas
+              </div>
+            </div>
           </div>
-        </form>
+        </div>
+
+        <!-- Botões -->
+        <div class="form-footer mt-4 d-flex justify-content-end gap-2">
+          <button type="button" (click)="handleCancel()" class="btn btn-outline-secondary">
+            {{ 'BUTTONS.CANCEL' | translate }}
+          </button>
+          <button type="submit" class="btn btn-primary" [disabled]="loading || submitting || form.invalid">
+            @if (loading || submitting) {
+            <span class="spinner-border spinner-border-sm me-2" role="status"></span>
+            }
+            @if (isEditMode) {
+            {{ 'BUTTONS.UPDATE' | translate }}
+            } @else {
+            {{ 'BUTTONS.CREATE' | translate }}
+            }
+          </button>
+        </div>
+      </form>
+    </div>
+
+    <!-- Help Card -->
+    <div class="col-lg-4">
+      <div class="card">
+        <div class="card-body">
+          <h5 class="card-title">
+            <i class="bi bi-info-circle me-2"></i>
+            Informações
+          </h5>
+          <p class="card-text text-muted small">
+            Rotinas são atividades ou processos vinculados a pilares específicos.
+          </p>
+          <hr>
+          <h6 class="small fw-bold">Campos Obrigatórios</h6>
+          <ul class="small text-muted">
+            <li>Nome (2-200 caracteres)</li>
+            <li>Pilar</li>
+          </ul>
+          <h6 class="small fw-bold mt-3">Rotinas Modelo</h6>
+          <p class="small text-muted mb-0">
+            Quando marcada como "modelo", a rotina será automaticamente
+            associada a novas empresas que vincularem este pilar.
+          </p>
+        </div>
       </div>
     </div>
   </div>
-
-  <!-- Help Card -->
-  <div class="col-lg-4">
-    <div class="card">
-      <div class="card-body">
-        <h5 class="card-title">
-          <i class="bi bi-info-circle me-2"></i>
-          Informações
-        </h5>
-        <p class="card-text text-muted small">
-          Rotinas são atividades ou processos vinculados a pilares específicos.
-        </p>
-        <hr>
-        <h6 class="small fw-bold">Campos Obrigatórios</h6>
-        <ul class="small text-muted">
-          <li>Nome (2-200 caracteres)</li>
-          <li>Pilar</li>
-        </ul>
-        <h6 class="small fw-bold mt-3">Rotinas Modelo</h6>
-        <p class="small text-muted mb-0">
-          Quando marcada como "modelo", a rotina será automaticamente
-          associada a novas empresas que vincularem este pilar.
-        </p>
-      </div>
-    </div>
-  </div>
+  }
 </div>
