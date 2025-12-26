@@ -81,6 +81,8 @@
     "OF": "of",
     "PREV": "Previous",
     "NEXT": "Next",
+    "OPTIONAL": "Optional",
+    "STATUS": "Status",
     "BASIC_INFO": "Basic Information",
     "TIMESTAMPS": "Timestamps",
     "CREATED_AT": "Created at",
