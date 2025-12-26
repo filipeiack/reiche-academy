@@ -83,7 +83,28 @@ export class AuthService {
         secret: this.configService.get('JWT_REFRESH_SECRET'),
       });
 
-      const usuario = await this.usuariosService.findByIdInternal(payload.sub);
+      // Busca direta no Prisma (contexto de autenticação, sem validação de tenant)
+      const usuario = await this.prisma.usuario.findUnique({
+        where: { id: payload.sub },
+        include: {
+          perfil: {
+            select: {
+              id: true,
+              codigo: true,
+              nome: true,
+              nivel: true,
+            },
+          },
+          empresa: {
+            select: {
+              id: true,
+              nome: true,
+              cnpj: true,
+              logoUrl: true,
+            },
+          },
+        },
+      });
       
       if (!usuario || !usuario.ativo) {
         throw new UnauthorizedException('Token inválido');
