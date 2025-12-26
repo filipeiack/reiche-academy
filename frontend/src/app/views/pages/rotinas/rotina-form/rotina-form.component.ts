@@ -47,7 +47,7 @@ export class RotinaFormComponent implements OnInit {
       nome: ['', [Validators.required, Validators.minLength(2), Validators.maxLength(200)]],
       descricao: ['', [Validators.maxLength(500)]],
       pilarId: ['', [Validators.required]],
-      ordem: [1, [Validators.required, Validators.min(1)]],
+      ordem: [null, [Validators.min(1)]],
       modelo: [false],
     });
   }
@@ -114,6 +114,11 @@ export class RotinaFormComponent implements OnInit {
       delete formValue.descricao;
     } else {
       formValue.descricao = formValue.descricao.trim();
+    }
+
+    // Remover ordem se null/undefined
+    if (formValue.ordem === null || formValue.ordem === undefined || formValue.ordem === '') {
+      delete formValue.ordem;
     }
 
     if (this.isEditMode) {

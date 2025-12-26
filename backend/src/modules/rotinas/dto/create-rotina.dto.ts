@@ -14,10 +14,11 @@ export class CreateRotinaDto {
   @Length(0, 500)
   descricao?: string;
 
-  @ApiProperty({ example: 1 })
+  @ApiPropertyOptional({ example: 1 })
   @IsInt()
   @Min(1)
-  ordem: number;
+  @IsOptional()
+  ordem?: number;
 
   @ApiProperty({ example: 'uuid-do-pilar' })
   @IsUUID()

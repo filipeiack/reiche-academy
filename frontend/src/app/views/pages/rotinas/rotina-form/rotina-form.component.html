@@ -111,9 +111,7 @@
 
             <!-- Ordem -->
             <div class="mb-3">
-              <label for="ordem" class="form-label">
-                Ordem <span class="text-danger">*</span>
-              </label>
+              <label for="ordem" class="form-label">Ordem</label>
               <input 
                 type="number" 
                 class="form-control" 
@@ -124,12 +122,9 @@
                 min="1"
               >
               <div class="form-text">
-                Ordem de exibição dentro do pilar
+                Ordem de exibição dentro do pilar (opcional)
               </div>
               <div class="invalid-feedback" *ngIf="ordemInvalid">
-                <span *ngIf="form.get('ordem')?.errors?.['required']">
-                  Ordem é obrigatória
-                </span>
                 <span *ngIf="form.get('ordem')?.errors?.['min']">
                   Ordem deve ser no mínimo 1
                 </span>
