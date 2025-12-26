@@ -59,8 +59,6 @@ export class DiagnosticosService {
             id: true,
             nome: true,
             descricao: true,
-            cor: true,
-            icone: true,
           },
         },
         rotinasEmpresa: {
@@ -74,7 +72,6 @@ export class DiagnosticosService {
                 id: true,
                 nome: true,
                 descricao: true,
-                frequenciaSugerida: true,
               },
             },
             notas: {

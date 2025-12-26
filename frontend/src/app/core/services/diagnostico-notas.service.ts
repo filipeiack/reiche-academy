@@ -18,7 +18,6 @@ export interface Rotina {
   id: string;
   nome: string;
   descricao?: string;
-  frequenciaSugerida?: string;
 }
 
 export interface RotinaEmpresa {
@@ -36,8 +35,6 @@ export interface Pilar {
   id: string;
   nome: string;
   descricao?: string;
-  cor?: string;
-  icone?: string;
 }
 
 export interface PilarEmpresa {
