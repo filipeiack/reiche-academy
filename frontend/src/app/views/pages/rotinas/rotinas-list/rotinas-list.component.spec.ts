@@ -33,6 +33,8 @@ describe('RotinasListComponent - Testes Unitários', () => {
       pilarId: 'pilar-1',
       modelo: true,
       ordem: 1,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
       ativo: true,
       pilar: mockPilares[0],
     } as Rotina,
@@ -42,7 +44,9 @@ describe('RotinasListComponent - Testes Unitários', () => {
       descricao: 'OKRs',
       pilarId: 'pilar-1',
       modelo: true,
-      ordem: 2,
+      ordem: 2,      
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
       ativo: true,
       pilar: mockPilares[0],
     } as Rotina,
@@ -52,6 +56,8 @@ describe('RotinasListComponent - Testes Unitários', () => {
       descricao: 'Redes sociais',
       pilarId: 'pilar-2',
       modelo: false,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
       ordem: 1,
       ativo: true,
       pilar: mockPilares[1],
@@ -299,7 +305,7 @@ describe('RotinasListComponent - Testes Unitários', () => {
     });
 
     it('deve desativar rotina com sucesso', () => {
-      rotinasService.remove.and.returnValue(of(undefined));
+      rotinasService.remove.and.returnValue(of(mockRotinas[0]));
       spyOn(window, 'alert');
 
       component.deleteRotina(mockRotinas[0]);
@@ -452,7 +458,7 @@ describe('RotinasListComponent - Testes Unitários', () => {
       };
 
       modalService.open.and.returnValue(mockModalRef as any);
-      rotinasService.remove.and.returnValue(of(undefined));
+      rotinasService.remove.and.returnValue(of(mockRotinas[0]));
 
       const modalContent = {};
       component.openDeleteModal(mockRotinas[0], modalContent);
@@ -466,7 +472,7 @@ describe('RotinasListComponent - Testes Unitários', () => {
       };
 
       modalService.open.and.returnValue(mockModalRef as any);
-      rotinasService.remove.and.returnValue(of(undefined));
+      rotinasService.remove.and.returnValue(of(mockRotinas[0]));
       spyOn(component, 'deleteRotina');
 
       const modalContent = {};

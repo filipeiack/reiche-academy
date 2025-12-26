@@ -32,6 +32,8 @@ describe('RotinaFormComponent - Testes Unitários', () => {
     pilarId: 'pilar-1',
     modelo: true,
     ordem: 1,
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
     ativo: true,
     pilar: mockPilares[0],
   } as Rotina;
@@ -278,13 +280,13 @@ describe('RotinaFormComponent - Testes Unitários', () => {
       component.onSubmit();
 
       const updatePayload = rotinasService.update.calls.mostRecent().args[1];
-      expect(updatePayload).not.toHaveProperty('pilarId');
       expect(updatePayload).toEqual({
         nome: 'Novo Nome',
         descricao: 'Nova descrição',
         ordem: 2,
         modelo: false,
       });
+      expect('pilarId' in updatePayload).toBe(false);
     });
   });
 

@@ -9,7 +9,7 @@ import { TranslatePipe } from '../../../../core/pipes/translate.pipe';
 @Component({
   selector: 'app-pilares-form',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, RouterLink, TranslatePipe],
+  imports: [CommonModule, ReactiveFormsModule, TranslatePipe],
   templateUrl: './pilares-form.component.html',
   styleUrl: './pilares-form.component.scss'
 })
