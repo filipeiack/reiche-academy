@@ -1,8 +1,8 @@
-import { Component, OnInit, inject } from '@angular/core';
+import { Component, OnInit, inject, TemplateRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { FormsModule } from '@angular/forms';
-import { NgbPaginationModule, NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
+import { NgbPaginationModule, NgbTooltipModule, NgbOffcanvas, NgbOffcanvasModule } from '@ng-bootstrap/ng-bootstrap';
 import { CdkDragDrop, DragDropModule, moveItemInArray } from '@angular/cdk/drag-drop';
 import Swal from 'sweetalert2';
 import { NgSelectModule } from '@ng-select/ng-select';
@@ -11,6 +11,7 @@ import { RotinasService, Rotina } from '../../../../core/services/rotinas.servic
 import { PilaresService, Pilar } from '../../../../core/services/pilares.service';
 import { RotinaBadgeComponent } from '../../../../shared/components/rotina-badge/rotina-badge.component';
 import { HttpErrorResponse } from '@angular/common/http';
+import { TranslatePipe } from "../../../../core/pipes/translate.pipe";
 
 @Component({
   selector: 'app-rotinas-list',
@@ -21,16 +22,19 @@ import { HttpErrorResponse } from '@angular/common/http';
     FormsModule,
     NgbPaginationModule,
     NgbTooltipModule,
+    NgbOffcanvasModule,
     NgSelectModule,
     DragDropModule,
     RotinaBadgeComponent,
-  ],
+    TranslatePipe
+],
   templateUrl: './rotinas-list.component.html',
   styleUrls: ['./rotinas-list.component.scss']
 })
 export class RotinasListComponent implements OnInit {
   private rotinasService = inject(RotinasService);
   private pilaresService = inject(PilaresService);
+  private offcanvas = inject(NgbOffcanvas);
 
   rotinas: Rotina[] = [];
   rotinasFiltered: Rotina[] = [];
@@ -42,6 +46,10 @@ export class RotinasListComponent implements OnInit {
   // Filtros
   pilarIdFiltro: string | null = null;
   searchQuery = '';
+  
+  // Offcanvas de detalhes
+  selectedRotina: Rotina | null = null;
+  loadingDetails = false;
   
   // Opções para ng-select (filtro de pilar)
   get pilarOptions() {
@@ -214,6 +222,48 @@ export class RotinasListComponent implements OnInit {
       `,
       confirmButtonText: 'Entendi',
       confirmButtonColor: '#3085d6'
+    });
+  }
+
+  reativar(id: string): void {
+    Swal.fire({
+      icon: 'question',
+      title: 'Confirmar Reativação',
+      text: 'Deseja reativar esta rotina?',
+      showCancelButton: true,
+      confirmButtonText: 'Reativar',
+      cancelButtonText: 'Cancelar',
+      confirmButtonColor: '#28a745',
+      cancelButtonColor: '#6c757d'
+    }).then((result) => {
+      if (result.isConfirmed) {
+        this.rotinasService.reativar(id).subscribe({
+          next: () => {
+            this.showToast('Rotina reativada com sucesso', 'success');
+            this.loadRotinas();
+          },
+          error: (err) => {
+            const message = err?.error?.message || 'Erro ao reativar rotina';
+            this.showToast(message, 'error');
+          }
+        });
+      }
+    });
+  }
+
+  openDetailsOffcanvas(id: string, content: TemplateRef<any>): void {
+    this.loadingDetails = true;
+    this.selectedRotina = null;
+    this.offcanvas.open(content, { position: 'end' });
+    this.rotinasService.findOne(id).subscribe({
+      next: (rotina) => {
+        this.selectedRotina = rotina;
+        this.loadingDetails = false;
+      },
+      error: () => {
+        this.loadingDetails = false;
+        this.showToast('Erro ao carregar detalhes', 'error');
+      }
     });
   }
 

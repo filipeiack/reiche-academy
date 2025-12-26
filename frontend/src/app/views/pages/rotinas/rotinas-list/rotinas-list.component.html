@@ -77,9 +77,8 @@
             <thead>
               <tr>
                 <th *ngIf="canReorder" style="width: 40px;"></th>
-                <th>Nome</th>
-                <th>Descrição</th>
                 <th>Pilar</th>
+                <th>Rotina</th>
                 <th>Tipo</th>
                 <th style="width: 80px;">Ordem</th>
                 <th style="width: 120px;">Ações</th>
@@ -91,32 +90,43 @@
                   <i class="bi bi-grip-vertical text-muted" [class.cursor-grab]="canReorder" style="cursor: grab;">
                   </i>
                 </td>
-                <td>
-                  <strong>{{ rotina.nome }}</strong>
-                </td>
-                <td>
-                  <span [ngbTooltip]="rotina.descricao || ''" placement="top" *ngIf="rotina.descricao">
-                    {{ truncateText(rotina.descricao, 50) }}
-                  </span>
-                  <span class="text-muted" *ngIf="!rotina.descricao">—</span>
-                </td>
                 <td>{{ rotina.pilar?.nome || '—' }}</td>
+                <td><span [ngbTooltip]="rotina.nome"> {{ truncateText(rotina.nome, 75) }} </span></td>
                 <td>
                   <app-rotina-badge [modelo]="rotina.modelo"></app-rotina-badge>
                 </td>
                 <td class="text-center">
                   {{ rotina.ordem || '—' }}
                 </td>
-                <td>
+                <td class="text-nowrap">
                   <div class="btn-group btn-group-sm" role="group">
-                    <a [routerLink]="['/rotinas/editar', rotina.id]" class="btn btn-outline-primary"
-                      ngbTooltip="Editar">
-                      <i class="bi bi-pencil"></i>
-                    </a>
-                    <button class="btn btn-outline-danger" (click)="confirmDesativar(rotina)"
-                      ngbTooltip="Desativar">
-                      <i class="bi bi-trash"></i>
+                    <!-- Detalhes -->
+                    <button class="btn btn-icon text-primary"
+                      (click)="openDetailsOffcanvas(rotina.id, detailsOffcanvas)"
+                      [title]="'Detalhes da rotina' | translate">
+                      <i class="feather icon-info"></i>
                     </button>
+
+                    <!-- Editar (sempre visível) -->
+                    <button class="btn btn-icon text-secondary" [routerLink]="['/rotinas/editar', rotina.id]"
+                      title="Editar rotina">
+                      <i class="feather icon-edit"></i>
+                    </button>
+
+                    <!-- Desativar (visível se ativo) -->
+                    @if (rotina.ativo) {
+                    <button class="btn btn-icon text-danger" (click)="confirmDesativar(rotina)"
+                      title="Desativar rotina">
+                      <i class="feather icon-trash-2"></i>
+                    </button>
+                    }
+
+                    <!-- Reativar (visível se inativo) -->
+                    @if (!rotina.ativo) {
+                    <button class="btn btn-icon text-success" (click)="reativar(rotina.id)" title="Reativar rotina">
+                      <i class="feather icon-check-circle"></i>
+                    </button>
+                    }
                   </div>
                 </td>
               </tr>
@@ -134,3 +144,66 @@
     </div>
   </div>
 </div>
+
+<!-- Offcanvas de Detalhes da Rotina -->
+<ng-template #detailsOffcanvas let-offcanvas>
+  <div class="offcanvas-header">
+    <h5 class="offcanvas-title">{{ 'ROTINAS.DETAILS' | translate }}</h5>
+    <button type="button" class="btn-close text-reset" (click)="offcanvas.dismiss()"></button>
+  </div>
+  <div class="offcanvas-body">
+    @if (loadingDetails) {
+    <div class="text-center py-5">
+      <div class="spinner-border text-primary" role="status">
+        <span class="visually-hidden">{{ 'COMMON.LOADING' | translate }}</span>
+      </div>
+      <p class="text-muted mt-3">{{ 'COMMON.LOADING' | translate }}...</p>
+    </div>
+    } @else if (selectedRotina) {
+    <div class="mb-4">
+      <h4 class="mb-2">{{ selectedRotina.nome }}</h4>
+      
+      <span class="badge" [ngClass]="{ 'bg-success': selectedRotina.ativo, 'bg-danger': !selectedRotina.ativo }">
+        {{ selectedRotina.ativo ? ('COMMON.ACTIVE' | translate) : ('COMMON.INACTIVE' | translate) }}
+      </span>
+    </div>
+
+    <div class="card mb-3">
+      <div class="card-body">
+        <h6 class="card-title mb-3">{{ 'COMMON.BASIC_INFO' | translate }}</h6>
+        @if (selectedRotina.descricao) {
+        <div class="mb-3">
+          <span class="text-muted small">{{ 'ROTINAS.FIELDS.DESCRIPTION' | translate }}</span>
+          <div class="mt-1">{{ selectedRotina.descricao }}</div>
+        </div>
+        }
+        <div class="mb-2">
+          <span class="text-muted small">{{ 'ROTINAS.FIELDS.TYPE' | translate }}</span>
+          <div>
+            <app-rotina-badge [modelo]="selectedRotina.modelo"></app-rotina-badge>
+          </div>
+        </div>
+        @if (selectedRotina.ordem) {
+        <div class="mb-2">
+          <span class="text-muted small">{{ 'ROTINAS.FIELDS.ORDER' | translate }}</span>
+          <div>{{ selectedRotina.ordem }}</div>
+        </div>
+        }
+        @if (selectedRotina.pilar) {
+        <div class="mb-0">
+          <span class="text-muted small">{{ 'ROTINAS.FIELDS.PILAR' | translate }}</span>
+          <div>{{ selectedRotina.pilar.nome }}</div>
+        </div>
+        }
+      </div>
+    </div>
+
+    <div class="d-grid gap-2">
+      <button type="button" class="btn btn-primary" [routerLink]="['/rotinas/editar', selectedRotina.id]"
+        (click)="offcanvas.dismiss()">
+        <i class="feather icon-edit"></i> {{ 'BUTTONS.EDIT' | translate }}
+      </button>
+    </div>
+    }
+  </div>
+</ng-template>

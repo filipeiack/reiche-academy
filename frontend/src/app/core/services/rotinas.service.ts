@@ -80,4 +80,8 @@ export class RotinasService {
       { ordens }
     );
   }
+
+  reativar(id: string): Observable<Rotina> {
+    return this.http.patch<Rotina>(`${this.apiUrl}/${id}`, { ativo: true });
+  }
 }
