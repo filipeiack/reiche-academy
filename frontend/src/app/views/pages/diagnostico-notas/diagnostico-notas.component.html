@@ -1,0 +1,199 @@
+<div class="mb-2 align-items-center gap-2 d-flex justify-content-between flex-wrap">
+  <nav aria-label="breadcrumb">
+    <ol class="breadcrumb breadcrumb-arrow mb-1">
+      <li class="breadcrumb-item">
+        <i class="input-icon" data-feather="clipboard" style="width: 16px; height: 16px"></i>
+      </li>
+      <li class="breadcrumb-item active" aria-current="page">
+        {{ 'DIAGNOSTICO.TITLE' | translate }}
+      </li>
+    </ol>
+  </nav>
+
+  @if (savingCount > 0) {
+    <div class="saving-indicator">
+      <div class="spinner-border" role="status">
+        <span class="visually-hidden">{{ 'COMMON.SAVING' | translate }}...</span>
+      </div>
+      <span>{{ 'DIAGNOSTICO.SAVING_CHANGES' | translate }}</span>
+    </div>
+  }
+</div>
+
+<div class="row">
+  <div class="col-md-12 stretch-card">
+    <div class="card">
+      <div class="card-body">
+        <!-- Seletor de empresa (apenas para admin) -->
+        @if (isAdmin) {
+          <div class="empresa-selector">
+            <label for="empresaSelect" class="form-label">
+              {{ 'DIAGNOSTICO.SELECT_EMPRESA' | translate }}
+            </label>
+            <ng-select
+              id="empresaSelect"
+              [items]="empresas"
+              bindLabel="razaoSocial"
+              bindValue="id"
+              [(ngModel)]="selectedEmpresaId"
+              (change)="onEmpresaChange($event)"
+              placeholder="{{ 'DIAGNOSTICO.SELECT_EMPRESA_PLACEHOLDER' | translate }}"
+              [clearable]="false"
+            >
+              <ng-template ng-option-tmp let-item="item">
+                <div>
+                  <strong>{{ item.razaoSocial }}</strong>
+                  @if (item.nomeFantasia) {
+                    <br />
+                    <small class="text-muted">{{ item.nomeFantasia }}</small>
+                  }
+                </div>
+              </ng-template>
+            </ng-select>
+          </div>
+        }
+
+        <!-- Loading -->
+        @if (loading) {
+          <div class="text-center py-5">
+            <div class="spinner-border text-primary" role="status">
+              <span class="visually-hidden">{{ 'COMMON.LOADING' | translate }}...</span>
+            </div>
+          </div>
+        }
+
+        <!-- Error -->
+        @if (error && !loading) {
+          <ngb-alert type="danger" [dismissible]="false">
+            <i class="feather icon-alert-circle"></i>
+            {{ error }}
+          </ngb-alert>
+        }
+
+        <!-- Conteúdo principal -->
+        @if (!loading && !error && pilares.length > 0) {
+          <div class="diagnostico-content">
+            <p class="text-muted mb-3">
+              {{ 'DIAGNOSTICO.INSTRUCTIONS' | translate }}
+            </p>
+
+            <!-- Accordion de Pilares -->
+            @for (pilar of pilares; track pilar.id; let i = $index) {
+              <div class="card mb-3">
+                <div class="card-header">
+                  <div class="pilar-header w-100 d-flex justify-content-between align-items-center">
+                    <div class="d-flex align-items-center gap-2">
+                      <button class="btn btn-link p-0 text-decoration-none" type="button" (click)="togglePilar(i)">
+                        @if (pilar.pilar.icone) {
+                          <i [attr.data-feather]="pilar.pilar.icone" 
+                             [style.color]="pilar.pilar.cor || '#6c757d'"></i>
+                        }
+                        <span class="ms-2">{{ pilar.pilar.nome }}</span>
+                      </button>
+                    </div>
+                    <span class="badge bg-light text-dark">
+                      {{ pilar.rotinasEmpresa.length }} 
+                      {{ pilar.rotinasEmpresa.length === 1 ? 'rotina' : 'rotinas' }}
+                    </span>
+                  </div>
+                </div>
+                
+                @if (pilarExpandido[i]) {
+                  <div class="card-body p-0">
+                    @if (pilar.rotinasEmpresa.length === 0) {
+                      <div class="empty-state">
+                        <i data-feather="inbox"></i>
+                        <p>{{ 'DIAGNOSTICO.NO_ROTINAS' | translate }}</p>
+                      </div>
+                    } @else {
+                      @for (rotina of pilar.rotinasEmpresa; track rotina.id) {
+                        <div class="rotina-item">
+                          <div class="rotina-header">
+                            <div class="rotina-nome">
+                              {{ rotina.rotina.nome }}
+                            </div>
+                            @if (rotina.rotina.descricao) {
+                              <p class="rotina-descricao">
+                                {{ rotina.rotina.descricao }}
+                              </p>
+                            }
+                          </div>
+
+                          <div class="rotina-campos">
+                            <!-- Campo Nota -->
+                            <div class="campo-nota">
+                              <label [for]="'nota-' + rotina.id" class="form-label">
+                                {{ 'DIAGNOSTICO.NOTA' | translate }}
+                              </label>
+                              <input
+                                type="number"
+                                [id]="'nota-' + rotina.id"
+                                class="form-control"
+                                min="1"
+                                max="10"
+                                step="0.5"
+                                [value]="getNotaAtual(rotina)"
+                                (input)="onNotaChange(rotina, $any($event.target).value, getCriticidadeAtual(rotina))"
+                                placeholder="1 - 10"
+                              />
+                            </div>
+
+                            <!-- Campo Criticidade -->
+                            <div class="campo-criticidade">
+                              <label [for]="'criticidade-' + rotina.id" class="form-label">
+                                {{ 'DIAGNOSTICO.CRITICIDADE' | translate }}
+                              </label>
+                              <ng-select
+                                [id]="'criticidade-' + rotina.id"
+                                [items]="criticidadeOptions"
+                                bindLabel="label"
+                                bindValue="value"
+                                [ngModel]="getCriticidadeAtual(rotina)"
+                                (ngModelChange)="onNotaChange(rotina, getNotaAtual(rotina), $event)"
+                                placeholder="{{ 'DIAGNOSTICO.SELECT_CRITICIDADE' | translate }}"
+                                [clearable]="false"
+                              >
+                              </ng-select>
+                            </div>
+
+                            <!-- Badge de Criticidade (visual) -->
+                            @if (getCriticidadeAtual(rotina); as criticidadeAtual) {
+                              <div class="d-flex align-items-end pb-2">
+                                @for (opt of criticidadeOptions; track opt.value) {
+                                  @if (opt.value === criticidadeAtual) {
+                                    <span [class]="getCriticidadeClass(criticidadeAtual)">
+                                      {{ opt.label }}
+                                    </span>
+                                  }
+                                }
+                              </div>
+                            }
+                          </div>
+                        </div>
+                      }
+                    }
+                  </div>
+                }
+              </div>
+            }
+          </div>
+        }
+
+        <!-- Estado vazio -->
+        @if (!loading && !error && pilares.length === 0 && selectedEmpresaId) {
+          <div class="empty-state">
+            <i data-feather="folder"></i>
+            <p>{{ 'DIAGNOSTICO.NO_PILARES' | translate }}</p>
+          </div>
+        }
+
+        @if (!loading && !error && !selectedEmpresaId && !isAdmin) {
+          <div class="empty-state">
+            <i data-feather="alert-circle"></i>
+            <p>{{ 'DIAGNOSTICO.NO_EMPRESA_ASSOCIATED' | translate }}</p>
+          </div>
+        }
+      </div>
+    </div>
+  </div>
+</div>

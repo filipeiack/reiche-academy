@@ -53,8 +53,8 @@ export const MENU: MenuItem[] = [
   },
   {
     label: 'MENU.NOTAS',
-    icon: 'folder-plus',
-    link: '/notas'
+    icon: 'clipboard',
+    link: '/diagnostico-notas'
   },
 
   

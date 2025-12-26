@@ -27,6 +27,26 @@
       <form [formGroup]="form" (ngSubmit)="onSubmit()">
         <div class="card">
           <div class="card-body">
+            
+            <!-- Pilar -->
+            <div class="mb-3">
+              <label for="pilarId" class="form-label">
+                Pilar <span class="text-danger">*</span>
+              </label>
+              <select #pilarIdSelect class="form-select" id="pilarId" formControlName="pilarId" [class.is-invalid]="pilarIdInvalid">
+                <option value="">Selecione um pilar</option>
+                <option *ngFor="let pilar of pilares" [value]="pilar.id">
+                  {{ pilar.nome }}
+                </option>
+              </select>
+              <div class="form-text" *ngIf="isEditMode">
+                O pilar não pode ser alterado após a criação
+              </div>
+              <div class="invalid-feedback" *ngIf="pilarIdInvalid">
+                Pilar é obrigatório
+              </div>
+            </div>
+            
             <!-- Nome -->
             <div class="mb-3">
               <label for="nome" class="form-label">
@@ -47,25 +67,7 @@
               </div>
             </div>
 
-            <!-- Pilar -->
-            <div class="mb-3">
-              <label for="pilarId" class="form-label">
-                Pilar <span class="text-danger">*</span>
-              </label>
-              <select class="form-select" id="pilarId" formControlName="pilarId" [class.is-invalid]="pilarIdInvalid">
-                <option value="">Selecione um pilar</option>
-                <option *ngFor="let pilar of pilares" [value]="pilar.id">
-                  {{ pilar.nome }}
-                </option>
-              </select>
-              <div class="form-text" *ngIf="isEditMode">
-                O pilar não pode ser alterado após a criação
-              </div>
-              <div class="invalid-feedback" *ngIf="pilarIdInvalid">
-                Pilar é obrigatório
-              </div>
-            </div>
-
+            
             <!-- Descrição -->
             <div class="mb-3">
               <label for="descricao" class="form-label">Descrição</label>

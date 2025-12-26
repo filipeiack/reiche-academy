@@ -13,15 +13,15 @@ export class CreateNotaRotinaDto {
   @IsNotEmpty()
   rotinaEmpresaId: string;
 
-  @ApiPropertyOptional({ example: 8.5, description: 'Nota de 0 a 10' })
+  @ApiProperty({ example: 8.5, description: 'Nota de 1 a 10' })
   @IsNumber()
-  @IsOptional()
-  @Min(0)
-  @Max(10)
-  nota?: number;
+  @IsNotEmpty({ message: 'A nota é obrigatória' })
+  @Min(1, { message: 'A nota mínima é 1' })
+  @Max(10, { message: 'A nota máxima é 10' })
+  nota: number;
 
-  @ApiPropertyOptional({ example: 'ALTO', enum: Criticidade })
-  @IsEnum(Criticidade)
-  @IsOptional()
-  criticidade?: Criticidade;
+  @ApiProperty({ example: 'MEDIO', enum: Criticidade })
+  @IsEnum(Criticidade, { message: 'Criticidade deve ser ALTO, MEDIO ou BAIXO' })
+  @IsNotEmpty({ message: 'A criticidade é obrigatória' })
+  criticidade: Criticidade;
 }

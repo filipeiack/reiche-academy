@@ -76,12 +76,14 @@
     "PAGE": "Página",
     "OF": "de",
     "PREV": "Anterior",
+    "STATUS": "Status",
     "NEXT": "Próximo",
     "OPTIONAL": "Opcional",
     "BASIC_INFO": "Informações Básicas",
     "TIMESTAMPS": "Datas",
     "CREATED_AT": "Criado em",
     "UPDATED_AT": "Atualizado em",
+
     "SELECT": "Selecione"
   },
   "BUTTONS": {
@@ -108,6 +110,7 @@
     "CIDADE": "Cidade",
     "ESTADO": "Estado",
     "USUARIOS_COUNT": "Usuários",
+    "PILARES_COUNT": "Pilares",
     "CREATE": "Criar Empresa",
     "EDIT": "Editar Empresa",
     "ADD": "Adicionar Empresa",
@@ -219,5 +222,18 @@
       "ROTINAS_COUNT": "Rotinas Vinculadas",
       "EMPRESAS_COUNT": "Empresas Usando"
     }
+  },
+  "DIAGNOSTICO": {
+    "TITLE": "Diagnóstico - Notas",
+    "SELECT_EMPRESA": "Selecione a Empresa",
+    "SELECT_EMPRESA_PLACEHOLDER": "Escolha uma empresa para trabalhar",
+    "INSTRUCTIONS": "Avalie cada rotina atribuindo uma nota de 1 a 10 e definindo o nível de criticidade. As alterações são salvas automaticamente.",
+    "NOTA": "Nota (1-10)",
+    "CRITICIDADE": "Criticidade",
+    "SELECT_CRITICIDADE": "Selecione a criticidade",
+    "SAVING_CHANGES": "Salvando alterações...",
+    "NO_PILARES": "Esta empresa não possui pilares associados.",
+    "NO_ROTINAS": "Este pilar não possui rotinas associadas.",
+    "NO_EMPRESA_ASSOCIATED": "Você não possui empresa associada. Entre em contato com o administrador."
   }
 }

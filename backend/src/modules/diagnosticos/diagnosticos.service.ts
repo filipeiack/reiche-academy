@@ -1,0 +1,195 @@
+import { Injectable, NotFoundException, ForbiddenException, BadRequestException } from '@nestjs/common';
+import { PrismaService } from '../../common/prisma/prisma.service';
+import { RequestUser } from '../../common/interfaces/request-user.interface';
+import { AuditService } from '../audit/audit.service';
+import { UpdateNotaRotinaDto } from './dto/update-nota-rotina.dto';
+
+@Injectable()
+export class DiagnosticosService {
+  constructor(
+    private prisma: PrismaService,
+    private audit: AuditService,
+  ) {}
+
+  /**
+   * Valida acesso multi-tenant
+   * ADMINISTRADOR tem acesso global
+   * Outros perfis só podem acessar rotinas da sua própria empresa
+   */
+  private async validateTenantAccess(rotinaEmpresaId: string, user: RequestUser) {
+    const rotinaEmpresa = await this.prisma.rotinaEmpresa.findUnique({
+      where: { id: rotinaEmpresaId },
+      include: {
+        pilarEmpresa: {
+          select: { empresaId: true },
+        },
+      },
+    });
+
+    if (!rotinaEmpresa) {
+      throw new NotFoundException('Rotina não encontrada');
+    }
+
+    if (user.perfil?.codigo !== 'ADMINISTRADOR' && user.empresaId !== rotinaEmpresa.pilarEmpresa.empresaId) {
+      throw new ForbiddenException('Você não pode acessar dados de outra empresa');
+    }
+
+    return rotinaEmpresa.pilarEmpresa.empresaId;
+  }
+
+  /**
+   * Buscar estrutura completa de diagnóstico de uma empresa
+   * Retorna pilares → rotinas → notas
+   */
+  async getDiagnosticoByEmpresa(empresaId: string, user: RequestUser) {
+    // Validar acesso multi-tenant
+    if (user.perfil?.codigo !== 'ADMINISTRADOR' && user.empresaId !== empresaId) {
+      throw new ForbiddenException('Você não pode acessar dados de outra empresa');
+    }
+
+    const pilares = await this.prisma.pilarEmpresa.findMany({
+      where: {
+        empresaId,
+        ativo: true,
+        pilar: { ativo: true },
+      },
+      include: {
+        pilar: {
+          select: {
+            id: true,
+            nome: true,
+            descricao: true,
+            cor: true,
+            icone: true,
+          },
+        },
+        rotinasEmpresa: {
+          where: {
+            ativo: true,
+            rotina: { ativo: true },
+          },
+          include: {
+            rotina: {
+              select: {
+                id: true,
+                nome: true,
+                descricao: true,
+                frequenciaSugerida: true,
+              },
+            },
+            notas: {
+              orderBy: { createdAt: 'desc' },
+              take: 1, // Pegar apenas a nota mais recente
+            },
+          },
+          orderBy: { ordem: 'asc' },
+        },
+      },
+      orderBy: { ordem: 'asc' },
+    });
+
+    return pilares;
+  }
+
+  /**
+   * Atualizar ou criar nota de uma rotina
+   * Se já existir nota, atualiza. Senão, cria uma nova.
+   */
+  async upsertNotaRotina(
+    rotinaEmpresaId: string,
+    updateDto: UpdateNotaRotinaDto,
+    user: RequestUser,
+  ) {
+    // Validar acesso multi-tenant
+    const empresaId = await this.validateTenantAccess(rotinaEmpresaId, user);
+
+    // Buscar nota mais recente (se existir)
+    const notaExistente = await this.prisma.notaRotina.findFirst({
+      where: { rotinaEmpresaId },
+      orderBy: { createdAt: 'desc' },
+    });
+
+    let nota;
+
+    if (notaExistente) {
+      // Atualizar nota existente
+      nota = await this.prisma.notaRotina.update({
+        where: { id: notaExistente.id },
+        data: {
+          nota: updateDto.nota,
+          criticidade: updateDto.criticidade,
+          updatedBy: user.id,
+        },
+        include: {
+          rotinaEmpresa: {
+            include: {
+              rotina: { select: { nome: true } },
+              pilarEmpresa: {
+                include: { pilar: { select: { nome: true } } },
+              },
+            },
+          },
+        },
+      });
+
+      // Registrar auditoria
+      await this.audit.log({
+        usuarioId: user.id,
+        usuarioNome: user.nome || '',
+        usuarioEmail: user.email || '',
+        entidade: 'NotaRotina',
+        entidadeId: nota.id,
+        acao: 'UPDATE',
+        dadosAntes: {
+          nota: notaExistente.nota,
+          criticidade: notaExistente.criticidade,
+        },
+        dadosDepois: {
+          nota: updateDto.nota,
+          criticidade: updateDto.criticidade,
+        },
+      });
+    } else {
+      // Criar nova nota
+      nota = await this.prisma.notaRotina.create({
+        data: {
+          rotinaEmpresaId,
+          nota: updateDto.nota,
+          criticidade: updateDto.criticidade,
+          createdBy: user.id,
+          updatedBy: user.id,
+        },
+        include: {
+          rotinaEmpresa: {
+            include: {
+              rotina: { select: { nome: true } },
+              pilarEmpresa: {
+                include: { pilar: { select: { nome: true } } },
+              },
+            },
+          },
+        },
+      });
+
+      // Registrar auditoria
+      await this.audit.log({
+        usuarioId: user.id,
+        usuarioNome: user.nome || '',
+        usuarioEmail: user.email || '',
+        entidade: 'NotaRotina',
+        entidadeId: nota.id,
+        acao: 'CREATE',
+        dadosDepois: {
+          nota: updateDto.nota,
+          criticidade: updateDto.criticidade,
+          rotinaEmpresaId,
+        },
+      });
+    }
+
+    return {
+      message: notaExistente ? 'Nota atualizada com sucesso' : 'Nota criada com sucesso',
+      nota,
+    };
+  }
+}

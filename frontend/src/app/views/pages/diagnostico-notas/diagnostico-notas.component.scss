@@ -1,0 +1,119 @@
+:host {
+  display: block;
+}
+
+.empresa-selector {
+  margin-bottom: 1.5rem;
+}
+
+.diagnostico-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1.5rem;
+}
+
+.saving-indicator {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: #6c757d;
+  font-size: 0.875rem;
+  
+  .spinner-border {
+    width: 1rem;
+    height: 1rem;
+    border-width: 0.15rem;
+  }
+}
+
+.pilar-header {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  
+  i {
+    font-size: 1.25rem;
+  }
+}
+
+.rotina-item {
+  padding: 1rem;
+  border-bottom: 1px solid #e9ecef;
+  
+  &:last-child {
+    border-bottom: none;
+  }
+}
+
+.rotina-header {
+  margin-bottom: 0.75rem;
+}
+
+.rotina-nome {
+  font-weight: 500;
+  color: #495057;
+  margin-bottom: 0.25rem;
+}
+
+.rotina-descricao {
+  font-size: 0.875rem;
+  color: #6c757d;
+  margin-bottom: 0;
+}
+
+.rotina-campos {
+  display: flex;
+  gap: 1rem;
+  align-items: start;
+}
+
+.campo-nota {
+  flex: 0 0 150px;
+}
+
+.campo-criticidade {
+  flex: 0 0 200px;
+}
+
+.form-label {
+  font-size: 0.875rem;
+  font-weight: 500;
+  margin-bottom: 0.375rem;
+}
+
+input[type="number"] {
+  &::-webkit-inner-spin-button,
+  &::-webkit-outer-spin-button {
+    opacity: 1;
+  }
+}
+
+.empty-state {
+  text-align: center;
+  padding: 3rem 1rem;
+  color: #6c757d;
+  
+  i {
+    font-size: 3rem;
+    margin-bottom: 1rem;
+    opacity: 0.3;
+  }
+  
+  p {
+    margin-bottom: 0;
+    font-size: 1.125rem;
+  }
+}
+
+// Estilos do accordion
+::ng-deep {
+  .accordion-button {
+    font-weight: 500;
+    
+    &:not(.collapsed) {
+      background-color: #f8f9fa;
+      box-shadow: none;
+    }
+  }
+}

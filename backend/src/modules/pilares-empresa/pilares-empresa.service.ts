@@ -284,4 +284,71 @@ export class PilaresEmpresaService {
       },
     });
   }
+
+  /**
+   * Desassociar um pilar de uma empresa (soft delete)
+   * Marca PilarEmpresa.ativo como false
+   * Implementa validação multi-tenant
+   */
+  async desassociar(
+    empresaId: string,
+    pilarEmpresaId: string,
+    user: RequestUser,
+  ) {
+    this.validateTenantAccess(empresaId, user);
+
+    // Buscar PilarEmpresa para validar existência e pertencimento à empresa
+    const pilarEmpresa = await this.prisma.pilarEmpresa.findUnique({
+      where: { id: pilarEmpresaId },
+      include: {
+        pilar: true,
+      },
+    });
+
+    if (!pilarEmpresa) {
+      throw new NotFoundException('Vínculo pilar-empresa não encontrado');
+    }
+
+    // Validar que o PilarEmpresa pertence à empresa correta
+    if (pilarEmpresa.empresaId !== empresaId) {
+      throw new ForbiddenException(
+        'Este pilar não pertence à empresa especificada',
+      );
+    }
+
+    // Validar que ainda está ativo
+    if (!pilarEmpresa.ativo) {
+      throw new NotFoundException('Este pilar já foi desassociado desta empresa');
+    }
+
+    // Soft delete - marcar como inativo
+    const updated = await this.prisma.pilarEmpresa.update({
+      where: { id: pilarEmpresaId },
+      data: {
+        ativo: false,
+        updatedBy: user.id,
+      },
+      include: {
+        pilar: true,
+      },
+    });
+
+    // Auditoria
+    const userRecord = await this.prisma.usuario.findUnique({ where: { id: user.id } });
+    await this.audit.log({
+      usuarioId: user.id,
+      usuarioNome: userRecord?.nome ?? '',
+      usuarioEmail: userRecord?.email ?? '',
+      entidade: 'pilares_empresa',
+      entidadeId: pilarEmpresaId,
+      acao: 'DELETE',
+      dadosAntes: { ativo: true, pilarNome: pilarEmpresa.pilar.nome },
+      dadosDepois: { ativo: false },
+    });
+
+    return {
+      message: `Pilar "${pilarEmpresa.pilar.nome}" desassociado com sucesso`,
+      pilarEmpresa: updated,
+    };
+  }
 }

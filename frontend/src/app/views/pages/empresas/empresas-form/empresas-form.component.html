@@ -233,6 +233,131 @@
                     </div>
                 </div>
 
+                <!-- Gestão de Pilares -->
+                <div class="card mt-3">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <h3 class="card-title mb-0">
+                            <i class="feather icon-layers me-2"></i>
+                            Pilares Associados
+                        </h3>
+                        @if (isPerfilCliente) {
+                        <span class="badge bg-info">
+                            <i class="feather icon-info me-1"></i>
+                            Somente Visualização
+                        </span>
+                        }
+                    </div>
+                    <div class="card-body">
+                        <!-- Buscar e adicionar pilares existentes - Apenas para ADMINISTRADOR/GESTOR -->
+                        @if (!isPerfilCliente) {
+                        <div class="mb-4">
+                            <label class="form-label">
+                                @if (isEditMode) {
+                                    Associar Pilar Existente
+                                } @else {
+                                    Selecionar Pilares para Associar
+                                }
+                            </label>
+                            <ng-select [items]="pilaresDisponiveis" bindLabel="nome" [searchable]="true"
+                                [clearable]="true" placeholder="Busque por nome de pilar..."
+                                (change)="associarPilar($event)">
+                                <ng-template ng-option-tmp let-item="item">
+                                    <div class="d-flex align-items-center">
+                                        <i class="feather icon-layers me-2"></i>
+                                        <div>
+                                            <div>{{ item.nome }}</div>
+                                            @if (item.descricao) {
+                                            <small class="text-muted">{{ item.descricao }}</small>
+                                            }
+                                        </div>
+                                    </div>
+                                </ng-template>
+                            </ng-select>
+                            <small class="text-muted">
+                                @if (isEditMode) {
+                                    Selecione um pilar para associar a esta empresa
+                                } @else {
+                                    Os pilares serão associados após criar a empresa (pilares padrão são adicionados automaticamente)
+                                }
+                            </small>
+                        </div>
+                        }
+
+                        <!-- Lista de pilares associados -->
+                        @if (isEditMode ? pilaresAssociados.length > 0 : pilaresPendentesAssociacao.length > 0) {
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead>
+                                    <tr>
+                                        <th style="width: 40px;"></th>
+                                        <th>Pilar</th>
+                                        <th>Ordem</th>
+                                        <th class="text-end">Ações</th>
+                                    </tr>
+                                </thead>
+                                <tbody cdkDropList (cdkDropListDropped)="onDropPilares($event)">
+                                    @if (isEditMode) {
+                                        @for (pilarEmpresa of pilaresAssociados; track pilarEmpresa.id; let idx = $index) {
+                                        <tr cdkDrag [cdkDragDisabled]="isPerfilCliente">
+                                            <td class="text-muted small">
+                                                @if (!isPerfilCliente) {
+                                                <i class="feather icon-menu text-muted" 
+                                                   style="cursor: grab;" 
+                                                   title="Arraste para reordenar"></i>
+                                                }
+                                            </td>
+                                            <td class="text-muted small">
+                                                <i class="feather icon-layers me-2"></i>
+                                                {{ pilarEmpresa.pilar.nome }}
+                                            </td>
+                                            <td class="text-muted small">{{ pilarEmpresa.ordem }}</td>
+                                            <td class="text-muted text-end small">
+                                                @if (!isPerfilCliente) {
+                                                <button type="button" class="btn btn-icon text-danger"
+                                                    (click)="desassociarPilar(pilarEmpresa)" 
+                                                    title="Desassociar pilar">
+                                                    <i class="feather icon-trash-2"></i>
+                                                </button>
+                                                }
+                                            </td>
+                                        </tr>
+                                        }
+                                    } @else {
+                                        @for (pilar of pilaresPendentesAssociacao; track pilar.id; let idx = $index) {
+                                        <tr>
+                                            <td></td>
+                                            <td class="text-muted small">
+                                                <i class="feather icon-target me-2"></i>
+                                                {{ pilar.nome }}
+                                            </td>
+                                            <td class="text-muted small">{{ idx + 1 }}</td>
+                                            <td class="text-muted text-end small">
+                                                @if (!isPerfilCliente) {
+                                                <button type="button" class="btn btn-icon text-danger"
+                                                    (click)="desassociarPilarPendente(pilar)" title="Remover pilar">
+                                                    <i class="feather icon-trash-2"></i>
+                                                </button>
+                                                }
+                                            </td>
+                                        </tr>
+                                        }
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                        } @else {
+                        <div class="alert alert-info mb-0">
+                            <i class="feather icon-info me-2"></i>
+                            @if (isEditMode) {
+                                Nenhum pilar associado a esta empresa ainda.
+                            } @else {
+                                Nenhum pilar adicional selecionado. Pilares padrão (modelo) serão associados automaticamente ao criar a empresa.
+                            }
+                        </div>
+                        }
+                    </div>
+                </div>
+
 
                 <div class="form-footer mt-4 d-flex justify-content-end gap-2">
                     <button type="button" (click)="handleCancel()" class="btn btn-outline-secondary">{{ 'BUTTONS.CANCEL' | translate

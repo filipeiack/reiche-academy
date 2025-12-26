@@ -2,11 +2,14 @@ import { Component, OnInit, ViewChild, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, ReactiveFormsModule, FormsModule, Validators } from '@angular/forms';
 import { Router, ActivatedRoute } from '@angular/router';
+import { CdkDragDrop, DragDropModule, moveItemInArray } from '@angular/cdk/drag-drop';
 import Swal from 'sweetalert2';
 import { EmpresasService, Empresa, CreateEmpresaRequest, UpdateEmpresaRequest, EstadoBrasil } from '../../../../core/services/empresas.service';
 import { UsersService } from '../../../../core/services/users.service';
 import { Usuario } from '../../../../core/models/auth.model';
 import { AuthService } from '../../../../core/services/auth.service';
+import { PilaresService, Pilar } from '../../../../core/services/pilares.service';
+import { PilaresEmpresaService, PilarEmpresa } from '../../../../core/services/pilares-empresa.service';
 import { TranslatePipe } from '../../../../core/pipes/translate.pipe';
 import { environment } from '../../../../../environments/environment';
 import { NgSelectModule } from '@ng-select/ng-select';
@@ -16,7 +19,7 @@ import { UserAvatarComponent } from '../../../../shared/components/user-avatar/u
 @Component({
   selector: 'app-empresas-form',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, FormsModule, TranslatePipe, NgSelectModule, UsuarioModalComponent, UserAvatarComponent],
+  imports: [CommonModule, ReactiveFormsModule, FormsModule, TranslatePipe, NgSelectModule, UsuarioModalComponent, UserAvatarComponent, DragDropModule],
   templateUrl: './empresas-form.component.html',
   styleUrl: './empresas-form.component.scss'
 })
@@ -24,6 +27,8 @@ export class EmpresasFormComponent implements OnInit {
   private service = inject(EmpresasService);
   private usersService = inject(UsersService);
   private authService = inject(AuthService);
+  private pilaresService = inject(PilaresService);
+  private pilaresEmpresaService = inject(PilaresEmpresaService);
   private fb = inject(FormBuilder);
   private router = inject(Router);
   private route = inject(ActivatedRoute);
@@ -34,6 +39,11 @@ export class EmpresasFormComponent implements OnInit {
   tiposNegocioList: string[] = [];
   usuariosDisponiveis: Usuario[] = [];
   usuariosAssociados: Usuario[] = [];
+  // Gestão de Pilares
+  pilaresDisponiveis: Pilar[] = [];
+  pilaresAssociados: PilarEmpresa[] = [];
+  pilaresPendentesAssociacao: Pilar[] = []; // Pilares a serem associados após criar a empresa
+
   usuariosPendentesAssociacao: Usuario[] = []; // Usuários a serem associados após criar a empresa
 
   currentLoggedUser: Usuario | null = null;
@@ -79,11 +89,13 @@ export class EmpresasFormComponent implements OnInit {
     // Perfis de cliente não carregam usuários disponíveis para associação
     if (!this.isPerfilCliente) {
       this.loadUsuariosDisponiveis();
+      this.loadPilaresDisponiveis();
     }
     
     if (this.isEditMode && this.empresaId) {
       this.loadEmpresa(this.empresaId);
       this.loadUsuariosAssociados(this.empresaId);
+      this.loadPilaresAssociados(this.empresaId);
     }
   }
 
@@ -181,6 +193,11 @@ export class EmpresasFormComponent implements OnInit {
           // Associar usuários pendentes
           if (this.usuariosPendentesAssociacao.length > 0 && novaEmpresa.id) {
             this.associarUsuariosPendentes(novaEmpresa.id);
+          }
+
+          // Associar pilares pendentes
+          if (this.pilaresPendentesAssociacao.length > 0 && novaEmpresa.id) {
+            this.associarPilaresPendentes(novaEmpresa.id);
           }
 
           if (this.logoFile && novaEmpresa.id) {
@@ -472,5 +489,161 @@ export class EmpresasFormComponent implements OnInit {
 
   isPerfilObject(perfil: any): perfil is { id: string; codigo: string; nome: string; nivel: number } {
     return perfil && typeof perfil === 'object' && 'nome' in perfil;
+  }
+
+  // ===== GESTÃO DE PILARES =====
+
+  loadPilaresDisponiveis(): void {
+    this.pilaresService.findAll().subscribe({
+      next: (pilares) => {
+        this.pilaresDisponiveis = pilares.filter(p => p.ativo);
+      },
+      error: (err) => {
+        console.error('Erro ao carregar pilares disponíveis:', err);
+      }
+    });
+  }
+
+  loadPilaresAssociados(empresaId: string): void {
+    this.pilaresEmpresaService.listarPilaresDaEmpresa(empresaId).subscribe({
+      next: (pilaresEmpresa) => {
+        console.log('📊 Pilares da empresa retornados:', pilaresEmpresa);
+        this.pilaresAssociados = pilaresEmpresa;
+      },
+      error: (err) => {
+        console.error('Erro ao carregar pilares associados:', err);
+      }
+    });
+  }
+
+  associarPilar(pilar: Pilar): void {
+    if (!this.empresaId) {
+      // Modo criação: acumular em memória
+      if (this.pilaresPendentesAssociacao.find(p => p.id === pilar.id)) {
+        this.showToast('Pilar já está na lista de associação', 'info');
+        return;
+      }
+      this.pilaresPendentesAssociacao.push(pilar);
+      this.pilaresDisponiveis = this.pilaresDisponiveis.filter(p => p.id !== pilar.id);
+      this.showToast(`Pilar ${pilar.nome} será associado ao salvar a empresa`, 'info');
+      return;
+    }
+
+    // Modo edição: associar imediatamente
+    this.pilaresEmpresaService.vincularPilares(this.empresaId, [pilar.id]).subscribe({
+      next: (response) => {
+        if (response.vinculados > 0) {
+          this.showToast(`Pilar ${pilar.nome} associado com sucesso!`, 'success');
+          this.pilaresAssociados = response.pilares;
+          this.pilaresDisponiveis = this.pilaresDisponiveis.filter(p => p.id !== pilar.id);
+        } else {
+          this.showToast('Pilar já estava associado', 'info');
+        }
+      },
+      error: (err) => {
+        this.showToast(err?.error?.message || 'Erro ao associar pilar', 'error');
+      }
+    });
+  }
+
+  desassociarPilar(pilarEmpresa: PilarEmpresa): void {
+    Swal.fire({
+      title: 'Desassociar Pilar',
+      html: `Deseja desassociar <strong>${pilarEmpresa.pilar.nome}</strong> desta empresa?<br><small class="text-muted">Isso também removerá as rotinas associadas.</small>`,
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonText: 'Sim, desassociar',
+      cancelButtonText: 'Cancelar'
+    }).then((result) => {
+      if (result.isConfirmed) {
+        if (!this.empresaId) {
+          // Modo criação: remover da lista pendente
+          this.pilaresPendentesAssociacao = this.pilaresPendentesAssociacao.filter(p => p.id !== pilarEmpresa.pilar.id);
+          this.pilaresDisponiveis.push(pilarEmpresa.pilar);
+          this.showToast(`Pilar ${pilarEmpresa.pilar.nome} removido da lista`, 'success');
+        } else {
+          // Modo edição: desassociar via API
+          this.confirmarDesassociacaoPilar(pilarEmpresa);
+        }
+      }
+    });
+  }
+
+  private confirmarDesassociacaoPilar(pilarEmpresa: PilarEmpresa): void {
+    if (!this.empresaId) return;
+
+    this.pilaresEmpresaService.desassociarPilar(this.empresaId, pilarEmpresa.id).subscribe({
+      next: (response) => {
+        this.showToast(response.message || `Pilar ${pilarEmpresa.pilar.nome} desassociado com sucesso!`, 'success');
+        this.pilaresAssociados = this.pilaresAssociados.filter(p => p.id !== pilarEmpresa.id);
+        this.pilaresDisponiveis.push(pilarEmpresa.pilar);
+      },
+      error: (err) => {
+        this.showToast(err?.error?.message || 'Erro ao desassociar pilar', 'error');
+      }
+    });
+  }
+
+  desassociarPilarPendente(pilar: Pilar): void {
+    this.pilaresPendentesAssociacao = this.pilaresPendentesAssociacao.filter(p => p.id !== pilar.id);
+    this.pilaresDisponiveis.push(pilar);
+    this.showToast(`Pilar ${pilar.nome} removido da lista`, 'success');
+  }
+
+  // Drag and Drop para Reordenação de Pilares
+  onDropPilares(event: CdkDragDrop<PilarEmpresa[]>): void {
+    if (event.previousIndex === event.currentIndex) {
+      return; // Não mudou de posição
+    }
+
+    // Atualizar ordem local
+    moveItemInArray(this.pilaresAssociados, event.previousIndex, event.currentIndex);
+    
+    // Salvar no backend
+    this.salvarReordenacaoPilares();
+  }
+
+  private salvarReordenacaoPilares(): void {
+    if (!this.empresaId) return;
+
+    const ordens = this.pilaresAssociados.map((pe, index) => ({
+      id: pe.id,
+      ordem: index + 1
+    }));
+
+    this.pilaresEmpresaService.reordenarPilares(this.empresaId, ordens).subscribe({
+      next: (pilaresAtualizados) => {
+        this.pilaresAssociados = pilaresAtualizados;
+        this.showToast('Ordem dos pilares atualizada com sucesso!', 'success');
+      },
+      error: (err) => {
+        console.error('Erro ao reordenar pilares:', err);
+        this.showToast('Erro ao reordenar pilares. Recarregue a página.', 'error');
+        // Recarregar lista original em caso de erro
+        if (this.empresaId) {
+          this.loadPilaresAssociados(this.empresaId);
+        }
+      }
+    });
+  }
+
+  // Método auxiliar para associar pilares pendentes após criar empresa
+  private associarPilaresPendentes(empresaId: string): void {
+    if (this.pilaresPendentesAssociacao.length === 0) {
+      return;
+    }
+
+    const pilaresIds = this.pilaresPendentesAssociacao.map(p => p.id);
+    
+    this.pilaresEmpresaService.vincularPilares(empresaId, pilaresIds).subscribe({
+      next: (response) => {
+        this.showToast(`${response.vinculados} pilar(es) associado(s) com sucesso!`, 'success');
+        this.pilaresPendentesAssociacao = [];
+      },
+      error: (err) => {
+        console.error('Erro ao associar pilares pendentes:', err);
+        this.showToast('Erro ao associar alguns pilares. Verifique em modo edição.', 'warning');
+      }
+    });
   }
 }

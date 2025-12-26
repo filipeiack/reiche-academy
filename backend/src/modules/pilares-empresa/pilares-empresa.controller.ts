@@ -2,6 +2,7 @@ import {
   Controller,
   Get,
   Post,
+  Delete,
   Body,
   Param,
   UseGuards,
@@ -58,5 +59,19 @@ export class PilaresEmpresaController {
     @Request() req: ExpressRequest & { user: any },
   ) {
     return this.pilaresEmpresaService.vincularPilares(empresaId, vincularDto.pilaresIds, req.user);
+  }
+
+  @Delete(':pilarEmpresaId')
+  @Roles('ADMINISTRADOR', 'GESTOR')
+  @ApiOperation({ summary: 'Desassociar um pilar de uma empresa (soft delete)' })
+  @ApiResponse({ status: 200, description: 'Pilar desassociado com sucesso' })
+  @ApiResponse({ status: 403, description: 'Acesso negado (multi-tenant)' })
+  @ApiResponse({ status: 404, description: 'Pilar não encontrado ou já desassociado' })
+  desassociar(
+    @Param('empresaId') empresaId: string,
+    @Param('pilarEmpresaId') pilarEmpresaId: string,
+    @Request() req: ExpressRequest & { user: any },
+  ) {
+    return this.pilaresEmpresaService.desassociar(empresaId, pilarEmpresaId, req.user);
   }
 }

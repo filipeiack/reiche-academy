@@ -61,6 +61,7 @@
                   <th scope="col" sortable="cidade" (sort)="onSort($event)">{{ 'COMPANIES.CIDADE' | translate }}</th>
                   <th scope="col" sortable="estado" (sort)="onSort($event)">{{ 'COMPANIES.ESTADO' | translate }}</th>
                   <th scope="col">{{ 'COMPANIES.USUARIOS_COUNT' | translate }}</th>
+                  <th scope="col">{{ 'COMPANIES.PILARES_COUNT' | translate }}</th>
                   <th>{{ 'COMMON.STATUS' | translate }}</th>
                   <th>{{ 'COMMON.ACTIONS' | translate }}</th>
                 </tr>
@@ -76,6 +77,7 @@
                   <td class="text-muted">{{ empresa.cidade }}</td>
                   <td class="text-muted">{{ empresa.estado }}</td>
                   <td class="text-muted">{{ empresa._count?.usuarios ?? 0 }}</td>
+                  <td class="text-muted">{{ empresa._count?.pilares ?? 0 }}</td>
                   <td class="text-muted">
                     {{ empresa.ativo ? ('COMMON.ACTIVE' | translate) : ('COMMON.INACTIVE' | translate) }}
                   </td>
@@ -95,7 +97,7 @@
                 </tr>
                 } @empty {
                 <tr>
-                  <td colspan="7" class="border-bottom text-center text-muted py-4">
+                  <td colspan="9" class="border-bottom text-center text-muted py-4">
                     {{ 'COMMON.NO_DATA' | translate }}
                   </td>
                 </tr>

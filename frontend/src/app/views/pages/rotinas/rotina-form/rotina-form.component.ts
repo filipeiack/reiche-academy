@@ -1,4 +1,4 @@
-import { Component, OnInit, inject } from '@angular/core';
+import { Component, OnInit, AfterViewInit, ViewChild, ElementRef, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { Router, ActivatedRoute, RouterLink } from '@angular/router';
@@ -17,12 +17,14 @@ import { TranslatePipe } from "../../../../core/pipes/translate.pipe";
   templateUrl: './rotina-form.component.html',
   styleUrls: ['./rotina-form.component.scss']
 })
-export class RotinaFormComponent implements OnInit {
+export class RotinaFormComponent implements OnInit, AfterViewInit {
   private fb = inject(FormBuilder);
   private rotinasService = inject(RotinasService);
   private pilaresService = inject(PilaresService);
   private router = inject(Router);
   private route = inject(ActivatedRoute);
+
+  @ViewChild('pilarIdSelect') pilarIdSelect!: ElementRef;
 
   form!: FormGroup;
   pilares: Pilar[] = [];
@@ -35,13 +37,21 @@ export class RotinaFormComponent implements OnInit {
   ngOnInit(): void {
     this.buildForm();
     this.loadPilares();
-    
     this.rotinaId = this.route.snapshot.paramMap.get('id');
     this.isEditMode = !!this.rotinaId;
     
     if (this.isEditMode) {
       this.loadRotina();
     }
+  }
+
+  ngAfterViewInit(): void {
+    // Dar foco ao campo pilarId após a view estar inicializada
+    setTimeout(() => {
+      if (this.pilarIdSelect?.nativeElement) {
+        this.pilarIdSelect.nativeElement.focus();
+      }
+    }, 100);
   }
 
   private showToast(title: string, icon: 'success' | 'error' | 'info' | 'warning', timer: number = 3000): void {
