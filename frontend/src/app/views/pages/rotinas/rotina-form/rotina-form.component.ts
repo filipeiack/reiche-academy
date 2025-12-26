@@ -3,6 +3,8 @@ import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { Router, ActivatedRoute, RouterLink } from '@angular/router';
 import { HttpErrorResponse } from '@angular/common/http';
+import Swal from 'sweetalert2';
+import { NgSelectModule } from '@ng-select/ng-select';
 
 import { RotinasService, CreateRotinaDto, UpdateRotinaDto } from '../../../../core/services/rotinas.service';
 import { PilaresService, Pilar } from '../../../../core/services/pilares.service';
@@ -10,7 +12,7 @@ import { PilaresService, Pilar } from '../../../../core/services/pilares.service
 @Component({
   selector: 'app-rotina-form',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, RouterLink],
+  imports: [CommonModule, ReactiveFormsModule, RouterLink, NgSelectModule],
   templateUrl: './rotina-form.component.html',
   styleUrls: ['./rotina-form.component.scss']
 })
@@ -40,6 +42,18 @@ export class RotinaFormComponent implements OnInit {
     if (this.isEditMode) {
       this.loadRotina();
     }
+  }
+
+  private showToast(title: string, icon: 'success' | 'error' | 'info' | 'warning', timer: number = 3000): void {
+    Swal.fire({
+      toast: true,
+      position: 'top-end',
+      showConfirmButton: false,
+      timer,
+      timerProgressBar: true,
+      title,
+      icon,
+    });
   }
 
   buildForm(): void {
@@ -131,7 +145,7 @@ export class RotinaFormComponent implements OnInit {
   createRotina(data: CreateRotinaDto): void {
     this.rotinasService.create(data).subscribe({
       next: () => {
-        this.showSuccessToast('Rotina criada com sucesso');
+        this.showToast('Rotina criada com sucesso', 'success');
         this.router.navigate(['/rotinas']);
       },
       error: (error: HttpErrorResponse) => {

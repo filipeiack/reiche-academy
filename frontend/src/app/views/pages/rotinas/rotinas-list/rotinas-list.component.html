@@ -113,7 +113,7 @@
                       ngbTooltip="Editar">
                       <i class="bi bi-pencil"></i>
                     </a>
-                    <button class="btn btn-outline-danger" (click)="openDeleteModal(rotina, deleteModal)"
+                    <button class="btn btn-outline-danger" (click)="confirmDesativar(rotina)"
                       ngbTooltip="Desativar">
                       <i class="bi bi-trash"></i>
                     </button>
@@ -134,28 +134,3 @@
     </div>
   </div>
 </div>
-
-<!-- Delete Confirmation Modal -->
-<ng-template #deleteModal let-modal>
-  <div class="modal-header">
-    <h5 class="modal-title">
-      <i class="bi bi-exclamation-triangle text-warning me-2"></i>
-      Desativar rotina?
-    </h5>
-    <button type="button" class="btn-close" (click)="modal.dismiss()"></button>
-  </div>
-  <div class="modal-body">
-    <p>Esta ação pode ser revertida.</p>
-    <p class="text-muted mb-0">
-      <small>A rotina será desativada e não aparecerá mais em listagens.</small>
-    </p>
-  </div>
-  <div class="modal-footer">
-    <button type="button" class="btn btn-secondary" (click)="modal.dismiss()">
-      Cancelar
-    </button>
-    <button type="button" class="btn btn-danger" (click)="modal.close('confirm')">
-      Desativar
-    </button>
-  </div>
-</ng-template>
