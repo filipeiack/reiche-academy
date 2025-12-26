@@ -47,7 +47,7 @@ export class RotinaFormComponent implements OnInit {
       nome: ['', [Validators.required, Validators.minLength(2), Validators.maxLength(200)]],
       descricao: ['', [Validators.maxLength(500)]],
       pilarId: ['', [Validators.required]],
-      ordem: [null, [Validators.min(1)]],
+      ordem: [1, [Validators.required, Validators.min(1)]],
       modelo: [false],
     });
   }
