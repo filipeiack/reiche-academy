@@ -152,7 +152,6 @@ export class UsuariosListComponent implements OnInit {
       title: 'Confirmar exclusão?',
       html: `<p>Tem certeza que deseja remover <strong>${this.selectedCount}</strong> usuário(s)?</p>
              <small style="color: #ff6b6b;">Esta ação não pode ser desfeita.</small>`,
-      icon: 'warning',
       showCancelButton: true,
       confirmButtonText: 'Sim, deletar',
       confirmButtonColor: '#C67A3D',

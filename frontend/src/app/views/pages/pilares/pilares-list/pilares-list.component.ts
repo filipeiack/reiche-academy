@@ -184,7 +184,6 @@ export class PilaresListComponent implements OnInit {
         if (rotinasAtivas > 0) {
           // Bloquear desativação
           Swal.fire({
-            icon: 'error',
             title: 'Não é possível desativar',
             html: `
               Este pilar possui <strong>${rotinasAtivas} rotinas ativas</strong> vinculadas.<br>
@@ -237,7 +236,6 @@ export class PilaresListComponent implements OnInit {
 
   reativar(id: string): void {
     Swal.fire({
-      icon: 'question',
       title: 'Confirmar Reativação',
       text: 'Deseja reativar este pilar?',
       showCancelButton: true,

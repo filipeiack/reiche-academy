@@ -79,7 +79,7 @@ Criar nova empresa
 {
   "nome": "Reiche Consultoria Ltda",
   "cnpj": "12.345.678/0001-90",
-  "razaoSocial": "Reiche Consultoria Empresarial Ltda"
+  "cidade": "rio de janeiro"
 }
 ```
 **Validação:** CNPJ deve estar no formato `00.000.000/0000-00`

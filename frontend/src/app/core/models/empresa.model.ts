@@ -2,7 +2,6 @@ export interface Empresa {
   id: string;
   nome: string;
   cnpj: string;
-  razaoSocial: string;
   tipoNegocio: string;
   ativo: boolean;
   logoUrl?: string;

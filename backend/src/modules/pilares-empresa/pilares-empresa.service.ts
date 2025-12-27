@@ -286,11 +286,13 @@ export class PilaresEmpresaService {
   }
 
   /**
-   * Desassociar um pilar de uma empresa (soft delete)
-   * Marca PilarEmpresa.ativo como false
+   * Remover um pilar de uma empresa (hard delete)
+   * Deleta PilarEmpresa e cascatea automaticamente:
+   * - RotinaEmpresa (onDelete: Cascade no schema)
+   * - NotaRotina (onDelete: Cascade no schema)
    * Implementa validação multi-tenant
    */
-  async desassociar(
+  async remover(
     empresaId: string,
     pilarEmpresaId: string,
     user: RequestUser,
@@ -316,21 +318,9 @@ export class PilaresEmpresaService {
       );
     }
 
-    // Validar que ainda está ativo
-    if (!pilarEmpresa.ativo) {
-      throw new NotFoundException('Este pilar já foi desassociado desta empresa');
-    }
-
-    // Soft delete - marcar como inativo
-    const updated = await this.prisma.pilarEmpresa.update({
-      where: { id: pilarEmpresaId },
-      data: {
-        ativo: false,
-        updatedBy: user.id,
-      },
-      include: {
-        pilar: true,
-      },
+    // Hard delete (cascata automática via Prisma)
+    const deleted = await this.prisma.pilarEmpresa.delete({
+      where: { id: pilarEmpresaId }
     });
 
     // Auditoria
@@ -342,13 +332,12 @@ export class PilaresEmpresaService {
       entidade: 'pilares_empresa',
       entidadeId: pilarEmpresaId,
       acao: 'DELETE',
-      dadosAntes: { ativo: true, pilarNome: pilarEmpresa.pilar.nome },
-      dadosDepois: { ativo: false },
+      dadosAntes: { pilarNome: pilarEmpresa.pilar.nome, empresaId }
     });
 
     return {
-      message: `Pilar "${pilarEmpresa.pilar.nome}" desassociado com sucesso`,
-      pilarEmpresa: updated,
+      message: `Pilar "${pilarEmpresa.pilar.nome}" removido com sucesso`,
+      pilarEmpresa: deleted,
     };
   }
 }

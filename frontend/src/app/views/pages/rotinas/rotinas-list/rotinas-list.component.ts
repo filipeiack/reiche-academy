@@ -213,7 +213,6 @@ export class RotinasListComponent implements OnInit {
     const empresasText = empresas.map((e: any) => `<li>${e.nome}</li>`).join('');
     
     Swal.fire({
-      icon: 'error',
       title: 'Não é possível desativar',
       html: `
         Esta rotina está em uso por <strong>${errorData.totalEmpresas} empresa(s)</strong>:<br><br>
@@ -227,7 +226,6 @@ export class RotinasListComponent implements OnInit {
 
   reativar(id: string): void {
     Swal.fire({
-      icon: 'question',
       title: 'Confirmar Reativação',
       text: 'Deseja reativar esta rotina?',
       showCancelButton: true,

@@ -1,7 +1,7 @@
 import { Component, OnInit, OnDestroy, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { NgbAlertModule } from '@ng-bootstrap/ng-bootstrap';
+import { NgbAlertModule, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { NgSelectModule } from '@ng-select/ng-select';
 import Swal from 'sweetalert2';
 import { Subject, Subscription, debounceTime, distinctUntilChanged } from 'rxjs';
@@ -25,7 +25,8 @@ interface AutoSaveQueueItem {
     NgbAlertModule,
     NgSelectModule,
     TranslatePipe,
-  ],
+    NgbTooltip
+],
   templateUrl: './diagnostico-notas.component.html',
   styleUrl: './diagnostico-notas.component.scss'
 })
@@ -49,6 +50,9 @@ export class DiagnosticoNotasComponent implements OnInit, OnDestroy {
   private autoSaveSubscription?: Subscription;
   private readonly MAX_RETRIES = 3;
   savingCount = 0; // Contador de saves em andamento
+  
+  // Cache local de valores em edição (antes de salvar no backend)
+  private notasCache = new Map<string, { nota: number | null, criticidade: string | null }>();
 
   // Opções de criticidade
   criticidadeOptions = [
@@ -89,23 +93,20 @@ export class DiagnosticoNotasComponent implements OnInit, OnDestroy {
     }
   }
 
-  private loadEmpresas(): void {
+private loadEmpresas(): void {
     this.empresasService.getAll().subscribe({
-      next: (data) => {
-        this.empresas = data.filter(e => e.ativo);
-        if (this.empresas.length > 0 && !this.selectedEmpresaId) {
-          // Auto-selecionar primeira empresa
-          this.selectedEmpresaId = this.empresas[0].id;
-          this.loadDiagnostico();
+        next: (data) => {
+            this.empresas = data.filter(e => e.ativo);
+        },
+        error: (err) => {
+            this.error = err?.error?.message || 'Erro ao carregar empresas';
         }
-      },
-      error: (err) => {
-        this.error = err?.error?.message || 'Erro ao carregar empresas';
-      }
     });
-  }
+}
 
-  onEmpresaChange(empresaId: string | null): void {
+  onEmpresaChange(event: any): void {
+    // ng-select retorna o objeto inteiro ou apenas o ID dependendo do evento
+    const empresaId = typeof event === 'string' ? event : event?.id || this.selectedEmpresaId;
     this.selectedEmpresaId = empresaId;
     if (empresaId) {
       this.loadDiagnostico();
@@ -119,6 +120,9 @@ export class DiagnosticoNotasComponent implements OnInit, OnDestroy {
 
     this.loading = true;
     this.error = '';
+    
+    // Limpar cache ao carregar novos dados
+    this.notasCache.clear();
 
     this.diagnosticoService.getDiagnosticoByEmpresa(this.selectedEmpresaId).subscribe({
       next: (data) => {
@@ -148,6 +152,7 @@ export class DiagnosticoNotasComponent implements OnInit, OnDestroy {
    * Configura o auto-save com debounce de 800ms
    */
   private setupAutoSave(): void {
+    console.log('🔧 Configurando auto-save subject...');
     this.autoSaveSubscription = this.autoSaveSubject
       .pipe(
         debounceTime(800), // Aguarda 800ms após última alteração
@@ -158,29 +163,64 @@ export class DiagnosticoNotasComponent implements OnInit, OnDestroy {
         )
       )
       .subscribe((item) => {
+        console.log('⏰ Debounce completado, executando save...');
         this.executeSave(item);
       });
+    console.log('✅ Auto-save configurado com sucesso');
   }
 
   /**
    * Chamado quando nota ou criticidade é alterada
    */
-  onNotaChange(rotinaEmpresa: RotinaEmpresa, nota: number | null, criticidade: string | null): void {
-    // Validar campos obrigatórios
-    if (nota === null || nota === undefined || !criticidade) {
-      return; // Não salvar se campos não estiverem preenchidos
+  onNotaChange(rotinaEmpresa: RotinaEmpresa, nota: any, criticidade: string | null): void {
+    console.log('🔄 onNotaChange chamado:', { 
+      rotinaEmpresaId: rotinaEmpresa.id, 
+      nota, 
+      notaType: typeof nota,
+      criticidade 
+    });
+    
+    // Converter nota para número se vier como string
+    const notaConverted = nota === '' || nota === null || nota === undefined ? null : Number(nota);
+    
+    // Buscar ou criar cache para esta rotina
+    const cached = this.notasCache.get(rotinaEmpresa.id) || { nota: this.getNotaAtual(rotinaEmpresa), criticidade: this.getCriticidadeAtual(rotinaEmpresa) };
+    
+    // Atualizar cache com novo valor
+    if (notaConverted !== null && notaConverted !== undefined) {
+      cached.nota = notaConverted;
+    }
+    if (criticidade !== null && criticidade !== undefined) {
+      cached.criticidade = criticidade;
+    }
+    
+    // Salvar no cache
+    this.notasCache.set(rotinaEmpresa.id, cached);
+    
+    const notaFinal = cached.nota;
+    const criticidadeFinal = cached.criticidade;
+
+    console.log('📊 Valores finais (com cache):', { notaFinal, criticidadeFinal, cached });
+
+    // Validar campos obrigatórios (silenciosamente - aguarda usuário preencher ambos)
+    if (notaFinal === null || notaFinal === undefined || !criticidadeFinal) {
+      console.log('⏸️ Aguardando campos completos');
+      return;
     }
 
     // Validar range de nota
-    if (nota < 1 || nota > 10) {
+    const notaNum = Number(notaFinal);
+    if (notaNum < 1 || notaNum > 10) {
       this.showToast('Nota deve estar entre 1 e 10', 'error');
       return;
     }
 
     const dto: UpdateNotaRotinaDto = {
-      nota: Number(nota),
-      criticidade: criticidade as 'ALTO' | 'MEDIO' | 'BAIXO',
+      nota: notaNum,
+      criticidade: criticidadeFinal as 'ALTO' | 'MEDIO' | 'BAIXO',
     };
+
+    console.log('➕ Adicionando à fila de auto-save:', dto);
 
     // Adicionar à fila de auto-save
     this.autoSaveSubject.next({
@@ -194,14 +234,21 @@ export class DiagnosticoNotasComponent implements OnInit, OnDestroy {
    * Executa o save no backend
    */
   private executeSave(item: AutoSaveQueueItem): void {
+    console.log('💾 Salvando nota:', item);
     this.savingCount++;
 
     this.diagnosticoService.upsertNotaRotina(item.rotinaEmpresaId, item.data).subscribe({
       next: (response) => {
+        console.log('✅ Nota salva com sucesso:', response);
         this.savingCount--;
-        // Auto-save silencioso - não mostrar toast de sucesso
+        // Atualizar dados locais com resposta do backend
+        this.updateLocalNotaData(item.rotinaEmpresaId, response.nota);
+        // Manter cache (não limpar) para preservar valores na tela
+        // Mostrar toast sutil de sucesso
+        this.showToast('Salvo', 'success', 1500);
       },
       error: (err) => {
+        console.error('❌ Erro ao salvar nota:', err);
         this.savingCount--;
         this.handleSaveError(item, err);
       }
@@ -235,17 +282,49 @@ export class DiagnosticoNotasComponent implements OnInit, OnDestroy {
   }
 
   /**
-   * Retorna a nota atual de uma rotina (última registrada)
+   * Retorna a nota atual de uma rotina (última registrada ou em cache)
    */
   getNotaAtual(rotinaEmpresa: RotinaEmpresa): number | null {
+    // Priorizar cache local (valores em edição)
+    const cached = this.notasCache.get(rotinaEmpresa.id);
+    if (cached?.nota !== undefined && cached?.nota !== null) {
+      return cached.nota;
+    }
+    // Fallback: valor salvo no backend
     return rotinaEmpresa.notas?.[0]?.nota ?? null;
   }
 
   /**
-   * Retorna a criticidade atual de uma rotina
+   * Retorna a criticidade atual de uma rotina (última registrada ou em cache)
    */
   getCriticidadeAtual(rotinaEmpresa: RotinaEmpresa): string | null {
+    // Priorizar cache local (valores em edição)
+    const cached = this.notasCache.get(rotinaEmpresa.id);
+    if (cached?.criticidade) {
+      return cached.criticidade;
+    }
+    // Fallback: valor salvo no backend
     return rotinaEmpresa.notas?.[0]?.criticidade ?? null;
+  }
+
+  /**
+   * Atualiza dados locais da rotina com resposta do backend
+   */
+  private updateLocalNotaData(rotinaEmpresaId: string, nota: any): void {
+    // Encontrar a rotina no array de pilares e atualizar
+    for (const pilar of this.pilares) {
+      const rotina = pilar.rotinasEmpresa.find(r => r.id === rotinaEmpresaId);
+      if (rotina) {
+        // Atualizar ou adicionar nota no array
+        if (rotina.notas && rotina.notas.length > 0) {
+          rotina.notas[0] = nota;
+        } else {
+          rotina.notas = [nota];
+        }
+        console.log('🔄 Dados locais atualizados:', { rotinaEmpresaId, nota });
+        break;
+      }
+    }
   }
 
   /**

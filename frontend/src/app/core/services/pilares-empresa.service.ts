@@ -58,9 +58,9 @@ export class PilaresEmpresaService {
   }
 
   /**
-   * Desassociar um pilar de uma empresa (soft delete)
+   * Remover um pilar de uma empresa
    */
-  desassociarPilar(empresaId: string, pilarEmpresaId: string): Observable<{
+  removerPilar(empresaId: string, pilarEmpresaId: string): Observable<{
     message: string;
     pilarEmpresa: PilarEmpresa;
   }> {

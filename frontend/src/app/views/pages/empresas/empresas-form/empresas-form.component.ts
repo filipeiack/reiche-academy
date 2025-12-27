@@ -417,7 +417,6 @@ export class EmpresasFormComponent implements OnInit {
     Swal.fire({
       title: 'Desassociar Usuário',
       html: `Deseja desassociar <strong>${usuario.nome}</strong> desta empresa?`,
-      icon: 'question',
       showCancelButton: true,
       confirmButtonText: 'Sim, desassociar',
       cancelButtonText: 'Cancelar'
@@ -546,13 +545,12 @@ export class EmpresasFormComponent implements OnInit {
     });
   }
 
-  desassociarPilar(pilarEmpresa: PilarEmpresa): void {
+  removePillarAssociation(pilarEmpresa: PilarEmpresa): void {
     Swal.fire({
-      title: 'Desassociar Pilar',
-      html: `Deseja desassociar <strong>${pilarEmpresa.pilar.nome}</strong> desta empresa?<br><small class="text-muted">Isso também removerá as rotinas associadas.</small>`,
-      icon: 'warning',
+      title: 'Remover Pilar',
+      html: `Deseja remover <strong>${pilarEmpresa.pilar.nome}</strong> desta empresa?<br><small class="text-muted">Isso também removerá as rotinas associadas.</small>`,
       showCancelButton: true,
-      confirmButtonText: 'Sim, desassociar',
+      confirmButtonText: 'Sim, remover',
       cancelButtonText: 'Cancelar'
     }).then((result) => {
       if (result.isConfirmed) {
@@ -562,24 +560,24 @@ export class EmpresasFormComponent implements OnInit {
           this.pilaresDisponiveis.push(pilarEmpresa.pilar);
           this.showToast(`Pilar ${pilarEmpresa.pilar.nome} removido da lista`, 'success');
         } else {
-          // Modo edição: desassociar via API
-          this.confirmarDesassociacaoPilar(pilarEmpresa);
+          // Modo edição: remover via API
+          this.confirmarRemocaoPilar(pilarEmpresa);
         }
       }
     });
   }
 
-  private confirmarDesassociacaoPilar(pilarEmpresa: PilarEmpresa): void {
+  private confirmarRemocaoPilar(pilarEmpresa: PilarEmpresa): void {
     if (!this.empresaId) return;
 
-    this.pilaresEmpresaService.desassociarPilar(this.empresaId, pilarEmpresa.id).subscribe({
+    this.pilaresEmpresaService.removerPilar(this.empresaId, pilarEmpresa.id).subscribe({
       next: (response) => {
-        this.showToast(response.message || `Pilar ${pilarEmpresa.pilar.nome} desassociado com sucesso!`, 'success');
+        this.showToast(response.message || `Pilar ${pilarEmpresa.pilar.nome} removido com sucesso!`, 'success');
         this.pilaresAssociados = this.pilaresAssociados.filter(p => p.id !== pilarEmpresa.id);
         this.pilaresDisponiveis.push(pilarEmpresa.pilar);
       },
       error: (err) => {
-        this.showToast(err?.error?.message || 'Erro ao desassociar pilar', 'error');
+        this.showToast(err?.error?.message || 'Erro ao remover pilar', 'error');
       }
     });
   }

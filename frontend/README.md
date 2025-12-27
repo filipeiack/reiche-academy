@@ -264,7 +264,6 @@ deleteSelectedUsuarios(): void {
   Swal.fire({
     title: 'Confirmar exclusão?',
     text: `${this.selectedCount} usuário(s) serão removidos`,
-    icon: 'warning',
     confirmButtonText: 'Deletar',
     confirmButtonColor: '#C67A3D',
     showCancelButton: true
