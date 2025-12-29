@@ -2,7 +2,7 @@
 <nav aria-label="breadcrumb">
     <ol class="breadcrumb breadcrumb-dot mb-1">
         <li class="breadcrumb-item">
-            <i class="input-icon" data-feather="users" style="width: 16px; height: 16px"></i>
+            <i class="feather icon-users"></i>            
         </li>
         <li class="breadcrumb-item">
             {{ "MENU.USUARIOS" | translate }}
@@ -129,18 +129,6 @@
                                     <input [type]="showPassword ? 'text' : 'password'" class="form-control"
                                         [class.is-invalid]="isFieldInvalid('senha')" id="senhaEdit" formControlName="senha"
                                         placeholder="Deixe em branco para manter a senha atual" />
-                                    <!-- <button 
-                                    type="button" 
-                                    class="btn btn-outline-primary"
-                                    (click)="togglePasswordVisibility()"
-                                    tabindex="-1"
-                                >
-                                    @if (showPassword) {
-                                        <i data-feather="eye-off" appFeatherIcon></i>
-                                    } @else {
-                                        <i data-feather="eye" appFeatherIcon></i>
-                                    }
-                                </button> -->
                                 </div>
                                 <small class="form-text text-muted d-block mt-1">
                                     Deixe em branco para manter a senha atual. Mínimo 6 caracteres.

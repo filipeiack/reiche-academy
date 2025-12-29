@@ -24,8 +24,7 @@ interface AutoSaveQueueItem {
     FormsModule,
     NgbAlertModule,
     NgSelectModule,
-    TranslatePipe,
-    NgbTooltip
+    TranslatePipe
 ],
   templateUrl: './diagnostico-notas.component.html',
   styleUrl: './diagnostico-notas.component.scss'
@@ -50,6 +49,7 @@ export class DiagnosticoNotasComponent implements OnInit, OnDestroy {
   private autoSaveSubscription?: Subscription;
   private readonly MAX_RETRIES = 3;
   savingCount = 0; // Contador de saves em andamento
+  lastSaveTime: Date | null = null; // Timestamp do último salvamento bem-sucedido
   
   // Cache local de valores em edição (antes de salvar no backend)
   private notasCache = new Map<string, { nota: number | null, criticidade: string | null }>();
@@ -121,8 +121,9 @@ private loadEmpresas(): void {
     this.loading = true;
     this.error = '';
     
-    // Limpar cache ao carregar novos dados
+    // Limpar cache e timestamp ao carregar novos dados
     this.notasCache.clear();
+    this.lastSaveTime = null;
 
     this.diagnosticoService.getDiagnosticoByEmpresa(this.selectedEmpresaId).subscribe({
       next: (data) => {
@@ -149,13 +150,13 @@ private loadEmpresas(): void {
   }
 
   /**
-   * Configura o auto-save com debounce de 800ms
+   * Configura o auto-save com debounce de 1000ms
    */
   private setupAutoSave(): void {
     console.log('🔧 Configurando auto-save subject...');
     this.autoSaveSubscription = this.autoSaveSubject
       .pipe(
-        debounceTime(800), // Aguarda 800ms após última alteração
+        debounceTime(1000), // Aguarda 1000ms após última alteração
         distinctUntilChanged((prev, curr) => 
           prev.rotinaEmpresaId === curr.rotinaEmpresaId &&
           prev.data.nota === curr.data.nota &&
@@ -241,11 +242,12 @@ private loadEmpresas(): void {
       next: (response) => {
         console.log('✅ Nota salva com sucesso:', response);
         this.savingCount--;
+        // Atualizar timestamp do último salvamento
+        this.lastSaveTime = new Date();
         // Atualizar dados locais com resposta do backend
         this.updateLocalNotaData(item.rotinaEmpresaId, response.nota);
         // Manter cache (não limpar) para preservar valores na tela
-        // Mostrar toast sutil de sucesso
-        this.showToast('Salvo', 'success', 1500);
+        //this.showToast('Salvo', 'success', 1500);
       },
       error: (err) => {
         console.error('❌ Erro ao salvar nota:', err);
@@ -276,8 +278,8 @@ private loadEmpresas(): void {
       }, 2000);
     } else {
       // Erro persistente - informar ao usuário
-      const message = err?.error?.message || 'Erro ao salvar nota';
-      this.showToast(`${message}. Tente novamente mais tarde.`, 'error', 5000);
+      const message = err?.error?.message || 'Erro ao salvar informações das notas';
+      this.showToast(`${message}. Tente salvar novamente mais tarde.`, 'error', 5000);
     }
   }
 
@@ -341,6 +343,66 @@ private loadEmpresas(): void {
       default:
         return 'badge bg-secondary';
     }
+  }
+
+  /**
+   * Formata o horário do último salvamento
+   */
+  getLastSaveTimeFormatted(): string {
+    if (!this.lastSaveTime) return '';
+    
+    const hours = this.lastSaveTime.getHours().toString().padStart(2, '0');
+    const minutes = this.lastSaveTime.getMinutes().toString().padStart(2, '0');
+    const seconds = this.lastSaveTime.getSeconds().toString().padStart(2, '0');
+    
+    return `${hours}:${minutes}:${seconds}`;
+  }
+
+  /**
+   * Verifica se há mudanças não salvas no cache
+   */
+  hasUnsavedChanges(): boolean {
+    return this.notasCache.size > 0;
+  }
+
+  /**
+   * Força salvamento de todas as alterações pendentes no cache
+   */
+  forceSaveAll(): void {
+    if (this.notasCache.size === 0) {
+      this.showToast('Não há alterações pendentes', 'info', 2000);
+      return;
+    }
+
+    console.log('💾 Forçando salvamento de todas as alterações pendentes...');
+    
+    // Coletar todos os itens do cache
+    const itemsToSave: AutoSaveQueueItem[] = [];
+    
+    this.notasCache.forEach((value, rotinaEmpresaId) => {
+      if (value.nota !== null && value.nota !== undefined && value.criticidade) {
+        itemsToSave.push({
+          rotinaEmpresaId,
+          data: {
+            nota: value.nota,
+            criticidade: value.criticidade as 'ALTO' | 'MEDIO' | 'BAIXO'
+          },
+          retryCount: 0
+        });
+      }
+    });
+
+    if (itemsToSave.length === 0) {
+      this.showToast('Não há alterações válidas para salvar', 'warning', 2000);
+      return;
+    }
+
+    // Salvar todos os itens
+    this.showToast(`Salvando ${itemsToSave.length} alteração(ões)...`, 'info', 2000);
+    
+    itemsToSave.forEach(item => {
+      this.executeSave(item);
+    });
   }
 
   private showToast(title: string, icon: 'success' | 'error' | 'info' | 'warning', timer: number = 3000): void {
