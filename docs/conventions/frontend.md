@@ -540,7 +540,7 @@ export class UsuariosListComponent implements OnInit {
   <nav aria-label="breadcrumb">
     <ol class="breadcrumb breadcrumb-arrow mb-1">
       <li class="breadcrumb-item">
-        <i class="input-icon" data-feather="users"></i>
+        <i class="feather icon-users"></i>
       </li>
       <li class="breadcrumb-item active" aria-current="page">
         {{ "MENU.USUARIOS" | translate }}
