@@ -340,4 +340,78 @@ export class PilaresEmpresaService {
       pilarEmpresa: deleted,
     };
   }
+
+  /**
+   * Definir ou remover responsável de um pilar da empresa
+   */
+  async definirResponsavel(
+    empresaId: string,
+    pilarEmpresaId: string,
+    responsavelId: string | null,
+    user: RequestUser,
+  ) {
+    this.validateTenantAccess(empresaId, user);
+
+    // Buscar PilarEmpresa para validar existência e pertencimento à empresa
+    const pilarEmpresa = await this.prisma.pilarEmpresa.findUnique({
+      where: { id: pilarEmpresaId },
+      include: { pilar: true },
+    });
+
+    if (!pilarEmpresa) {
+      throw new NotFoundException('Vínculo pilar-empresa não encontrado');
+    }
+
+    // Validar que o PilarEmpresa pertence à empresa correta
+    if (pilarEmpresa.empresaId !== empresaId) {
+      throw new ForbiddenException(
+        'Este pilar não pertence à empresa especificada',
+      );
+    }
+
+    // Se responsavelId for fornecido, validar que o usuário existe e pertence à empresa
+    if (responsavelId) {
+      const responsavel = await this.prisma.usuario.findUnique({
+        where: { id: responsavelId },
+      });
+
+      if (!responsavel) {
+        throw new NotFoundException('Usuário responsável não encontrado');
+      }
+
+      if (responsavel.empresaId !== empresaId) {
+        throw new ForbiddenException(
+          'O responsável deve pertencer à mesma empresa do pilar',
+        );
+      }
+    }
+
+    // Atualizar responsável
+    const updated = await this.prisma.pilarEmpresa.update({
+      where: { id: pilarEmpresaId },
+      data: {
+        responsavelId: responsavelId || null,
+        updatedBy: user.id,
+      },
+      include: {
+        pilar: true,
+        responsavel: true,
+      },
+    });
+
+    // Auditoria
+    const userRecord = await this.prisma.usuario.findUnique({ where: { id: user.id } });
+    await this.audit.log({
+      usuarioId: user.id,
+      usuarioNome: userRecord?.nome ?? '',
+      usuarioEmail: userRecord?.email ?? '',
+      entidade: 'pilares_empresa',
+      entidadeId: pilarEmpresaId,
+      acao: 'UPDATE',
+      dadosAntes: { responsavelId: pilarEmpresa.responsavelId },
+      dadosDepois: { responsavelId: responsavelId },
+    });
+
+    return updated;
+  }
 }

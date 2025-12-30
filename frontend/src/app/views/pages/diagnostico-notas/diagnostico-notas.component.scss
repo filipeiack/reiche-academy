@@ -2,11 +2,18 @@
   display: block;
 }
 
-.sticky-header {
+.sticky-header-empresa {
   top: var(--navbar-height, 60px);
   position: sticky;
+  z-index: 2;
+  background: var(--bs-app-bg);
+}
+
+.sticky-header-pilar {
+  top: calc(var(--navbar-height, 60px) + var(--headerEmpresa-height, 100px));
+  position: sticky;
   z-index: 1;
-  background: #0A0A0A;
+  background: var(--bs-body-bg);
 }
 
 .saving-indicator {

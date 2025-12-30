@@ -159,7 +159,7 @@
                                     Selecionar Usuários para Associar
                                 }
                             </label>
-                            <ng-select [items]="usuariosDisponiveis" bindLabel="nome" [searchable]="true"
+                            <ng-select [items]="usuariosDisponiveis" [addTag]="true" bindLabel="nome" [searchable]="true"
                                 [clearable]="true" placeholder="Busque por nome ou email..."
                                 (change)="associarUsuario($event)">
                                 <ng-template ng-option-tmp let-item="item">
@@ -259,7 +259,7 @@
                                 }
                             </label>
                             <ng-select [items]="pilaresDisponiveis" bindLabel="nome" [searchable]="true"
-                                [clearable]="true" placeholder="Busque por nome de pilar..."
+                                [clearable]="true" [addTag]="addPilarTag" placeholder="Busque por nome de pilar ou digite para criar novo..."
                                 (change)="associarPilar($event)">
                                 <ng-template ng-option-tmp let-item="item">
                                     <div class="d-flex align-items-center">

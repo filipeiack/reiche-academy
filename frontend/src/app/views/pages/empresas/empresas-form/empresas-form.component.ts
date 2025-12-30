@@ -8,7 +8,7 @@ import { EmpresasService, Empresa, CreateEmpresaRequest, UpdateEmpresaRequest, E
 import { UsersService } from '../../../../core/services/users.service';
 import { Usuario } from '../../../../core/models/auth.model';
 import { AuthService } from '../../../../core/services/auth.service';
-import { PilaresService, Pilar } from '../../../../core/services/pilares.service';
+import { PilaresService, Pilar, CreatePilarDto } from '../../../../core/services/pilares.service';
 import { PilaresEmpresaService, PilarEmpresa } from '../../../../core/services/pilares-empresa.service';
 import { TranslatePipe } from '../../../../core/pipes/translate.pipe';
 import { environment } from '../../../../../environments/environment';
@@ -514,6 +514,26 @@ export class EmpresasFormComponent implements OnInit {
       }
     });
   }
+
+  addPilarTag = (nome: string): Pilar | Promise<Pilar> => {
+    const novoPilar: CreatePilarDto = {
+      nome: nome,
+      modelo: false
+    };
+
+    return new Promise((resolve, reject) => {
+      this.pilaresService.create(novoPilar).subscribe({
+        next: (pilar) => {
+          this.showToast(`Pilar "${nome}" criado com sucesso!`, 'success');
+          resolve(pilar);
+        },
+        error: (err) => {
+          this.showToast(err?.error?.message || 'Erro ao criar pilar', 'error');
+          reject(err);
+        }
+      });
+    });
+  };
 
   associarPilar(pilar: Pilar): void {
     if (!this.empresaId) {

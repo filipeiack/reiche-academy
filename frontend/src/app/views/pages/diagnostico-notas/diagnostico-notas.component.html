@@ -1,5 +1,4 @@
-
-<div id="headerEmpresa" class="sticky-header mb-2">
+<div id="headerEmpresa" class="sticky-header-empresa mb-1">
     <div class="mb-2 align-items-center d-flex justify-content-between flex-wrap">
         <nav aria-label="breadcrumb">
             <ol class="breadcrumb breadcrumb-arrow">
@@ -27,9 +26,9 @@
                 <span class="text-muted small">Salvo por último às: {{ getLastSaveTimeFormatted() }}</span>
             </div>
             }
-            
-            <button type="button" class="btn btn-sm btn-primary" (click)="forceSaveAll()" 
-                    [disabled]="savingCount > 0 || !hasUnsavedChanges()">
+
+            <button type="button" class="btn btn-sm btn-primary" (click)="forceSaveAll()"
+                [disabled]="savingCount > 0 || !hasUnsavedChanges()">
                 <i class="feather icon-save" style="width: 14px; height: 14px"></i>
                 Salvar Tudo
             </button>
@@ -38,36 +37,55 @@
     </div>
 
     <div class="card">
-        <div class="card-body">
-            <!-- Seletor de empresa (apenas para admin) -->
-            @if (isAdmin) {
-            <div>
-                <label for="empresaSelect" class="form-label">
-                    {{ 'DIAGNOSTICO.SELECT_EMPRESA' | translate }}
-                </label>
-                <ng-select id="empresaSelect" [items]="empresas" bindLabel="nome" bindValue="id"
-                    [(ngModel)]="selectedEmpresaId" (change)="onEmpresaChange($event)"
-                    placeholder="{{ 'DIAGNOSTICO.SELECT_EMPRESA_PLACEHOLDER' | translate }}" [clearable]="false">
-                    <ng-template ng-option-tmp let-item="item">
-                        <div>
-                            <strong>{{ item.nome }}</strong>
-                            @if (item.cnpj) {
-                            <br />
-                            <small class="text-muted">{{ item.cnpj }} - {{ item.cidade }}/{{ item.estado }} </small>
-                            }
-                        </div>
-                    </ng-template>
-                </ng-select>
-            </div>
-            } @else if (empresaLogada) {
-            <div class="empresa-info">
-                <i class="feather icon-briefcase"></i>
-                <span class="h3">
-                    {{ empresaLogada.nome }}
-                </span>
-                @if (empresaLogada.cnpj) {
-                        <span class="text-muted small d-block">{{ empresaLogada.cnpj }} - {{ empresaLogada.cidade }}/{{ empresaLogada.estado }}</span>
+        <div class="card-body" style="padding-top: 10px; padding-bottom: 10px;">
+            @if (isAdmin || empresaLogada) {
+            <div class="row">
+                <!-- Seletor de empresa (apenas para admin) -->
+                @if (isAdmin) {
+                <div class="col-11">
+                    <ng-select id="empresaSelect" [items]="empresas" bindLabel="nome" bindValue="id"
+                        [(ngModel)]="selectedEmpresaId" (change)="onEmpresaChange($event)"
+                        placeholder="{{ 'DIAGNOSTICO.SELECT_EMPRESA_PLACEHOLDER' | translate }}" [clearable]="false">
+                        <ng-template ng-option-tmp let-item="item">
+                            <div>
+                                <strong>{{ item.nome }}</strong>
+                                @if (item.cnpj) {
+                                <br />
+                                <small class="text-muted">{{ item.cnpj }} - {{ item.cidade }}/{{ item.estado }} </small>
+                                }
+                            </div>
+                        </ng-template>
+                    </ng-select>
+                </div>
+                } @else if (empresaLogada) {
+                <div class="col-11 d-flex gap-3 align-items-center">
+                    <i class="feather icon-briefcase"></i>
+                    <span class="h3">
+                        {{ empresaLogada.nome }}
+                    </span>
+                    @if (empresaLogada.cnpj) {
+                    <span class="text-muted small d-block">{{ empresaLogada.cnpj }} - {{ empresaLogada.cidade }}/{{
+                        empresaLogada.estado }}</span>
                     }
+                </div>
+                }
+
+                @if (selectedEmpresaId) {
+                <div class="col-1 d-flex justify-content-end">
+                    <div ngbDropdown class="mb-2">
+                        <a class="no-dropdown-toggle-icon" ngbDropdownToggle id="dropdownMenuButton">
+                            <i class="feather icon-more-horizontal" style="font-size: x-large;"></i>
+                        </a>
+                        <div ngbDropdownMenu aria-labelledby="dropdownMenuButton">
+                            <a ngbDropdownItem class="d-flex align-items-center gap-1"
+                                (click)="abrirModalPilares(); $event.preventDefault()">
+                                <i class="feather icon-edit" style="font-size: small;"></i>
+                                <span class="">Editar Pilares</span>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+                }
             </div>
             }
 
@@ -102,6 +120,7 @@
                 <p>{{ 'DIAGNOSTICO.NO_EMPRESA_ASSOCIATED' | translate }}</p>
             </div>
             }
+
         </div>
     </div>
 </div>
@@ -119,19 +138,47 @@
             <!-- Accordion de Pilares -->
             @for (pilar of pilares; track pilar.id; let i = $index) {
             <div class="card mb-1">
-                <div class="card-header">
-                    <div class="pilar-header w-100 d-flex justify-content-between align-items-center">
+                <div class="card-header sticky-header-pilar">
+                    @if (pilar.rotinasEmpresa.length > 0) {
+                    <ngb-progressbar type="primary" [value]="getPilarProgress(pilar)" height="5px"></ngb-progressbar>
+                    }
+                    <div class="pilar-header">
                         <div class="d-flex align-items-center gap-2">
-                            <button class="btn btn-link p-0 text-decoration-none d-flex align-items-center gap-1"
+                            <button class="btn btn-link p-0 text-decoration-none d-flex align-items-center"
                                 type="button" (click)="togglePilar(i)">
-                                <i [ngClass]="pilarExpandido[i] ? 'feather icon-chevron-up' : 'feather icon-chevron-down'"></i>
+                                <i
+                                    [ngClass]="pilarExpandido[i] ? 'feather icon-chevron-up' : 'feather icon-chevron-down'"></i>
                                 <span>PILAR {{ pilar.pilar.nome }}</span>
                             </button>
                         </div>
-                        <span class="badge bg-light text-dark">
-                            {{ pilar.rotinasEmpresa.length }}
-                            {{ pilar.rotinasEmpresa.length === 1 ? 'rotina' : 'rotinas' }}
-                        </span>
+
+                        <div class="ms-auto d-flex align-items-center gap-3">
+                            <span class="badge bg-light text-dark">
+                                {{ pilar.rotinasEmpresa.length }}
+                                {{ pilar.rotinasEmpresa.length === 1 ? 'rotina' : 'rotinas' }}
+                            </span>
+
+                            <div ngbDropdown class="mb-2">
+                                <a class="no-dropdown-toggle-icon" ngbDropdownToggle id="dropdownMenuButton">
+                                    <i class="feather icon-more-horizontal"></i>
+                                </a>
+                                <div ngbDropdownMenu aria-labelledby="dropdownMenuButton">
+                                    <a ngbDropdownItem class="d-flex align-items-center gap-1" (click)="abrirModalResponsavel(pilar); $event.preventDefault()">
+                                        <i class="feather icon-user" style="font-size: small;"></i>
+                                        <span class="">Definir Responsável</span>
+                                    </a>
+                                    <a ngbDropdownItem class="d-flex align-items-center gap-1" href=""
+                                        (click)="false"><i class="feather icon-plus-circle"
+                                            style="font-size: small;"></i> <span class="">Nova Rotina</span></a>
+                                    <a ngbDropdownItem class="d-flex align-items-center gap-1" href=""
+                                        (click)="false"><i class="feather icon-menu" style="font-size: small;"></i>
+                                        <span class="">Reordenar Rotinas</span></a>
+                                    <a ngbDropdownItem class="d-flex align-items-center gap-1" href=""
+                                        (click)="false"><i class="feather icon-trash-2" style="font-size: small;"></i>
+                                        <span class="">Deletar Pilar</span></a>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
 
@@ -143,13 +190,18 @@
                         <p>{{ 'DIAGNOSTICO.NO_ROTINAS' | translate }}</p>
                     </div>
                     } @else {
+
+                    <ngb-alert class="gap-2 mb-0" [dismissible]="false" [type]="'primary'">
+                        <i class="feather icon-user" style="font-size: small;"></i>
+                        <span class="small">Responsável pelo pilar:</span>
+                        <span> {{ pilar.responsavel?.nome || 'Não atribuído' }}</span>
+                    </ngb-alert>
                     @for (rotina of pilar.rotinasEmpresa; track rotina.id) {
                     <div class="row mb-1">
                         <div class="col-md-12 mb-0">
                             <div class="row align-items-end">
                                 <div class="col-md-8">
-                                    
-                                    <span> <i class="feather icon-chevrons-right"></i> {{ rotina.rotina.nome }} </span>
+
                                     <!-- Badge de Criticidade (visual) -->
                                     @if (getCriticidadeAtual(rotina); as criticidadeAtual) {
 
@@ -162,18 +214,19 @@
                                     }
 
                                     }
+                                    <span> {{ rotina.rotina.nome }} </span>
                                 </div>
 
                                 <div class="col-md-4 ">
                                     <div class="row">
                                         <!-- Campo Criticidade -->
-                                        <div class="col-md-7">
+                                        <div class="col-md-6">
                                             <label [for]="'criticidade-' + rotina.id" class="form-label">
                                                 {{ 'DIAGNOSTICO.CRITICIDADE' | translate }} <span
                                                     class="text-danger">*</span>
                                             </label>
-                                            <ng-select [id]="'criticidade-' + rotina.id"
-                                                [items]="criticidadeOptions" bindLabel="label" bindValue="value"
+                                            <ng-select [id]="'criticidade-' + rotina.id" [items]="criticidadeOptions"
+                                                bindLabel="label" bindValue="value"
                                                 [ngModel]="getCriticidadeAtual(rotina)"
                                                 (ngModelChange)="onNotaChange(rotina, getNotaAtual(rotina), $event)"
                                                 placeholder="{{ 'DIAGNOSTICO.SELECT_CRITICIDADE' | translate }}"
@@ -182,15 +235,21 @@
                                         </div>
 
                                         <!-- Campo Nota -->
-                                        <div class="col-md-5">
+                                        <div class="col-md-4">
                                             <label [for]="'nota-' + rotina.id" class="form-label">
-                                                {{ 'DIAGNOSTICO.NOTA' | translate }} <span
-                                                    class="text-danger">*</span>
+                                                {{ 'DIAGNOSTICO.NOTA' | translate }} <span class="text-danger">*</span>
                                             </label>
-                                            <input type="number" [id]="'nota-' + rotina.id" class="form-control"
-                                                min="1" max="10" step="1" [value]="getNotaAtual(rotina)"
+                                            <input type="number" [id]="'nota-' + rotina.id" class="form-control" min="1"
+                                                max="10" step="1" [value]="getNotaAtual(rotina)"
                                                 (input)="onNotaChange(rotina, $any($event.target).value, getCriticidadeAtual(rotina))"
                                                 placeholder="1 - 10" />
+                                        </div>
+
+                                        <div class="col-md-2">
+                                            <button type="button" class="btn btn-icon text-danger mt-4"
+                                                title="Remover rotina">
+                                                <i class="feather icon-trash-2"></i>
+                                            </button>
                                         </div>
                                     </div>
                                 </div>
@@ -217,3 +276,14 @@
     </div>
 </div>
 }
+
+<!-- Modal para gerenciar pilares -->
+<app-pilares-empresa-modal [empresaId]="selectedEmpresaId || ''" [isPerfilCliente]="isReadOnlyPerfil"
+    (pilaresModificados)="onPilaresModificados()">
+</app-pilares-empresa-modal>
+
+<!-- Modal para definir responsável -->
+<app-responsavel-pilar-modal 
+    [empresaId]="selectedEmpresaId || ''"
+    (responsavelAtualizado)="onResponsavelAtualizado()">
+</app-responsavel-pilar-modal>

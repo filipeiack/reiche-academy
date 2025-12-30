@@ -84,8 +84,8 @@
               </div>
             </div>
 
-            <!-- Ordem -->
-            <div class="mb-3">
+            <!-- Ordem comentada por enquanto-->
+            <!-- <div class="mb-3">
               <label for="ordem" class="form-label">Ordem</label>
               <input type="number" class="form-control" id="ordem" formControlName="ordem"
                 [class.is-invalid]="ordemInvalid" placeholder="1" min="1">
@@ -97,14 +97,15 @@
                   Ordem deve ser no mínimo 1
                 </span>
               </div>
-            </div>
+            </div> -->
 
             <!-- Modelo -->
             <div class="mb-3">
-              <div class="form-check">
-                <input class="form-check-input" type="checkbox" id="modelo" formControlName="modelo">
+              <div class="form-check form-switch">
+                <input class="form-check-input" type="checkbox" id="modelo"
+                                        formControlName="modelo">
                 <label class="form-check-label" for="modelo">
-                  Rotina Modelo
+                  Rotina Padrão
                 </label>
               </div>
               <div class="form-text">

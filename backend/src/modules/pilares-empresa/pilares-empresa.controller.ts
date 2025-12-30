@@ -2,6 +2,7 @@ import {
   Controller,
   Get,
   Post,
+  Patch,
   Delete,
   Body,
   Param,
@@ -13,6 +14,7 @@ import { ApiTags, ApiOperation, ApiBearerAuth, ApiResponse } from '@nestjs/swagg
 import { PilaresEmpresaService } from './pilares-empresa.service';
 import { ReordenarPilaresDto } from './dto/reordenar-pilares.dto';
 import { VincularPilaresDto } from './dto/vincular-pilares.dto';
+import { DefinirResponsavelDto } from './dto/definir-responsavel.dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../auth/guards/roles.guard';
 import { Roles } from '../auth/decorators/roles.decorator';
@@ -73,5 +75,25 @@ export class PilaresEmpresaController {
     @Request() req: ExpressRequest & { user: any },
   ) {
     return this.pilaresEmpresaService.remover(empresaId, pilarEmpresaId, req.user);
+  }
+
+  @Patch(':pilarEmpresaId/responsavel')
+  @Roles('ADMINISTRADOR', 'GESTOR')
+  @ApiOperation({ summary: 'Definir ou remover responsável de um pilar da empresa' })
+  @ApiResponse({ status: 200, description: 'Responsável definido com sucesso' })
+  @ApiResponse({ status: 403, description: 'Acesso negado (multi-tenant)' })
+  @ApiResponse({ status: 404, description: 'Pilar ou responsável não encontrado' })
+  definirResponsavel(
+    @Param('empresaId') empresaId: string,
+    @Param('pilarEmpresaId') pilarEmpresaId: string,
+    @Body() dto: DefinirResponsavelDto,
+    @Request() req: ExpressRequest & { user: any },
+  ) {
+    return this.pilaresEmpresaService.definirResponsavel(
+      empresaId, 
+      pilarEmpresaId, 
+      dto.responsavelId ?? null, 
+      req.user
+    );
   }
 }

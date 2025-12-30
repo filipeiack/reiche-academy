@@ -10,6 +10,7 @@ export interface PilarEmpresa {
   pilarId: string;
   ordem: number;
   ativo: boolean;
+  responsavelId?: string | null;
   createdAt: string;
   updatedAt: string;
   createdBy?: string;
@@ -76,5 +77,15 @@ export class PilaresEmpresaService {
   reordenarPilares(empresaId: string, ordens: Array<{ id: string; ordem: number }>): Observable<PilarEmpresa[]> {
     const dto: ReordenarPilaresDto = { ordens };
     return this.http.post<PilarEmpresa[]>(`${this.API_URL}/${empresaId}/pilares/reordenar`, dto);
+  }
+
+  /**
+   * Definir responsável por um pilar
+   */
+  definirResponsavel(empresaId: string, pilarEmpresaId: string, responsavelId: string | null): Observable<PilarEmpresa> {
+    return this.http.patch<PilarEmpresa>(
+      `${this.API_URL}/${empresaId}/pilares/${pilarEmpresaId}/responsavel`, 
+      { responsavelId }
+    );
   }
 }

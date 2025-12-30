@@ -1,7 +1,7 @@
-import { Component, OnInit, OnDestroy, inject } from '@angular/core';
+import { Component, OnInit, OnDestroy, ViewChild, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { NgbAlertModule, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
+import { NgbAlertModule, NgbProgressbar } from '@ng-bootstrap/ng-bootstrap';
 import { NgSelectModule } from '@ng-select/ng-select';
 import Swal from 'sweetalert2';
 import { Subject, Subscription, debounceTime, distinctUntilChanged } from 'rxjs';
@@ -10,6 +10,9 @@ import { DiagnosticoNotasService, PilarEmpresa, RotinaEmpresa, UpdateNotaRotinaD
 import { EmpresasService, Empresa } from '../../../core/services/empresas.service';
 import { AuthService } from '../../../core/services/auth.service';
 import { EmpresaBasic } from '@app/core/models/auth.model';
+import { NgbDropdownModule } from '@ng-bootstrap/ng-bootstrap';
+import { PilaresEmpresaModalComponent } from '../empresas/pilares-empresa-modal/pilares-empresa-modal.component';
+import { ResponsavelPilarModalComponent } from './responsavel-pilar-modal/responsavel-pilar-modal.component';
 
 interface AutoSaveQueueItem {
   rotinaEmpresaId: string;
@@ -24,8 +27,12 @@ interface AutoSaveQueueItem {
     CommonModule,
     FormsModule,
     NgbAlertModule,
+    NgbDropdownModule,
     NgSelectModule,
-    TranslatePipe
+    TranslatePipe,
+    NgbProgressbar,
+    PilaresEmpresaModalComponent,
+    ResponsavelPilarModalComponent
 ],
   templateUrl: './diagnostico-notas.component.html',
   styleUrl: './diagnostico-notas.component.scss'
@@ -35,6 +42,9 @@ export class DiagnosticoNotasComponent implements OnInit, OnDestroy {
   private empresasService = inject(EmpresasService);
   private authService = inject(AuthService);
 
+  @ViewChild(PilaresEmpresaModalComponent) pilaresModal!: PilaresEmpresaModalComponent;
+  @ViewChild(ResponsavelPilarModalComponent) responsavelModal!: ResponsavelPilarModalComponent;
+
   pilares: PilarEmpresa[] = [];
   empresas: Empresa[] = [];
   empresaLogada: EmpresaBasic | null = null;
@@ -42,6 +52,14 @@ export class DiagnosticoNotasComponent implements OnInit, OnDestroy {
   isAdmin = false;
   loading = false;
   error = '';
+
+  get isReadOnlyPerfil(): boolean {
+    const user = this.authService.getCurrentUser();
+    if (!user?.perfil) return false;
+    const perfilCodigo = typeof user.perfil === 'object' ? user.perfil.codigo : user.perfil;
+    // Apenas COLABORADOR e LEITURA são somente leitura, GESTOR pode editar
+    return ['COLABORADOR', 'LEITURA'].includes(perfilCodigo);
+  }
   
   // Controle de accordion manual
   pilarExpandido: { [key: number]: boolean } = {};
@@ -150,6 +168,44 @@ private loadEmpresas(): void {
    */
   togglePilar(index: number): void {
     this.pilarExpandido[index] = !this.pilarExpandido[index];
+  }
+
+  /**
+   * Abre o modal de gerenciamento de pilares
+   */
+  abrirModalPilares(): void {
+    if (this.pilaresModal && this.selectedEmpresaId) {
+      this.pilaresModal.open();
+    }
+  }
+
+  /**
+   * Callback quando pilares são modificados no modal
+   */
+  onPilaresModificados(): void {
+    // Recarregar diagnóstico para refletir mudanças nos pilares
+    if (this.selectedEmpresaId) {
+      this.loadDiagnostico();
+    }
+  }
+
+  /**
+   * Abre o modal de definição de responsável
+   */
+  abrirModalResponsavel(pilarEmpresa: PilarEmpresa): void {
+    if (this.responsavelModal) {
+      this.responsavelModal.open(pilarEmpresa);
+    }
+  }
+
+  /**
+   * Callback quando responsável é atualizado
+   */
+  onResponsavelAtualizado(): void {
+    // Recarregar diagnóstico para refletir mudanças no responsável
+    if (this.selectedEmpresaId) {
+      this.loadDiagnostico();
+    }
   }
 
   /**
@@ -346,6 +402,41 @@ private loadEmpresas(): void {
       default:
         return 'badge bg-secondary';
     }
+  }
+
+  /**
+   * Calcula o percentual de progresso de um pilar
+   * - Se rotina tem nota E criticidade = 100% daquela rotina
+   * - Se rotina tem apenas nota OU criticidade = 50% daquela rotina
+   * - Se rotina não tem nada = 0% daquela rotina
+   */
+  getPilarProgress(pilar: PilarEmpresa): number {
+    if (!pilar.rotinasEmpresa || pilar.rotinasEmpresa.length === 0) {
+      return 0;
+    }
+
+    let totalProgress = 0;
+    const totalRotinas = pilar.rotinasEmpresa.length;
+
+    pilar.rotinasEmpresa.forEach(rotina => {
+      const nota = this.getNotaAtual(rotina);
+      const criticidade = this.getCriticidadeAtual(rotina);
+
+      const hasNota = nota !== null && nota !== undefined;
+      const hasCriticidade = criticidade !== null && criticidade !== undefined && criticidade !== '';
+
+      if (hasNota && hasCriticidade) {
+        // Ambos preenchidos = 100% da rotina
+        totalProgress += 1;
+      } else if (hasNota || hasCriticidade) {
+        // Apenas um preenchido = 50% da rotina
+        totalProgress += 0.5;
+      }
+      // Se nenhum preenchido, não adiciona nada (0%)
+    });
+
+    // Retorna o percentual total do pilar
+    return (totalProgress / totalRotinas) * 100;
   }
 
   /**

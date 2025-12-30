@@ -68,7 +68,22 @@
 
                         <!-- Pilar Padrão e Ordem (lado a lado) -->
                         <div class="row mb-3">
-                            <div class="col-md-6 mb-3">
+                            <div class="col-md-8 mb-3">
+                                <div class="form-check form-switch">
+                                    <input class="form-check-input" type="checkbox" id="modelo"
+                                        formControlName="modelo">
+                                    <label class="form-check-label" for="modelo">
+                                        {{ 'PILARES.FIELDS.IS_MODEL' | translate }}
+                                    </label>
+                                </div>
+                                <div class="form-text">
+                                    {{ 'PILARES.HELPERS.MODEL' | translate }}
+                                </div>
+                            </div>
+
+                            <!-- Ordem padrao do pilar comentado para rever necessidade no futuro -->
+                            <!--
+                            <div class="col-md-4 mb-3">
                                 <label for="ordem" class="form-label">
                                     {{ 'PILARES.FIELDS.ORDER' | translate }}
                                 </label>
@@ -82,21 +97,7 @@
                                     {{ getFieldError('ordem') }}
                                 </div>
                                 }
-                            </div>
-
-                            <div class="col-md-6 mb-3">
-                                <label class="form-label d-block">{{ 'PILARES.FIELDS.CONFIGURATION' | translate }}</label>
-                                <div class="form-check form-switch">
-                                    <input class="form-check-input" type="checkbox" id="modelo"
-                                        formControlName="modelo">
-                                    <label class="form-check-label" for="modelo">
-                                        {{ 'PILARES.FIELDS.IS_MODEL' | translate }}
-                                    </label>
-                                </div>
-                                <div class="form-text">
-                                    {{ 'PILARES.HELPERS.MODEL' | translate }}
-                                </div>
-                            </div>
+                            </div> -->
                         </div>
 
                     </div>
