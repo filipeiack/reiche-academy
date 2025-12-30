@@ -1,3 +1,5 @@
+import { EstadoBrasil } from "../services/empresas.service";
+
 export interface LoginRequest {
   email: string;
   senha: string;
@@ -14,6 +16,8 @@ export interface EmpresaBasic {
   id: string;
   nome: string;
   cnpj: string;
+  cidade?: string;
+  estado?: EstadoBrasil;
   logoUrl?: string | null;
 }
 

@@ -9,6 +9,7 @@ import { TranslatePipe } from '../../../core/pipes/translate.pipe';
 import { DiagnosticoNotasService, PilarEmpresa, RotinaEmpresa, UpdateNotaRotinaDto } from '../../../core/services/diagnostico-notas.service';
 import { EmpresasService, Empresa } from '../../../core/services/empresas.service';
 import { AuthService } from '../../../core/services/auth.service';
+import { EmpresaBasic } from '@app/core/models/auth.model';
 
 interface AutoSaveQueueItem {
   rotinaEmpresaId: string;
@@ -36,6 +37,7 @@ export class DiagnosticoNotasComponent implements OnInit, OnDestroy {
 
   pilares: PilarEmpresa[] = [];
   empresas: Empresa[] = [];
+  empresaLogada: EmpresaBasic | null = null;
   selectedEmpresaId: string | null = null;
   isAdmin = false;
   loading = false;
@@ -86,6 +88,7 @@ export class DiagnosticoNotasComponent implements OnInit, OnDestroy {
     } else if (user.empresaId) {
       // Perfil cliente: usar empresa do usuário logado
       this.selectedEmpresaId = user.empresaId;
+      this.empresaLogada = user.empresa ?? null;
       this.loadDiagnostico();
     } else {
       // Usuário sem empresa associada

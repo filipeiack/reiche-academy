@@ -37,12 +37,21 @@ export interface Pilar {
   descricao?: string;
 }
 
+export interface ResponsavelPilar {
+  id: string;
+  nome: string;
+  email: string;
+  cargo?: string;
+}
+
 export interface PilarEmpresa {
   id: string;
   empresaId: string;
   pilarId: string;
   ordem: number;
+  responsavelId?: string;
   pilar: Pilar;
+  responsavel?: ResponsavelPilar;
   rotinasEmpresa: RotinaEmpresa[];
 }
 

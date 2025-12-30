@@ -61,6 +61,14 @@ export class DiagnosticosService {
             descricao: true,
           },
         },
+        responsavel: {
+          select: {
+            id: true,
+            nome: true,
+            email: true,
+            cargo: true,
+          },
+        },
         rotinasEmpresa: {
           where: {
             ativo: true,

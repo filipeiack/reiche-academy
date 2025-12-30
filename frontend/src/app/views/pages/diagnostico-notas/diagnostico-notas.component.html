@@ -41,7 +41,7 @@
         <div class="card-body">
             <!-- Seletor de empresa (apenas para admin) -->
             @if (isAdmin) {
-            <div class="empresa-selector">
+            <div>
                 <label for="empresaSelect" class="form-label">
                     {{ 'DIAGNOSTICO.SELECT_EMPRESA' | translate }}
                 </label>
@@ -58,6 +58,16 @@
                         </div>
                     </ng-template>
                 </ng-select>
+            </div>
+            } @else if (empresaLogada) {
+            <div class="empresa-info">
+                <i class="feather icon-briefcase"></i>
+                <span class="h3">
+                    {{ empresaLogada.nome }}
+                </span>
+                @if (empresaLogada.cnpj) {
+                        <span class="text-muted small d-block">{{ empresaLogada.cnpj }} - {{ empresaLogada.cidade }}/{{ empresaLogada.estado }}</span>
+                    }
             </div>
             }
 
