@@ -27,11 +27,11 @@ export class RotinasController {
   constructor(private readonly rotinasService: RotinasService) {}
 
   @Post()
-  @Roles('ADMINISTRADOR')
-  @ApiOperation({ summary: 'Criar nova rotina' })
+  @Roles('ADMINISTRADOR', 'GESTOR')
+  @ApiOperation({ summary: 'Criar nova rotina (e opcionalmente vincular a empresa via pilarEmpresaId)' })
   @ApiResponse({ status: 201, description: 'Rotina criada com sucesso' })
-  create(@Body() createRotinaDto: CreateRotinaDto, @Request() req: ExpressRequest & { user: { id: string } }) {
-    return this.rotinasService.create(createRotinaDto, req.user.id);
+  create(@Body() createRotinaDto: CreateRotinaDto, @Request() req: ExpressRequest & { user: any }) {
+    return this.rotinasService.create(createRotinaDto, req.user);
   }
 
   @Get()

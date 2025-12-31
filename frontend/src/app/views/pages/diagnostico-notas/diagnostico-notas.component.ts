@@ -13,6 +13,7 @@ import { EmpresaBasic } from '@app/core/models/auth.model';
 import { NgbDropdownModule } from '@ng-bootstrap/ng-bootstrap';
 import { PilaresEmpresaModalComponent } from '../empresas/pilares-empresa-modal/pilares-empresa-modal.component';
 import { ResponsavelPilarModalComponent } from './responsavel-pilar-modal/responsavel-pilar-modal.component';
+import { NovaRotinaModalComponent } from './nova-rotina-modal/nova-rotina-modal.component';
 
 interface AutoSaveQueueItem {
   rotinaEmpresaId: string;
@@ -32,7 +33,8 @@ interface AutoSaveQueueItem {
     TranslatePipe,
     NgbProgressbar,
     PilaresEmpresaModalComponent,
-    ResponsavelPilarModalComponent
+    ResponsavelPilarModalComponent,
+    NovaRotinaModalComponent
 ],
   templateUrl: './diagnostico-notas.component.html',
   styleUrl: './diagnostico-notas.component.scss'
@@ -44,6 +46,7 @@ export class DiagnosticoNotasComponent implements OnInit, OnDestroy {
 
   @ViewChild(PilaresEmpresaModalComponent) pilaresModal!: PilaresEmpresaModalComponent;
   @ViewChild(ResponsavelPilarModalComponent) responsavelModal!: ResponsavelPilarModalComponent;
+  @ViewChild(NovaRotinaModalComponent) novaRotinaModal!: NovaRotinaModalComponent;
 
   pilares: PilarEmpresa[] = [];
   empresas: Empresa[] = [];
@@ -203,6 +206,25 @@ private loadEmpresas(): void {
    */
   onResponsavelAtualizado(): void {
     // Recarregar diagnóstico para refletir mudanças no responsável
+    if (this.selectedEmpresaId) {
+      this.loadDiagnostico();
+    }
+  }
+
+  /**
+   * Abre o modal de nova rotina customizada
+   */
+  abrirModalNovaRotina(pilarEmpresa: PilarEmpresa): void {
+    if (this.novaRotinaModal) {
+      this.novaRotinaModal.open(pilarEmpresa);
+    }
+  }
+
+  /**
+   * Callback quando rotina é criada
+   */
+  onRotinaCriada(): void {
+    // Recarregar diagnóstico para refletir nova rotina
     if (this.selectedEmpresaId) {
       this.loadDiagnostico();
     }

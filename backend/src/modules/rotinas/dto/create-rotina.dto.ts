@@ -29,4 +29,9 @@ export class CreateRotinaDto {
   @IsUUID()
   @IsNotEmpty()
   pilarId: string;
+
+  @ApiPropertyOptional({ example: 'uuid-do-pilar-empresa', description: 'Se fornecido, cria automaticamente o vínculo RotinaEmpresa' })
+  @IsUUID()
+  @IsOptional()
+  pilarEmpresaId?: string;
 }

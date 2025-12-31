@@ -8,7 +8,7 @@ import { AuditService } from '../audit/audit.service';
 export class RotinasService {
   constructor(private prisma: PrismaService, private audit: AuditService) {}
 
-  async create(createRotinaDto: CreateRotinaDto, userId: string) {
+  async create(createRotinaDto: CreateRotinaDto, user: any) {
     // Verifica se o pilar existe
     const pilar = await this.prisma.pilar.findUnique({
       where: { id: createRotinaDto.pilarId },
@@ -18,25 +18,60 @@ export class RotinasService {
       throw new NotFoundException('Pilar não encontrado');
     }
 
-    const created = await this.prisma.rotina.create({
-      data: {
-        ...createRotinaDto,
-        createdBy: userId,
-      },
-      include: {
-        pilar: true,
-      },
+    // Se pilarEmpresaId foi fornecido, validar multi-tenant para GESTOR
+    if (createRotinaDto.pilarEmpresaId) {
+      const pilarEmpresa = await this.prisma.pilarEmpresa.findUnique({
+        where: { id: createRotinaDto.pilarEmpresaId },
+        include: { empresa: true },
+      });
+
+      if (!pilarEmpresa) {
+        throw new NotFoundException('PilarEmpresa não encontrado');
+      }
+
+      // GESTOR só pode criar rotinas para sua própria empresa
+      if (user.perfil === 'GESTOR' && pilarEmpresa.empresaId !== user.empresaId) {
+        throw new NotFoundException('PilarEmpresa não encontrado');
+      }
+    }
+
+    // Criar rotina e RotinaEmpresa em transação se pilarEmpresaId fornecido
+    const { pilarEmpresaId, ...rotinaData } = createRotinaDto;
+    
+    const created = await this.prisma.$transaction(async (tx) => {
+      const rotina = await tx.rotina.create({
+        data: {
+          ...rotinaData,
+          createdBy: user.id,
+        },
+        include: {
+          pilar: true,
+        },
+      });
+
+      // Se pilarEmpresaId foi fornecido, criar também o vínculo RotinaEmpresa
+      if (pilarEmpresaId) {
+        await tx.rotinaEmpresa.create({
+          data: {
+            pilarEmpresaId,
+            rotinaId: rotina.id,
+            createdBy: user.id,
+          },
+        });
+      }
+
+      return rotina;
     });
 
-    const user = await this.prisma.usuario.findUnique({ where: { id: userId } });
+    const usuario = await this.prisma.usuario.findUnique({ where: { id: user.id } });
     await this.audit.log({
-      usuarioId: userId,
-      usuarioNome: user?.nome ?? '',
-      usuarioEmail: user?.email ?? '',
+      usuarioId: user.id,
+      usuarioNome: usuario?.nome ?? '',
+      usuarioEmail: usuario?.email ?? '',
       entidade: 'rotinas',
       entidadeId: created.id,
       acao: 'CREATE',
-      dadosDepois: created,
+      dadosDepois: { ...created, pilarEmpresaId },
     });
 
     return created;

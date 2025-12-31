@@ -28,6 +28,7 @@ export interface CreateRotinaDto {
   ordem?: number;
   pilarId: string;
   modelo?: boolean;
+  pilarEmpresaId?: string;
 }
 
 export interface UpdateRotinaDto {

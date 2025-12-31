@@ -140,7 +140,7 @@
             <div class="card mb-1">
                 <div class="card-header sticky-header-pilar">
                     @if (pilar.rotinasEmpresa.length > 0) {
-                    <ngb-progressbar type="primary" [value]="getPilarProgress(pilar)" height="5px"></ngb-progressbar>
+                    <ngb-progressbar type="primary" [value]="getPilarProgress(pilar)" height="5px" style="font-size: 7px;"> {{ getPilarProgress(pilar) }} % </ngb-progressbar>
                     }
                     <div class="pilar-header">
                         <div class="d-flex align-items-center gap-2">
@@ -167,9 +167,10 @@
                                         <i class="feather icon-user" style="font-size: small;"></i>
                                         <span class="">Definir Responsável</span>
                                     </a>
-                                    <a ngbDropdownItem class="d-flex align-items-center gap-1" href=""
-                                        (click)="false"><i class="feather icon-plus-circle"
-                                            style="font-size: small;"></i> <span class="">Nova Rotina</span></a>
+                                    <a ngbDropdownItem class="d-flex align-items-center gap-1" (click)="abrirModalNovaRotina(pilar); $event.preventDefault()">
+                                        <i class="feather icon-plus-circle" style="font-size: small;"></i> 
+                                        <span class="">Nova Rotina</span>
+                                    </a>
                                     <a ngbDropdownItem class="d-flex align-items-center gap-1" href=""
                                         (click)="false"><i class="feather icon-menu" style="font-size: small;"></i>
                                         <span class="">Reordenar Rotinas</span></a>
@@ -287,3 +288,8 @@
     [empresaId]="selectedEmpresaId || ''"
     (responsavelAtualizado)="onResponsavelAtualizado()">
 </app-responsavel-pilar-modal>
+
+<!-- Modal para criar nova rotina -->
+<app-nova-rotina-modal
+    (rotinaCriada)="onRotinaCriada()">
+</app-nova-rotina-modal>
