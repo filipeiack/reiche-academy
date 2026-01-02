@@ -1,111 +1,76 @@
-# Regras de Negócio — Diagnosticos
+# Regras de Negócio — Diagnósticos
 
-**Módulo:** Diagnosticos  
+**Módulo:** Diagnósticos  
 **Backend:** `backend/src/modules/diagnosticos/`  
-**Frontend:** Não implementado  
-**Última extração:** 22/12/2024  
+**Frontend:** `frontend/src/app/views/pages/diagnostico-notas/`  
+**Última extração:** 02/01/2026  
 **Agente:** Extractor de Regras
 
 ---
 
 ## 1. Visão Geral
 
-O módulo Diagnosticos é responsável por:
-- **Gerenciar estruturas de dados** para diagnóstico empresarial
-- **DTOs definidos** para validação de entrada
-- **Sem implementação de lógica de negócio** (apenas definições de estrutura)
+O módulo Diagnósticos é responsável por:
+- **Buscar estrutura completa** de pilares → rotinas → notas por empresa (diagnóstico empresarial)
+- **Upsert de notas** com auto-save (criar ou atualizar notas de rotinas)
+- **Validação multi-tenant** estrita (ADMINISTRADOR acessa tudo, outros apenas sua empresa)
+- **Auditoria completa** de criação e atualização de notas
+- **Interface de diagnóstico** com auto-save, cache local e cálculo de progresso
+- **Gestão de rotinas customizadas** por empresa
+- **Definição de responsáveis** por pilar em cada empresa
 
 **Entidades principais:**
-- PilarEmpresa (vinculação empresa-pilar)
-- RotinaEmpresa (vinculação empresa-rotina via pilar)
-- NotaRotina (avaliação de rotinas)
-- PilarEvolucao (evolução histórica de pilares)
-- AgendaReuniao (agendamento de reuniões)
+- NotaRotina (avaliação de rotinas com nota 1-10 e criticidade)
+- PilarEmpresa (vinculação empresa-pilar com responsável)
+- RotinaEmpresa (vinculação rotina-pilar por empresa)
 
 **Endpoints implementados:**
-- ❌ NENHUM (módulo sem controller ou service)
+- `GET /empresas/:empresaId/diagnostico/notas` — Buscar estrutura completa de diagnóstico (todos os perfis)
+- `PATCH /rotinas-empresa/:rotinaEmpresaId/nota` — Atualizar ou criar nota (ADMINISTRADOR, CONSULTOR, GESTOR, COLABORADOR)
 
-**Status do módulo:** 🚧 **STUB** (apenas estrutura, sem implementação)
-
----
-
-## 2. Visão Geral do Status
-
-⚠️ **IMPORTANTE:** Este módulo possui **APENAS DTOs** definidos.
-
-**Arquivos existentes:**
-- ✅ `diagnosticos.module.ts` (módulo vazio)
-- ✅ DTOs de criação e atualização (5 entidades)
-- ❌ **NÃO existe** `diagnosticos.service.ts`
-- ❌ **NÃO existe** `diagnosticos.controller.ts`
-
-**Implicações:**
-- DTOs estão prontos para validação
-- Nenhuma lógica de negócio implementada
-- Nenhum endpoint disponível
-- Estruturas existem no Prisma schema
-- Módulo planejado mas não implementado
+**Status do módulo:** ✅ **IMPLEMENTADO** (backend + frontend completos)
 
 ---
 
-## 3. Entidades (Definidas no Schema)
+## 2. Arquitetura do Módulo
 
-### 3.1. PilarEmpresa
+### 2.1. Backend
 
-**Localização:** `backend/prisma/schema.prisma`
+**Arquivos principais:**
+- `diagnosticos.service.ts` — Lógica de negócio
+- `diagnosticos.controller.ts` — Endpoints REST
+- `diagnosticos.module.ts` — Módulo NestJS
+- DTOs de validação (update-nota-rotina.dto.ts)
 
-| Campo | Tipo | Descrição |
-|-------|------|-----------|
-| id | String (UUID) | Identificador único |
-| empresaId | String | FK para Empresa |
-| pilarId | String | FK para Pilar |
-| ativo | Boolean (default: true) | Soft delete flag |
-| createdAt | DateTime | Data de criação |
-| updatedAt | DateTime | Data da última atualização |
-| createdBy | String? | ID do usuário que criou |
-| updatedBy | String? | ID do usuário que atualizou |
+**Integrações:**
+- PrismaService — Acesso ao banco de dados
+- AuditService — Registro de operações CUD
 
-**Relações:**
-- `empresa`: Empresa (empresa associada)
-- `pilar`: Pilar (pilar associado)
-- `rotinasEmpresa`: RotinaEmpresa[] (rotinas vinculadas)
-- `evolucao`: PilarEvolucao[] (histórico de evolução)
+### 2.2. Frontend
 
-**Índices:**
-- `[empresaId, pilarId]` (unique)
+**Arquivos principais:**
+- `diagnostico-notas.component.ts` — Componente principal (590 linhas)
+- `nova-rotina-modal.component.ts` — Modal criação de rotinas customizadas
+- `responsavel-pilar-modal.component.ts` — Modal definição de responsáveis
+- `rotinas-pilar-modal.component.ts` — Modal gestão de rotinas do pilar
 
-**Observação:** Já mencionado em empresas.md e pilares.md, mas sem implementação CRUD.
-
----
-
-### 3.2. RotinaEmpresa
-
-**Localização:** `backend/prisma/schema.prisma`
-
-| Campo | Tipo | Descrição |
-|-------|------|-----------|
-| id | String (UUID) | Identificador único |
-| pilarEmpresaId | String | FK para PilarEmpresa |
-| rotinaId | String | FK para Rotina |
-| observacao | String? | Observação customizada da empresa |
-| createdAt | DateTime | Data de criação |
-| updatedAt | DateTime | Data da última atualização |
-| createdBy | String? | ID do usuário que criou |
-| updatedBy | String? | ID do usuário que atualizado |
-
-**Relações:**
-- `pilarEmpresa`: PilarEmpresa (vínculo pilar-empresa)
-- `rotina`: Rotina (rotina template)
-- `notas`: NotaRotina[] (avaliações da rotina)
-
-**Índices:**
-- `[pilarEmpresaId, rotinaId]` (unique)
-
-**Observação:** Permite vinculação de rotinas específicas a empresas via pilar.
+**Funcionalidades:**
+- Auto-save com debounce (1000ms)
+- Cache local de valores em edição
+- Cálculo de progresso por pilar (0-100%)
+- Cálculo de média de notas por pilar
+- Validação em tempo real (nota 1-10, criticidade obrigatória)
+- Retry automático em caso de erro (até 3 tentativas)
+- Indicadores visuais de salvamento e timestamp do último save
+- Suporte a perfis read-only (COLABORADOR e LEITURA)
 
 ---
 
-### 3.3. NotaRotina
+## 3. Entidades
+
+### 3.1. NotaRotina (IMPLEMENTADO)
+
+### 3.1. NotaRotina (IMPLEMENTADO)
 
 **Localização:** `backend/prisma/schema.prisma`
 
@@ -113,7 +78,7 @@ O módulo Diagnosticos é responsável por:
 |-------|------|-----------|
 | id | String (UUID) | Identificador único |
 | rotinaEmpresaId | String | FK para RotinaEmpresa |
-| nota | Float? | Avaliação de 0 a 10 |
+| nota | Float? | Avaliação de 1 a 10 (validado no DTO) |
 | criticidade | Criticidade? | Nível de criticidade (ALTO, MEDIO, BAIXO) |
 | createdAt | DateTime | Data de criação |
 | updatedAt | DateTime | Data da última atualização |
@@ -122,7 +87,7 @@ O módulo Diagnosticos é responsável por:
 
 **Enum Criticidade:**
 - ALTO
-- MEDIO
+- MEDIO  
 - BAIXO
 
 **Relações:**
@@ -131,73 +96,687 @@ O módulo Diagnosticos é responsável por:
 **Índices:**
 - `[rotinaEmpresaId]`
 
-**Observação:** Permite múltiplas avaliações de uma mesma rotina (histórico de evolução).
+**Comportamento:**
+- Sistema mantém histórico de notas (não sobrescreve, cria nova)
+- Endpoint `upsertNotaRotina` atualiza a nota mais recente ou cria nova
+- Frontend exibe apenas a nota mais recente (`orderBy: { createdAt: 'desc' }, take: 1`)
 
 ---
 
-### 3.4. PilarEvolucao
+## 4. Regras Implementadas
 
-**Localização:** `backend/prisma/schema.prisma`
+### R-DIAG-001: Buscar Estrutura Completa de Diagnóstico
 
-| Campo | Tipo | Descrição |
-|-------|------|-----------|
-| id | String (UUID) | Identificador único |
-| pilarEmpresaId | String | FK para PilarEmpresa |
-| mediaNotas | Float? | Média das notas das rotinas do pilar (0-10) |
-| createdAt | DateTime | Data de criação (snapshot temporal) |
-| updatedAt | DateTime | Data da última atualização |
-| createdBy | String? | ID do usuário que criou |
-| updatedBy | String? | ID do usuário que atualizou |
+**Descrição:** Endpoint retorna estrutura hierárquica completa de pilares → rotinas → notas de uma empresa.
 
-**Relações:**
-- `pilarEmpresa`: PilarEmpresa (pilar avaliado)
+**Implementação:**
+- **Endpoint:** `GET /empresas/:empresaId/diagnostico/notas` (todos os perfis)
+- **Método:** `DiagnosticosService.getDiagnosticoByEmpresa()`
 
-**Observação:** Permite rastrear evolução histórica da avaliação de um pilar ao longo do tempo.
+**Validação Multi-Tenant:**
+```typescript
+if (user.perfil?.codigo !== 'ADMINISTRADOR' && user.empresaId !== empresaId) {
+  throw new ForbiddenException('Você não pode acessar dados de outra empresa');
+}
+```
+
+**Filtros Aplicados:**
+```typescript
+where: {
+  empresaId,
+  ativo: true,
+  pilar: { ativo: true }, // Cascata lógica
+}
+```
+
+**Estrutura Retornada:**
+```typescript
+PilarEmpresa[] {
+  id, ordem, responsavelId,
+  pilar: { id, nome, descricao },
+  responsavel: { id, nome, email, cargo } | null,
+  rotinasEmpresa: RotinaEmpresa[] {
+    id, ordem,
+    rotina: { id, nome, descricao },
+    notas: NotaRotina[] (apenas a mais recente)
+  }
+}
+```
+
+**Ordenação:**
+- Pilares: por `ordem` ASC
+- Rotinas: por `ordem` ASC dentro de cada pilar
+- Notas: mais recente primeiro (`createdAt` DESC, `take: 1`)
+
+**Include Completo:**
+- Dados do pilar
+- Responsável do pilar (se definido)
+- Rotinas ativas do pilar
+- Nota mais recente de cada rotina
+
+**Perfis autorizados:** Todos (ADMINISTRADOR, CONSULTOR, GESTOR, COLABORADOR, LEITURA)
+
+**Arquivo:** [diagnosticos.service.ts](../../backend/src/modules/diagnosticos/diagnosticos.service.ts#L40-L90)
 
 ---
 
-### 3.5. AgendaReuniao
+### R-DIAG-002: Upsert de Nota com Auto-Save
 
-**Localização:** `backend/prisma/schema.prisma`
+**Descrição:** Endpoint cria ou atualiza nota de uma rotina. Se já existe nota mais recente, atualiza. Senão, cria nova.
 
-| Campo | Tipo | Descrição |
-|-------|------|-----------|
-| id | String (UUID) | Identificador único |
-| titulo | String | Título da reunião |
-| descricao | String? | Descrição detalhada |
-| dataHora | DateTime | Data e hora da reunião |
-| duracao | Int? | Duração em minutos |
-| local | String? | Local físico da reunião |
-| link | String? | Link para reunião online |
-| usuarioId | String | FK para Usuario (organizador) |
-| createdAt | DateTime | Data de criação |
-| updatedAt | DateTime | Data da última atualização |
+**Implementação:**
+- **Endpoint:** `PATCH /rotinas-empresa/:rotinaEmpresaId/nota` (ADMINISTRADOR, CONSULTOR, GESTOR, COLABORADOR)
+- **Método:** `DiagnosticosService.upsertNotaRotina()`
+- **DTO:** UpdateNotaRotinaDto
 
-**Relações:**
-- `usuario`: Usuario (organizador da reunião)
+**Validação Multi-Tenant:**
+```typescript
+const rotinaEmpresa = await this.prisma.rotinaEmpresa.findUnique({
+  where: { id: rotinaEmpresaId },
+  include: { pilarEmpresa: { select: { empresaId: true } } },
+});
 
-**Índices:**
-- `[usuarioId]`
+if (user.perfil?.codigo !== 'ADMINISTRADOR' && 
+    user.empresaId !== rotinaEmpresa.pilarEmpresa.empresaId) {
+  throw new ForbiddenException('Você não pode acessar dados de outra empresa');
+}
+```
 
-**Observação:** Agenda de reuniões relacionadas ao processo de diagnóstico.
+**Lógica de Upsert:**
+```typescript
+// Buscar nota mais recente
+const notaExistente = await this.prisma.notaRotina.findFirst({
+  where: { rotinaEmpresaId },
+  orderBy: { createdAt: 'desc' },
+});
+
+if (notaExistente) {
+  // Atualizar nota existente
+  nota = await this.prisma.notaRotina.update({
+    where: { id: notaExistente.id },
+    data: {
+      nota: updateDto.nota,
+      criticidade: updateDto.criticidade,
+      updatedBy: user.id,
+    },
+  });
+} else {
+  // Criar nova nota
+  nota = await this.prisma.notaRotina.create({
+    data: {
+      rotinaEmpresaId,
+      nota: updateDto.nota,
+      criticidade: updateDto.criticidade,
+      createdBy: user.id,
+      updatedBy: user.id,
+    },
+  });
+}
+```
+
+**Validação de DTO:**
+- `nota`: number, required, min: 1, max: 10
+- `criticidade`: enum (ALTO, MEDIO, BAIXO), required
+
+**Auditoria:**
+- **UPDATE**: Registra `dadosAntes` e `dadosDepois`
+- **CREATE**: Registra apenas `dadosDepois` + `rotinaEmpresaId`
+
+**Retorno:**
+```typescript
+{
+  message: 'Nota atualizada com sucesso' | 'Nota criada com sucesso',
+  nota: NotaRotina (com includes: rotinaEmpresa, rotina, pilarEmpresa, pilar)
+}
+```
+
+**Perfis autorizados:** ADMINISTRADOR, CONSULTOR, GESTOR, COLABORADOR (LEITURA **não** pode salvar)
+
+**Arquivo:** [diagnosticos.service.ts](../../backend/src/modules/diagnosticos/diagnosticos.service.ts#L92-L196)
 
 ---
 
-## 4. DTOs Implementados
+### RA-DIAG-001: Auditoria Completa de Notas
 
-### 4.1. CreatePilarEmpresaDto
+**Descrição:** Todas operações CREATE e UPDATE em NotaRotina são auditadas.
+
+**Implementação:**
+- **Serviço:** AuditService
+- **Entidade:** 'NotaRotina'
+
+**Dados auditados:**
+- usuarioId, usuarioNome, usuarioEmail
+- entidade: 'NotaRotina'
+- entidadeId: ID da nota
+- acao: CREATE | UPDATE
+- dadosAntes (em UPDATE): { nota, criticidade }
+- dadosDepois (sempre): { nota, criticidade, rotinaEmpresaId (em CREATE) }
+
+**Cobertura:**
+- ✅ CREATE (criação de nota)
+- ✅ UPDATE (atualização de nota)
+- ❌ DELETE (não implementado — notas não são deletadas, apenas historico mantido)
+
+**Arquivo:** [diagnosticos.service.ts](../../backend/src/modules/diagnosticos/diagnosticos.service.ts#L138-L148, L181-L191)
+
+---
+
+## 5. Regras de Interface (Frontend)
+
+### UI-DIAG-001: Tela de Diagnóstico com Auto-Save
+
+**Descrição:** Interface principal de diagnóstico empresarial com auto-save inteligente.
+
+**Acesso:** Todos os perfis autenticados  
+**Rota:** `/diagnostico/notas`
+
+**Localização:** `frontend/src/app/views/pages/diagnostico-notas/`
+
+**Funcionalidades:**
+
+1. **Seleção de Empresa:**
+   - ADMINISTRADOR: ng-select com lista de empresas ativas
+   - Outros perfis: Empresa pré-selecionada (empresaId do usuário)
+
+2. **Estrutura Hierárquica:**
+   - Accordion expansível por pilar
+   - Todos os pilares inicialmente expandidos
+   - Rotinas listadas dentro de cada pilar (ordenadas por `ordem`)
+
+3. **Auto-Save com Debounce:**
+   - Debounce de 1000ms após última alteração
+   - Salva automaticamente nota + criticidade
+   - Cache local de valores em edição
+   - Indicador visual "Salvando..." durante operação
+
+4. **Validações em Tempo Real:**
+   - Nota: obrigatória, 1-10
+   - Criticidade: obrigatória (ALTO, MEDIO, BAIXO)
+   - Ambos os campos devem estar preenchidos para salvar
+   - Validação silenciosa (aguarda usuário preencher ambos)
+
+5. **Retry Automático:**
+   - Até 3 tentativas em caso de erro
+   - Delay de 2 segundos entre tentativas
+   - Toast de erro persistente após falha final
+
+6. **Indicadores Visuais:**
+   - Contador de saves em andamento (`savingCount`)
+   - Timestamp do último salvamento bem-sucedido
+   - Progress bar por pilar (0-100%)
+   - Média de notas por pilar (0-10)
+   - Badges de criticidade com cores (danger, warning, success)
+
+---
+
+### UI-DIAG-002: Cálculo de Progresso por Pilar
+
+**Descrição:** Algoritmo de cálculo de percentual de preenchimento de diagnóstico.
+
+**Lógica:**
+```typescript
+getPilarProgress(pilar: PilarEmpresa): number {
+  let totalProgress = 0;
+  const totalRotinas = pilar.rotinasEmpresa.length;
+
+  pilar.rotinasEmpresa.forEach(rotina => {
+    const hasNota = nota !== null && nota !== undefined;
+    const hasCriticidade = criticidade !== null && criticidade !== undefined;
+
+    if (hasNota && hasCriticidade) {
+      totalProgress += 1; // 100% da rotina
+    } else if (hasNota || hasCriticidade) {
+      totalProgress += 0.5; // 50% da rotina
+    }
+    // Nenhum preenchido = 0%
+  });
+
+  return (totalProgress / totalRotinas) * 100;
+}
+```
+
+**Interpretação:**
+- Rotina com nota E criticidade = 100%
+- Rotina com apenas nota OU criticidade = 50%
+- Rotina sem nada = 0%
+- Pilar sem rotinas = 0%
+
+**Exibição:**
+- Progress bar Bootstrap com variante de cor:
+  - 0-33%: `bg-danger`
+  - 34-66%: `bg-warning`
+  - 67-100%: `bg-success`
+
+---
+
+### UI-DIAG-003: Cálculo de Média de Notas
+
+**Descrição:** Algoritmo de cálculo de média aritmética das notas de um pilar.
+
+**Lógica:**
+```typescript
+getPilarMediaNotas(pilar: PilarEmpresa): number {
+  const rotinasComNota = pilar.rotinasEmpresa.filter(rotina => 
+    rotina.nota !== null && rotina.nota !== undefined
+  );
+
+  if (rotinasComNota.length === 0) return 0;
+
+  const somaNotas = rotinasComNota.reduce((soma, rotina) => 
+    soma + (rotina.nota || 0), 0
+  );
+
+  return somaNotas / rotinasComNota.length;
+}
+```
+
+**Interpretação:**
+- Considera apenas rotinas com nota preenchida
+- Ignora rotinas sem nota (não afeta média)
+- Retorna 0 se nenhuma rotina tiver nota
+- Valor entre 0 e 10
+
+**Exibição:**
+- Badge com cor baseada na média:
+  - 0-4: `bg-danger`
+  - 5-7: `bg-warning`
+  - 8-10: `bg-success`
+- Precisão de 1 casa decimal (ex: 7.5)
+
+---
+
+### UI-DIAG-004: Cache Local e Priorização de Valores
+
+**Descrição:** Estratégia de cache para melhorar UX durante edição.
+
+**Implementação:**
+```typescript
+private notasCache = new Map<string, { nota: number | null, criticidade: string | null }>();
+
+getNotaAtual(rotinaEmpresa: RotinaEmpresa): number | null {
+  // Priorizar cache local (valores em edição)
+  const cached = this.notasCache.get(rotinaEmpresa.id);
+  if (cached?.nota !== undefined && cached?.nota !== null) {
+    return cached.nota;
+  }
+  // Fallback: valor salvo no backend
+  return rotinaEmpresa.notas?.[0]?.nota ?? null;
+}
+```
+
+**Justificativa:**
+- Evita "piscar" de valores durante digitação
+- Mantém valores visíveis mesmo antes de salvar
+- Sincroniza com backend após salvamento bem-sucedido
+- Limpa cache ao recarregar dados
+
+**Ciclo de Vida:**
+1. Usuário edita campo → valor vai para cache
+2. Debounce completa → salva no backend
+3. Backend retorna sucesso → atualiza dados locais + mantém cache
+4. Usuário recarrega página → limpa cache, mostra dados do backend
+
+---
+
+### UI-DIAG-005: Perfis Read-Only
+
+**Descrição:** Restrição de edição para perfis específicos.
+
+**Lógica:**
+```typescript
+get isReadOnlyPerfil(): boolean {
+  const perfilCodigo = user.perfil?.codigo;
+  return ['COLABORADOR', 'LEITURA'].includes(perfilCodigo);
+}
+```
+
+**Comportamento:**
+- **COLABORADOR e LEITURA**: Inputs desabilitados, sem auto-save
+- **GESTOR, CONSULTOR, ADMINISTRADOR**: Podem editar e salvar
+
+**Diferença em relação ao backend:**
+- Backend: COLABORADOR **pode** salvar notas
+- Frontend: COLABORADOR **não pode** editar (apenas leitura)
+- Decisão de UX: proteger COLABORADOR de edições acidentais no frontend
+
+---
+
+### UI-DIAG-006: Gestão de Pilares da Empresa
+
+**Descrição:** Botão "Gerenciar Pilares" abre modal reutilizado de empresas.
+
+**Implementação:**
+- Componente: `PilaresEmpresaModalComponent` (reutilizado)
+- Trigger: Botão no cabeçalho da tela
+- Callback: `onPilaresModificados()` → recarrega diagnóstico
+
+**Funcionalidades (herdadas):**
+- Adicionar/remover pilares
+- Reordenar pilares via drag & drop
+- Validação multi-tenant
+
+**Apenas para:** ADMINISTRADOR e GESTOR
+
+---
+
+### UI-DIAG-007: Definição de Responsável por Pilar
+
+**Descrição:** Modal para atribuir usuário responsável pelo acompanhamento de um pilar.
+
+**Implementação:**
+- Componente: `ResponsavelPilarModalComponent`
+- Localização: `frontend/src/app/views/pages/diagnostico-notas/responsavel-pilar-modal/`
+- Trigger: Botão "Definir Responsável" no card do pilar
+
+**Funcionalidades:**
+- ng-select com usuários da empresa
+- Exibe nome + email de cada usuário
+- Permite remover responsável (seleção null)
+- Callback: `onResponsavelAtualizado()` → recarrega diagnóstico
+
+**Backend Correspondente:**
+- Endpoint: `PATCH /empresas/:empresaId/pilares/:pilarEmpresaId/responsavel`
+- Validação: Responsável deve pertencer à mesma empresa
+
+**Apenas para:** ADMINISTRADOR e GESTOR
+
+---
+
+### UI-DIAG-008: Criação de Rotina Customizada
+
+**Descrição:** Modal para criar nova rotina não-modelo vinculada ao pilar da empresa.
+
+**Implementação:**
+- Componente: `NovaRotinaModalComponent`
+- Localização: `frontend/src/app/views/pages/diagnostico-notas/nova-rotina-modal/`
+- Trigger: Botão "Nova Rotina" no card do pilar
 
 **Campos:**
-- `empresaId`: @IsUUID(), @IsNotEmpty()
-- `pilarId`: @IsUUID(), @IsNotEmpty()
+- **Nome**: obrigatório, min 3 caracteres
+- **Descrição**: opcional, textarea
+- **PilarId**: automático (do pilar selecionado)
+- **Modelo**: false (sempre customizada)
+- **PilarEmpresaId**: automático (cria vínculo RotinaEmpresa automaticamente)
 
-**Validações:**
-- Ambos os campos obrigatórios
-- Devem ser UUIDs válidos
+**Fluxo:**
+```typescript
+POST /rotinas
+{
+  nome: 'Nova Rotina X',
+  descricao: 'Descrição...',
+  pilarId: 'uuid-pilar',
+  modelo: false,
+  pilarEmpresaId: 'uuid-pilar-empresa' // ← Vínculo automático
+}
+```
 
-**Arquivo:** [create-pilar-empresa.dto.ts](../../backend/src/modules/diagnosticos/dto/create-pilar-empresa.dto.ts)
+**Backend:**
+- Cria Rotina no catálogo global
+- Cria RotinaEmpresa automaticamente (transação)
+- Calcula `ordem` automaticamente (próxima disponível)
+- Valida multi-tenant se user for GESTOR
+
+**Callback:** `onRotinaCriada()` → recarrega diagnóstico
+
+**Apenas para:** ADMINISTRADOR e GESTOR
 
 ---
+
+### UI-DIAG-009: Gestão de Rotinas do Pilar
+
+**Descrição:** Modal para adicionar/remover/reordenar rotinas de um pilar da empresa.
+
+**Implementação:**
+- Componente: `RotinasPilarModalComponent`
+- Localização: `frontend/src/app/views/pages/diagnostico-notas/rotinas-pilar-modal/`
+- Trigger: Botão "Editar Rotinas" no card do pilar
+
+**Funcionalidades:**
+- Listar rotinas vinculadas ao PilarEmpresa
+- Adicionar rotinas do catálogo global
+- Remover rotinas (delete RotinaEmpresa)
+- Reordenar via drag & drop
+- Validação multi-tenant
+
+**Backend Correspondente:**
+- Endpoints em `PilaresEmpresaService`:
+  - `GET /empresas/:empresaId/pilares/:pilarEmpresaId/rotinas`
+  - `POST /empresas/:empresaId/pilares/:pilarEmpresaId/rotinas`
+  - `DELETE /empresas/:empresaId/pilares/rotinas/:rotinaEmpresaId`
+  - `PATCH /empresas/:empresaId/pilares/:pilarEmpresaId/rotinas/reordenar`
+
+**Callback:** `onRotinasModificadas()` → recarrega diagnóstico
+
+**Apenas para:** ADMINISTRADOR e GESTOR
+
+---
+
+## 6. Validações
+
+### 6.1. UpdateNotaRotinaDto
+
+**Campos:**
+- `nota`: @IsNumber(), @IsNotEmpty(), @Min(1), @Max(10)
+- `criticidade`: @IsEnum(Criticidade), @IsNotEmpty()
+
+**Validações implementadas:**
+- Nota obrigatória, entre 1 e 10
+- Criticidade obrigatória (ALTO, MEDIO, BAIXO)
+- Mensagens de erro customizadas
+
+**Arquivo:** [update-nota-rotina.dto.ts](../../backend/src/modules/diagnosticos/dto/update-nota-rotina.dto.ts)
+
+---
+
+## 7. Comportamentos Condicionais
+
+### 7.1. Priorização de Cache vs Backend
+
+**Condição:** Valores em edição no frontend
+
+**Comportamento:**
+- **Getters** priorizam cache local
+- **Após save bem-sucedido**, atualiza dados locais com resposta do backend
+- **Ao recarregar página**, limpa cache e usa dados do backend
+
+**Justificativa:**
+- Evita UX ruim (valores "piscando")
+- Mantém sincronização eventual com backend
+
+---
+
+### 7.2. Retry Automático em Caso de Erro
+
+**Condição:** Erro HTTP no auto-save
+
+**Comportamento:**
+- Aguarda 2 segundos
+- Tenta novamente (até 3 vezes)
+- Se falhar 3x, exibe toast de erro persistente (5000ms)
+
+**Justificativa:**
+- Resiliência a falhas temporárias de rede
+- Não perde dados do usuário
+
+---
+
+### 7.3. Validação Silenciosa de Campos Obrigatórios
+
+**Condição:** Usuário editando campos
+
+**Comportamento:**
+- **NÃO salva** se apenas nota ou apenas criticidade preenchidos
+- **NÃO exibe erro** (aguarda silenciosamente)
+- **Salva automaticamente** quando ambos os campos estão completos
+
+**Justificativa:**
+- UX não intrusiva
+- Evita salvamentos parciais inválidos
+
+---
+
+### 7.4. Bloqueio de Edição para COLABORADOR (Frontend)
+
+**Condição:** Perfil do usuário é COLABORADOR ou LEITURA
+
+**Comportamento Frontend:**
+- Inputs desabilitados
+- Auto-save desativado
+- Botões de gestão ocultados
+
+**Comportamento Backend:**
+- COLABORADOR **pode** salvar notas (endpoint permite)
+- LEITURA **não pode** salvar (endpoint bloqueia)
+
+**Discrepância:**
+- Frontend mais restritivo que backend para COLABORADOR
+- Decisão de UX: proteger de edições acidentais
+
+---
+
+### 7.5. Cascata Lógica de Pilares Inativos
+
+**Condição:** Pilar desativado (`Pilar.ativo = false`)
+
+**Comportamento:**
+- Filtro em `getDiagnosticoByEmpresa`: `pilar: { ativo: true }`
+- Pilares inativos não aparecem no diagnóstico
+- PilarEmpresa.ativo pode continuar `true` (histórico preservado)
+
+**Justificativa:**
+- Cascata lógica (não física)
+- Permite reativação sem perder vinculação
+
+---
+
+## 8. Ausências ou Ambiguidades
+
+### 8.1. Paginação Ausente
+
+**Status:** ❌ NÃO IMPLEMENTADO
+
+**Descrição:**
+- Endpoint `getDiagnosticoByEmpresa` retorna TODOS os pilares e rotinas da empresa
+- Sem paginação, filtros ou busca
+- Pode ser problemático com muitas rotinas
+
+**TODO:**
+- Considerar paginação se empresa tiver >100 rotinas
+- Ou implementar scroll infinito no frontend
+
+---
+
+### 8.2. Histórico de Notas Não Exposto
+
+**Status:** ⚠️ IMPLEMENTADO NO BACKEND, NÃO NO FRONTEND
+
+**Descrição:**
+- Schema permite múltiplas `NotaRotina` por `RotinaEmpresa` (histórico)
+- Backend cria novas notas (não sobrescreve)
+- Frontend exibe apenas a mais recente (`take: 1`)
+- Não há interface para visualizar histórico
+
+**TODO:**
+- Implementar endpoint `GET /rotinas-empresa/:id/notas` (histórico completo)
+- Implementar modal frontend com histórico de notas
+
+---
+
+### 8.3. PilarEvolucao Não Implementado
+
+**Status:** ❌ NÃO IMPLEMENTADO
+
+**Descrição:**
+- Entidade `PilarEvolucao` existe no schema
+- Permite snapshots temporais da média de notas
+- Nenhum endpoint ou lógica implementada
+- Frontend calcula média em tempo real (não persiste)
+
+**TODO:**
+- Implementar job agendado para criar snapshots mensais
+- Endpoint para visualizar evolução histórica
+
+---
+
+### 8.4. AgendaReuniao Não Implementado
+
+**Status:** ❌ NÃO IMPLEMENTADO
+
+**Descrição:**
+- Entidade `AgendaReuniao` existe no schema
+- DTO criado mas sem endpoints
+- Funcionalidade planejada mas não desenvolvida
+
+**TODO:**
+- CRUD completo de AgendaReuniao
+- Integração com diagnóstico (reuniões relacionadas a pilares?)
+
+---
+
+## 9. Sumário de Regras
+
+| ID | Descrição | Status |
+|----|-----------|--------|
+| **R-DIAG-001** | Buscar estrutura completa de diagnóstico | ✅ Implementado |
+| **R-DIAG-002** | Upsert de nota com auto-save | ✅ Implementado |
+| **RA-DIAG-001** | Auditoria completa de notas | ✅ Implementado |
+
+**Frontend (UI):**
+
+| ID | Descrição | Status |
+|----|-----------|--------|
+| **UI-DIAG-001** | Tela de diagnóstico com auto-save | ✅ Implementado |
+| **UI-DIAG-002** | Cálculo de progresso por pilar | ✅ Implementado |
+| **UI-DIAG-003** | Cálculo de média de notas | ✅ Implementado |
+| **UI-DIAG-004** | Cache local e priorização de valores | ✅ Implementado |
+| **UI-DIAG-005** | Perfis read-only | ✅ Implementado |
+| **UI-DIAG-006** | Gestão de pilares da empresa | ✅ Implementado |
+| **UI-DIAG-007** | Definição de responsável por pilar | ✅ Implementado |
+| **UI-DIAG-008** | Criação de rotina customizada | ✅ Implementado |
+| **UI-DIAG-009** | Gestão de rotinas do pilar | ✅ Implementado |
+
+**Pendências:**
+- ❌ Paginação de diagnóstico
+- ⚠️ Histórico de notas (backend pronto, frontend ausente)
+- ❌ PilarEvolucao (snapshots temporais)
+- ❌ AgendaReuniao (CRUD completo)
+
+---
+
+## 10. Referências
+
+**Módulo Diagnósticos:**
+- [diagnosticos.service.ts](../../backend/src/modules/diagnosticos/diagnosticos.service.ts)
+- [diagnosticos.controller.ts](../../backend/src/modules/diagnosticos/diagnosticos.controller.ts)
+- [update-nota-rotina.dto.ts](../../backend/src/modules/diagnosticos/dto/update-nota-rotina.dto.ts)
+- [diagnosticos.module.ts](../../backend/src/modules/diagnosticos/diagnosticos.module.ts)
+
+**Frontend:**
+- [diagnostico-notas.component.ts](../../frontend/src/app/views/pages/diagnostico-notas/diagnostico-notas.component.ts)
+- [nova-rotina-modal.component.ts](../../frontend/src/app/views/pages/diagnostico-notas/nova-rotina-modal/nova-rotina-modal.component.ts)
+- [responsavel-pilar-modal.component.ts](../../frontend/src/app/views/pages/diagnostico-notas/responsavel-pilar-modal/responsavel-pilar-modal.component.ts)
+- [rotinas-pilar-modal.component.ts](../../frontend/src/app/views/pages/diagnostico-notas/rotinas-pilar-modal/rotinas-pilar-modal.component.ts)
+- [diagnostico-notas.service.ts](../../frontend/src/app/core/services/diagnostico-notas.service.ts)
+
+**Schema:**
+- [schema.prisma](../../backend/prisma/schema.prisma) (NotaRotina, PilarEvolucao)
+
+**Dependências:**
+- AuditService (auditoria de operações)
+- PrismaService (acesso ao banco)
+- PilaresEmpresaService (gestão de pilares e rotinas)
+- RotinasService (criação de rotinas customizadas)
+- JwtAuthGuard (autenticação)
+- RolesGuard (autorização por perfil)
+
+---
+
+**Data de extração:** 02/01/2026  
+**Agente:** Extractor de Regras (Modo A - Reverse Engineering)  
+**Status:** ✅ **Backend e Frontend Completamente Implementados**
+
+**Observação final:**  
+Este módulo transforma o catálogo de pilares e rotinas em um diagnóstico empresarial funcional, com auto-save, validações em tempo real, cálculos de progresso e múltiplas modalidades de gestão (pilares, rotinas, responsáveis). A implementação está completa e pronta para uso.
 
 ### 4.2. CreateRotinaEmpresaDto
 

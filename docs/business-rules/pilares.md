@@ -2,8 +2,8 @@
 
 **Módulo:** Pilares  
 **Backend:** `backend/src/modules/pilares/` e `backend/src/modules/pilares-empresa/`  
-**Frontend:** Não implementado  
-**Última extração:** 22/12/2024  
+**Frontend:** `frontend/src/app/views/pages/pilares/` e `frontend/src/app/views/pages/empresas/pilares-empresa-*`  
+**Última extração:** 02/01/2026  
 **Agente:** Extractor de Regras
 
 ---
@@ -15,11 +15,14 @@ O módulo Pilares é responsável por:
 - Gerenciar pilares por empresa (vinculação e ordenação per-company)
 - Validação de dependências com rotinas ativas
 - Auditoria de operações em pilares
-- Auto-associação de pilares padrão a novas empresas
+- Auto-associação de pilares modelo a novas empresas
+- Gestão de responsáveis por pilar em cada empresa
+- Vinculação e ordenação de rotinas em pilares por empresa
 
 **Entidades principais:**
 - Pilar (catálogo global de pilares)
-- PilarEmpresa (vínculo pilar-empresa com ordenação per-company)
+- PilarEmpresa (vínculo pilar-empresa com ordenação e responsável)
+- RotinaEmpresa (vínculo rotina-pilar por empresa com ordenação)
 
 **Módulo Pilares (Catálogo Global):**
 - `POST /pilares` — Criar pilar (ADMINISTRADOR)
@@ -30,7 +33,14 @@ O módulo Pilares é responsável por:
 
 **Módulo PilaresEmpresa (Multi-Tenant):**
 - `GET /empresas/:empresaId/pilares` — Listar pilares da empresa (todos)
-- `POST /empresas/:empresaId/pilares/reordenar` — Reordenar pilares da empresa (ADMINISTRADOR, GESTOR)
+- `POST /empresas/:empresaId/pilares/reordenar` — Reordenar pilares (ADMINISTRADOR, GESTOR)
+- `POST /empresas/:empresaId/pilares/vincular` — Vincular pilares (ADMINISTRADOR, GESTOR)
+- `DELETE /empresas/:empresaId/pilares/:pilarEmpresaId` — Remover pilar da empresa (ADMINISTRADOR, GESTOR)
+- `PATCH /empresas/:empresaId/pilares/:pilarEmpresaId/responsavel` — Definir responsável (ADMINISTRADOR, GESTOR)
+- `GET /empresas/:empresaId/pilares/:pilarEmpresaId/rotinas` — Listar rotinas (todos)
+- `POST /empresas/:empresaId/pilares/:pilarEmpresaId/rotinas` — Vincular rotina (ADMINISTRADOR, GESTOR)
+- `DELETE /empresas/:empresaId/pilares/rotinas/:rotinaEmpresaId` — Remover rotina (ADMINISTRADOR, GESTOR)
+- `PATCH /empresas/:empresaId/pilares/:pilarEmpresaId/rotinas/reordenar` — Reordenar rotinas (ADMINISTRADOR, GESTOR)
 
 ---
 
@@ -80,6 +90,7 @@ O módulo Pilares é responsável por:
 | empresaId | String | FK para Empresa |
 | pilarId | String | FK para Pilar |
 | ordem | Int | Ordem de exibição do pilar na empresa (per-company) |
+| responsavelId | String? | FK para Usuario (responsável pelo pilar na empresa) |
 | ativo | Boolean (default: true) | Soft delete flag |
 | createdAt | DateTime | Data de criação |
 | updatedAt | DateTime | Data da última atualização |
@@ -89,6 +100,7 @@ O módulo Pilares é responsável por:
 **Relações:**
 - `empresa`: Empresa (empresa associada)
 - `pilar`: Pilar (pilar associado)
+- `responsavel`: Usuario? (usuário responsável pelo acompanhamento do pilar)
 - `rotinasEmpresa`: RotinaEmpresa[] (rotinas vinculadas ao pilar na empresa)
 - `evolucao`: PilarEvolucao[] (histórico de evolução do pilar)
 
@@ -599,6 +611,387 @@ await this.prisma.pilarEmpresa.createMany({
 - Sem necessidade de desativar PilarEmpresa manualmente
 
 **Arquivo:** [pilares-empresa.service.ts](../../backend/src/modules/pilares-empresa/pilares-empresa.service.ts#L41)
+
+---
+
+### R-PILEMP-004: Auto-Associação de Rotinas Modelo
+
+**Descrição:** Ao vincular um pilar a uma empresa, rotinas com `modelo: true` desse pilar são automaticamente associadas.
+
+**Implementação:**
+- **Módulo:** PilaresEmpresaService
+- **Método:** `autoAssociarRotinasModelo()`
+- **Trigger:** Após criar `PilarEmpresa` (em `vincularPilares`)
+
+**Comportamento:**
+```typescript
+const pilarEmpresa = await this.prisma.pilarEmpresa.findUnique({
+  where: { id: pilarEmpresaId },
+  include: {
+    pilar: {
+      include: {
+        rotinas: {
+          where: {
+            modelo: true,
+            ativo: true,
+          },
+        },
+      },
+    },
+  },
+});
+
+const rotinaEmpresaData = rotinasModelo.map((rotina, index) => ({
+  pilarEmpresaId: pilarEmpresa.id,
+  rotinaId: rotina.id,
+  ordem: rotina.ordem ?? (index + 1),
+  createdBy: user.id,
+}));
+
+await this.prisma.rotinaEmpresa.createMany({
+  data: rotinaEmpresaData,
+  skipDuplicates: true,
+});
+```
+
+**Auditoria:**
+- Entidade: `pilares_empresa`
+- Ação: `UPDATE`
+- Dados: rotinas associadas automaticamente
+
+**Arquivo:** [pilares-empresa.service.ts](../../backend/src/modules/pilares-empresa/pilares-empresa.service.ts#L205-L272)
+
+---
+
+### R-PILEMP-005: Remoção de Pilar da Empresa (Hard Delete)
+
+**Descrição:** Endpoint remove completamente o vínculo PilarEmpresa, cascateando automaticamente RotinaEmpresa e NotaRotina.
+
+**Implementação:**
+- **Endpoint:** `DELETE /empresas/:empresaId/pilares/:pilarEmpresaId` (ADMINISTRADOR, GESTOR)
+- **Módulo:** PilaresEmpresaService
+- **Método:** `remover()`
+
+**Validação:**
+1. Multi-tenant: Usuário pode acessar empresaId?
+2. PilarEmpresa pertence à empresa especificada?
+
+**Comportamento:**
+```typescript
+// Hard delete (cascata automática via Prisma)
+const deleted = await this.prisma.pilarEmpresa.delete({
+  where: { id: pilarEmpresaId }
+});
+```
+
+**Cascata Automática (via Schema):**
+- `RotinaEmpresa` → `onDelete: Cascade`
+- `NotaRotina` (via RotinaEmpresa) → `onDelete: Cascade`
+- `PilarEvolucao` → `onDelete: Cascade`
+
+**Auditoria:**
+- Entidade: `pilares_empresa`
+- Ação: `DELETE`
+- Dados: nome do pilar removido
+
+**Retorno:**
+```typescript
+{
+  message: 'Pilar "Marketing" removido com sucesso',
+  pilarEmpresa: deleted
+}
+```
+
+**Perfis autorizados:** ADMINISTRADOR, GESTOR
+
+**Arquivo:** [pilares-empresa.service.ts](../../backend/src/modules/pilares-empresa/pilares-empresa.service.ts#L274-L321)
+
+---
+
+### R-PILEMP-006: Definir ou Remover Responsável de Pilar
+
+**Descrição:** Endpoint permite definir ou remover o usuário responsável pelo acompanhamento de um pilar em uma empresa.
+
+**Implementação:**
+- **Endpoint:** `PATCH /empresas/:empresaId/pilares/:pilarEmpresaId/responsavel` (ADMINISTRADOR, GESTOR)
+- **Módulo:** PilaresEmpresaService
+- **Método:** `definirResponsavel()`
+
+**Input:**
+```typescript
+{
+  "responsavelId": "uuid-usuario" | null
+}
+```
+
+**Validação:**
+1. Multi-tenant: Usuário pode acessar empresaId?
+2. PilarEmpresa pertence à empresa especificada?
+3. Se `responsavelId` fornecido:
+   - Usuário existe?
+   - Usuário pertence à mesma empresa?
+
+**Comportamento:**
+```typescript
+// Se responsavelId for fornecido, validar
+if (responsavelId) {
+  const responsavel = await this.prisma.usuario.findUnique({
+    where: { id: responsavelId },
+  });
+
+  if (!responsavel) {
+    throw new NotFoundException('Usuário responsável não encontrado');
+  }
+
+  if (responsavel.empresaId !== empresaId) {
+    throw new ForbiddenException(
+      'O responsável deve pertencer à mesma empresa do pilar',
+    );
+  }
+}
+
+// Atualizar responsável
+const updated = await this.prisma.pilarEmpresa.update({
+  where: { id: pilarEmpresaId },
+  data: {
+    responsavelId: responsavelId || null,
+    updatedBy: user.id,
+  },
+});
+```
+
+**Auditoria:**
+- Entidade: `pilares_empresa`
+- Ação: `UPDATE`
+- Dados: antes e depois do responsavelId
+
+**Perfis autorizados:** ADMINISTRADOR, GESTOR
+
+**Arquivo:** [pilares-empresa.service.ts](../../backend/src/modules/pilares-empresa/pilares-empresa.service.ts#L323-L376)
+
+---
+
+### R-PILEMP-007: Listar Rotinas de Pilar da Empresa
+
+**Descrição:** Endpoint retorna rotinas vinculadas a um pilar específico de uma empresa, ordenadas por `RotinaEmpresa.ordem`.
+
+**Implementação:**
+- **Endpoint:** `GET /empresas/:empresaId/pilares/:pilarEmpresaId/rotinas` (todos os perfis)
+- **Módulo:** PilaresEmpresaService
+- **Método:** `listarRotinas()`
+
+**Validação:**
+1. Multi-tenant: Usuário pode acessar empresaId?
+2. PilarEmpresa pertence à empresa especificada?
+
+**Filtro:**
+```typescript
+where: { pilarEmpresaId }
+```
+
+**Ordenação:**
+```typescript
+orderBy: { ordem: 'asc' }
+```
+
+**Include:**
+```typescript
+include: {
+  rotina: {
+    include: {
+      pilar: true,
+    },
+  },
+}
+```
+
+**Retorno:** Array de `RotinaEmpresa` com rotina e pilar incluídos
+
+**Perfis autorizados:** Todos (com validação multi-tenant)
+
+**Arquivo:** [pilares-empresa.service.ts](../../backend/src/modules/pilares-empresa/pilares-empresa.service.ts#L378-L404)
+
+---
+
+### R-PILEMP-008: Vincular Rotina a Pilar da Empresa
+
+**Descrição:** Endpoint permite vincular uma rotina a um pilar da empresa, criando `RotinaEmpresa`.
+
+**Implementação:**
+- **Endpoint:** `POST /empresas/:empresaId/pilares/:pilarEmpresaId/rotinas` (ADMINISTRADOR, GESTOR)
+- **Módulo:** PilaresEmpresaService
+- **Método:** `vincularRotina()`
+
+**Input:**
+```typescript
+{
+  "rotinaId": "uuid-rotina",
+  "ordem": 1  // opcional
+}
+```
+
+**Validação:**
+1. Multi-tenant: Usuário pode acessar empresaId?
+2. PilarEmpresa pertence à empresa especificada?
+3. Rotina existe e está ativa?
+4. Rotina pertence ao mesmo pilar?
+5. Rotina já não está vinculada?
+
+**Comportamento:**
+```typescript
+// Validar que a rotina pertence ao mesmo pilar
+if (rotina.pilarId !== pilarEmpresa.pilarId) {
+  throw new BadRequestException('A rotina não pertence a este pilar');
+}
+
+// Verificar se já existe vínculo
+const existente = await this.prisma.rotinaEmpresa.findUnique({
+  where: {
+    pilarEmpresaId_rotinaId: { pilarEmpresaId, rotinaId },
+  },
+});
+
+if (existente) {
+  throw new BadRequestException('Esta rotina já está vinculada a este pilar');
+}
+
+// Calcular ordem se não fornecida
+let ordemFinal = ordem;
+if (!ordemFinal) {
+  const ultimaRotina = await this.prisma.rotinaEmpresa.findFirst({
+    where: { pilarEmpresaId },
+    orderBy: { ordem: 'desc' },
+  });
+  ordemFinal = ultimaRotina ? ultimaRotina.ordem + 1 : 1;
+}
+
+// Criar vínculo
+await this.prisma.rotinaEmpresa.create({
+  data: { pilarEmpresaId, rotinaId, ordem: ordemFinal, createdBy: user.id },
+});
+```
+
+**Auditoria:**
+- Entidade: `rotinas_empresa`
+- Ação: `CREATE`
+
+**Perfis autorizados:** ADMINISTRADOR, GESTOR
+
+**Arquivo:** [pilares-empresa.service.ts](../../backend/src/modules/pilares-empresa/pilares-empresa.service.ts#L406-L478)
+
+---
+
+### R-PILEMP-009: Remover Rotina de Pilar da Empresa
+
+**Descrição:** Endpoint remove `RotinaEmpresa` e reordena automaticamente as rotinas restantes.
+
+**Implementação:**
+- **Endpoint:** `DELETE /empresas/:empresaId/pilares/rotinas/:rotinaEmpresaId` (ADMINISTRADOR, GESTOR)
+- **Módulo:** PilaresEmpresaService
+- **Método:** `removerRotina()`
+
+**Validação:**
+1. Multi-tenant: Usuário pode acessar empresaId?
+2. RotinaEmpresa pertence à empresa especificada?
+
+**Comportamento:**
+```typescript
+// Deletar (cascata automática de NotaRotina via schema)
+const deleted = await this.prisma.rotinaEmpresa.delete({
+  where: { id: rotinaEmpresaId },
+});
+
+// Reordenar rotinas restantes
+const rotinasRestantes = await this.prisma.rotinaEmpresa.findMany({
+  where: { pilarEmpresaId: rotinaEmpresa.pilarEmpresaId },
+  orderBy: { ordem: 'asc' },
+});
+
+const updates = rotinasRestantes.map((r, index) =>
+  this.prisma.rotinaEmpresa.update({
+    where: { id: r.id },
+    data: { ordem: index + 1, updatedBy: user.id },
+  }),
+);
+
+await this.prisma.$transaction(updates);
+```
+
+**Cascata Automática (via Schema):**
+- `NotaRotina` → `onDelete: Cascade`
+
+**Auditoria:**
+- Entidade: `rotinas_empresa`
+- Ação: `DELETE`
+
+**Reordenação Automática:**
+- Rotinas restantes são renumeradas sequencialmente (1, 2, 3...)
+- Mantém consistência da ordenação
+
+**Perfis autorizados:** ADMINISTRADOR, GESTOR
+
+**Arquivo:** [pilares-empresa.service.ts](../../backend/src/modules/pilares-empresa/pilares-empresa.service.ts#L480-L535)
+
+---
+
+### R-PILEMP-010: Reordenar Rotinas de Pilar da Empresa
+
+**Descrição:** Endpoint permite reordenar rotinas de um pilar específico, atualizando `RotinaEmpresa.ordem`.
+
+**Implementação:**
+- **Endpoint:** `PATCH /empresas/:empresaId/pilares/:pilarEmpresaId/rotinas/reordenar` (ADMINISTRADOR, GESTOR)
+- **Módulo:** PilaresEmpresaService
+- **Método:** `reordenarRotinas()`
+
+**Input:**
+```typescript
+{
+  "ordens": [
+    { "id": "uuid-rotina-empresa-1", "ordem": 1 },
+    { "id": "uuid-rotina-empresa-2", "ordem": 2 }
+  ]
+}
+```
+
+**Validação:**
+1. Multi-tenant: Usuário pode acessar empresaId?
+2. PilarEmpresa pertence à empresa especificada?
+3. Todos os IDs pertencem ao pilarEmpresaId?
+
+**Comportamento:**
+```typescript
+// Validar que todos os IDs pertencem ao pilarEmpresa
+const existingRotinas = await this.prisma.rotinaEmpresa.findMany({
+  where: {
+    id: { in: idsToUpdate },
+    pilarEmpresaId,
+  },
+});
+
+if (existingRotinas.length !== idsToUpdate.length) {
+  throw new NotFoundException('Rotinas não encontradas neste pilar');
+}
+
+// Atualizar ordens em transação
+const updates = ordens.map((item) =>
+  this.prisma.rotinaEmpresa.update({
+    where: { id: item.id },
+    data: { ordem: item.ordem, updatedBy: user.id },
+  }),
+);
+
+await this.prisma.$transaction(updates);
+```
+
+**Auditoria:**
+- Entidade: `rotinas_empresa`
+- Ação: `UPDATE`
+
+**Atomicidade:** Transação (rollback se falhar)
+
+**Perfis autorizados:** ADMINISTRADOR, GESTOR
+
+**Arquivo:** [pilares-empresa.service.ts](../../backend/src/modules/pilares-empresa/pilares-empresa.service.ts#L537-L582)
 
 ---
 

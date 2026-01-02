@@ -2,8 +2,8 @@
 
 **Módulo:** Rotinas  
 **Backend:** `backend/src/modules/rotinas/`  
-**Frontend:** Não implementado  
-**Última extração:** 21/12/2024  
+**Frontend:** `frontend/src/app/views/pages/rotinas/`  
+**Última extração:** 02/01/2026  
 **Agente:** Extractor de Regras
 
 ---
@@ -14,15 +14,18 @@ O módulo Rotinas é responsável por:
 - Gerenciar rotinas do sistema (CRUD completo)
 - Ordenação customizável de rotinas dentro de cada pilar
 - Validação de dependência com pilares
+- Validação de uso por empresas antes de desativar
 - Auditoria de operações em rotinas
 - Filtragem de rotinas por pilar
+- Criação com vínculo automático a empresa (via pilarEmpresaId)
+- Reordenação de rotinas por pilar
 
 **Entidades principais:**
 - Rotina (rotinas vinculadas a pilares)
 - RotinaEmpresa (vínculo rotina-empresa via PilarEmpresa)
 
 **Endpoints implementados:**
-- `POST /rotinas` — Criar rotina (ADMINISTRADOR)
+- `POST /rotinas` — Criar rotina (ADMINISTRADOR, GESTOR)
 - `GET /rotinas?pilarId=uuid` — Listar rotinas ativas (todos, filtro opcional)
 - `GET /rotinas/:id` — Buscar rotina por ID (todos)
 - `PATCH /rotinas/:id` — Atualizar rotina (ADMINISTRADOR)
@@ -92,16 +95,18 @@ O módulo Rotinas é responsável por:
 
 ## 3. Regras Implementadas
 
-### R-ROT-001: Criação de Rotina com Validação de Pilar
+### R-ROT-001: Criação de Rotina com Validação de Pilar e Vínculo Automático
 
-**Descrição:** Sistema valida que o pilar existe antes de criar rotina.
+**Descrição:** Sistema valida que o pilar existe antes de criar rotina. Opcionalmente, pode criar o vínculo RotinaEmpresa automaticamente se `pilarEmpresaId` for fornecido.
 
 **Implementação:**
-- **Endpoint:** `POST /rotinas` (restrito a ADMINISTRADOR)
+- **Endpoint:** `POST /rotinas` (restrito a ADMINISTRADOR, GESTOR)
 - **Método:** `RotinasService.create()`
 - **DTO:** CreateRotinaDto
 
-**Validação:**
+**Validações:**
+
+1. **Validação de Pilar:**
 ```typescript
 const pilar = await this.prisma.pilar.findUnique({
   where: { id: createRotinaDto.pilarId },
@@ -112,11 +117,65 @@ if (!pilar) {
 }
 ```
 
+2. **Validação Multi-Tenant (se pilarEmpresaId fornecido):**
+```typescript
+if (createRotinaDto.pilarEmpresaId) {
+  const pilarEmpresa = await this.prisma.pilarEmpresa.findUnique({
+    where: { id: createRotinaDto.pilarEmpresaId },
+    include: { empresa: true },
+  });
+
+  if (!pilarEmpresa) {
+    throw new NotFoundException('PilarEmpresa não encontrado');
+  }
+
+  // GESTOR só pode criar rotinas para sua própria empresa
+  if (user.perfil === 'GESTOR' && pilarEmpresa.empresaId !== user.empresaId) {
+    throw new NotFoundException('PilarEmpresa não encontrado');
+  }
+}
+```
+
+3. **Criação Transacional:**
+```typescript
+const created = await this.prisma.$transaction(async (tx) => {
+  const rotina = await tx.rotina.create({
+    data: {
+      ...rotinaData,
+      createdBy: user.id,
+    },
+  });
+
+  // Se pilarEmpresaId foi fornecido, criar também o vínculo RotinaEmpresa
+  if (pilarEmpresaId) {
+    const ultimaRotina = await tx.rotinaEmpresa.findFirst({
+      where: { pilarEmpresaId },
+      orderBy: { ordem: 'desc' },
+    });
+
+    const proximaOrdem = ultimaRotina ? ultimaRotina.ordem + 1 : 1;
+
+    await tx.rotinaEmpresa.create({
+      data: {
+        pilarEmpresaId,
+        rotinaId: rotina.id,
+        ordem: proximaOrdem,
+        createdBy: user.id,
+      },
+    });
+  }
+
+  return rotina;
+});
+```
+
 **Validação de DTO:**
 - `nome`: string, required, 2-200 caracteres
 - `descricao`: string, optional, 0-500 caracteres
 - `ordem`: number, optional, >= 1
+- `modelo`: boolean, optional (default: false)
 - `pilarId`: UUID, required
+- `pilarEmpresaId`: UUID, optional (se fornecido, cria RotinaEmpresa automaticamente)
 
 **Retorno:**
 - Rotina criada com pilar incluído
@@ -124,9 +183,11 @@ if (!pilar) {
 **Auditoria:**
 - Registra criação em tabela de auditoria
 - Ação: CREATE
-- Dados completos da rotina criada
+- Dados completos da rotina criada + pilarEmpresaId (se fornecido)
 
-**Arquivo:** [rotinas.service.ts](../../backend/src/modules/rotinas/rotinas.service.ts#L11-L45)
+**Perfis autorizados:** ADMINISTRADOR, GESTOR (com restrição multi-tenant)
+
+**Arquivo:** [rotinas.service.ts](../../backend/src/modules/rotinas/rotinas.service.ts#L11-L88)
 
 ---
 
@@ -243,15 +304,50 @@ if (updateRotinaDto.pilarId) {
 
 ---
 
-### R-ROT-005: Desativação de Rotina (Soft Delete)
+### R-ROT-005: Desativação de Rotina com Validação de Uso
 
-**Descrição:** Sistema desativa rotina (ativo: false) ao invés de deletar fisicamente.
+**Descrição:** Sistema desativa rotina (ativo: false) ao invés de deletar fisicamente. Valida se rotina está em uso por empresas antes de desativar.
 
 **Implementação:**
 - **Endpoint:** `DELETE /rotinas/:id` (restrito a ADMINISTRADOR)
 - **Método:** `RotinasService.remove()`
 
-**Comportamento:**
+**Validação de Uso por Empresas:**
+```typescript
+const rotinaEmpresasEmUso = await this.prisma.rotinaEmpresa.findMany({
+  where: { rotinaId: id },
+  include: {
+    pilarEmpresa: {
+      include: {
+        empresa: {
+          select: {
+            id: true,
+            nome: true,
+          },
+        },
+      },
+    },
+  },
+});
+
+if (rotinaEmpresasEmUso.length > 0) {
+  const empresasAfetadas = rotinaEmpresasEmUso.map(
+    (re) => ({
+      id: re.pilarEmpresa.empresa.id,
+      nome: re.pilarEmpresa.empresa.nome,
+    })
+  );
+
+  // Bloqueio rígido com 409 Conflict + lista de empresas
+  throw new ConflictException({
+    message: 'Não é possível desativar esta rotina pois está em uso por empresas',
+    empresasAfetadas,
+    totalEmpresas: empresasAfetadas.length,
+  });
+}
+```
+
+**Comportamento (se não houver uso):**
 ```typescript
 const after = await this.prisma.rotina.update({
   where: { id },
@@ -262,12 +358,17 @@ const after = await this.prisma.rotina.update({
 });
 ```
 
+**Exceção:**
+- HTTP 409 Conflict se rotina estiver em uso
+- Retorna lista de empresas afetadas
+- Mensagem clara do motivo do bloqueio
+
 **Auditoria:**
 - Registra estado antes e depois
 - Ação: DELETE (mas operação é UPDATE)
 - Dados completos da mudança
 
-**Arquivo:** [rotinas.service.ts](../../backend/src/modules/rotinas/rotinas.service.ts#L117-L139)
+**Arquivo:** [rotinas.service.ts](../../backend/src/modules/rotinas/rotinas.service.ts#L165-L220)
 
 ---
 
