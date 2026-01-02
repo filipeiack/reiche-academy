@@ -226,7 +226,7 @@
                                 <div class="col-md-4 ">
                                     <div class="row">
                                         <!-- Campo Criticidade -->
-                                        <div class="col-md-6">
+                                        <div class="col-md-7">
                                             <label [for]="'criticidade-' + rotina.id" class="form-label">
                                                 {{ 'DIAGNOSTICO.CRITICIDADE' | translate }} <span
                                                     class="text-danger">*</span>
@@ -241,7 +241,7 @@
                                         </div>
 
                                         <!-- Campo Nota -->
-                                        <div class="col-md-4">
+                                        <div class="col-md-5">
                                             <label [for]="'nota-' + rotina.id" class="form-label">
                                                 {{ 'DIAGNOSTICO.NOTA' | translate }} <span class="text-danger">*</span>
                                             </label>
@@ -249,13 +249,6 @@
                                                 max="10" step="1" [value]="getNotaAtual(rotina)"
                                                 (input)="onNotaChange(rotina, $any($event.target).value, getCriticidadeAtual(rotina))"
                                                 placeholder="1 - 10" />
-                                        </div>
-
-                                        <div class="col-md-2">
-                                            <button type="button" class="btn btn-icon text-danger mt-4"
-                                                title="Remover rotina">
-                                                <i class="feather icon-trash-2"></i>
-                                            </button>
                                         </div>
                                     </div>
                                 </div>

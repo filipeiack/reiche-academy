@@ -5,9 +5,10 @@ import { CdkDragDrop, DragDropModule, moveItemInArray } from '@angular/cdk/drag-
 import { NgSelectModule } from '@ng-select/ng-select';
 import { FormsModule } from '@angular/forms';
 import Swal from 'sweetalert2';
-import { DiagnosticoNotasService, RotinaEmpresa } from '../../../../core/services/diagnostico-notas.service';
+import { DiagnosticoNotasService, RotinaEmpresa, PilarEmpresa } from '../../../../core/services/diagnostico-notas.service';
 import { RotinasService, Rotina } from '../../../../core/services/rotinas.service';
 import { HttpErrorResponse } from '@angular/common/http';
+import { NovaRotinaModalComponent } from '../nova-rotina-modal/nova-rotina-modal.component';
 
 @Component({
   selector: 'app-rotinas-pilar-modal',
@@ -18,7 +19,8 @@ import { HttpErrorResponse } from '@angular/common/http';
     NgbTooltipModule,
     DragDropModule,
     NgSelectModule,
-    FormsModule
+    FormsModule,
+    NovaRotinaModalComponent
   ],
   template: `
     <ng-template #modalContent let-modal>
@@ -42,10 +44,17 @@ import { HttpErrorResponse } from '@angular/common/http';
         <!-- Conteúdo -->
         @if (!loading) {
         <div class="mb-3">
-          <p class="text-muted small mb-3">
-            <i class="feather icon-info me-1"></i>
-            Arraste as rotinas para reordenar, adicione novas rotinas ou remova as existentes.
-          </p>
+          <div class="d-flex justify-content-between align-items-center mb-3">
+            <p class="text-muted small mb-0">
+              <i class="feather icon-info me-1"></i>
+              Arraste as rotinas para reordenar, adicione novas rotinas ou remova as existentes.
+            </p>
+            <button type="button" class="btn btn-primary btn-sm" 
+                    (click)="abrirModalNovaRotina(); $event.preventDefault()">
+              <i class="feather icon-plus me-1"></i>
+              Adicionar Rotina
+            </button>
+          </div>
 
           <!-- Lista de rotinas (drag and drop) -->
           @if (rotinasEmpresa.length > 0) {
@@ -56,12 +65,12 @@ import { HttpErrorResponse } from '@angular/common/http';
                 <div class="d-flex align-items-center gap-2">
                   <i class="feather icon-menu drag-handle" cdkDragHandle ngbTooltip="Arrastar para reordenar"></i>
                   <span class="badge bg-secondary small">{{ rotinaEmpresa.ordem }}</span>
-                  <span class="flex-grow-1">{{ rotinaEmpresa.rotina.nome }}</span>
-                  <button type="button" class="btn btn-sm btn-danger" 
-                          (click)="confirmarRemocao(rotinaEmpresa)"
-                          ngbTooltip="Remover rotina">
-                    <i class="feather icon-trash-2"></i>
-                  </button>
+                  <span class="flex-grow-1 small">{{ rotinaEmpresa.rotina.nome }}</span>
+                  <button type="button" class="btn btn-icon text-danger"
+                        (click)="confirmarRemocao(rotinaEmpresa)" title="Remover rotina">
+                        <i class="feather icon-trash-2"></i>
+                    </button>
+                  
                 </div>
               </div>
             </div>
@@ -74,39 +83,6 @@ import { HttpErrorResponse } from '@angular/common/http';
           </div>
           }
 
-          <!-- Adicionar nova rotina -->
-          <div class="mt-4">
-            <h6 class="mb-3">Adicionar Nova Rotina</h6>
-            <div class="row g-2">
-              <div class="col-9">
-                <ng-select
-                  [items]="rotinasDisponiveis"
-                  bindLabel="nome"
-                  bindValue="id"
-                  [(ngModel)]="novaRotinaId"
-                  placeholder="Selecione uma rotina"
-                  [clearable]="true">
-                  <ng-template ng-option-tmp let-item="item">
-                    <div>
-                      <strong>{{ item.nome }}</strong>
-                      @if (item.descricao) {
-                      <br />
-                      <small class="text-muted">{{ item.descricao }}</small>
-                      }
-                    </div>
-                  </ng-template>
-                </ng-select>
-              </div>
-              <div class="col-3">
-                <button type="button" class="btn btn-primary w-100" 
-                        [disabled]="!novaRotinaId"
-                        (click)="adicionarRotina()">
-                  <i class="feather icon-plus me-1"></i>
-                  Adicionar
-                </button>
-              </div>
-            </div>
-          </div>
         </div>
         }
       </div>
@@ -120,6 +96,9 @@ import { HttpErrorResponse } from '@angular/common/http';
         }
       </div>
     </ng-template>
+
+    <!-- Modal de Nova Rotina -->
+    <app-nova-rotina-modal (rotinaCriada)="onRotinaCriada()"></app-nova-rotina-modal>
   `,
   styles: [`
     .rotinas-list {
@@ -166,6 +145,8 @@ export class RotinasPilarModalComponent implements OnInit {
   private rotinasService = inject(RotinasService);
 
   @ViewChild('modalContent') modalContent!: TemplateRef<any>;
+  @ViewChild(NovaRotinaModalComponent) novaRotinaModal!: NovaRotinaModalComponent;
+  @Input() empresaId!: string;
   @Input() pilarEmpresaId!: string;
   @Input() pilarNome: string = '';
   @Input() pilarId!: string;
@@ -199,25 +180,17 @@ export class RotinasPilarModalComponent implements OnInit {
   private async carregarDados(): Promise<void> {
     this.loading = true;
     try {
-      // Carregar rotinas do pilar através do diagnóstico
-      // Como não temos endpoint específico, vamos usar o findByEmpresa e filtrar
-      // Isso será ajustado quando tivermos o endpoint correto
+      // Carregar rotinas vinculadas ao pilar
+      this.rotinasEmpresa = await this.diagnosticoService
+        .listarRotinas(this.empresaId, this.pilarEmpresaId)
+        .toPromise() || [];
       
-      // Por enquanto, vamos carregar todas as rotinas disponíveis do pilar
-      const todasRotinas = await this.rotinasService.findAll(this.pilarId).toPromise();
-      
-      // As rotinasEmpresa virão do parent component via Input ou precisamos de endpoint
-      // Por enquanto, assumimos que serão passadas
-      
-      this.rotinasDisponiveis = todasRotinas || [];
+      // Carregar todas as rotinas disponíveis do pilar para referência
+      this.rotinasDisponiveis = await this.rotinasService.findAll(this.pilarId).toPromise() || [];
       
     } catch (error) {
       console.error('Erro ao carregar dados:', error);
-      Swal.fire({
-        icon: 'error',
-        title: 'Erro',
-        text: 'Erro ao carregar rotinas. Tente novamente.'
-      });
+      this.showToast('Erro ao carregar rotinas. Tente novamente', 'error');
     } finally {
       this.loading = false;
     }
@@ -238,25 +211,24 @@ export class RotinasPilarModalComponent implements OnInit {
 
   async salvarOrdem(): Promise<void> {
     try {
-      // Aqui precisamos criar um endpoint no backend para atualizar a ordem
-      // Por enquanto, vamos mostrar um aviso
+      const ordens = this.rotinasEmpresa.map(r => ({
+        id: r.id,
+        ordem: r.ordem
+      }));
+
+      await this.diagnosticoService.reordenarRotinas(
+        this.empresaId,
+        this.pilarEmpresaId,
+        { ordens }
+      ).toPromise();
       
-      Swal.fire({
-        icon: 'info',
-        title: 'Funcionalidade em desenvolvimento',
-        text: 'O endpoint para salvar a ordem ainda precisa ser implementado no backend.'
-      });
+      this.showToast('Ordem das rotinas atualizada com sucesso.', 'success');
       
       this.temAlteracoes = false;
       this.rotinasModificadas.emit();
       
     } catch (error) {
-      console.error('Erro ao salvar ordem:', error);
-      Swal.fire({
-        icon: 'error',
-        title: 'Erro',
-        text: 'Erro ao salvar a ordem das rotinas.'
-      });
+      this.showToast('Erro ao salvar a ordem das rotinas. Tente novamente', 'error');
     }
   }
 
@@ -264,7 +236,6 @@ export class RotinasPilarModalComponent implements OnInit {
     const result = await Swal.fire({
       title: 'Remover Rotina',
       text: `Deseja remover a rotina "${rotinaEmpresa.rotina.nome}" deste pilar?`,
-      icon: 'warning',
       showCancelButton: true,
       confirmButtonColor: '#d33',
       cancelButtonColor: '#6c757d',
@@ -279,76 +250,60 @@ export class RotinasPilarModalComponent implements OnInit {
 
   private async removerRotina(rotinaEmpresa: RotinaEmpresa): Promise<void> {
     try {
-      // Aqui precisamos criar um endpoint no backend para deletar a RotinaEmpresa
-      // Por enquanto, removemos localmente
-      
-      const index = this.rotinasEmpresa.findIndex(r => r.id === rotinaEmpresa.id);
-      if (index > -1) {
-        this.rotinasEmpresa.splice(index, 1);
-        
-        // Reordenar as rotinas restantes
-        this.rotinasEmpresa.forEach((rotina, idx) => {
-          rotina.ordem = idx + 1;
-        });
-      }
+      await this.diagnosticoService.removerRotina(
+        this.empresaId,
+        rotinaEmpresa.id
+      ).toPromise();
 
-      Swal.fire({
-        icon: 'success',
-        title: 'Removida!',
-        text: 'Rotina removida com sucesso.',
-        timer: 2000,
-        showConfirmButton: false
-      });
+      this.showToast('Rotina removida com sucesso.', 'success');
 
-      this.rotinasModificadas.emit();
-
-    } catch (error) {
-      console.error('Erro ao remover rotina:', error);
-      Swal.fire({
-        icon: 'error',
-        title: 'Erro',
-        text: 'Erro ao remover a rotina.'
-      });
-    }
-  }
-
-  async adicionarRotina(): Promise<void> {
-    if (!this.novaRotinaId) return;
-
-    try {
-      // Buscar próxima ordem
-      const proximaOrdem = this.rotinasEmpresa.length > 0 
-        ? Math.max(...this.rotinasEmpresa.map(r => r.ordem)) + 1 
-        : 1;
-
-      // Criar RotinaEmpresa via endpoint
-      // Por enquanto, simulamos localmente
-      const rotinaBase = this.rotinasDisponiveis.find(r => r.id === this.novaRotinaId);
-      
-      if (!rotinaBase) return;
-
-      // Aqui chamaríamos o endpoint do backend
-      // await this.diagnosticoService.adicionarRotinaAoPilar(...)
-      
-      Swal.fire({
-        icon: 'success',
-        title: 'Adicionada!',
-        text: 'Rotina adicionada com sucesso.',
-        timer: 2000,
-        showConfirmButton: false
-      });
-
-      this.novaRotinaId = null;
-      this.rotinasModificadas.emit();
+      // Recarregar dados para refletir a remoção e reordenação automática
       await this.carregarDados();
+      this.rotinasModificadas.emit();
 
     } catch (error) {
-      console.error('Erro ao adicionar rotina:', error);
-      Swal.fire({
-        icon: 'error',
-        title: 'Erro',
-        text: 'Erro ao adicionar a rotina.'
-      });
+      this.showToast('Erro ao remover rotina. Tente novamente', 'error');
     }
   }
+
+  /**
+   * Abre modal de nova rotina customizada
+   */
+  abrirModalNovaRotina(): void {
+    if (!this.novaRotinaModal) return;
+
+    // Criar objeto PilarEmpresa para passar ao modal
+    const pilarEmpresa: PilarEmpresa = {
+      id: this.pilarEmpresaId,
+      pilarId: this.pilarId,
+      pilar: {
+        id: this.pilarId,
+        nome: this.pilarNome,
+      } as any,
+      rotinasEmpresa: this.rotinasEmpresa
+    } as PilarEmpresa;
+
+    this.novaRotinaModal.open(pilarEmpresa);
+  }
+
+  /**
+   * Callback quando rotina é criada na modal de nova rotina
+   * Recarrega a lista de rotinas para incluir a nova
+   */
+  async onRotinaCriada(): Promise<void> {
+    await this.carregarDados();
+    this.rotinasModificadas.emit();
+  }
+
+  private showToast(title: string, icon: 'success' | 'error' | 'info' | 'warning', timer: number = 3000): void {
+      Swal.fire({
+        toast: true,
+        position: 'top-end',
+        showConfirmButton: false,
+        timer,
+        timerProgressBar: true,
+        title,
+        icon
+      });
+    }
 }

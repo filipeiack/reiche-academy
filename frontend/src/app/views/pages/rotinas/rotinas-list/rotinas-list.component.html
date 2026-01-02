@@ -12,7 +12,7 @@
 
   <button type="button" class="btn btn-primary btn-icon-text btn-xs" [routerLink]="['/rotinas/novo']">
     <i class="feather icon-plus btn-icon-prepend"></i>
-    Nova Rotina
+    Adicionar Rotina
   </button>
 </div>
 
@@ -67,7 +67,7 @@
           <p class="text-muted">Comece criando sua primeira rotina</p>
           <a routerLink="/rotinas/novo" class="btn btn-primary">
             <i class="bi bi-plus-circle me-2"></i>
-            Nova Rotina
+            Adicionar Rotina
           </a>
         </div>
 
@@ -135,8 +135,9 @@
         </div>
 
         <!-- Pagination -->
-        <div class="d-flex justify-content-center mt-3" *ngIf="totalRotinas > pageSize">
-          <ngb-pagination [(page)]="page" [pageSize]="pageSize" [collectionSize]="totalRotinas" [maxSize]="5"
+        <div class="d-flex justify-content-between p-2">
+          <span class="text-muted fs-12">{{ totalRotinas }} {{ 'COMMON.ITEMS' | translate }}</span>
+          <ngb-pagination [(page)]="page" [pageSize]="pageSize" [collectionSize]="totalRotinas" size="sm"
             [rotate]="true" [boundaryLinks]="true">
           </ngb-pagination>
         </div>

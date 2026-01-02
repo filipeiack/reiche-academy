@@ -1,0 +1,36 @@
+.pilares-list {
+    min-height: 200px;
+}
+
+.pilar-item {
+    cursor: move;
+    transition: all 0.2s;
+}
+
+.pilar-item:hover {
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.pilar-item.cdk-drag-preview {
+    box-shadow: 0 5px 10px rgba(0, 0, 0, 0.2);
+    opacity: 0.9;
+}
+
+.pilar-item.cdk-drag-animating {
+    transition: transform 250ms cubic-bezier(0, 0, 0.2, 1);
+}
+
+.drag-handle {
+    cursor: grab;
+    color: #6c757d;
+}
+
+.drag-handle:active {
+    cursor: grabbing;
+}
+
+:host ::ng-deep .modal-body {
+    padding: 1.5rem;
+    max-height: 70vh;
+    overflow-y: auto;
+}

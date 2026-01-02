@@ -25,48 +25,34 @@
         </ng-template>
     </ng-select>
     <small class="text-muted">
-        Selecione um pilar para associar a esta empresa
+        <i class="feather icon-info me-1"></i>
+        Arraste os pilares para reordenar, adicione novos pilares ou remova os existentes.
     </small>
 </div>
 }
 
 <!-- Lista de pilares associados -->
 @if (pilaresAssociados.length > 0) {
-<div class="table-responsive">
-    <table class="table table-hover">
-        <thead>
-            <tr>
-                <th style="width: 40px;"></th>
-                <th>Pilar</th>
-                <th>Ordem</th>
-                <th class="text-end">Ações</th>
-            </tr>
-        </thead>
-        <tbody cdkDropList (cdkDropListDropped)="onDropPilares($event)">
-            @for (pilarEmpresa of pilaresAssociados; track pilarEmpresa.id; let idx = $index) {
-            <tr cdkDrag [cdkDragDisabled]="isPerfilCliente" style="height: auto;">
-            <td class="text-muted small" style="padding: 0.25rem 0.5rem;">
-                @if (!isPerfilCliente) {
-                <i class="feather icon-menu text-muted" style="cursor: grab;" title="Arraste para reordenar"></i>
-                }
-            </td>
-            <td class="text-muted small" style="padding: 0.25rem 0.5rem;">
-                <i class="feather icon-layers me-2"></i>
-                {{ pilarEmpresa.pilar.nome }}
-            </td>
-            <td class="text-muted small" style="padding: 0.25rem 0.5rem;">{{ pilarEmpresa.ordem }}</td>
-            <td class="text-muted text-end small" style="padding: 0.25rem 0.5rem;">
-                @if (!isPerfilCliente) {
+<div cdkDropList (cdkDropListDropped)="onDropPilares($event)" class="pilares-list">
+
+    @for (pilarEmpresa of pilaresAssociados; track pilarEmpresa.id; let idx = $index) {
+
+    <div class="pilar-item card mb-2" cdkDrag>
+        <div class="card-body p-2">
+            <div class="d-flex align-items-center gap-2">
+                <i class="feather icon-menu drag-handle" cdkDragHandle ngbTooltip="Arrastar para reordenar"></i>
+                <span class="badge bg-secondary small">{{ pilarEmpresa.ordem }}</span>
+                <span class="flex-grow-1 small">{{ pilarEmpresa.pilar.nome }}</span>
                 <button type="button" class="btn btn-icon text-danger" (click)="removePillarAssociation(pilarEmpresa)"
-                title="Remover pilar">
-                <i class="feather icon-trash-2"></i>
+                    title="Remover pilar">
+                    <i class="feather icon-trash-2"></i>
                 </button>
-                }
-            </td>
-            </tr>
-            }
-        </tbody>
-    </table>
+
+            </div>
+        </div>
+    </div>
+    
+    }
 </div>
 } @else {
 <div class="alert alert-info mb-0">

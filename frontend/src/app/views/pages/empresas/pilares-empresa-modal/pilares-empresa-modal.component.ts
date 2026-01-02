@@ -25,19 +25,24 @@ import { PilaresEmpresaFormComponent } from '../pilares-empresa-form/pilares-emp
       </div>
       <div class="modal-footer">
         <button type="button" class="btn btn-secondary" (click)="modal.close()">Fechar</button>
+        @if (this.formComponent.temAlteracoes) {
+        <button type="button" class="btn btn-success" (click)="this.formComponent.salvarOrdem()">
+          <i class="feather icon-save me-1"></i>
+          Salvar Ordem
+        </button>
+        }
       </div>
     </ng-template>
   `,
   styles: [`
-    :host ::ng-deep .modal-body {
-      padding: 1.5rem;
-    }
+    
   `]
 })
 export class PilaresEmpresaModalComponent {
   private modalService = inject(NgbModal);
   
   @ViewChild('modalContent') modalContent!: TemplateRef<any>;
+  @ViewChild(PilaresEmpresaFormComponent) formComponent!: PilaresEmpresaFormComponent;
   @Input() empresaId!: string;
   @Input() isPerfilCliente: boolean = false;
   @Output() pilaresModificados = new EventEmitter<void>();

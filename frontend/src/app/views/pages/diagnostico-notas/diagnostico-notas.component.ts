@@ -229,7 +229,8 @@ private loadEmpresas(): void {
    * Abre o modal de gerenciamento de rotinas do pilar
    */
   abrirModalEditarRotinas(pilarEmpresa: PilarEmpresa): void {
-    if (this.rotinasPilarModal) {
+    if (this.rotinasPilarModal && this.selectedEmpresaId) {
+      this.rotinasPilarModal.empresaId = this.selectedEmpresaId;
       this.rotinasPilarModal.pilarEmpresaId = pilarEmpresa.id;
       this.rotinasPilarModal.pilarNome = pilarEmpresa.pilar.nome;
       this.rotinasPilarModal.pilarId = pilarEmpresa.pilarId;

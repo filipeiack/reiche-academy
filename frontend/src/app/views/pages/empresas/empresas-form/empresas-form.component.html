@@ -154,13 +154,13 @@
                         <div class="mb-4">
                             <label class="form-label">
                                 @if (isEditMode) {
-                                    Adicionar Usuário Existente
+                                Adicionar Usuário Existente
                                 } @else {
-                                    Selecionar Usuários para Associar
+                                Selecionar Usuários para Associar
                                 }
                             </label>
-                            <ng-select [items]="usuariosDisponiveis" [addTag]="true" bindLabel="nome" [searchable]="true"
-                                [clearable]="true" placeholder="Busque por nome ou email..."
+                            <ng-select [items]="usuariosDisponiveis" [addTag]="true" bindLabel="nome"
+                                [searchable]="true" [clearable]="true" placeholder="Busque por nome ou email..."
                                 (change)="associarUsuario($event)">
                                 <ng-template ng-option-tmp let-item="item">
                                     <div class="d-flex align-items-center">
@@ -175,9 +175,9 @@
                             </ng-select>
                             <small class="text-muted">
                                 @if (isEditMode) {
-                                    Selecione um usuário para associar a esta empresa
+                                Selecione um usuário para associar a esta empresa
                                 } @else {
-                                    Os usuários serão associados após criar a empresa
+                                Os usuários serão associados após criar a empresa
                                 }
                             </small>
                         </div>
@@ -197,7 +197,8 @@
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    @for (usuario of (isEditMode ? usuariosAssociados : usuariosPendentesAssociacao); track usuario.id) {
+                                    @for (usuario of (isEditMode ? usuariosAssociados : usuariosPendentesAssociacao);
+                                    track usuario.id) {
                                     <tr>
                                         <td class="text-muted small">{{ usuario.nome }}</td>
                                         <td class="text-muted small">{{ usuario.cargo }}</td>
@@ -224,9 +225,9 @@
                         <div class="alert alert-info mb-0">
                             <i class="feather icon-info me-2"></i>
                             @if (isEditMode) {
-                                Nenhum usuário associado a esta empresa ainda.
+                            Nenhum usuário associado a esta empresa ainda.
                             } @else {
-                                Nenhum usuário adicionado ainda. Os usuários serão associados quando a empresa for criada.
+                            Nenhum usuário adicionado ainda. Os usuários serão associados quando a empresa for criada.
                             }
                         </div>
                         }
@@ -252,7 +253,8 @@
                         @if (!isPerfilCliente) {
                         <div class="mb-4">
                             <ng-select [items]="pilaresDisponiveis" bindLabel="nome" [searchable]="true"
-                                [clearable]="true" [addTag]="addPilarTag" placeholder="Busque por nome de pilar ou digite para criar novo..."
+                                [clearable]="true" [addTag]="addPilarTag"
+                                placeholder="Busque por nome de pilar ou digite para criar novo..."
                                 (change)="associarPilar($event)">
                                 <ng-template ng-option-tmp let-item="item">
                                     <div class="d-flex align-items-center">
@@ -268,9 +270,10 @@
                             </ng-select>
                             <small class="text-muted">
                                 @if (isEditMode) {
-                                    Selecione um pilar para associar a esta empresa
+                                Arraste os pilares para reordenar, adicione novos pilares ou remova os existentes.
                                 } @else {
-                                    Os pilares serão associados após criar a empresa (pilares padrão são adicionados automaticamente)
+                                Os pilares serão associados após criar a empresa (pilares padrão são adicionados
+                                automaticamente)
                                 }
                             </small>
                         </div>
@@ -278,73 +281,55 @@
 
                         <!-- Lista de pilares associados -->
                         @if (isEditMode ? pilaresAssociados.length > 0 : pilaresPendentesAssociacao.length > 0) {
-                        <div class="table-responsive">
-                            <table class="table table-hover">
-                                <thead>
-                                    <tr>
-                                        <th style="width: 40px;"></th>
-                                        <th>Pilar</th>
-                                        <th>Ordem</th>
-                                        <th class="text-end">Ações</th>
-                                    </tr>
-                                </thead>
-                                <tbody cdkDropList (cdkDropListDropped)="onDropPilares($event)">
-                                    @if (isEditMode) {
-                                        @for (pilarEmpresa of pilaresAssociados; track pilarEmpresa.id; let idx = $index) {
-                                        <tr cdkDrag [cdkDragDisabled]="isPerfilCliente">
-                                            <td class="text-muted small">
-                                                @if (!isPerfilCliente) {
-                                                <i class="feather icon-menu text-muted" 
-                                                   style="cursor: grab;" 
-                                                   title="Arraste para reordenar"></i>
-                                                }
-                                            </td>
-                                            <td class="text-muted small">
-                                                <i class="feather icon-layers me-2"></i>
-                                                {{ pilarEmpresa.pilar.nome }}
-                                            </td>
-                                            <td class="text-muted small">{{ pilarEmpresa.ordem }}</td>
-                                            <td class="text-muted text-end small">
-                                                @if (!isPerfilCliente) {
-                                                <button type="button" class="btn btn-icon text-danger"
-                                                    (click)="removePillarAssociation(pilarEmpresa)" 
-                                                    title="Remover pilar">
-                                                    <i class="feather icon-trash-2"></i>
-                                                </button>
-                                                }
-                                            </td>
-                                        </tr>
-                                        }
-                                    } @else {
-                                        @for (pilar of pilaresPendentesAssociacao; track pilar.id; let idx = $index) {
-                                        <tr>
-                                            <td></td>
-                                            <td class="text-muted small">
-                                                <i class="feather icon-target me-2"></i>
-                                                {{ pilar.nome }}
-                                            </td>
-                                            <td class="text-muted small">{{ idx + 1 }}</td>
-                                            <td class="text-muted text-end small">
-                                                @if (!isPerfilCliente) {
-                                                <button type="button" class="btn btn-icon text-danger"
-                                                    (click)="desassociarPilarPendente(pilar)" title="Remover pilar">
-                                                    <i class="feather icon-trash-2"></i>
-                                                </button>
-                                                }
-                                            </td>
-                                        </tr>
-                                        }
-                                    }
-                                </tbody>
-                            </table>
+                        <div cdkDropList (cdkDropListDropped)="onDropPilares($event)" class="pilares-list">
+                            @if (isEditMode) {
+                            @for (pilarEmpresa of pilaresAssociados; track pilarEmpresa.id; let idx = $index) {
+                            <div class="pilar-item card mb-2" cdkDrag>
+                                <div class="card-body p-2">
+                                    <div class="d-flex align-items-center gap-2">
+                                        <i class="feather icon-menu drag-handle" cdkDragHandle
+                                            ngbTooltip="Arrastar para reordenar"></i>
+                                        <span class="badge bg-secondary small">{{ pilarEmpresa.ordem }}</span>
+                                        <span class="flex-grow-1 small">{{ pilarEmpresa.pilar.nome }}</span>
+                                        <button type="button" class="btn btn-icon text-danger"
+                                            (click)="removePillarAssociation(pilarEmpresa)" title="Remover pilar">
+                                            <i class="feather icon-trash-2"></i>
+                                        </button>
+
+                                    </div>
+                                </div>
+                            </div>
+                            }
+                            } @else {
+                            @for (pilar of pilaresPendentesAssociacao; track pilar.id; let idx = $index) {
+
+                            <div class="pilar-item card mb-2" cdkDrag>
+                                <div class="card-body p-2">
+                                    <div class="d-flex align-items-center gap-2">
+
+                                        <span class="badge bg-secondary small">{{ pilar.ordem }}</span>
+                                        <span class="flex-grow-1 small">{{ pilar.nome }}</span>
+                                        <button type="button" class="btn btn-icon text-danger"
+                                            (click)="desassociarPilarPendente(pilar)" title="Remover pilar">
+                                            <i class="feather icon-trash-2"></i>
+                                        </button>
+
+                                    </div>
+                                </div>
+                            </div>
+
+
+                            }
+                            }
                         </div>
                         } @else {
                         <div class="alert alert-info mb-0">
                             <i class="feather icon-info me-2"></i>
                             @if (isEditMode) {
-                                Nenhum pilar associado a esta empresa ainda.
+                            Nenhum pilar associado a esta empresa ainda.
                             } @else {
-                                Nenhum pilar adicional selecionado. Pilares padrão (modelo) serão associados automaticamente ao criar a empresa.
+                            Nenhum pilar adicional selecionado. Pilares padrão (modelo) serão associados automaticamente
+                            ao criar a empresa.
                             }
                         </div>
                         }
@@ -353,7 +338,8 @@
 
 
                 <div class="form-footer mt-4 d-flex justify-content-end gap-2">
-                    <button type="button" (click)="handleCancel()" class="btn btn-outline-secondary">{{ 'BUTTONS.CANCEL' | translate
+                    <button type="button" (click)="handleCancel()" class="btn btn-outline-secondary">{{ 'BUTTONS.CANCEL'
+                        | translate
                         }}</button>
                     <button type="submit" class="btn btn-primary" [disabled]="loading || form.invalid">
                         @if (loading) {
@@ -427,21 +413,24 @@
                         {{ 'COMPANIES.INFO.CREATE' | translate }}
                         }
                     </p>
-                    
+
                     <hr class="my-3">
-                    
+
                     <h6 class="mb-2">{{ 'COMPANIES.INFO.WHAT_ARE' | translate }}</h6>
                     <p class="small text-muted">
                         {{ 'COMPANIES.INFO.DESCRIPTION' | translate }}
                     </p>
-                    
+
                     <h6 class="mb-2 mt-3">{{ 'COMPANIES.INFO.FIELDS_GUIDE' | translate }}</h6>
                     <ul class="small text-muted mb-2">
-                        <li><strong>{{ 'COMPANIES.LOGIN_URL' | translate }}:</strong> {{ 'COMPANIES.INFO.LOGIN_URL_TIP' | translate }}</li>
-                        <li><strong>{{ 'COMPANIES.INFO.LOGO' | translate }}:</strong> {{ 'COMPANIES.INFO.LOGO_TIP' | translate }}</li>
-                        <li><strong>{{ 'COMPANIES.TIPO_NEGOCIO' | translate }}:</strong> {{ 'COMPANIES.INFO.BUSINESS_TYPE_TIP' | translate }}</li>
+                        <li><strong>{{ 'COMPANIES.LOGIN_URL' | translate }}:</strong> {{ 'COMPANIES.INFO.LOGIN_URL_TIP'
+                            | translate }}</li>
+                        <li><strong>{{ 'COMPANIES.INFO.LOGO' | translate }}:</strong> {{ 'COMPANIES.INFO.LOGO_TIP' |
+                            translate }}</li>
+                        <li><strong>{{ 'COMPANIES.TIPO_NEGOCIO' | translate }}:</strong> {{
+                            'COMPANIES.INFO.BUSINESS_TYPE_TIP' | translate }}</li>
                     </ul>
-                    
+
                     <h6 class="mb-2 mt-3">{{ 'COMPANIES.INFO.USERS_MANAGEMENT' | translate }}</h6>
                     <p class="small text-muted mb-2">
                         {{ 'COMPANIES.INFO.USERS_DESC' | translate }}
@@ -451,7 +440,7 @@
                         <li>{{ 'COMPANIES.INFO.USERS_TIP_2' | translate }}</li>
                         <li>{{ 'COMPANIES.INFO.USERS_TIP_3' | translate }}</li>
                     </ul>
-                    
+
                     <div class="alert alert-info p-2 mb-0">
                         <small>
                             <strong>{{ 'COMPANIES.INFO.MULTI_TENANT' | translate }}:</strong>

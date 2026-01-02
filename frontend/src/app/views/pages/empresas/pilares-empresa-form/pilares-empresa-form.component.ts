@@ -24,6 +24,7 @@ export class PilaresEmpresaFormComponent implements OnInit {
   pilaresDisponiveis: Pilar[] = [];
   pilaresAssociados: PilarEmpresa[] = [];
   loading = false;
+  temAlteracoes = false;
 
   ngOnInit(): void {
     if (!this.isPerfilCliente) {
@@ -127,32 +128,37 @@ export class PilaresEmpresaFormComponent implements OnInit {
   }
 
   onDropPilares(event: CdkDragDrop<PilarEmpresa[]>): void {
-    if (this.isPerfilCliente) return;
 
-    const previousIndex = event.previousIndex;
-    const currentIndex = event.currentIndex;
-
-    if (previousIndex === currentIndex) return;
-
-    moveItemInArray(this.pilaresAssociados, previousIndex, currentIndex);
-
-    const novasOrdens = this.pilaresAssociados.map((pe, idx) => ({
-      id: pe.id,
-      ordem: idx + 1
-    }));
-
-    if (this.empresaId) {
-      this.pilaresEmpresaService.reordenarPilares(this.empresaId, novasOrdens).subscribe({
-        next: () => {
-          this.showToast('Pilares reordenados com sucesso!', 'success');
-          this.loadPilaresAssociados(this.empresaId);
-          this.pilaresChanged.emit();
-        },
-        error: (err: any) => {
-          this.showToast(err?.error?.message || 'Erro ao reordenar pilares', 'error');
-          this.loadPilaresAssociados(this.empresaId);
-        }
+    if (event.previousIndex !== event.currentIndex) {
+      moveItemInArray(this.pilaresAssociados, event.previousIndex, event.currentIndex);
+      
+      // Atualizar a ordem de todas as pilares
+      this.pilaresAssociados.forEach((pilar, index) => {
+        pilar.ordem = index + 1;
       });
+      
+      this.temAlteracoes = true;
+    }
+  }
+
+  async salvarOrdem(): Promise<void> {
+    try {
+      const novasOrdens = this.pilaresAssociados.map((p, idx) => ({
+        id: p.id,
+        ordem: idx + 1
+      }));
+
+      if (this.empresaId) {
+        await this.pilaresEmpresaService.reordenarPilares(this.empresaId, novasOrdens).toPromise();
+      
+      this.showToast('Ordem das pilares atualizada com sucesso.', 'success');
+      
+      this.temAlteracoes = false;
+      this.pilaresChanged.emit();
+    }
+      
+    } catch (error) {
+      this.showToast('Erro ao salvar a ordem das pilares. Tente novamente', 'error');
     }
   }
 
