@@ -56,6 +56,11 @@ export const MENU: MenuItem[] = [
     icon: 'clipboard',
     link: '/diagnostico-notas'
   },
+  {
+    label: 'MENU.EVOLUCAO',
+    icon: 'trending-up',
+    link: '/diagnostico-evolucao'
+  },
 
   
   {

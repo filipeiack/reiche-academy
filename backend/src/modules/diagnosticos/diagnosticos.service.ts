@@ -197,4 +197,184 @@ export class DiagnosticosService {
       nota,
     };
   }
+
+  /**
+   * Calcular médias atuais dos pilares de uma empresa
+   * Retorna apenas pilares que possuem pelo menos 1 nota
+   */
+  async calcularMediasPilares(empresaId: string, user: RequestUser) {
+    // Validar acesso multi-tenant
+    if (user.perfil?.codigo !== 'ADMINISTRADOR' && user.empresaId !== empresaId) {
+      throw new ForbiddenException('Você não pode acessar dados de outra empresa');
+    }
+
+    // Buscar pilares da empresa com suas rotinas e notas
+    const pilares = await this.prisma.pilarEmpresa.findMany({
+      where: {
+        empresaId,
+        ativo: true,
+        pilar: { ativo: true },
+      },
+      include: {
+        pilar: {
+          select: {
+            id: true,
+            nome: true,
+          },
+        },
+        rotinasEmpresa: {
+          where: {
+            ativo: true,
+            rotina: { ativo: true },
+          },
+          include: {
+            notas: {
+              orderBy: { createdAt: 'desc' },
+              take: 1, // Apenas a nota mais recente
+            },
+          },
+        },
+      },
+      orderBy: { ordem: 'asc' },
+    });
+
+    // Calcular médias
+    const medias = pilares
+      .map((pilar) => {
+        const notasValidas = pilar.rotinasEmpresa
+          .map((re) => re.notas[0]?.nota)
+          .filter((nota) => nota !== null && nota !== undefined);
+
+        if (notasValidas.length === 0) {
+          return null; // Não retornar pilares sem notas
+        }
+
+        const soma = notasValidas.reduce((acc, nota) => acc + nota, 0);
+        const mediaAtual = soma / notasValidas.length;
+
+        return {
+          pilarEmpresaId: pilar.id,
+          pilarId: pilar.pilarId,
+          pilarNome: pilar.pilar.nome,
+          mediaAtual: Number(mediaAtual.toFixed(2)),
+          totalRotinasAvaliadas: notasValidas.length,
+          totalRotinas: pilar.rotinasEmpresa.length,
+        };
+      })
+      .filter((media) => media !== null);
+
+    return medias;
+  }
+
+  /**
+   * Congelar médias atuais na tabela PilarEvolucao
+   * Cria snapshots históricos das médias
+   */
+  async congelarMedias(empresaId: string, user: RequestUser) {
+    // Validar acesso multi-tenant
+    if (user.perfil?.codigo !== 'ADMINISTRADOR' && user.empresaId !== empresaId) {
+      throw new ForbiddenException('Você não pode acessar dados de outra empresa');
+    }
+
+    // Validar perfil autorizado
+    if (!['ADMINISTRADOR', 'CONSULTOR', 'GESTOR'].includes(user.perfil?.codigo)) {
+      throw new ForbiddenException('Apenas gestores podem congelar médias');
+    }
+
+    // Calcular médias atuais
+    const medias = await this.calcularMediasPilares(empresaId, user);
+
+    if (medias.length === 0) {
+      throw new BadRequestException('Não há médias para congelar');
+    }
+
+    // Criar registros de evolução
+    const evolucoes = await Promise.all(
+      medias.map((media) =>
+        this.prisma.pilarEvolucao.create({
+          data: {
+            pilarEmpresaId: media.pilarEmpresaId,
+            mediaNotas: media.mediaAtual,
+            createdBy: user.id,
+            updatedBy: user.id,
+          },
+        }),
+      ),
+    );
+
+    // Registrar auditoria para cada snapshot criado
+    await Promise.all(
+      evolucoes.map((evolucao) =>
+        this.audit.log({
+          usuarioId: user.id,
+          usuarioNome: user.nome || '',
+          usuarioEmail: user.email || '',
+          entidade: 'PilarEvolucao',
+          entidadeId: evolucao.id,
+          acao: 'CREATE',
+          dadosDepois: {
+            pilarEmpresaId: evolucao.pilarEmpresaId,
+            mediaNotas: evolucao.mediaNotas,
+          },
+        }),
+      ),
+    );
+
+    return {
+      message: 'Médias congeladas com sucesso',
+      totalPilaresCongelados: evolucoes.length,
+      data: new Date(),
+    };
+  }
+
+  /**
+   * Buscar histórico de evolução de um pilar
+   * Retorna todos os snapshots ordenados por data
+   */
+  async buscarHistoricoEvolucao(empresaId: string, pilarEmpresaId: string, user: RequestUser) {
+    // Validar se pilarEmpresa pertence à empresa
+    const pilarEmpresa = await this.prisma.pilarEmpresa.findUnique({
+      where: { id: pilarEmpresaId },
+      select: { empresaId: true },
+    });
+
+    if (!pilarEmpresa) {
+      throw new NotFoundException('Pilar não encontrado');
+    }
+
+    if (pilarEmpresa.empresaId !== empresaId) {
+      throw new BadRequestException('Pilar não pertence à empresa informada');
+    }
+
+    // Validar acesso multi-tenant
+    if (user.perfil?.codigo !== 'ADMINISTRADOR' && user.empresaId !== empresaId) {
+      throw new ForbiddenException('Você não pode acessar dados de outra empresa');
+    }
+
+    // Buscar histórico
+    const historico = await this.prisma.pilarEvolucao.findMany({
+      where: { pilarEmpresaId },
+      orderBy: { createdAt: 'asc' },
+      include: {
+        pilarEmpresa: {
+          include: {
+            pilar: {
+              select: {
+                id: true,
+                nome: true,
+              },
+            },
+          },
+        },
+      },
+    });
+
+    return historico.map((item) => ({
+      id: item.id,
+      mediaNotas: item.mediaNotas,
+      createdAt: item.createdAt,
+      pilarNome: item.pilarEmpresa.pilar.nome,
+      pilarId: item.pilarEmpresa.pilarId,
+    }));
+  }
 }

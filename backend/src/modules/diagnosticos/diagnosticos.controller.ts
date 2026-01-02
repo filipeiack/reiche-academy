@@ -1,6 +1,7 @@
 import {
   Controller,
   Get,
+  Post,
   Patch,
   Body,
   Param,
@@ -43,5 +44,39 @@ export class DiagnosticosController {
     @Request() req: ExpressRequest & { user: any },
   ) {
     return this.diagnosticosService.upsertNotaRotina(rotinaEmpresaId, updateDto, req.user);
+  }
+
+  @Get('empresas/:empresaId/evolucao/medias')
+  @Roles('ADMINISTRADOR', 'CONSULTOR', 'GESTOR', 'COLABORADOR', 'LEITURA')
+  @ApiOperation({ summary: 'Calcular médias atuais dos pilares da empresa' })
+  @ApiResponse({ status: 200, description: 'Médias calculadas com sucesso' })
+  calcularMediasPilares(
+    @Param('empresaId') empresaId: string,
+    @Request() req: ExpressRequest & { user: any },
+  ) {
+    return this.diagnosticosService.calcularMediasPilares(empresaId, req.user);
+  }
+
+  @Post('empresas/:empresaId/evolucao/congelar')
+  @Roles('ADMINISTRADOR', 'CONSULTOR', 'GESTOR')
+  @ApiOperation({ summary: 'Congelar médias atuais na tabela PilarEvolucao' })
+  @ApiResponse({ status: 201, description: 'Médias congeladas com sucesso' })
+  congelarMedias(
+    @Param('empresaId') empresaId: string,
+    @Request() req: ExpressRequest & { user: any },
+  ) {
+    return this.diagnosticosService.congelarMedias(empresaId, req.user);
+  }
+
+  @Get('empresas/:empresaId/evolucao/historico/:pilarEmpresaId')
+  @Roles('ADMINISTRADOR', 'CONSULTOR', 'GESTOR', 'COLABORADOR', 'LEITURA')
+  @ApiOperation({ summary: 'Buscar histórico de evolução de um pilar' })
+  @ApiResponse({ status: 200, description: 'Histórico retornado com sucesso' })
+  buscarHistoricoEvolucao(
+    @Param('empresaId') empresaId: string,
+    @Param('pilarEmpresaId') pilarEmpresaId: string,
+    @Request() req: ExpressRequest & { user: any },
+  ) {
+    return this.diagnosticosService.buscarHistoricoEvolucao(empresaId, pilarEmpresaId, req.user);
   }
 }

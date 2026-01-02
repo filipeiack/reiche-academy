@@ -1,0 +1,162 @@
+<div id="headerEmpresa" class="sticky-header-empresa mb-1">
+    <div class="mb-2 align-items-center d-flex justify-content-between flex-wrap">
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb breadcrumb-arrow">
+                <li class="breadcrumb-item">
+                    <i class="feather icon-trending-up"></i>
+                </li>
+                <li class="breadcrumb-item active" aria-current="page">
+                    {{ 'EVOLUCAO.TITLE' | translate }}
+                </li>
+            </ol>
+        </nav>
+    </div>
+
+    <div class="card">
+        <div class="card-body" style="padding-top: 10px; padding-bottom: 10px;">
+            @if (isAdmin || empresaLogada) {
+            <div class="row">
+                <!-- Seletor de empresa (apenas para admin) -->
+                @if (isAdmin) {
+                <div class="col-12">
+                    <ng-select id="empresaSelect" [items]="empresas" bindLabel="nome" bindValue="id"
+                        [(ngModel)]="selectedEmpresaId" (change)="onEmpresaChange($event)"
+                        placeholder="{{ 'EVOLUCAO.SELECT_EMPRESA_PLACEHOLDER' | translate }}" [clearable]="false">
+                    </ng-select>
+                </div>
+                } @else if (empresaLogada) {
+                <div class="col-12 d-flex gap-3 align-items-center">
+                    <i class="feather icon-briefcase"></i>
+                    <span class="h3">
+                        {{ empresaLogada.nome }}
+                    </span>
+                    @if (empresaLogada.cnpj) {
+                    <span class="text-muted small d-block">{{ empresaLogada.cnpj }} - {{ empresaLogada.cidade }}/{{
+                        empresaLogada.estado }}</span>
+                    }
+                </div>
+                }
+            </div>
+            }
+
+            <!-- Loading -->
+            @if (loading) {
+            <div class="text-center py-5">
+                <div class="spinner-border text-primary" role="status">
+                    <span class="visually-hidden">{{ 'COMMON.LOADING' | translate }}...</span>
+                </div>
+            </div>
+            }
+
+            <!-- Error -->
+            @if (error && !loading) {
+            <ngb-alert type="danger" [dismissible]="false">
+                <i class="feather icon-alert-circle"></i>
+                {{ error }}
+            </ngb-alert>
+            }
+
+            <!-- Estado vazio -->
+            @if (!loading && !error && medias.length === 0 && selectedEmpresaId) {
+            <div class="empty-state">
+                <i class="feather icon-folder"></i>
+                <p>{{ 'EVOLUCAO.NO_MEDIAS' | translate }}</p>
+            </div>
+            }
+
+            @if (!loading && !error && !selectedEmpresaId && !isAdmin) {
+            <div class="empty-state">
+                <i class="feather icon-alert-circle"></i>
+                <p>{{ 'EVOLUCAO.NO_EMPRESA_ASSOCIATED' | translate }}</p>
+            </div>
+            }
+
+        </div>
+    </div>
+</div>
+
+<!-- Conteúdo principal -->
+@if (!loading && !error && selectedEmpresaId && medias.length > 0) {
+<div class="row">
+    <!-- Cards de Pilares com Médias -->
+    @for (media of medias; track media.pilarEmpresaId) {
+    <div class="col-md-4 mb-3">
+        <div class="card">
+            <div class="card-body">
+                <h5 class="card-title mb-2">{{ media.pilarNome }}</h5>
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                    <span class="text-muted">{{ 'EVOLUCAO.MEDIA_ATUAL' | translate }}:</span>
+                    <h3 class="mb-0 text-primary">{{ media.mediaAtual.toFixed(1) }}</h3>
+                </div>
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                    <span class="text-muted small">{{ 'EVOLUCAO.ROTINAS_AVALIADAS' | translate }}:</span>
+                    <span class="badge bg-info">{{ media.totalRotinasAvaliadas }}/{{ media.totalRotinas }}</span>
+                </div>
+                <div class="progress" style="height: 5px;">
+                    <div class="progress-bar"
+                        [class.bg-success]="(media.totalRotinasAvaliadas / media.totalRotinas * 100) >= 80"
+                        [class.bg-warning]="(media.totalRotinasAvaliadas / media.totalRotinas * 100) >= 50 && (media.totalRotinasAvaliadas / media.totalRotinas * 100) < 80"
+                        [class.bg-danger]="(media.totalRotinasAvaliadas / media.totalRotinas * 100) < 50"
+                        role="progressbar"
+                        [style.width.%]="media.totalRotinasAvaliadas / media.totalRotinas * 100"
+                        [attr.aria-valuenow]="media.totalRotinasAvaliadas / media.totalRotinas * 100" aria-valuemin="0"
+                        aria-valuemax="100">
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    }
+</div>
+
+<!-- Botão Congelar -->
+@if (canCongelar) {
+<div class="card mb-3">
+    <div class="card-body">
+        <div class="d-flex justify-content-between align-items-center">
+            <div>
+                <h5 class="mb-1">{{ 'EVOLUCAO.CONGELAR_TITLE' | translate }}</h5>
+                <p class="text-muted mb-0">{{ 'EVOLUCAO.CONGELAR_DESC' | translate }}</p>
+            </div>
+            <button type="button" class="btn btn-primary" (click)="congelarMedias()" [disabled]="medias.length === 0">
+                <i class="feather icon-archive"></i>
+                {{ 'EVOLUCAO.CONGELAR_BTN' | translate }}
+            </button>
+        </div>
+    </div>
+</div>
+}
+
+<!-- Seletor de Pilar e Gráfico -->
+<div class="card">
+    <div class="card-body">
+        <h5 class="card-title mb-3">{{ 'EVOLUCAO.GRAFICO_TITLE' | translate }}</h5>
+
+        <div class="mb-4">
+            <label for="pilarSelect" class="form-label">{{ 'EVOLUCAO.SELECT_PILAR' | translate }}</label>
+            <ng-select id="pilarSelect" [items]="medias" bindLabel="pilarNome" bindValue="pilarEmpresaId"
+                [(ngModel)]="selectedPilarEmpresaId" (change)="onPilarChange($any($event))"
+                placeholder="{{ 'EVOLUCAO.SELECT_PILAR_PLACEHOLDER' | translate }}" [clearable]="true">
+            </ng-select>
+        </div>
+
+        @if (selectedPilarEmpresaId) {
+        @if (historico.length > 0) {
+        <div style="height: 400px;">
+            <canvas id="evolucaoChart"></canvas>
+        </div>
+        } @else {
+        <div class="empty-state">
+            <i class="feather icon-bar-chart-2"></i>
+            <p>{{ 'EVOLUCAO.NO_HISTORICO' | translate }}</p>
+        </div>
+        }
+        } @else {
+        <div class="empty-state">
+            <i class="feather icon-bar-chart-2"></i>
+            <p>{{ 'EVOLUCAO.SELECT_PILAR_INFO' | translate }}</p>
+        </div>
+        }
+    </div>
+</div>
+}

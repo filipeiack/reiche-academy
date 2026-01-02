@@ -18,15 +18,21 @@ O módulo Diagnósticos é responsável por:
 - **Interface de diagnóstico** com auto-save, cache local e cálculo de progresso
 - **Gestão de rotinas customizadas** por empresa
 - **Definição de responsáveis** por pilar em cada empresa
+- **Evolução de pilares** — Cálculo e congelamento de médias históricas
+- **Histórico de evolução** — Visualização gráfica da evolução das médias por pilar
 
 **Entidades principais:**
 - NotaRotina (avaliação de rotinas com nota 1-10 e criticidade)
 - PilarEmpresa (vinculação empresa-pilar com responsável)
 - RotinaEmpresa (vinculação rotina-pilar por empresa)
+- PilarEvolucao (snapshot de médias congeladas por data)
 
 **Endpoints implementados:**
 - `GET /empresas/:empresaId/diagnostico/notas` — Buscar estrutura completa de diagnóstico (todos os perfis)
 - `PATCH /rotinas-empresa/:rotinaEmpresaId/nota` — Atualizar ou criar nota (ADMINISTRADOR, CONSULTOR, GESTOR, COLABORADOR)
+- `GET /empresas/:empresaId/evolucao/medias` — Buscar médias atuais dos pilares (todos os perfis)
+- `POST /empresas/:empresaId/evolucao/congelar` — Congelar médias atuais na base (ADMINISTRADOR, CONSULTOR, GESTOR)
+- `GET /empresas/:empresaId/evolucao/historico/:pilarEmpresaId` — Buscar histórico de evolução de um pilar (todos os perfis)
 
 **Status do módulo:** ✅ **IMPLEMENTADO** (backend + frontend completos)
 
@@ -1364,8 +1370,356 @@ if (rotina.pilarId !== pilarEmpresa.pilarId) {
 ---
 
 **Observação final:**  
-Este documento reflete APENAS os DTOs DEFINIDOS.  
-**Módulo Diagnosticos NÃO possui implementação.**  
-Estruturas estão prontas no schema e validações nos DTOs.  
-**Crítico:** Service e Controller precisam ser implementados.  
-**Roadmap:** Implementar em 5 fases (pilares → rotinas → notas → evolução → reuniões).
+Este documento reflete a implementação completa do módulo Diagnósticos.  
+**Status:** Backend e frontend implementados e funcionais.  
+**Roadmap futuro:** Módulo de Evolução de Pilares (histórico e gráficos).
+
+---
+
+## 5. PilarEvolucao — Histórico de Médias
+
+### 5.1. Entidade PilarEvolucao
+
+**Localização:** `backend/prisma/schema.prisma`
+
+| Campo | Tipo | Descrição |
+|-------|------|-----------|
+| id | String (UUID) | Identificador único |
+| pilarEmpresaId | String | FK para PilarEmpresa |
+| mediaNotas | Float? | Média calculada das notas (0-10) |
+| createdAt | DateTime | Data do snapshot (data do congelamento) |
+| updatedAt | DateTime | Data da última atualização |
+| createdBy | String? | ID do usuário que congelou |
+| updatedBy | String? | ID do usuário que atualizou |
+
+**Relações:**
+- `pilarEmpresa`: PilarEmpresa (pilar associado ao snapshot)
+
+**Comportamento:**
+- Armazena snapshots históricos das médias de notas por pilar
+- Criado quando usuário "congela" as médias atuais
+- Não é atualizado após criação (histórico imutável)
+- Permite visualização da evolução temporal das médias
+
+---
+
+## 6. Regras de Negócio — Evolução de Pilares
+
+### R-EVOL-001: Calcular Médias Atuais dos Pilares
+
+**Descrição:** Calcula a média atual das notas de cada pilar da empresa, considerando apenas rotinas que possuem notas.
+
+**Implementação:**
+- **Endpoint:** `GET /empresas/:empresaId/evolucao/medias` (todos os perfis)
+- **Método:** `DiagnosticosService.calcularMediasPilares()`
+
+**Validação Multi-Tenant:**
+```typescript
+if (user.perfil?.codigo !== 'ADMINISTRADOR' && user.empresaId !== empresaId) {
+  throw new ForbiddenException('Você não pode acessar dados de outra empresa');
+}
+```
+
+**Lógica de Cálculo:**
+```typescript
+// Para cada PilarEmpresa da empresa:
+1. Buscar todas as RotinaEmpresa ativas do pilar
+2. Para cada rotina, buscar a nota mais recente (if exists)
+3. Calcular média = soma(notas) / count(notas)
+4. Se count(notas) === 0, não retornar o pilar (média não existe)
+```
+
+**Estrutura Retornada:**
+```typescript
+Array<{
+  pilarEmpresaId: string;
+  pilarId: string;
+  pilarNome: string;
+  mediaAtual: number;  // 0-10
+  totalRotinasAvaliadas: number;
+  totalRotinas: number;
+}>
+```
+
+**Filtros:**
+- Apenas pilares ativos
+- Apenas rotinas ativas
+- Apenas pilares com pelo menos 1 nota
+
+**Perfis autorizados:** Todos
+
+---
+
+### R-EVOL-002: Congelar Médias Atuais
+
+**Descrição:** Cria snapshots na tabela PilarEvolucao com as médias calculadas no momento atual.
+
+**Implementação:**
+- **Endpoint:** `POST /empresas/:empresaId/evolucao/congelar` (ADMINISTRADOR, CONSULTOR, GESTOR)
+- **Método:** `DiagnosticosService.congelarMedias()`
+
+**Validação Multi-Tenant:**
+```typescript
+if (user.perfil?.codigo !== 'ADMINISTRADOR' && user.empresaId !== empresaId) {
+  throw new ForbiddenException('Você não pode acessar dados de outra empresa');
+}
+```
+
+**Validação de Perfil:**
+```typescript
+if (!['ADMINISTRADOR', 'CONSULTOR', 'GESTOR'].includes(user.perfil?.codigo)) {
+  throw new ForbiddenException('Apenas gestores podem congelar médias');
+}
+```
+
+**Lógica de Congelamento:**
+```typescript
+1. Calcular médias atuais (usar R-EVOL-001)
+2. Para cada pilar com média > 0:
+   - Criar registro em PilarEvolucao
+   - mediaNotas = média calculada
+   - createdAt = data/hora atual
+   - createdBy = user.id
+3. Registrar auditoria (CREATE em PilarEvolucao)
+```
+
+**Retorno:**
+```typescript
+{
+  message: 'Médias congeladas com sucesso',
+  totalPilaresCongelados: number,
+  data: DateTime
+}
+```
+
+**Validação:**
+- Apenas pilares com média > 0 são congelados
+- Usuário deve estar associado à empresa (exceto ADMINISTRADOR)
+
+**Perfis autorizados:** ADMINISTRADOR, CONSULTOR, GESTOR
+
+**Auditoria:** Sim (CREATE)
+
+---
+
+### R-EVOL-003: Buscar Histórico de Evolução
+
+**Descrição:** Retorna todo o histórico de médias congeladas de um pilar específico.
+
+**Implementação:**
+- **Endpoint:** `GET /empresas/:empresaId/evolucao/historico/:pilarEmpresaId` (todos os perfis)
+- **Método:** `DiagnosticosService.buscarHistoricoEvolucao()`
+
+**Validação Multi-Tenant:**
+```typescript
+// Verificar se pilarEmpresa pertence à empresa
+const pilarEmpresa = await this.prisma.pilarEmpresa.findUnique({
+  where: { id: pilarEmpresaId },
+  select: { empresaId: true },
+});
+
+if (user.perfil?.codigo !== 'ADMINISTRADOR' && 
+    user.empresaId !== pilarEmpresa.empresaId) {
+  throw new ForbiddenException('Você não pode acessar dados de outra empresa');
+}
+```
+
+**Lógica de Busca:**
+```typescript
+// Buscar todos os registros de PilarEvolucao para o pilar
+const historico = await this.prisma.pilarEvolucao.findMany({
+  where: { pilarEmpresaId },
+  orderBy: { createdAt: 'asc' },
+  include: {
+    pilarEmpresa: {
+      include: {
+        pilar: { select: { id: true, nome: true } }
+      }
+    }
+  }
+});
+```
+
+**Estrutura Retornada:**
+```typescript
+Array<{
+  id: string;
+  mediaNotas: number;
+  createdAt: DateTime;
+  pilarNome: string;
+  pilarId: string;
+}>
+```
+
+**Ordenação:** Por data de criação (ASC - mais antigo primeiro)
+
+**Perfis autorizados:** Todos
+
+---
+
+## 7. Interface — Tela de Evolução
+
+### 7.1. Visão Geral
+
+**Localização:** `frontend/src/app/views/pages/diagnostico-evolucao/`
+
+**Funcionalidades:**
+- Exibir lista de pilares da empresa do usuário logado
+- Mostrar média atual de cada pilar
+- Botão para congelar médias (apenas ADMINISTRADOR, CONSULTOR, GESTOR)
+- Gráfico de linha mostrando evolução histórica de cada pilar
+- Filtro para selecionar qual pilar visualizar no gráfico
+
+### 7.2. Componentes
+
+**Componente principal:** `diagnostico-evolucao.component.ts`
+
+**Responsabilidades:**
+- Carregar médias atuais via `GET /evolucao/medias`
+- Exibir cards com informações dos pilares
+- Botão "Congelar Médias" que chama `POST /evolucao/congelar`
+- Selecionar pilar para ver histórico
+- Carregar histórico via `GET /evolucao/historico/:pilarEmpresaId`
+- Renderizar gráfico de linha com Chart.js ou similar
+
+**Estados:**
+- Loading (carregando dados)
+- Empty (empresa sem pilares ou sem notas)
+- Data (exibindo médias e gráfico)
+- Error (erro ao carregar)
+
+### 7.3. Layout da Tela
+
+**Estrutura:**
+```
+[Breadcrumb] Diagnósticos > Evolução
+
+[Empresa Selecionada] (se ADMIN, dropdown; senão, empresa do usuário)
+
+[Cards de Pilares]
+┌─────────────────────┐  ┌─────────────────────┐
+│ Pilar: Gestão       │  │ Pilar: Vendas       │
+│ Média: 7.5          │  │ Média: 6.8          │
+│ Rotinas: 12/15      │  │ Rotinas: 8/10       │
+└─────────────────────┘  └─────────────────────┘
+
+[Botão: Congelar Médias] (apenas ADMIN/CONSULTOR/GESTOR)
+
+[Seletor de Pilar para Gráfico]
+▼ Selecione um pilar
+
+[Gráfico de Evolução]
+┌────────────────────────────────────────┐
+│  Evolução - Pilar Gestão               │
+│                                        │
+│  10 ┤                            ●     │
+│   8 ┤              ●──●──●──●          │
+│   6 ┤        ●──●                      │
+│   4 ┤  ●──●                            │
+│   2 ┤                                  │
+│   0 └───────────────────────────────── │
+│     Jan  Fev  Mar  Abr  Mai  Jun       │
+└────────────────────────────────────────┘
+```
+
+### 7.4. Regras de Exibição
+
+**Cálculo de Médias:**
+- Exibir apenas pilares que possuem pelo menos 1 nota
+- Média exibida com 1 casa decimal (ex: 7.5)
+- Indicador visual: Progresso das rotinas avaliadas (ex: "12/15")
+
+**Botão Congelar:**
+- Visível apenas para: ADMINISTRADOR, CONSULTOR, GESTOR
+- Desabilitado se não houver médias para congelar
+- Ao clicar: Confirmação via SweetAlert
+- Após congelar: Atualizar automaticamente os dados
+
+**Gráfico:**
+- Exibir apenas se pilar tiver histórico (registros em PilarEvolucao)
+- Eixo X: Datas dos congelamentos
+- Eixo Y: Média das notas (0-10)
+- Linha conectando os pontos
+- Tooltips mostrando data e média exata
+
+### 7.5. Controle de Acesso
+
+**Perfis autorizados para visualizar:** Todos
+
+**Perfis autorizados para congelar:** ADMINISTRADOR, CONSULTOR, GESTOR
+
+**Validação:**
+- Usuários (exceto ADMIN) só veem dados da própria empresa
+- ADMIN pode selecionar qualquer empresa
+
+---
+
+## 8. Fluxo de Uso — Evolução de Pilares
+
+```
+1. Usuário acessa "Diagnósticos > Evolução"
+   
+2. Sistema carrega médias atuais dos pilares
+   → GET /empresas/:empresaId/evolucao/medias
+   
+3. Sistema exibe cards com pilares e médias
+   
+4. Usuário (GESTOR) decide congelar as médias
+   → Clica em "Congelar Médias"
+   → Confirmação via modal
+   
+5. Sistema congela as médias
+   → POST /empresas/:empresaId/evolucao/congelar
+   → Cria registros em PilarEvolucao
+   → Registra auditoria
+   
+6. Usuário seleciona um pilar para ver evolução
+   
+7. Sistema carrega histórico do pilar
+   → GET /empresas/:empresaId/evolucao/historico/:pilarEmpresaId
+   
+8. Sistema renderiza gráfico de evolução temporal
+```
+
+---
+
+## 9. Validações e Restrições — Evolução
+
+### Validações Backend
+
+**Calcular Médias:**
+- `empresaId` deve existir
+- Usuário deve ter acesso à empresa (multi-tenant)
+- Retornar apenas pilares com média > 0
+
+**Congelar Médias:**
+- `empresaId` deve existir
+- Usuário deve ter perfil ADMINISTRADOR, CONSULTOR ou GESTOR
+- Usuário deve ter acesso à empresa (multi-tenant)
+- Deve haver pelo menos 1 pilar com média > 0
+- Cada congelamento cria um novo registro (não sobrescreve)
+
+**Buscar Histórico:**
+- `pilarEmpresaId` deve existir
+- PilarEmpresa deve pertencer à empresa informada
+- Usuário deve ter acesso à empresa (multi-tenant)
+
+### Validações Frontend
+
+**Exibição:**
+- Mostrar mensagem amigável se empresa não tiver pilares
+- Mostrar mensagem amigável se pilares não tiverem notas
+- Desabilitar botão "Congelar" se não houver médias
+
+**Congelamento:**
+- Confirmar ação antes de executar
+- Exibir loading durante processamento
+- Mostrar toast de sucesso/erro após conclusão
+- Recarregar dados automaticamente após sucesso
+
+**Gráfico:**
+- Exibir mensagem se pilar não tiver histórico
+- Formatar datas de forma legível
+- Exibir tooltips informativos nos pontos
+
+---

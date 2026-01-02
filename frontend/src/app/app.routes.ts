@@ -78,6 +78,17 @@ export const routes: Routes = [
       }
     ]
   },
+  {
+    path: 'diagnostico-evolucao',
+    component: BaseComponent,
+    canActivate: [authGuard],
+    children: [
+      {
+        path: '',
+        loadComponent: () => import('./views/pages/diagnostico-evolucao/diagnostico-evolucao.component').then(m => m.DiagnosticoEvolucaoComponent)
+      }
+    ]
+  },
   // Rota wildcard para login customizado - DEVE SER A ÚLTIMA!
   // Captura qualquer URL não reconhecida e trata como loginUrl
   {

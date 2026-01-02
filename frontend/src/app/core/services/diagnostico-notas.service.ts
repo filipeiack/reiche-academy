@@ -69,6 +69,29 @@ export interface ReordenarRotinasDto {
   ordens: Array<{ id: string; ordem: number }>;
 }
 
+export interface MediaPilar {
+  pilarEmpresaId: string;
+  pilarId: string;
+  pilarNome: string;
+  mediaAtual: number;
+  totalRotinasAvaliadas: number;
+  totalRotinas: number;
+}
+
+export interface CongelarMediasResponse {
+  message: string;
+  totalPilaresCongelados: number;
+  data: string;
+}
+
+export interface HistoricoEvolucao {
+  id: string;
+  mediaNotas: number;
+  createdAt: string;
+  pilarNome: string;
+  pilarId: string;
+}
+
 @Injectable({
   providedIn: 'root',
 })
@@ -141,6 +164,32 @@ export class DiagnosticoNotasService {
     return this.http.patch<{ message: string }>(
       `${this.apiUrl}/empresas/${empresaId}/pilares/${pilarEmpresaId}/rotinas/reordenar`,
       dto
+    );
+  }
+
+  /**
+   * Calcular médias atuais dos pilares da empresa
+   */
+  calcularMediasPilares(empresaId: string): Observable<MediaPilar[]> {
+    return this.http.get<MediaPilar[]>(`${this.apiUrl}/empresas/${empresaId}/evolucao/medias`);
+  }
+
+  /**
+   * Congelar médias atuais na tabela PilarEvolucao
+   */
+  congelarMedias(empresaId: string): Observable<CongelarMediasResponse> {
+    return this.http.post<CongelarMediasResponse>(
+      `${this.apiUrl}/empresas/${empresaId}/evolucao/congelar`,
+      {}
+    );
+  }
+
+  /**
+   * Buscar histórico de evolução de um pilar
+   */
+  buscarHistoricoEvolucao(empresaId: string, pilarEmpresaId: string): Observable<HistoricoEvolucao[]> {
+    return this.http.get<HistoricoEvolucao[]>(
+      `${this.apiUrl}/empresas/${empresaId}/evolucao/historico/${pilarEmpresaId}`
     );
   }
 }
