@@ -5,12 +5,15 @@ import { NgSelectModule } from '@ng-select/ng-select';
 import { NgbAlertModule } from '@ng-bootstrap/ng-bootstrap';
 import { TranslatePipe } from '../../../core/pipes/translate.pipe';
 import Swal from 'sweetalert2';
+import { firstValueFrom } from 'rxjs';
 import { DiagnosticoNotasService, MediaPilar, HistoricoEvolucao } from '../../../core/services/diagnostico-notas.service';
 import { EmpresasService, Empresa } from '../../../core/services/empresas.service';
-import { AuthService, EmpresaBasic } from '../../../core/services/auth.service';
+import { EmpresaBasic } from '@app/core/models/auth.model';
+import { AuthService } from '../../../core/services/auth.service';
 import { Chart, registerables } from 'chart.js';
+import annotationPlugin from 'chartjs-plugin-annotation';
 
-Chart.register(...registerables);
+Chart.register(...registerables, annotationPlugin);
 
 @Component({
   selector: 'app-diagnostico-evolucao',
@@ -38,11 +41,24 @@ export class DiagnosticoEvolucaoComponent implements OnInit {
   error = '';
 
   medias: MediaPilar[] = [];
-  selectedPilarEmpresaId: string | null = null;
-  historico: HistoricoEvolucao[] = [];
+  historico: any[] = []; // Agora armazena histórico de todos os pilares
   chart: Chart | null = null;
 
   canCongelar = false; // ADMINISTRADOR, CONSULTOR, GESTOR
+
+  // Paleta de cores para os pilares
+  private readonly COLORS = [
+    { border: 'rgb(75, 192, 192)', bg: 'rgba(75, 192, 192, 0.2)' },
+    { border: 'rgb(255, 99, 132)', bg: 'rgba(255, 99, 132, 0.2)' },
+    { border: 'rgb(54, 162, 235)', bg: 'rgba(54, 162, 235, 0.2)' },
+    { border: 'rgb(255, 206, 86)', bg: 'rgba(255, 206, 86, 0.2)' },
+    { border: 'rgb(153, 102, 255)', bg: 'rgba(153, 102, 255, 0.2)' },
+    { border: 'rgb(255, 159, 64)', bg: 'rgba(255, 159, 64, 0.2)' },
+    { border: 'rgb(199, 199, 199)', bg: 'rgba(199, 199, 199, 0.2)' },
+    { border: 'rgb(83, 102, 255)', bg: 'rgba(83, 102, 255, 0.2)' },
+    { border: 'rgb(255, 102, 196)', bg: 'rgba(255, 102, 196, 0.2)' },
+    { border: 'rgb(102, 255, 178)', bg: 'rgba(102, 255, 178, 0.2)' }
+  ];
 
   ngOnInit(): void {
     this.checkUserPerfil();
@@ -73,7 +89,7 @@ export class DiagnosticoEvolucaoComponent implements OnInit {
         nome: user.empresa?.nome || '',
         cnpj: user.empresa?.cnpj || '',
         cidade: user.empresa?.cidade || '',
-        estado: user.empresa?.estado || '',
+        estado: user.empresa?.estado,
       };
       this.selectedEmpresaId = user.empresaId;
       this.loadMedias();
@@ -116,6 +132,8 @@ export class DiagnosticoEvolucaoComponent implements OnInit {
       next: (data) => {
         this.medias = data;
         this.loading = false;
+        // Carregar histórico de todos os pilares
+        this.loadAllHistorico();
       },
       error: (err: any) => {
         this.error = err?.error?.message || 'Erro ao carregar médias dos pilares';
@@ -150,10 +168,8 @@ export class DiagnosticoEvolucaoComponent implements OnInit {
               'success'
             );
             this.loading = false;
-            // Recarregar histórico se houver pilar selecionado
-            if (this.selectedPilarEmpresaId) {
-              this.loadHistorico(this.selectedPilarEmpresaId);
-            }
+            // Recarregar histórico de todos os pilares
+            this.loadAllHistorico();
           },
           error: (err: any) => {
             this.loading = false;
@@ -167,31 +183,48 @@ export class DiagnosticoEvolucaoComponent implements OnInit {
     });
   }
 
-  onPilarChange(pilarEmpresaId: string): void {
-    if (!pilarEmpresaId) {
-      this.destroyChart();
+  /**
+   * Carrega histórico de todos os pilares
+   */
+  private async loadAllHistorico(): Promise<void> {
+    if (!this.selectedEmpresaId || this.medias.length === 0) {
       this.historico = [];
+      this.destroyChart();
       return;
     }
 
-    this.selectedPilarEmpresaId = pilarEmpresaId;
-    this.loadHistorico(pilarEmpresaId);
-  }
+    try {
+      // Fazer requisições paralelas para todos os pilares
+      const promises = this.medias.map(media =>
+        firstValueFrom(
+          this.diagnosticoService.buscarHistoricoEvolucao(this.selectedEmpresaId!, media.pilarEmpresaId)
+        ).catch(err => {
+          console.error(`Erro ao carregar histórico do pilar ${media.pilarNome}:`, err);
+          return []; // Retorna array vazio em caso de erro
+        })
+      );
 
-  private loadHistorico(pilarEmpresaId: string): void {
-    if (!this.selectedEmpresaId) return;
+      const results = await Promise.all(promises);
 
-    this.diagnosticoService.buscarHistoricoEvolucao(this.selectedEmpresaId, pilarEmpresaId).subscribe({
-      next: (data) => {
-        this.historico = data;
+      // Combinar resultados com informações do pilar
+      this.historico = results
+        .map((data, index) => ({
+          pilarEmpresaId: this.medias[index].pilarEmpresaId,
+          pilarNome: this.medias[index].pilarNome,
+          data: data || []
+        }))
+        .filter(h => h.data.length > 0);
+      
+      // Pequeno delay para garantir que o DOM foi atualizado
+      setTimeout(() => {
         this.renderChart();
-      },
-      error: (err: any) => {
-        this.showToast('Erro ao carregar histórico', 'error');
-        this.historico = [];
-        this.destroyChart();
-      }
-    });
+      }, 100);
+    } catch (err) {
+      console.error('Erro ao carregar histórico de pilares:', err);
+      this.showToast('Erro ao carregar histórico', 'error');
+      this.historico = [];
+      this.destroyChart();
+    }
   }
 
   private renderChart(): void {
@@ -204,43 +237,137 @@ export class DiagnosticoEvolucaoComponent implements OnInit {
     const ctx = document.getElementById('evolucaoChart') as HTMLCanvasElement;
     if (!ctx) return;
 
-    const labels = this.historico.map(h => new Date(h.createdAt).toLocaleDateString('pt-BR'));
-    const data = this.historico.map(h => h.mediaNotas);
+    // Coletar todas as datas únicas de todos os pilares
+    const allDates = new Set<string>();
+    this.historico.forEach(pilar => {
+      pilar.data.forEach((item: HistoricoEvolucao) => {
+        allDates.add(new Date(item.createdAt).toLocaleDateString('pt-BR'));
+      });
+    });
+    const labels = Array.from(allDates).sort((a, b) => {
+      const dateA = a.split('/').reverse().join('-');
+      const dateB = b.split('/').reverse().join('-');
+      return dateA.localeCompare(dateB);
+    });
+
+    // Criar dataset para cada pilar
+    const datasets = this.historico.map((pilar, index) => {
+      const colorIndex = index % this.COLORS.length;
+      const color = this.COLORS[colorIndex];
+
+      // Mapear dados do pilar para as datas correspondentes
+      const data = labels.map(label => {
+        const item = pilar.data.find((h: HistoricoEvolucao) => 
+          new Date(h.createdAt).toLocaleDateString('pt-BR') === label
+        );
+        return item ? item.mediaNotas : null;
+      });
+
+      return {
+        label: pilar.pilarNome,
+        data: data,
+        borderColor: color.border,
+        backgroundColor: color.bg,
+        tension: 0.3,
+        fill: false,
+        spanGaps: true // Conecta pontos mesmo se houver valores null
+      };
+    });
 
     this.chart = new Chart(ctx, {
       type: 'line',
       data: {
         labels: labels,
-        datasets: [{
-          label: 'Média das Notas',
-          data: data,
-          borderColor: 'rgb(75, 192, 192)',
-          backgroundColor: 'rgba(75, 192, 192, 0.2)',
-          tension: 0.1,
-          fill: true
-        }]
+        datasets: datasets
       },
       options: {
         responsive: true,
         maintainAspectRatio: false,
+        interaction: {
+          mode: 'index',
+          intersect: false,
+        },
         scales: {
           y: {
             beginAtZero: true,
             max: 10,
             ticks: {
               stepSize: 1
+            },
+            title: {
+              display: true,
+              text: 'Média das Notas'
+            }
+          },
+          x: {
+            title: {
+              display: true,
+              text: 'Data'
             }
           }
         },
         plugins: {
           legend: {
             display: true,
-            position: 'top'
+            position: 'top',
+            onClick: (e, legendItem, legend) => {
+              // Permitir ocultar/mostrar linhas clicando na legenda
+              const index = legendItem.datasetIndex!;
+              const ci = legend.chart;
+              if (ci.isDatasetVisible(index)) {
+                ci.hide(index);
+                legendItem.hidden = true;
+              } else {
+                ci.show(index);
+                legendItem.hidden = false;
+              }
+            }
           },
           tooltip: {
             callbacks: {
               label: function(context) {
-                return 'Média: ' + context.parsed.y.toFixed(2);
+                let label = context.dataset.label || '';
+                if (label) {
+                  label += ': ';
+                }
+                if (context.parsed.y !== null) {
+                  label += context.parsed.y.toFixed(2);
+                }
+                return label;
+              }
+            }
+          },
+          annotation: {
+            annotations: {
+              // Zona Vermelha: 0-6
+              zonaVermelha: {
+                type: 'box',
+                yMin: 0,
+                yMax: 6,
+                backgroundColor: 'rgba(255, 99, 132, 0.1)',
+                borderColor: 'rgba(255, 99, 132, 0.3)',
+                borderWidth: 1,
+                drawTime: 'beforeDatasetsDraw'
+              },
+              // Zona Amarela: 6-8
+              zonaAmarela: {
+                type: 'box',
+                yMin: 6,
+                yMax: 8,
+                backgroundColor: 'rgba(255, 206, 86, 0.1)',
+                borderColor: 'rgba(255, 206, 86, 0.3)',
+                borderWidth: 1,
+                drawTime: 'beforeDatasetsDraw'
+              },
+              // Zona Verde: 8-10
+              zonaVerde: {
+                type: 'box',
+                yMin: 8,
+                yMax: 10,
+                backgroundColor: 'rgba(75, 192, 192, 0.1)',
+                borderColor: 'rgba(75, 192, 192, 0.3)',
+                borderWidth: 1,
+                drawTime: 'beforeDatasetsDraw'
               }
             }
           }
