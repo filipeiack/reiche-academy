@@ -51,11 +51,21 @@ export class RotinasService {
 
       // Se pilarEmpresaId foi fornecido, criar também o vínculo RotinaEmpresa
       if (pilarEmpresaId) {
+        // Buscar a maior ordem existente no pilar para adicionar a nova rotina no final
+        const ultimaRotina = await tx.rotinaEmpresa.findFirst({
+          where: { pilarEmpresaId },
+          orderBy: { ordem: 'desc' },
+          select: { ordem: true },
+        });
+
+        const proximaOrdem = ultimaRotina ? ultimaRotina.ordem + 1 : 1;
+
         await tx.rotinaEmpresa.create({
           data: {
             pilarEmpresaId,
             rotinaId: rotina.id,
             createdBy: user.id,
+            ordem: proximaOrdem,
           },
         });
       }

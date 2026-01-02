@@ -2,8 +2,12 @@ import { Component, Input } from '@angular/core';
 import { NgClass } from '@angular/common';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 
+/**
+ * Componente genérico para exibir badges de modelo/customização
+ * Usado para pilares, rotinas e outros recursos que podem ser padrão ou customizados
+ */
 @Component({
-  selector: 'app-rotina-badge',
+  selector: 'app-modelo-badge',
   standalone: true,
   imports: [NgClass, NgbTooltip],
   template: `
@@ -17,20 +21,20 @@ import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
   `,
   styles: [`
     span {
-      font-size: 0.75rem;
-      font-weight: 500;
-      padding: 0.25rem 0.5rem;
-      border-radius: 0.25rem;
       display: inline-block;
+      padding: 0.25rem 0.5rem;
+      font-size: 0.75rem;
+      font-weight: 600;
+      border-radius: 0.25rem;
     }
   `]
 })
-export class RotinaBadgeComponent {
+export class ModeloBadgeComponent {
   @Input() modelo: boolean = false;
   @Input() title?: string;
 
   get label(): string {
-    return this.modelo ? 'Modelo' : 'Customizada';
+    return this.modelo ? 'Padrão' : 'Customizado';
   }
 
   get badgeClass(): string {
@@ -42,7 +46,7 @@ export class RotinaBadgeComponent {
       return this.title;
     }
     return this.modelo
-      ? 'Rotina padrão do sistema'
-      : 'Rotina customizada';
+      ? 'Padrão do sistema'
+      : 'Customizado';
   }
 }

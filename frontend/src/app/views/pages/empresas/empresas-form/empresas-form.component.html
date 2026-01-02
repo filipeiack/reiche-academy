@@ -251,13 +251,6 @@
                         <!-- Buscar e adicionar pilares existentes - Apenas para ADMINISTRADOR/GESTOR -->
                         @if (!isPerfilCliente) {
                         <div class="mb-4">
-                            <label class="form-label">
-                                @if (isEditMode) {
-                                    Associar Pilar Existente
-                                } @else {
-                                    Selecionar Pilares para Associar
-                                }
-                            </label>
                             <ng-select [items]="pilaresDisponiveis" bindLabel="nome" [searchable]="true"
                                 [clearable]="true" [addTag]="addPilarTag" placeholder="Busque por nome de pilar ou digite para criar novo..."
                                 (change)="associarPilar($event)">

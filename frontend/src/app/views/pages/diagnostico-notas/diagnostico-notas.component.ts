@@ -14,6 +14,7 @@ import { NgbDropdownModule } from '@ng-bootstrap/ng-bootstrap';
 import { PilaresEmpresaModalComponent } from '../empresas/pilares-empresa-modal/pilares-empresa-modal.component';
 import { ResponsavelPilarModalComponent } from './responsavel-pilar-modal/responsavel-pilar-modal.component';
 import { NovaRotinaModalComponent } from './nova-rotina-modal/nova-rotina-modal.component';
+import { MediaBadgeComponent } from '../../../shared/components/media-badge/media-badge.component';
 
 interface AutoSaveQueueItem {
   rotinaEmpresaId: string;
@@ -34,7 +35,8 @@ interface AutoSaveQueueItem {
     NgbProgressbar,
     PilaresEmpresaModalComponent,
     ResponsavelPilarModalComponent,
-    NovaRotinaModalComponent
+    NovaRotinaModalComponent,
+    MediaBadgeComponent
 ],
   templateUrl: './diagnostico-notas.component.html',
   styleUrl: './diagnostico-notas.component.scss'
@@ -459,6 +461,31 @@ private loadEmpresas(): void {
 
     // Retorna o percentual total do pilar
     return (totalProgress / totalRotinas) * 100;
+  }
+
+  /**
+   * Calcula a média de notas das rotinas de um pilar
+   */
+  getPilarMediaNotas(pilar: PilarEmpresa): number {
+    if (!pilar.rotinasEmpresa || pilar.rotinasEmpresa.length === 0) {
+      return 0;
+    }
+
+    const rotinasComNota = pilar.rotinasEmpresa.filter(rotina => {
+      const nota = this.getNotaAtual(rotina);
+      return nota !== null && nota !== undefined;
+    });
+
+    if (rotinasComNota.length === 0) {
+      return 0;
+    }
+
+    const somaNotas = rotinasComNota.reduce((soma, rotina) => {
+      const nota = this.getNotaAtual(rotina) || 0;
+      return soma + nota;
+    }, 0);
+
+    return somaNotas / rotinasComNota.length;
   }
 
   /**

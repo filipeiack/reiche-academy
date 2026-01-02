@@ -6,7 +6,7 @@ import Swal from 'sweetalert2';
 import { PilaresService, Pilar } from '../../../../core/services/pilares.service';
 import { NgbPaginationModule, NgbTooltipModule, NgbOffcanvas, NgbOffcanvasModule } from '@ng-bootstrap/ng-bootstrap';
 import { NgSelectModule } from '@ng-select/ng-select';
-import { PilarBadgeComponent } from '../../../../shared/components/pilar-badge/pilar-badge.component';
+import { ModeloBadgeComponent } from '../../../../shared/components/modelo-badge/modelo-badge.component';
 import { TranslatePipe } from '../../../../core/pipes/translate.pipe';
 
 @Component({
@@ -20,7 +20,7 @@ import { TranslatePipe } from '../../../../core/pipes/translate.pipe';
     NgbTooltipModule,
     NgSelectModule,
     NgbOffcanvasModule,
-    PilarBadgeComponent,
+    ModeloBadgeComponent,
     TranslatePipe
   ],
   templateUrl: './pilares-list.component.html',

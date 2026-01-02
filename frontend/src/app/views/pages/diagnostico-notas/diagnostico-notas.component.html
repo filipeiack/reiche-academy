@@ -140,7 +140,8 @@
             <div class="card mb-1">
                 <div class="card-header sticky-header-pilar">
                     @if (pilar.rotinasEmpresa.length > 0) {
-                    <ngb-progressbar type="primary" [value]="getPilarProgress(pilar)" height="5px" style="font-size: 7px;"> {{ getPilarProgress(pilar) }} % </ngb-progressbar>
+                    <ngb-progressbar type="primary" [value]="getPilarProgress(pilar)" height="7px" [title]="'Progressão das respostas PILAR ' + pilar.pilar.nome"
+                    style="font-size: 8px; font-weight: 500;"> {{ getPilarProgress(pilar) }} % </ngb-progressbar>
                     }
                     <div class="pilar-header">
                         <div class="d-flex align-items-center gap-2">
@@ -153,7 +154,12 @@
                         </div>
 
                         <div class="ms-auto d-flex align-items-center gap-3">
-                            <span class="badge bg-light text-dark">
+                            
+                            @if (pilar.rotinasEmpresa.length > 0) {
+                            <app-media-badge [media]="getPilarMediaNotas(pilar)"></app-media-badge>
+                            }
+
+                            <span class="badge bg-light text-dark small">
                                 {{ pilar.rotinasEmpresa.length }}
                                 {{ pilar.rotinasEmpresa.length === 1 ? 'rotina' : 'rotinas' }}
                             </span>
@@ -169,14 +175,14 @@
                                     </a>
                                     <a ngbDropdownItem class="d-flex align-items-center gap-1" (click)="abrirModalNovaRotina(pilar); $event.preventDefault()">
                                         <i class="feather icon-plus-circle" style="font-size: small;"></i> 
-                                        <span class="">Nova Rotina</span>
+                                        <span class="">Adicionar Rotina</span>
                                     </a>
                                     <a ngbDropdownItem class="d-flex align-items-center gap-1" href=""
                                         (click)="false"><i class="feather icon-menu" style="font-size: small;"></i>
                                         <span class="">Reordenar Rotinas</span></a>
-                                    <a ngbDropdownItem class="d-flex align-items-center gap-1" href=""
+                                    <!-- <a ngbDropdownItem class="d-flex align-items-center gap-1" href=""
                                         (click)="false"><i class="feather icon-trash-2" style="font-size: small;"></i>
-                                        <span class="">Deletar Pilar</span></a>
+                                        <span class="">Deletar Pilar</span></a> -->
                                 </div>
                             </div>
                         </div>

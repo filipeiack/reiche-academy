@@ -9,7 +9,7 @@ import { NgSelectModule } from '@ng-select/ng-select';
 
 import { RotinasService, Rotina } from '../../../../core/services/rotinas.service';
 import { PilaresService, Pilar } from '../../../../core/services/pilares.service';
-import { RotinaBadgeComponent } from '../../../../shared/components/rotina-badge/rotina-badge.component';
+import { ModeloBadgeComponent } from '../../../../shared/components/modelo-badge/modelo-badge.component';
 import { HttpErrorResponse } from '@angular/common/http';
 import { TranslatePipe } from "../../../../core/pipes/translate.pipe";
 
@@ -25,7 +25,7 @@ import { TranslatePipe } from "../../../../core/pipes/translate.pipe";
     NgbOffcanvasModule,
     NgSelectModule,
     DragDropModule,
-    RotinaBadgeComponent,
+    ModeloBadgeComponent,
     TranslatePipe
 ],
   templateUrl: './rotinas-list.component.html',
