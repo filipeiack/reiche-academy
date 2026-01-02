@@ -14,6 +14,7 @@ import { NgbDropdownModule } from '@ng-bootstrap/ng-bootstrap';
 import { PilaresEmpresaModalComponent } from '../empresas/pilares-empresa-modal/pilares-empresa-modal.component';
 import { ResponsavelPilarModalComponent } from './responsavel-pilar-modal/responsavel-pilar-modal.component';
 import { NovaRotinaModalComponent } from './nova-rotina-modal/nova-rotina-modal.component';
+import { RotinasPilarModalComponent } from './rotinas-pilar-modal/rotinas-pilar-modal.component';
 import { MediaBadgeComponent } from '../../../shared/components/media-badge/media-badge.component';
 
 interface AutoSaveQueueItem {
@@ -36,6 +37,7 @@ interface AutoSaveQueueItem {
     PilaresEmpresaModalComponent,
     ResponsavelPilarModalComponent,
     NovaRotinaModalComponent,
+    RotinasPilarModalComponent,
     MediaBadgeComponent
 ],
   templateUrl: './diagnostico-notas.component.html',
@@ -49,6 +51,7 @@ export class DiagnosticoNotasComponent implements OnInit, OnDestroy {
   @ViewChild(PilaresEmpresaModalComponent) pilaresModal!: PilaresEmpresaModalComponent;
   @ViewChild(ResponsavelPilarModalComponent) responsavelModal!: ResponsavelPilarModalComponent;
   @ViewChild(NovaRotinaModalComponent) novaRotinaModal!: NovaRotinaModalComponent;
+  @ViewChild(RotinasPilarModalComponent) rotinasPilarModal!: RotinasPilarModalComponent;
 
   pilares: PilarEmpresa[] = [];
   empresas: Empresa[] = [];
@@ -223,10 +226,33 @@ private loadEmpresas(): void {
   }
 
   /**
+   * Abre o modal de gerenciamento de rotinas do pilar
+   */
+  abrirModalEditarRotinas(pilarEmpresa: PilarEmpresa): void {
+    if (this.rotinasPilarModal) {
+      this.rotinasPilarModal.pilarEmpresaId = pilarEmpresa.id;
+      this.rotinasPilarModal.pilarNome = pilarEmpresa.pilar.nome;
+      this.rotinasPilarModal.pilarId = pilarEmpresa.pilarId;
+      this.rotinasPilarModal.rotinasEmpresa = [...pilarEmpresa.rotinasEmpresa];
+      this.rotinasPilarModal.open();
+    }
+  }
+
+  /**
    * Callback quando rotina é criada
    */
   onRotinaCriada(): void {
     // Recarregar diagnóstico para refletir nova rotina
+    if (this.selectedEmpresaId) {
+      this.loadDiagnostico();
+    }
+  }
+
+  /**
+   * Callback quando rotinas do pilar são modificadas
+   */
+  onRotinasModificadas(): void {
+    // Recarregar diagnóstico para refletir mudanças
     if (this.selectedEmpresaId) {
       this.loadDiagnostico();
     }

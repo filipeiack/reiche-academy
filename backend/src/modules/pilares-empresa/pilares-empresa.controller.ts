@@ -15,6 +15,8 @@ import { PilaresEmpresaService } from './pilares-empresa.service';
 import { ReordenarPilaresDto } from './dto/reordenar-pilares.dto';
 import { VincularPilaresDto } from './dto/vincular-pilares.dto';
 import { DefinirResponsavelDto } from './dto/definir-responsavel.dto';
+import { VincularRotinaDto } from './dto/vincular-rotina.dto';
+import { ReordenarRotinasDto } from './dto/reordenar-rotinas.dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../auth/guards/roles.guard';
 import { Roles } from '../auth/decorators/roles.decorator';
@@ -93,6 +95,74 @@ export class PilaresEmpresaController {
       empresaId, 
       pilarEmpresaId, 
       dto.responsavelId ?? null, 
+      req.user
+    );
+  }
+
+  @Get(':pilarEmpresaId/rotinas')
+  @Roles('ADMINISTRADOR', 'CONSULTOR', 'GESTOR', 'COLABORADOR', 'LEITURA')
+  @ApiOperation({ summary: 'Listar rotinas vinculadas a um pilar da empresa' })
+  @ApiResponse({ status: 200, description: 'Lista de rotinas do pilar ordenada' })
+  listarRotinas(
+    @Param('empresaId') empresaId: string,
+    @Param('pilarEmpresaId') pilarEmpresaId: string,
+    @Request() req: ExpressRequest & { user: any },
+  ) {
+    return this.pilaresEmpresaService.listarRotinas(empresaId, pilarEmpresaId, req.user);
+  }
+
+  @Post(':pilarEmpresaId/rotinas')
+  @Roles('ADMINISTRADOR', 'GESTOR')
+  @ApiOperation({ summary: 'Vincular uma rotina a um pilar da empresa' })
+  @ApiResponse({ status: 201, description: 'Rotina vinculada com sucesso' })
+  @ApiResponse({ status: 400, description: 'Rotina já vinculada ou não pertence ao pilar' })
+  @ApiResponse({ status: 403, description: 'Acesso negado (multi-tenant)' })
+  @ApiResponse({ status: 404, description: 'Pilar ou rotina não encontrados' })
+  vincularRotina(
+    @Param('empresaId') empresaId: string,
+    @Param('pilarEmpresaId') pilarEmpresaId: string,
+    @Body() dto: VincularRotinaDto,
+    @Request() req: ExpressRequest & { user: any },
+  ) {
+    return this.pilaresEmpresaService.vincularRotina(
+      empresaId,
+      pilarEmpresaId,
+      dto.rotinaId,
+      dto.ordem,
+      req.user
+    );
+  }
+
+  @Delete('rotinas/:rotinaEmpresaId')
+  @Roles('ADMINISTRADOR', 'GESTOR')
+  @ApiOperation({ summary: 'Remover uma rotina de um pilar da empresa' })
+  @ApiResponse({ status: 200, description: 'Rotina removida com sucesso' })
+  @ApiResponse({ status: 403, description: 'Acesso negado (multi-tenant)' })
+  @ApiResponse({ status: 404, description: 'Rotina não encontrada' })
+  removerRotina(
+    @Param('empresaId') empresaId: string,
+    @Param('rotinaEmpresaId') rotinaEmpresaId: string,
+    @Request() req: ExpressRequest & { user: any },
+  ) {
+    return this.pilaresEmpresaService.removerRotina(empresaId, rotinaEmpresaId, req.user);
+  }
+
+  @Patch(':pilarEmpresaId/rotinas/reordenar')
+  @Roles('ADMINISTRADOR', 'GESTOR')
+  @ApiOperation({ summary: 'Reordenar rotinas de um pilar da empresa' })
+  @ApiResponse({ status: 200, description: 'Rotinas reordenadas com sucesso' })
+  @ApiResponse({ status: 403, description: 'Acesso negado (multi-tenant)' })
+  @ApiResponse({ status: 404, description: 'Pilar ou rotinas não encontrados' })
+  reordenarRotinas(
+    @Param('empresaId') empresaId: string,
+    @Param('pilarEmpresaId') pilarEmpresaId: string,
+    @Body() dto: ReordenarRotinasDto,
+    @Request() req: ExpressRequest & { user: any },
+  ) {
+    return this.pilaresEmpresaService.reordenarRotinas(
+      empresaId,
+      pilarEmpresaId,
+      dto.ordens,
       req.user
     );
   }

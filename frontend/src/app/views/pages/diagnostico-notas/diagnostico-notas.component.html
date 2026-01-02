@@ -177,12 +177,11 @@
                                         <i class="feather icon-plus-circle" style="font-size: small;"></i> 
                                         <span class="">Adicionar Rotina</span>
                                     </a>
-                                    <a ngbDropdownItem class="d-flex align-items-center gap-1" href=""
-                                        (click)="false"><i class="feather icon-menu" style="font-size: small;"></i>
-                                        <span class="">Reordenar Rotinas</span></a>
-                                    <!-- <a ngbDropdownItem class="d-flex align-items-center gap-1" href=""
-                                        (click)="false"><i class="feather icon-trash-2" style="font-size: small;"></i>
-                                        <span class="">Deletar Pilar</span></a> -->
+                                    <a ngbDropdownItem class="d-flex align-items-center gap-1" (click)="abrirModalEditarRotinas(pilar); $event.preventDefault()">
+                                        <i class="feather icon-edit" style="font-size: small;"></i>
+                                        <span class="">Editar Rotinas</span>
+                                    </a>
+                                    
                                 </div>
                             </div>
                         </div>
@@ -299,3 +298,8 @@
 <app-nova-rotina-modal
     (rotinaCriada)="onRotinaCriada()">
 </app-nova-rotina-modal>
+
+<!-- Modal para gerenciar rotinas do pilar -->
+<app-rotinas-pilar-modal
+    (rotinasModificadas)="onRotinasModificadas()">
+</app-rotinas-pilar-modal>
