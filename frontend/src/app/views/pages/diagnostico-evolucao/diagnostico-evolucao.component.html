@@ -5,7 +5,7 @@
                 <li class="breadcrumb-item">
                     <i class="feather icon-trending-up"></i>
                 </li>
-                <li class="breadcrumb-item active" aria-current="page">
+                <li class="breadcrumb-item active text-primary" aria-current="page">
                     {{ 'EVOLUCAO.TITLE' | translate }}
                 </li>
             </ol>
@@ -97,8 +97,7 @@
                         [class.bg-success]="(media.totalRotinasAvaliadas / media.totalRotinas * 100) >= 80"
                         [class.bg-warning]="(media.totalRotinasAvaliadas / media.totalRotinas * 100) >= 50 && (media.totalRotinasAvaliadas / media.totalRotinas * 100) < 80"
                         [class.bg-danger]="(media.totalRotinasAvaliadas / media.totalRotinas * 100) < 50"
-                        role="progressbar"
-                        [style.width.%]="media.totalRotinasAvaliadas / media.totalRotinas * 100"
+                        role="progressbar" [style.width.%]="media.totalRotinasAvaliadas / media.totalRotinas * 100"
                         [attr.aria-valuenow]="media.totalRotinasAvaliadas / media.totalRotinas * 100" aria-valuemin="0"
                         aria-valuemax="100">
                     </div>
@@ -109,28 +108,20 @@
     }
 </div>
 
-<!-- Botão Congelar -->
-@if (canCongelar) {
-<div class="card mb-3">
-    <div class="card-body">
-        <div class="d-flex justify-content-between align-items-center">
-            <div>
-                <h5 class="mb-1">{{ 'EVOLUCAO.CONGELAR_TITLE' | translate }}</h5>
-                <p class="text-muted mb-0">{{ 'EVOLUCAO.CONGELAR_DESC' | translate }}</p>
-            </div>
-            <button type="button" class="btn btn-primary" (click)="congelarMedias()" [disabled]="medias.length === 0">
-                <i class="feather icon-archive"></i>
-                {{ 'EVOLUCAO.CONGELAR_BTN' | translate }}
-            </button>
-        </div>
-    </div>
-</div>
-}
-
 <!-- Gráfico de Evolução -->
 <div class="card">
     <div class="card-body">
-        <h5 class="card-title mb-3">{{ 'EVOLUCAO.GRAFICO_TITLE' | translate }}</h5>
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <h5 class="card-title mb-0">{{ 'EVOLUCAO.GRAFICO_TITLE' | translate }}</h5>
+            <!-- Botão Congelar -->
+            @if (canCongelar) {
+            <button type="button" class="btn btn-primary" ngbTooltip="'EVOLUCAO.CONGELAR_DESC' | translate "
+            (click)="congelarMedias()" [disabled]="medias.length === 0">
+            <i class="feather icon-archive"></i>
+            {{ 'EVOLUCAO.CONGELAR_BTN' | translate }}
+            </button>
+            }
+        </div>
         <p class="text-muted small mb-3">
             <i class="feather icon-info me-1"></i>
             Clique nas legendas para ocultar/mostrar pilares individualmente
@@ -139,7 +130,7 @@
         <div style="height: 450px;">
             <canvas id="evolucaoChart"></canvas>
         </div>
-        
+
         @if (historico.length === 0) {
         <div class="empty-state" style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);">
             <i class="feather icon-bar-chart-2"></i>

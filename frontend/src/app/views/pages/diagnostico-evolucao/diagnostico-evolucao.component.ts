@@ -2,7 +2,7 @@ import { Component, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { NgSelectModule } from '@ng-select/ng-select';
-import { NgbAlertModule } from '@ng-bootstrap/ng-bootstrap';
+import { NgbAlertModule, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { TranslatePipe } from '../../../core/pipes/translate.pipe';
 import Swal from 'sweetalert2';
 import { firstValueFrom } from 'rxjs';
@@ -23,8 +23,9 @@ Chart.register(...registerables, annotationPlugin);
     FormsModule,
     NgSelectModule,
     NgbAlertModule,
-    TranslatePipe
-  ],
+    TranslatePipe,
+    NgbTooltip
+],
   templateUrl: './diagnostico-evolucao.component.html',
   styleUrl: './diagnostico-evolucao.component.scss'
 })
@@ -47,18 +48,18 @@ export class DiagnosticoEvolucaoComponent implements OnInit {
   canCongelar = false; // ADMINISTRADOR, CONSULTOR, GESTOR
 
   // Paleta de cores para os pilares
-  private readonly COLORS = [
-    { border: 'rgb(75, 192, 192)', bg: 'rgba(75, 192, 192, 0.2)' },
-    { border: 'rgb(255, 99, 132)', bg: 'rgba(255, 99, 132, 0.2)' },
-    { border: 'rgb(54, 162, 235)', bg: 'rgba(54, 162, 235, 0.2)' },
-    { border: 'rgb(255, 206, 86)', bg: 'rgba(255, 206, 86, 0.2)' },
-    { border: 'rgb(153, 102, 255)', bg: 'rgba(153, 102, 255, 0.2)' },
-    { border: 'rgb(255, 159, 64)', bg: 'rgba(255, 159, 64, 0.2)' },
-    { border: 'rgb(199, 199, 199)', bg: 'rgba(199, 199, 199, 0.2)' },
-    { border: 'rgb(83, 102, 255)', bg: 'rgba(83, 102, 255, 0.2)' },
-    { border: 'rgb(255, 102, 196)', bg: 'rgba(255, 102, 196, 0.2)' },
-    { border: 'rgb(102, 255, 178)', bg: 'rgba(102, 255, 178, 0.2)' }
-  ];
+private readonly COLORS = [
+    { border: 'rgb(52, 152, 219)', bg: 'rgba(52, 152, 219, 0.2)' },
+    { border: 'rgb(155, 89, 182)', bg: 'rgba(155, 89, 182, 0.2)' },
+    { border: 'rgb(41, 128, 185)', bg: 'rgba(41, 128, 185, 0.2)' },
+    { border: 'rgb(52, 73, 94)', bg: 'rgba(52, 73, 94, 0.2)' },
+    { border: 'rgb(142, 68, 173)', bg: 'rgba(142, 68, 173, 0.2)' },
+    { border: 'rgb(44, 62, 80)', bg: 'rgba(44, 62, 80, 0.2)' },
+    { border: 'rgb(93, 109, 126)', bg: 'rgba(93, 109, 126, 0.2)' },
+    { border: 'rgb(10, 132, 255)', bg: 'rgba(10, 132, 255, 0.2)' },
+    { border: 'rgb(121, 134, 203)', bg: 'rgba(121, 134, 203, 0.2)' },
+    { border: 'rgb(88, 86, 214)', bg: 'rgba(88, 86, 214, 0.2)' }
+];
 
   ngOnInit(): void {
     this.checkUserPerfil();
@@ -153,9 +154,9 @@ export class DiagnosticoEvolucaoComponent implements OnInit {
 
     Swal.fire({
       title: 'Congelar Médias',
-      text: `Deseja congelar as médias de ${this.medias.length} pilar(es)?`,
+      text: `Deseja salvar/atualizar as médias de ${this.medias.length} pilar(es)? Se já existe registro de hoje, será atualizado.`,
       showCancelButton: true,
-      confirmButtonText: 'Sim, congelar',
+      confirmButtonText: 'Sim, salvar',
       cancelButtonText: 'Cancelar',
       confirmButtonColor: '#3085d6'
     }).then((result) => {
@@ -164,8 +165,9 @@ export class DiagnosticoEvolucaoComponent implements OnInit {
         this.diagnosticoService.congelarMedias(this.selectedEmpresaId).subscribe({
           next: (response) => {
             this.showToast(
-              `${response.totalPilaresCongelados} pilar(es) congelado(s) com sucesso!`,
-              'success'
+              response.message,
+              'success',
+              4000
             );
             this.loading = false;
             // Recarregar histórico de todos os pilares
@@ -344,9 +346,9 @@ export class DiagnosticoEvolucaoComponent implements OnInit {
                 type: 'box',
                 yMin: 0,
                 yMax: 6,
-                backgroundColor: 'rgba(255, 99, 132, 0.1)',
-                borderColor: 'rgba(255, 99, 132, 0.3)',
-                borderWidth: 1,
+                backgroundColor: 'rgba(250, 30, 30, 0.15)',
+                //borderColor: 'rgba(252, 30, 30, 0.5)',
+                borderWidth: 0,
                 drawTime: 'beforeDatasetsDraw'
               },
               // Zona Amarela: 6-8
@@ -354,9 +356,9 @@ export class DiagnosticoEvolucaoComponent implements OnInit {
                 type: 'box',
                 yMin: 6,
                 yMax: 8,
-                backgroundColor: 'rgba(255, 206, 86, 0.1)',
-                borderColor: 'rgba(255, 206, 86, 0.3)',
-                borderWidth: 1,
+                backgroundColor: 'rgba(247, 226, 36, 0.15)',
+                //borderColor: 'rgba(255, 206, 86, 0.5)',
+                borderWidth: 0,
                 drawTime: 'beforeDatasetsDraw'
               },
               // Zona Verde: 8-10
@@ -364,9 +366,9 @@ export class DiagnosticoEvolucaoComponent implements OnInit {
                 type: 'box',
                 yMin: 8,
                 yMax: 10,
-                backgroundColor: 'rgba(75, 192, 192, 0.1)',
-                borderColor: 'rgba(75, 192, 192, 0.3)',
-                borderWidth: 1,
+                backgroundColor: 'rgba(61, 172, 57, 0.15)',
+                //borderColor: 'rgba(33, 206, 27, 0.5)',
+                borderWidth: 0,
                 drawTime: 'beforeDatasetsDraw'
               }
             }

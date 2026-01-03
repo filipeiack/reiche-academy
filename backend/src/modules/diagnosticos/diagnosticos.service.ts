@@ -268,7 +268,7 @@ export class DiagnosticosService {
 
   /**
    * Congelar médias atuais na tabela PilarEvolucao
-   * Cria snapshots históricos das médias
+   * Cria snapshots históricos das médias ou atualiza se já existe registro hoje
    */
   async congelarMedias(empresaId: string, user: RequestUser) {
     // Validar acesso multi-tenant
@@ -281,48 +281,106 @@ export class DiagnosticosService {
       throw new ForbiddenException('Apenas gestores podem congelar médias');
     }
 
-    // Calcular médias atuais
+    // Calcular médias atuais SEMPRE baseado nos dados da tabela
     const medias = await this.calcularMediasPilares(empresaId, user);
 
     if (medias.length === 0) {
       throw new BadRequestException('Não há médias para congelar');
     }
 
-    // Criar registros de evolução
-    const evolucoes = await Promise.all(
-      medias.map((media) =>
-        this.prisma.pilarEvolucao.create({
-          data: {
-            pilarEmpresaId: media.pilarEmpresaId,
-            mediaNotas: media.mediaAtual,
-            createdBy: user.id,
-            updatedBy: user.id,
-          },
-        }),
-      ),
-    );
+    // Obter data de hoje (início e fim do dia)
+    const hoje = new Date();
+    hoje.setHours(0, 0, 0, 0);
+    const fimDia = new Date(hoje);
+    fimDia.setHours(23, 59, 59, 999);
 
-    // Registrar auditoria para cada snapshot criado
-    await Promise.all(
-      evolucoes.map((evolucao) =>
-        this.audit.log({
-          usuarioId: user.id,
-          usuarioNome: user.nome || '',
-          usuarioEmail: user.email || '',
-          entidade: 'PilarEvolucao',
-          entidadeId: evolucao.id,
-          acao: 'CREATE',
-          dadosDepois: {
-            pilarEmpresaId: evolucao.pilarEmpresaId,
-            mediaNotas: evolucao.mediaNotas,
+    let criados = 0;
+    let atualizados = 0;
+
+    // Para cada pilar, verificar se já existe registro de hoje
+    const evolucoes = await Promise.all(
+      medias.map(async (media) => {
+        // Buscar registro de hoje para este pilar
+        const registroHoje = await this.prisma.pilarEvolucao.findFirst({
+          where: {
+            pilarEmpresaId: media.pilarEmpresaId,
+            createdAt: {
+              gte: hoje,
+              lte: fimDia,
+            },
           },
-        }),
-      ),
+        });
+
+        let evolucao;
+
+        if (registroHoje) {
+          // Atualizar registro existente de hoje
+          evolucao = await this.prisma.pilarEvolucao.update({
+            where: { id: registroHoje.id },
+            data: {
+              mediaNotas: media.mediaAtual,
+              updatedBy: user.id,
+              updatedAt: new Date(),
+            },
+          });
+          atualizados++;
+
+          // Auditoria de UPDATE
+          await this.audit.log({
+            usuarioId: user.id,
+            usuarioNome: user.nome || '',
+            usuarioEmail: user.email || '',
+            entidade: 'PilarEvolucao',
+            entidadeId: evolucao.id,
+            acao: 'UPDATE',
+            dadosAntes: {
+              mediaNotas: registroHoje.mediaNotas,
+            },
+            dadosDepois: {
+              pilarEmpresaId: evolucao.pilarEmpresaId,
+              mediaNotas: evolucao.mediaNotas,
+            },
+          });
+        } else {
+          // Criar novo registro
+          evolucao = await this.prisma.pilarEvolucao.create({
+            data: {
+              pilarEmpresaId: media.pilarEmpresaId,
+              mediaNotas: media.mediaAtual,
+              createdBy: user.id,
+              updatedBy: user.id,
+            },
+          });
+          criados++;
+
+          // Auditoria de CREATE
+          await this.audit.log({
+            usuarioId: user.id,
+            usuarioNome: user.nome || '',
+            usuarioEmail: user.email || '',
+            entidade: 'PilarEvolucao',
+            entidadeId: evolucao.id,
+            acao: 'CREATE',
+            dadosDepois: {
+              pilarEmpresaId: evolucao.pilarEmpresaId,
+              mediaNotas: evolucao.mediaNotas,
+            },
+          });
+        }
+
+        return evolucao;
+      }),
     );
 
     return {
-      message: 'Médias congeladas com sucesso',
+      message: criados > 0 && atualizados > 0 
+        ? `${criados} pilar(es) criado(s) e ${atualizados} atualizado(s) com sucesso`
+        : criados > 0 
+          ? `${criados} pilar(es) congelado(s) com sucesso`
+          : `${atualizados} pilar(es) atualizado(s) com sucesso`,
       totalPilaresCongelados: evolucoes.length,
+      criados,
+      atualizados,
       data: new Date(),
     };
   }

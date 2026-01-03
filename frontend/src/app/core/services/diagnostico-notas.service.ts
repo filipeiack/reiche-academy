@@ -81,6 +81,8 @@ export interface MediaPilar {
 export interface CongelarMediasResponse {
   message: string;
   totalPilaresCongelados: number;
+  criados: number;
+  atualizados: number;
   data: string;
 }
 
