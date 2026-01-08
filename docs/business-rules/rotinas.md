@@ -1472,44 +1472,46 @@ Deseja desativar mesmo assim?
 
 ---
 
-### R-ROT-BE-001: Auto-associação de Rotinas Modelo
+### R-ROT-BE-001: Auto-associação de Rotinas Template
 
-**Descrição:** Quando empresa vincular PilarEmpresa, rotinas com `modelo: true` devem ser auto-criadas em RotinaEmpresa.
+**Descrição:** Quando nova empresa é criada, rotinas template ativas são auto-criadas como snapshots em RotinaEmpresa.
 
-**Condição:** Novo registro em PilarEmpresa (empresa vincula pilar).
+**Condição:** Criação de nova empresa + `AUTO_ASSOCIAR_PILARES_PADRAO=true`.
 
 **Comportamento Esperado:**
-1. **Método explícito:** `PilaresEmpresaService.vincularPilares()` deve chamar método auxiliar `autoAssociarRotinasModelo(pilarEmpresaId, pilarId)`
-2. Query: `SELECT * FROM rotinas WHERE pilarId = :pilarId AND modelo = true AND ativo = true`
-3. Para cada rotina modelo:
+1. **Método explícito:** `EmpresasService.create()` chama `PilaresEmpresaService.createRotinaEmpresa()` 
+2. Para cada Pilar template ativo:
+   - Busca rotinas com `ativo: true` vinculadas ao Pilar
+   - Cria snapshots em RotinaEmpresa usando `rotinaTemplateId`
+3. Snapshot armazena:
    ```typescript
-   createMany({
-     data: rotinas.map((r, index) => ({
-       pilarEmpresaId: novoPilarEmpresaId,
-       rotinaId: r.id,
-       ordem: r.ordem ?? index + 1,
-       ativo: true
-     }))
-   })
+   {
+     rotinaTemplateId: template.id,
+     nome: template.nome, // Cópia congelada
+     pilarEmpresaId: novoPilarEmpresaId,
+     ordem: auto-increment,
+     ativo: true
+   }
    ```
 4. Auditoria: registrar criação em batch
 
 **Cenários:**
-- **Happy Path:** Rotinas modelo auto-associadas
-- **Sem rotinas modelo:** Apenas PilarEmpresa criado
+- **Happy Path:** Rotinas template auto-associadas via snapshot
+- **Sem rotinas template:** Apenas PilarEmpresa criado
 - **Duplicata:** Ignorar (constraint unique)
 
 **Impacto Técnico:**
-- Módulo: `PilaresEmpresaService`
-- Método principal: `vincularPilares()`
-- Método auxiliar: `autoAssociarRotinasModelo(pilarEmpresaId, pilarId)` (CRIAR)
+- Módulo: `EmpresasService` (auto-associação)
+- Módulo auxiliar: `PilaresEmpresaService` (criação de snapshots)
+- Método principal: `create()`
+- Método auxiliar: `createRotinaEmpresa()`
 - Tabelas: `rotinas`, `rotinas_empresa`
 
-**Decisão:** ✅ **APROVADO** - Implementar auto-associação via método explícito
+**Decisão:** ✅ **APROVADO** - Implementado via método explícito usando Snapshot Pattern
 
 **Observação:** Evitar uso de triggers de banco de dados para facilitar rastreabilidade e manutenção futura.
 
-**Referência Similar:** [empresas.md](empresas.md#R-EMP-004) (auto-associação de pilares)
+**Referência Similar:** [pilares.md](pilares.md#R-EMP-004) (auto-associação de pilares)
 
 ---
 

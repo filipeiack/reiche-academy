@@ -4,6 +4,7 @@ import { EmpresasService } from './empresas.service';
 import { PrismaService } from '../../common/prisma/prisma.service';
 import { AuditService } from '../audit/audit.service';
 import { RequestUser } from '../../common/interfaces/request-user.interface';
+import { PilaresEmpresaService } from '../pilares-empresa/pilares-empresa.service';
 
 /**
  * QA UNITÁRIO ESTRITO - Suite Completa
@@ -97,12 +98,22 @@ describe('EmpresasService - Validação Completa de Regras de Negócio', () => {
               deleteMany: jest.fn(),
               createMany: jest.fn(),
             },
+            pilar: {
+              findMany: jest.fn(),
+            },
           },
         },
         {
           provide: AuditService,
           useValue: {
             log: jest.fn(),
+          },
+        },
+        {
+          provide: PilaresEmpresaService,
+          useValue: {
+            createPilarEmpresa: jest.fn(),
+            createRotinaEmpresa: jest.fn(),
           },
         },
       ],
@@ -151,6 +162,7 @@ describe('EmpresasService - Validação Completa de Regras de Negócio', () => {
 
       jest.spyOn(prisma.empresa, 'findUnique').mockResolvedValue(null);
       jest.spyOn(prisma.empresa, 'create').mockResolvedValue(mockEmpresaA as any);
+      jest.spyOn(prisma.pilar, 'findMany').mockResolvedValue([]);
 
       const result = await service.create(createDto, 'admin-id');
 
@@ -393,6 +405,7 @@ describe('EmpresasService - Validação Completa de Regras de Negócio', () => {
       jest.spyOn(prisma.empresa, 'findUnique').mockResolvedValue(null); // CNPJ ok
       jest.spyOn(prisma.empresa, 'findFirst').mockResolvedValue(null); // loginUrl único
       jest.spyOn(prisma.empresa, 'create').mockResolvedValue(mockEmpresaA as any);
+      jest.spyOn(prisma.pilar, 'findMany').mockResolvedValue([]);
 
       const result = await service.create(createDto, 'admin-id');
 
@@ -409,6 +422,7 @@ describe('EmpresasService - Validação Completa de Regras de Negócio', () => {
 
       jest.spyOn(prisma.empresa, 'findUnique').mockResolvedValue(null);
       jest.spyOn(prisma.empresa, 'create').mockResolvedValue(mockEmpresaA as any);
+      jest.spyOn(prisma.pilar, 'findMany').mockResolvedValue([]);
 
       const result = await service.create(createDto, 'admin-id');
 
@@ -470,6 +484,7 @@ describe('EmpresasService - Validação Completa de Regras de Negócio', () => {
 
       jest.spyOn(prisma.empresa, 'findUnique').mockResolvedValue(null);
       jest.spyOn(prisma.empresa, 'create').mockResolvedValue(mockEmpresaA as any);
+      jest.spyOn(prisma.pilar, 'findMany').mockResolvedValue([]);
 
       const result = await service.create(createDto, 'admin-id');
 
@@ -488,6 +503,7 @@ describe('EmpresasService - Validação Completa de Regras de Negócio', () => {
 
       jest.spyOn(prisma.empresa, 'findUnique').mockResolvedValue(null);
       jest.spyOn(prisma.empresa, 'create').mockResolvedValue(mockEmpresaA as any);
+      jest.spyOn(prisma.pilar, 'findMany').mockResolvedValue([]);
 
       const result = await service.create(createDto, 'admin-id');
 

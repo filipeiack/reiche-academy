@@ -634,7 +634,7 @@ if (rotiasCount > 0) {
 
 ### R-EMP-004: Auto-Associação de Pilares Padrão a Novas Empresas
 
-**Descrição:** Ao criar uma empresa, pilares com `modelo: true` são automaticamente vinculados via PilarEmpresa.
+**Descrição:** Ao criar uma empresa, todos pilares templates ativos são automaticamente copiados como snapshots (PilarEmpresa).
 
 **Implementação:**
 - **Módulo:** EmpresasService
@@ -646,23 +646,33 @@ if (rotiasCount > 0) {
 const autoAssociate = process.env.AUTO_ASSOCIAR_PILARES_PADRAO !== 'false';
 
 if (autoAssociate) {
-  const pilaresModelo = await this.prisma.pilar.findMany({
-    where: { 
-      modelo: true, 
-      ativo: true 
-    },
+  const pilaresTemplates = await this.prisma.pilar.findMany({
+    where: { ativo: true },
     orderBy: { ordem: 'asc' },
+    include: {
+      rotinas: {
+        where: { ativo: true },
+        orderBy: { ordem: 'asc' },
+      },
+    },
   });
   
-  if (pilaresModelo.length > 0) {
-    await this.prisma.pilarEmpresa.createMany({
-      data: pilaresModelo.map((pilar, index) => ({
-        empresaId: created.id,
-        pilarId: pilar.id,
-        ordem: pilar.ordem ?? (index + 1),
-        createdBy: userId,
-      })),
-    });
+  for (const pilarTemplate of pilaresTemplates) {
+    const pilarEmpresa = await this.pilaresEmpresaService.createPilarEmpresa(
+      created.id,
+      { pilarTemplateId: pilarTemplate.id },
+      user,
+    );
+
+    // Auto-associar rotinas do template
+    for (const rotinaTemplate of pilarTemplate.rotinas) {
+      await this.pilaresEmpresaService.createRotinaEmpresa(
+        created.id,
+        pilarEmpresa.id,
+        { rotinaTemplateId: rotinaTemplate.id },
+        user,
+      );
+    }
   }
 }
 ```
@@ -673,10 +683,10 @@ if (autoAssociate) {
 
 **Justificativa:**
 - Onboarding rápido de novas empresas
-- Padronização inicial
+- Padronização inicial via Snapshot Pattern
 - Admin pode desvincular pilares não utilizados depois
 
-**Arquivo:** [empresas.service.ts](../../backend/src/modules/empresas/empresas.service.ts#L26-L51)
+**Arquivo:** [empresas.service.ts](../../backend/src/modules/empresas/empresas.service.ts)
 
 ---
 
@@ -1421,16 +1431,18 @@ export class ReordenarPilaresDto {
 **Condição:** Criação de nova empresa + `AUTO_ASSOCIAR_PILARES_PADRAO=true`
 
 **Comportamento:**
-- Sistema busca pilares com `modelo: true` e `ativo: true`
-- Cria PilarEmpresa automaticamente para cada pilar encontrado
-- Preserva ordem original do catálogo global
+- Sistema busca todos Pilar templates ativos (`ativo: true`)
+- Cria PilarEmpresa automaticamente usando Snapshot Pattern
+- Cada snapshot tem `pilarTemplateId` referenciando o template original
+- Preserva `nome` copiado do template no momento da criação
+- Auto-associa também as Rotinas de cada Pilar template
 
 **Configuração:**
 - Env var: `AUTO_ASSOCIAR_PILARES_PADRAO`
 - Default: `true`
 - Para desabilitar: `AUTO_ASSOCIAR_PILARES_PADRAO="false"`
 
-**Arquivo:** [empresas.service.ts](../../backend/src/modules/empresas/empresas.service.ts#L26-L51)
+**Arquivo:** [empresas.service.ts](../../backend/src/modules/empresas/empresas.service.ts)
 
 ---
 
@@ -1454,16 +1466,18 @@ export class ReordenarPilaresDto {
 
 ## 6. Ausências ou Ambiguidades (ATUALIZADO)
 
-### 6.1. Campo `modelo` Implementado
+### 6.1. Snapshot Pattern Implementado
 
 **Status:** ✅ IMPLEMENTADO
 
 **Descrição:**
-- Campo `modelo` agora controla auto-associação de pilares
-- Pilares com `modelo: true` são automaticamente vinculados a novas empresas
+- PilarEmpresa e RotinaEmpresa armazenam cópias (snapshots) de templates
+- Campo `pilarTemplateId` e `rotinaTemplateId` referenciam templates originais
+- Campo `nome` é copiado e congelado no momento da criação do snapshot
+- Auto-associação de templates ativos ao criar nova empresa
 - Configurável via `AUTO_ASSOCIAR_PILARES_PADRAO`
 
-**Arquivo:** [empresas.service.ts](../../backend/src/modules/empresas/empresas.service.ts#L26-L51)
+**Arquivo:** [empresas.service.ts](../../backend/src/modules/empresas/empresas.service.ts)
 
 ---
 

@@ -4,10 +4,15 @@ import { CreateEmpresaDto } from './dto/create-empresa.dto';
 import { UpdateEmpresaDto } from './dto/update-empresa.dto';
 import { AuditService } from '../audit/audit.service';
 import { RequestUser } from '../../common/interfaces/request-user.interface';
+import { PilaresEmpresaService } from '../pilares-empresa/pilares-empresa.service';
 
 @Injectable()
 export class EmpresasService {
-  constructor(private prisma: PrismaService, private audit: AuditService) {}
+  constructor(
+    private prisma: PrismaService, 
+    private audit: AuditService,
+    private pilaresEmpresaService: PilaresEmpresaService,
+  ) {}
 
   /**
    * RA-EMP-001: Valida isolamento multi-tenant
@@ -53,9 +58,42 @@ export class EmpresasService {
       },
     });
 
-    // TODO: Auto-associar pilares padrão à nova empresa usando Snapshot Pattern
-    // Use createPilarEmpresa() do PilaresEmpresaService para criar snapshots
-    // ao invés da lógica antiga com modelo: true e pilarId
+    // RA-EMP-004: Auto-associar templates de pilares e rotinas à nova empresa
+    // Configurável via env var AUTO_ASSOCIAR_PILARES_PADRAO (default: true)
+    const autoAssociate = process.env.AUTO_ASSOCIAR_PILARES_PADRAO !== 'false';
+
+    if (autoAssociate) {
+      // Buscar todos pilares templates ativos
+      const pilaresTemplates = await this.prisma.pilar.findMany({
+        where: { ativo: true },
+        orderBy: { ordem: 'asc' },
+        include: {
+          rotinas: {
+            where: { ativo: true },
+            orderBy: { ordem: 'asc' },
+          },
+        },
+      });
+
+      // Para cada pilar template, criar snapshot (PilarEmpresa)
+      for (const pilarTemplate of pilaresTemplates) {
+        const pilarEmpresa = await this.pilaresEmpresaService.createPilarEmpresa(
+          created.id,
+          { pilarTemplateId: pilarTemplate.id },
+          { id: userId, perfil: { codigo: 'ADMINISTRADOR' } } as RequestUser,
+        );
+
+        // Para cada rotina template do pilar, criar snapshot (RotinaEmpresa)
+        for (const rotinaTemplate of pilarTemplate.rotinas) {
+          await this.pilaresEmpresaService.createRotinaEmpresa(
+            created.id,
+            pilarEmpresa.id,
+            { rotinaTemplateId: rotinaTemplate.id },
+            { id: userId, perfil: { codigo: 'ADMINISTRADOR' } } as RequestUser,
+          );
+        }
+      }
+    }
 
     return created;
   }
