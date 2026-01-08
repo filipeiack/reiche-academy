@@ -45,6 +45,14 @@ export class RotinasListComponent implements OnInit {
   // Filtros
   pilarIdFiltro: string | null = null;
   searchQuery = '';
+  tipoFilter: 'all' | 'modelo' | 'customizado' = 'modelo';
+  
+  // Opções para ng-select (filtro de tipo)
+  tipoOptions = [
+    { value: 'all', label: 'Todos os Tipos' },
+    { value: 'modelo', label: 'Padrão' },
+    { value: 'customizado', label: 'Customizados' }
+  ];
   
   // Offcanvas de detalhes
   selectedRotina: Rotina | null = null;
@@ -99,7 +107,7 @@ export class RotinasListComponent implements OnInit {
     this.rotinasService.findAll(this.pilarIdFiltro || undefined).subscribe({
       next: (rotinas) => {
         this.rotinas = rotinas;
-        this.rotinasFiltered = rotinas;
+        this.applyFilters();
         this.loading = false;
       },
       error: (error: HttpErrorResponse) => {
@@ -113,6 +121,25 @@ export class RotinasListComponent implements OnInit {
   onFilterChange(): void {
     this.page = 1;
     this.loadRotinas();
+  }
+
+  onTipoFilterChange(tipo: 'all' | 'modelo' | 'customizado'): void {
+    this.tipoFilter = tipo;
+    this.page = 1;
+    this.applyFilters();
+  }
+
+  applyFilters(): void {
+    let filtered = [...this.rotinas];
+
+    // Filtro de tipo
+    if (this.tipoFilter === 'modelo') {
+      filtered = filtered.filter(r => r.modelo);
+    } else if (this.tipoFilter === 'customizado') {
+      filtered = filtered.filter(r => !r.modelo);
+    }
+
+    this.rotinasFiltered = filtered;
   }
 
   get paginatedRotinas(): Rotina[] {

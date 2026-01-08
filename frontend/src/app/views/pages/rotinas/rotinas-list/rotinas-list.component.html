@@ -23,7 +23,7 @@
 
         <!-- Filtros -->
         <div class="row mb-3">
-          <div class="col-md-6">
+          <div class="col-md-4">
             <ng-select id="pilarFilter" [(ngModel)]="pilarIdFiltro" (ngModelChange)="onFilterChange()"
               placeholder="Todos os Pilares" [clearable]="true">
               <ng-option *ngFor="let pilar of pilares" [value]="pilar.id">
@@ -31,7 +31,13 @@
               </ng-option>
             </ng-select>
           </div>
-          <div class="col-md-6">
+          <div class="col-md-4">
+            <ng-select [items]="tipoOptions" bindLabel="label" bindValue="value"
+              placeholder="Filtrar por tipo" [(ngModel)]="tipoFilter"
+              (ngModelChange)="onTipoFilterChange($event)" [clearable]="false">
+            </ng-select>
+          </div>
+          <div class="col-md-4">
             <div class="alert alert-info mb-0" *ngIf="!canReorder">
 
               Selecione um pilar para habilitar a reordenação drag-and-drop

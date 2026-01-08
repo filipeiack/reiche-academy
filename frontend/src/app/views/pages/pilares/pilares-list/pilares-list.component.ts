@@ -38,7 +38,7 @@ export class PilaresListComponent implements OnInit {
   
   // Filtros UI-PIL-007
   statusFilter: 'all' | 'active' | 'inactive' = 'all';
-  tipoFilter: 'all' | 'modelo' | 'customizado' = 'all';
+  tipoFilter: 'all' | 'modelo' | 'customizado' = 'modelo';
 
   // Opções para ng-select
   statusOptions = [
