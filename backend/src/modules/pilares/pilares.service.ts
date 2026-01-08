@@ -19,19 +19,20 @@ export class PilaresService {
       throw new ConflictException('Já existe um pilar com este nome');
     }
 
-    // GAP-001: Validação de ordem duplicada
-    if (createPilarDto.ordem !== undefined && createPilarDto.ordem !== null) {
-      const existingOrdem = await this.prisma.pilar.findUnique({
-        where: { ordem: createPilarDto.ordem },
+    // Se ordem não fornecida, auto-incrementar
+    let ordem = createPilarDto.ordem;
+    if (ordem === undefined || ordem === null) {
+      const ultimoPilar = await this.prisma.pilar.findFirst({
+        orderBy: { ordem: 'desc' },
+        select: { ordem: true },
       });
-      if (existingOrdem) {
-        throw new ConflictException('Já existe um pilar com esta ordem');
-      }
+      ordem = ultimoPilar ? ultimoPilar.ordem + 1 : 1;
     }
 
     const created = await this.prisma.pilar.create({
       data: {
         ...createPilarDto,
+        ordem,
         createdBy: requestUser.id,
       },
     });
@@ -109,19 +110,6 @@ export class PilaresService {
 
       if (existingPilar) {
         throw new ConflictException('Já existe um pilar com este nome');
-      }
-    }
-
-    // GAP-001: Validação de ordem duplicada
-    if (updatePilarDto.ordem !== undefined && updatePilarDto.ordem !== null) {
-      const existingOrdem = await this.prisma.pilar.findFirst({
-        where: {
-          ordem: updatePilarDto.ordem,
-          id: { not: id },
-        },
-      });
-      if (existingOrdem) {
-        throw new ConflictException('Já existe um pilar com esta ordem');
       }
     }
 

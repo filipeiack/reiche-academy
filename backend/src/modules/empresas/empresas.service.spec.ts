@@ -239,55 +239,6 @@ describe('EmpresasService - Validação Completa de Regras de Negócio', () => {
     });
   });
 
-  describe('R-EMP-021: Atualização de Pilares', () => {
-    it('deve substituir todos os pilares vinculados', async () => {
-      const newPilares = ['pilar-1', 'pilar-2', 'pilar-3'];
-
-      jest.spyOn(prisma.empresa, 'findUnique')
-        .mockResolvedValueOnce(mockEmpresaA as any) // before
-        .mockResolvedValueOnce({ ...mockEmpresaA, pilares: newPilares } as any); // after
-      jest.spyOn(prisma.pilarEmpresa, 'deleteMany').mockResolvedValue({ count: 3 } as any);
-      jest.spyOn(prisma.pilarEmpresa, 'createMany').mockResolvedValue({ count: 3 } as any);
-      jest.spyOn(audit, 'log').mockResolvedValue(undefined);
-
-      await service.vincularPilares('empresa-a-id', newPilares, 'admin-id', mockAdminUser);
-
-      expect(prisma.pilarEmpresa.deleteMany).toHaveBeenCalledWith({
-        where: { empresaId: 'empresa-a-id' },
-      });
-
-      expect(prisma.pilarEmpresa.createMany).toHaveBeenCalledWith({
-        data: newPilares.map(pilarId => ({
-          empresaId: 'empresa-a-id',
-          pilarId,
-          createdBy: 'admin-id',
-        })),
-      });
-    });
-
-    it('deve registrar auditoria de vinculação', async () => {
-      const newPilares = ['pilar-1'];
-
-      jest.spyOn(prisma.empresa, 'findUnique')
-        .mockResolvedValueOnce(mockEmpresaA as any)
-        .mockResolvedValueOnce(mockEmpresaA as any);
-      jest.spyOn(prisma.pilarEmpresa, 'deleteMany').mockResolvedValue({ count: 0 } as any);
-      jest.spyOn(prisma.pilarEmpresa, 'createMany').mockResolvedValue({ count: 1 } as any);
-      jest.spyOn(audit, 'log').mockResolvedValue(undefined);
-
-      await service.vincularPilares('empresa-a-id', newPilares, 'admin-id', mockAdminUser);
-
-      expect(audit.log).toHaveBeenCalledWith(
-        expect.objectContaining({
-          usuarioId: 'admin-id',
-          entidade: 'empresas',
-          entidadeId: 'empresa-a-id',
-          acao: 'UPDATE',
-        })
-      );
-    });
-  });
-
   // ============================================================
   // RA-EMP-001: Implementar Isolamento Multi-Tenant (BLOQUEANTE)
   // ============================================================
@@ -353,33 +304,6 @@ describe('EmpresasService - Validação Completa de Regras de Negócio', () => {
       );
 
       expect(prisma.empresa.update).not.toHaveBeenCalled();
-    });
-  });
-
-  describe('RA-EMP-001: Isolamento Multi-Tenant em vincularPilares()', () => {
-    it('deve permitir ADMINISTRADOR vincular pilares em qualquer empresa', async () => {
-      jest.spyOn(prisma.empresa, 'findUnique')
-        .mockResolvedValueOnce(mockEmpresaA as any)
-        .mockResolvedValueOnce(mockEmpresaA as any);
-      jest.spyOn(prisma.pilarEmpresa, 'deleteMany').mockResolvedValue({ count: 0 } as any);
-      jest.spyOn(prisma.pilarEmpresa, 'createMany').mockResolvedValue({ count: 1 } as any);
-      jest.spyOn(audit, 'log').mockResolvedValue(undefined);
-
-      await service.vincularPilares('empresa-a-id', ['pilar-1'], 'admin-id', mockAdminUser);
-
-      expect(prisma.pilarEmpresa.createMany).toHaveBeenCalled();
-    });
-
-    it('deve bloquear GESTOR de vincular pilares em empresa de outro tenant', async () => {
-      jest.spyOn(prisma.empresa, 'findUnique').mockResolvedValue(mockEmpresaB as any);
-
-      await expect(
-        service.vincularPilares('empresa-b-id', ['pilar-1'], 'gestor-a-id', mockGestorEmpresaA)
-      ).rejects.toThrow(
-        new ForbiddenException('Você não pode vincular pilares em dados de outra empresa')
-      );
-
-      expect(prisma.pilarEmpresa.deleteMany).not.toHaveBeenCalled();
     });
   });
 
@@ -694,24 +618,6 @@ describe('EmpresasService - Validação Completa de Regras de Negócio', () => {
       );
     });
 
-    it('deve usar requestUser.nome em vincularPilares()', async () => {
-      jest.spyOn(prisma.empresa, 'findUnique')
-        .mockResolvedValueOnce(mockEmpresaA as any)
-        .mockResolvedValueOnce(mockEmpresaA as any);
-      jest.spyOn(prisma.pilarEmpresa, 'deleteMany').mockResolvedValue({ count: 0 } as any);
-      jest.spyOn(prisma.pilarEmpresa, 'createMany').mockResolvedValue({ count: 1 } as any);
-      jest.spyOn(audit, 'log').mockResolvedValue(undefined);
-
-      await service.vincularPilares('empresa-a-id', ['pilar-1'], 'gestor-a-id', mockGestorEmpresaA);
-
-      expect(audit.log).toHaveBeenCalledWith(
-        expect.objectContaining({
-          usuarioNome: 'Gestor A',
-          usuarioEmail: 'gestor-a@test.com',
-        })
-      );
-    });
-
     it('deve usar requestUser.nome em updateLogo()', async () => {
       jest.spyOn(prisma.empresa, 'findUnique').mockResolvedValue(mockEmpresaA as any);
       jest.spyOn(prisma.empresa, 'update').mockResolvedValue(mockEmpresaA as any);
@@ -794,14 +700,6 @@ describe('EmpresasService - Validação Completa de Regras de Negócio', () => {
 
       await expect(
         service.remove('empresa-inexistente', 'admin-id', mockAdminUser)
-      ).rejects.toThrow(new NotFoundException('Empresa não encontrada'));
-    });
-
-    it('deve lançar NotFoundException se empresa não existir em vincularPilares()', async () => {
-      jest.spyOn(prisma.empresa, 'findUnique').mockResolvedValue(null);
-
-      await expect(
-        service.vincularPilares('empresa-inexistente', ['pilar-1'], 'admin-id', mockAdminUser)
       ).rejects.toThrow(new NotFoundException('Empresa não encontrada'));
     });
 

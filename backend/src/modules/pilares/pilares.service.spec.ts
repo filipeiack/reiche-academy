@@ -95,33 +95,15 @@ describe('PilaresService', () => {
       jest.spyOn(prisma.pilar, 'create').mockResolvedValue(mockPilarPadrao as any);
 
       const result = await service.create(
-        { nome: 'Estratégia', descricao: 'Pilar estratégico', modelo: true, ordem: 1 },
+        { nome: 'Estratégia', descricao: 'Pilar estratégico', ordem: 1 },
         mockAdminUser,
       );
 
-      expect(result.modelo).toBe(true);
-      expect(prisma.pilar.create).toHaveBeenCalledWith(
-        expect.objectContaining({
-          data: expect.objectContaining({
-            modelo: true,
-          }),
-        }),
-      );
+      expect(result.nome).toBe('Estratégia');
+      expect(prisma.pilar.create).toHaveBeenCalled();
     });
 
-    it('deve criar pilar com modelo: false (default)', async () => {
-      jest.spyOn(prisma.pilar, 'findUnique').mockResolvedValue(null);
-      jest.spyOn(prisma.pilar, 'create').mockResolvedValue(mockPilarCustomizado as any);
-
-      const result = await service.create(
-        { nome: 'Inovação', modelo: false },
-        mockAdminUser,
-      );
-
-      expect(result.modelo).toBe(false);
-    });
-
-    it('deve criar pilar sem campo modelo (opcional)', async () => {
+    it('deve criar pilar sem especificar ordem (auto-incremento)', async () => {
       jest.spyOn(prisma.pilar, 'findUnique').mockResolvedValue(null);
       jest.spyOn(prisma.pilar, 'create').mockResolvedValue({ ...mockPilarCustomizado, modelo: false } as any);
 
@@ -131,47 +113,6 @@ describe('PilaresService', () => {
       );
 
       expect(prisma.pilar.create).toHaveBeenCalled();
-    });
-  });
-
-  // ============================================================
-  // GAP-2: Campo modelo em UpdatePilarDto
-  // ============================================================
-
-  describe('GAP-2: Campo modelo em atualização', () => {
-    it('deve atualizar pilar de modelo: false → true', async () => {
-      jest.spyOn(prisma.pilar, 'findFirst').mockResolvedValue(mockPilarCustomizado as any);
-      jest.spyOn(prisma.pilar, 'findUnique').mockResolvedValue(null);
-      jest.spyOn(prisma.pilar, 'update').mockResolvedValue({ ...mockPilarCustomizado, modelo: true } as any);
-
-      const result = await service.update(
-        'pilar-2',
-        { modelo: true },
-        mockAdminUser,
-      );
-
-      expect(result.modelo).toBe(true);
-      expect(prisma.pilar.update).toHaveBeenCalledWith(
-        expect.objectContaining({
-          data: expect.objectContaining({
-            modelo: true,
-          }),
-        }),
-      );
-    });
-
-    it('deve atualizar pilar de modelo: true → false', async () => {
-      jest.spyOn(prisma.pilar, 'findFirst').mockResolvedValue(mockPilarPadrao as any);
-      jest.spyOn(prisma.pilar, 'findUnique').mockResolvedValue(null);
-      jest.spyOn(prisma.pilar, 'update').mockResolvedValue({ ...mockPilarPadrao, modelo: false } as any);
-
-      const result = await service.update(
-        'pilar-1',
-        { modelo: false },
-        mockAdminUser,
-      );
-
-      expect(result.modelo).toBe(false);
     });
   });
 

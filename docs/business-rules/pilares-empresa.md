@@ -3,74 +3,228 @@
 **Módulo:** PilaresEmpresa  
 **Backend:** `backend/src/modules/pilares-empresa/`  
 **Frontend:** Não implementado  
-**Última extração:** 22/12/2024  
-**Agente:** Extractor de Regras
+**Última extração:** 08/01/2026  
+**Agente:** Extractor de Regras  
+**Padrão:** Snapshot Pattern
 
 ---
 
 ## 1. Visão Geral
 
-O módulo PilaresEmpresa é responsável por:
-- Gerenciar vinculação de pilares a empresas (multi-tenant)
-- Ordenação customizada de pilares por empresa
-- Reordenação de pilares dentro de uma empresa específica
+O módulo PilaresEmpresa gerencia **instâncias snapshot** de pilares por empresa.
+
+### Responsabilidades:
+
+- Criar pilares por empresa (cópia de template OU customizado)
+- Ordenação customizada per-company (independente do template)
+- Reordenação de pilares dentro da empresa
+- Edição de dados da instância (nome, descrição)
 - Validação de acesso multi-tenant (isolamento de dados)
-- Filtro de cascata lógica (pilares inativos invisíveis)
+- Gestão de responsáveis por pilar
 
 **Entidades principais:**
-- PilarEmpresa (vinculação pilar-empresa com ordenação per-company)
+- PilarEmpresa (instância snapshot com dados copiados/customizados)
 
 **Endpoints implementados:**
 - `GET /empresas/:empresaId/pilares` — Listar pilares da empresa (todos perfis)
-- `POST /empresas/:empresaId/pilares/reordenar` — Reordenar pilares da empresa (ADMINISTRADOR, GESTOR)
+- `POST /empresas/:empresaId/pilares` — Criar pilar (cópia OU customizado) (ADMINISTRADOR, GESTOR)
+- `POST /empresas/:empresaId/pilares/reordenar` — Reordenar pilares (ADMINISTRADOR, GESTOR)
+- `PATCH /empresas/:empresaId/pilares/:pilarEmpresaId` — Editar pilar da empresa (ADMINISTRADOR, GESTOR)
+- `DELETE /empresas/:empresaId/pilares/:pilarEmpresaId` — Remover pilar (ADMINISTRADOR, GESTOR)
+- `PATCH /empresas/:empresaId/pilares/:pilarEmpresaId/responsavel` — Definir responsável (ADMINISTRADOR, GESTOR)
 
 **Características:**
 - Multi-tenancy: Isolamento de dados por empresa
+- Snapshot Pattern: Dados copiados de templates (customizáveis)
 - RBAC: Validação de perfil por endpoint
-- Auditoria: Registro de reordenações
-- Cascata lógica: Pilar inativo = invisível automaticamente
+- Auditoria: Registro de operações
 
 ---
 
 ## 2. Entidades
 
-### 2.1. PilarEmpresa
+### 2.1. PilarEmpresa (Instância Snapshot)
 
 **Localização:** `backend/prisma/schema.prisma`
 
+**Descrição:** Instância snapshot de pilar por empresa. Contém cópia dos dados do template OU dados customizados.
+
 | Campo | Tipo | Descrição |
 |-------|------|-----------|
-| id | String (UUID) | Identificador único |
-| empresaId | String | FK para Empresa |
-| pilarId | String | FK para Pilar |
-| ordem | Int | Ordem de exibição do pilar na empresa (per-company) |
+| id | String (UUID) | Identificador único da instância |
+| pilarTemplateId | String? | FK para Pilar (null = customizado, uuid = cópia de template) |
+| pilarTemplate | Pilar? | Relação com template de origem (se aplicável) |
+| nome | String | Nome do pilar (SEMPRE preenchido, copiado OU customizado) |
+| descricao | String? | Descrição (SEMPRE preenchido, copiado OU customizado) |
+| empresaId | String | FK para Empresa (obrigatório) |
+| empresa | Empresa | Relação com empresa dona da instância |
+| ordem | Int | Ordem de exibição per-company (independente do template) |
+| responsavelId | String? | FK para Usuario (responsável pelo pilar na empresa) |
+| responsavel | Usuario? | Relação com usuário responsável |
 | ativo | Boolean (default: true) | Soft delete flag |
-| createdAt | DateTime | Data de criação |
+| createdAt | DateTime | Data de criação da instância |
 | updatedAt | DateTime | Data da última atualização |
 | createdBy | String? | ID do usuário que criou |
 | updatedBy | String? | ID do usuário que atualizou |
 
 **Relações:**
-- `empresa`: Empresa (empresa associada)
-- `pilar`: Pilar (pilar associado)
+- `pilarTemplate`: Pilar? (template de origem, se aplicável)
+- `empresa`: Empresa (empresa dona)
+- `responsavel`: Usuario? (usuário responsável)
 - `rotinasEmpresa`: RotinaEmpresa[] (rotinas vinculadas ao pilar na empresa)
-- `evolucao`: PilarEvolucao[] (histórico de evolução do pilar)
+- `evolucao`: PilarEvolucao[] (histórico de evolução)
 
 **Índices:**
-- `[empresaId, pilarId]` (unique)
+- `@@unique([empresaId, nome])` — Nome único por empresa
 
 **Regras de Negócio:**
-- Um pilar só pode ser vinculado uma vez por empresa (unique constraint)
-- Ordem é obrigatória e determina exibição na interface
-- Cada empresa tem sua própria ordenação independente
+- Cada empresa tem sua própria coleção de pilares (snapshots)
+- Nome deve ser único dentro da empresa (permite customização)
+- Ordem é obrigatória e determina exibição (independente do template)
+- `pilarTemplateId = null` indica pilar customizado (não veio de template)
+- `pilarTemplateId != null` indica cópia de template (origem rastreável)
+
+**📝 Mudanças do Snapshot Pattern:**
+- ✅ Campo `pilarTemplateId` (nullable) substitui `pilarId` (obrigatório)
+- ✅ Campos `nome` e `descricao` adicionados (SEMPRE preenchidos)
+- ✅ Constraint `@@unique([empresaId, pilarId])` substituída por `@@unique([empresaId, nome])`
+- ✅ Empresa pode editar `nome` e `descricao` sem afetar outras empresas
+- ✅ Template pode ser atualizado sem propagar mudanças (snapshot congelado)
 
 ---
 
 ## 3. Regras Implementadas
 
-### R-PILEMP-001: Listagem de Pilares por Empresa (Multi-Tenant)
+### R-PILEMP-001: Criação de Pilar a partir de Template (Snapshot)
 
-**Descrição:** Endpoint retorna pilares ativos de uma empresa específica, ordenados por `PilarEmpresa.ordem`.
+**Descrição:** Sistema copia dados de um template global para criar instância snapshot por empresa.
+
+**Implementação:**
+- **Endpoint:** `POST /empresas/:empresaId/pilares` (ADMINISTRADOR, GESTOR)
+- **Método:** `PilaresEmpresaService.create()`
+- **DTO:** CreatePilarEmpresaDto
+
+**Input:**
+```typescript
+{
+  "pilarTemplateId": "uuid-template-estrategia",
+  // nome e descricao NÃO são fornecidos (serão copiados)
+}
+```
+
+**Comportamento:**
+```typescript
+// 1. Buscar template
+const template = await this.prisma.pilar.findUnique({
+  where: { id: dto.pilarTemplateId, ativo: true },
+});
+
+if (!template) {
+  throw new NotFoundException('Template de pilar não encontrado');
+}
+
+// 2. Calcular próxima ordem
+const maxOrdem = await this.prisma.pilarEmpresa.findFirst({
+  where: { empresaId },
+  orderBy: { ordem: 'desc' },
+});
+
+const proximaOrdem = (maxOrdem?.ordem ?? 0) + 1;
+
+// 3. Criar snapshot (CÓPIA)
+const pilarEmpresa = await this.prisma.pilarEmpresa.create({
+  data: {
+    pilarTemplateId: template.id,      // Referência ao template
+    nome: template.nome,                // CÓPIA
+    descricao: template.descricao,      // CÓPIA
+    empresaId,
+    ordem: proximaOrdem,
+    createdBy: user.id,
+  },
+});
+```
+
+**Validações:**
+- Template existe e está ativo?
+- Empresa existe?
+- Multi-tenant (GESTOR só cria para própria empresa)
+- Nome não duplicado na empresa (constraint `@@unique([empresaId, nome])`)
+
+**Retorno:**
+- PilarEmpresa criado com dados copiados
+
+**Auditoria:**
+- Ação: CREATE
+- Entidade: pilares_empresa
+- Dados: pilarTemplateId + dados copiados
+
+**Arquivo:** [pilares-empresa.service.ts](../../backend/src/modules/pilares-empresa/pilares-empresa.service.ts) (a implementar)
+
+---
+
+### R-PILEMP-002: Criação de Pilar Customizado (Sem Template)
+
+**Descrição:** Sistema cria pilar customizado (específico da empresa) sem vínculo com template.
+
+**Implementação:**
+- **Endpoint:** `POST /empresas/:empresaId/pilares` (ADMINISTRADOR, GESTOR)
+- **Método:** `PilaresEmpresaService.create()`
+- **DTO:** CreatePilarEmpresaDto
+
+**Input:**
+```typescript
+{
+  "pilarTemplateId": null,          // Indica customizado
+  "nome": "Pilar Específico XYZ",   // Obrigatório se null
+  "descricao": "Descrição custom"   // Opcional
+}
+```
+
+**Comportamento:**
+```typescript
+// 1. Validar campos obrigatórios
+if (!dto.pilarTemplateId && !dto.nome) {
+  throw new BadRequestException(
+    'Nome é obrigatório para pilares customizados'
+  );
+}
+
+// 2. Calcular próxima ordem
+const proximaOrdem = (await getMaxOrdem(empresaId)) + 1;
+
+// 3. Criar customizado
+const pilarEmpresa = await this.prisma.pilarEmpresa.create({
+  data: {
+    pilarTemplateId: null,             // SEM template
+    nome: dto.nome,                    // Fornecido pelo usuário
+    descricao: dto.descricao ?? null,  // Opcional
+    empresaId,
+    ordem: proximaOrdem,
+    createdBy: user.id,
+  },
+});
+```
+
+**Validações:**
+- Se `pilarTemplateId = null`, `nome` é obrigatório
+- Nome não duplicado na empresa
+- Multi-tenant (GESTOR só cria para própria empresa)
+
+**Retorno:**
+- PilarEmpresa customizado
+
+**Auditoria:**
+- Ação: CREATE
+- Entidade: pilares_empresa
+- Dados: pilarTemplateId=null + nome customizado
+
+**Arquivo:** [pilares-empresa.service.ts](../../backend/src/modules/pilares-empresa/pilares-empresa.service.ts) (a implementar)
+
+---
+
+### R-PILEMP-003: Listagem de Pilares por Empresa (Snapshot Pattern)
+
+**Descrição:** Endpoint retorna pilares ativos de uma empresa específica, ordenados por `PilarEmpresa.ordem`. Dados são lidos da instância snapshot (não precisa JOIN com template).
 
 **Implementação:**
 - **Endpoint:** `GET /empresas/:empresaId/pilares`
@@ -90,12 +244,12 @@ private validateTenantAccess(empresaId: string, user: RequestUser) {
 }
 ```
 
-**Filtro de Cascata Lógica:**
+**Filtro:**
 ```typescript
 where: {
   empresaId,
   ativo: true,
-  pilar: { ativo: true }, // Pilar desativado = invisível
+  // ❌ NÃO precisa filtrar pilarTemplate.ativo (dados copiados)
 }
 ```
 
@@ -104,26 +258,28 @@ where: {
 orderBy: { ordem: 'asc' } // PilarEmpresa.ordem (per-company)
 ```
 
-**Include:**
+**Include (Opcional):**
 ```typescript
 include: {
-  pilar: {
-    include: {
-      _count: {
-        select: {
-          rotinas: true,
-          empresas: true,
-        },
-      },
-    },
+  pilarTemplate: true,  // Apenas para rastreabilidade (origem)
+  responsavel: {
+    select: { id: true, nome: true, email: true },
+  },
+  _count: {
+    select: { rotinasEmpresa: true },
   },
 }
 ```
 
 **Retorno:**
-- Array de PilarEmpresa com Pilar incluído
-- Contadores: `pilar._count.rotinas` e `pilar._count.empresas`
-- Ordenado por `ordem` da empresa (não ordem global)
+- Array de PilarEmpresa com dados completos (nome, descrição na própria tabela)
+- Não precisa `COALESCE` (dados sempre em `PilarEmpresa`)
+- Ordenado por `ordem` da empresa (independente do template)
+
+**📝 Mudança do Snapshot Pattern:**
+- ✅ Dados lidos diretamente de `PilarEmpresa` (não JOIN obrigatório)
+- ✅ `pilarTemplate` incluído apenas para rastreabilidade (opcional)
+- ❌ NÃO precisa filtrar `pilarTemplate.ativo` (snapshot independente)
 
 **Exceções:**
 - HTTP 403 Forbidden se usuário tentar acessar outra empresa
@@ -133,7 +289,72 @@ include: {
 
 ---
 
-### R-PILEMP-002: Reordenação de Pilares por Empresa
+### R-PILEMP-004: Edição de Pilar da Empresa (Customização)
+
+**Descrição:** Empresa pode editar nome e descrição de sua instância snapshot sem afetar outras empresas.
+
+**Implementação:**
+- **Endpoint:** `PATCH /empresas/:empresaId/pilares/:pilarEmpresaId` (ADMINISTRADOR, GESTOR)
+- **Método:** `PilaresEmpresaService.update()`
+- **DTO:** UpdatePilarEmpresaDto
+
+**Input:**
+```typescript
+{
+  "nome": "Novo nome customizado",
+  "descricao": "Nova descrição"
+}
+```
+
+**Comportamento:**
+```typescript
+// 1. Validar acesso multi-tenant
+this.validateTenantAccess(empresaId, user);
+
+// 2. Validar nome único na empresa (se alterado)
+if (dto.nome) {
+  const existing = await this.prisma.pilarEmpresa.findFirst({
+    where: {
+      empresaId,
+      nome: dto.nome,
+      id: { not: pilarEmpresaId },
+    },
+  });
+  
+  if (existing) {
+    throw new ConflictException('Já existe um pilar com este nome nesta empresa');
+  }
+}
+
+// 3. Atualizar
+const updated = await this.prisma.pilarEmpresa.update({
+  where: { id: pilarEmpresaId },
+  data: {
+    nome: dto.nome,
+    descricao: dto.descricao,
+    updatedBy: user.id,
+  },
+});
+```
+
+**Validações:**
+- Pilar pertence à empresa?
+- Nome único dentro da empresa
+- Multi-tenant (GESTOR só edita própria empresa)
+
+**Auditoria:**
+- Ação: UPDATE
+- Dados antes e depois
+
+**📝 Snapshot Pattern:**
+- ✅ Empresa edita livremente SEM afetar outras empresas
+- ✅ Mesmo pilares criados a partir do mesmo template podem ter nomes diferentes
+
+**Arquivo:** [pilares-empresa.service.ts](../../backend/src/modules/pilares-empresa/pilares-empresa.service.ts) (a implementar)
+
+---
+
+### R-PILEMP-005: Reordenação de Pilares por Empresa
 
 **Descrição:** Endpoint permite reordenar pilares de uma empresa específica (atualiza `PilarEmpresa.ordem`).
 
@@ -691,6 +912,293 @@ private validateTenantAccess(empresaId: string, user: RequestUser) {
 - Pilares (catálogo global)
 - Empresas (multi-tenant)
 - Rotinas (vinculação de rotinas)
+
+---
+
+## 4. DTOs e Validações
+
+### 4.1. CreatePilarEmpresaDto
+
+**Localização:** `backend/src/modules/pilares-empresa/dto/create-pilar-empresa.dto.ts`
+
+**Campos:**
+
+| Campo | Tipo | Validações | Descrição |
+|-------|------|-----------|-----------|
+| pilarTemplateId | string? | `@IsOptional()`, `@IsUUID()` | UUID do template (null = customizado) |
+| nome | string? | `@ValidateIf(o => !o.pilarTemplateId)`, `@IsNotEmpty()`, `@Length(2, 200)` | Obrigatório se pilarTemplateId=null |
+| descricao | string? | `@IsOptional()`, `@MaxLength(500)` | Descrição opcional |
+
+**Validação XOR:**
+```typescript
+import { ValidateIf, IsNotEmpty, IsOptional, IsUUID, Length, MaxLength } from 'class-validator';
+
+export class CreatePilarEmpresaDto {
+  @IsOptional()
+  @IsUUID('4', { message: 'pilarTemplateId deve ser um UUID válido' })
+  pilarTemplateId?: string;
+
+  @ValidateIf(o => !o.pilarTemplateId)
+  @IsNotEmpty({ message: 'Nome é obrigatório para pilares customizados' })
+  @Length(2, 200, { message: 'Nome deve ter entre 2 e 200 caracteres' })
+  nome?: string;
+
+  @IsOptional()
+  @MaxLength(500, { message: 'Descrição deve ter no máximo 500 caracteres' })
+  descricao?: string;
+}
+```
+
+**Lógica:**
+- Se `pilarTemplateId` fornecido → copiar nome/descrição do template
+- Se `pilarTemplateId = null` → `nome` é obrigatório (customizado)
+
+---
+
+### 4.2. UpdatePilarEmpresaDto
+
+**Localização:** `backend/src/modules/pilares-empresa/dto/update-pilar-empresa.dto.ts`
+
+**Campos:**
+
+| Campo | Tipo | Validações | Descrição |
+|-------|------|-----------|-----------|
+| nome | string? | `@IsOptional()`, `@Length(2, 200)` | Nome customizado |
+| descricao | string? | `@IsOptional()`, `@MaxLength(500)` | Descrição customizada |
+| responsavelId | string? | `@IsOptional()`, `@IsUUID()` | UUID do usuário responsável |
+
+**Validação:**
+```typescript
+export class UpdatePilarEmpresaDto {
+  @IsOptional()
+  @Length(2, 200)
+  nome?: string;
+
+  @IsOptional()
+  @MaxLength(500)
+  descricao?: string;
+
+  @IsOptional()
+  @IsUUID('4')
+  responsavelId?: string;
+}
+```
+
+**Regras:**
+- Nome deve ser único dentro da empresa (validado no service)
+- `pilarTemplateId` NÃO pode ser alterado (imutável após criação)
+
+---
+
+### 4.3. Exemplos de Erros
+
+**400 Bad Request:**
+```json
+{
+  "statusCode": 400,
+  "message": [
+    "Nome é obrigatório para pilares customizados",
+    "Nome deve ter entre 2 e 200 caracteres"
+  ],
+  "error": "Bad Request"
+}
+```
+
+**404 Not Found:**
+```json
+{
+  "statusCode": 404,
+  "message": "Template de pilar não encontrado",
+  "error": "Not Found"
+}
+```
+
+**409 Conflict:**
+```json
+{
+  "statusCode": 409,
+  "message": "Já existe um pilar com este nome nesta empresa",
+  "error": "Conflict"
+}
+```
+
+**403 Forbidden (Multi-tenant):**
+```json
+{
+  "statusCode": 403,
+  "message": "Você não pode acessar dados de outra empresa",
+  "error": "Forbidden"
+}
+```
+
+---
+
+## 5. Regras de Deleção e Reordenação
+
+### R-PILEMP-006: Deleção de Pilar da Empresa (Hard Delete com Validação)
+
+**Descrição:** Sistema remove pilar da empresa (hard delete) apenas se não houver rotinas vinculadas. Deleção é auditada.
+
+**Implementação:**
+- **Endpoint:** `DELETE /empresas/:empresaId/pilares/:pilarEmpresaId` (ADMINISTRADOR, GESTOR)
+- **Método:** `PilaresEmpresaService.delete()`
+
+**Validações:**
+
+1. **Multi-Tenant:**
+```typescript
+this.validateTenantAccess(empresaId, user);
+```
+
+2. **Validar Ausência de Rotinas:**
+```typescript
+const pilarEmpresa = await this.prisma.pilarEmpresa.findUnique({
+  where: { id: pilarEmpresaId },
+  include: {
+    _count: {
+      select: { rotinasEmpresa: true }
+    }
+  }
+});
+
+if (!pilarEmpresa) {
+  throw new NotFoundException('Pilar não encontrado nesta empresa');
+}
+
+if (pilarEmpresa._count.rotinasEmpresa > 0) {
+  throw new ConflictException(
+    `Não é possível remover pilar com ${pilarEmpresa._count.rotinasEmpresa} rotina(s) vinculada(s)`
+  );
+}
+```
+
+3. **Buscar Rotinas Antes de Deletar (para auditoria):**
+```typescript
+const rotinasVinculadas = await this.prisma.rotinaEmpresa.findMany({
+  where: { pilarEmpresaId },
+  select: { id: true, nome: true }
+});
+```
+
+4. **Hard Delete em Cascata:**
+```typescript
+// Prisma já deleta rotinasEmpresa automaticamente (onDelete: Cascade)
+await this.prisma.pilarEmpresa.delete({
+  where: { id: pilarEmpresaId }
+});
+```
+
+**Auditoria (Pilar Deletado):**
+```typescript
+await this.audit.log({
+  usuarioId: user.id,
+  usuarioNome: user.nome,
+  usuarioEmail: user.email,
+  entidade: 'pilares_empresa',
+  entidadeId: pilarEmpresaId,
+  acao: 'DELETE',
+  dadosAntes: {
+    id: pilarEmpresa.id,
+    nome: pilarEmpresa.nome,
+    empresaId: pilarEmpresa.empresaId,
+    pilarTemplateId: pilarEmpresa.pilarTemplateId,
+  },
+  dadosDepois: null,
+});
+```
+
+**Auditoria (Rotinas Deletadas em Cascata):**
+```typescript
+for (const rotina of rotinasVinculadas) {
+  await this.audit.log({
+    usuarioId: user.id,
+    usuarioNome: user.nome,
+    usuarioEmail: user.email,
+    entidade: 'rotinas_empresa',
+    entidadeId: rotina.id,
+    acao: 'DELETE',
+    dadosAntes: { id: rotina.id, nome: rotina.nome, pilarEmpresaId },
+    dadosDepois: null,
+  });
+}
+```
+
+**Retorno:** HTTP 204 No Content
+
+**Exceções:**
+- HTTP 404: Pilar não encontrado
+- HTTP 409: Pilar possui rotinas vinculadas
+- HTTP 403: Usuário tentando deletar pilar de outra empresa
+
+**Arquivo:** [pilares-empresa.service.ts](../../backend/src/modules/pilares-empresa/pilares-empresa.service.ts) (a implementar)
+
+---
+
+### R-PILEMP-007: Reordenação de Pilares (Já Implementada)
+
+**Descrição:** Endpoint permite reordenar pilares de uma empresa específica (atualiza `PilarEmpresa.ordem`).
+
+**Implementação:**
+- **Endpoint:** `POST /empresas/:empresaId/pilares/reordenar`
+- **Método:** `PilaresEmpresaService.reordenar()`
+- **DTO:** ReordenarPilaresDto
+
+**Input:**
+```typescript
+{
+  "ordens": [
+    { "id": "uuid-pilar-empresa-1", "ordem": 1 },
+    { "id": "uuid-pilar-empresa-2", "ordem": 2 }
+  ]
+}
+```
+
+**Validações:**
+- Multi-tenant
+- IDs pertencem à empresa
+- Transação atômica
+
+**Auditoria:**
+- Ação: UPDATE
+- Entidade: pilares_empresa
+- Dados: lista completa de reordenação
+
+**Arquivo:** [pilares-empresa.service.ts](../../backend/src/modules/pilares-empresa/pilares-empresa.service.ts#L58-L118)
+
+---
+
+## 6. Validação de Pilares Inativos
+
+### R-PILEMP-008: Validação de Ativação ao Criar Rotina
+
+**Descrição:** Ao adicionar rotina a um pilar, sistema valida se `PilarEmpresa.ativo = true`.
+
+**Implementação:**
+- **Módulo:** RotinaEmpresaService (ao vincular rotina)
+- **Método:** `create()`
+
+**Validação:**
+```typescript
+const pilarEmpresa = await this.prisma.pilarEmpresa.findUnique({
+  where: { id: pilarEmpresaId },
+  select: { ativo: true, empresaId: true }
+});
+
+if (!pilarEmpresa) {
+  throw new NotFoundException('Pilar não encontrado nesta empresa');
+}
+
+if (!pilarEmpresa.ativo) {
+  throw new ConflictException('Não é possível adicionar rotinas a pilares inativos');
+}
+```
+
+**Exceção:**
+- HTTP 409 Conflict: "Não é possível adicionar rotinas a pilares inativos"
+
+**Justificativa:**
+- Prevenir vinculação a pilares desativados
+- Manter integridade lógica
 
 ---
 

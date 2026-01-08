@@ -123,6 +123,7 @@ describe('UsuariosService - Validação Completa de Regras de Negócio', () => {
 
     it('deve permitir criar usuário com email único', async () => {
       jest.spyOn(prisma.usuario, 'findUnique').mockResolvedValue(null);
+      jest.spyOn(prisma.perfilUsuario, 'findUnique').mockResolvedValue(mockPerfilColaborador as any);
       jest.spyOn(prisma.usuario, 'create').mockResolvedValue({
         id: 'novo-id',
         email: 'unico@test.com',
@@ -145,6 +146,7 @@ describe('UsuariosService - Validação Completa de Regras de Negócio', () => {
     it('deve armazenar senha como hash argon2 ao criar usuário', async () => {
       const senhaPlainText = 'senha123';
       jest.spyOn(prisma.usuario, 'findUnique').mockResolvedValue(null);
+      jest.spyOn(prisma.perfilUsuario, 'findUnique').mockResolvedValue(mockPerfilColaborador as any);
       jest.spyOn(prisma.usuario, 'create').mockResolvedValue({
         id: 'novo-id',
         senha: '$argon2id$hashed',
@@ -181,6 +183,7 @@ describe('UsuariosService - Validação Completa de Regras de Negócio', () => {
   describe('RN-003: Redação de Senha em Logs de Auditoria', () => {
     it('deve substituir senha por [REDACTED] ao auditar criação', async () => {
       jest.spyOn(prisma.usuario, 'findUnique').mockResolvedValue(null);
+      jest.spyOn(prisma.perfilUsuario, 'findUnique').mockResolvedValue(mockPerfilColaborador as any);
       jest.spyOn(prisma.usuario, 'create').mockResolvedValue({
         id: 'novo-id',
         email: 'novo@test.com',

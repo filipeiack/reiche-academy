@@ -3,38 +3,47 @@
 **Módulo:** Pilares  
 **Backend:** `backend/src/modules/pilares/` e `backend/src/modules/pilares-empresa/`  
 **Frontend:** `frontend/src/app/views/pages/pilares/` e `frontend/src/app/views/pages/empresas/pilares-empresa-*`  
-**Última extração:** 02/01/2026  
-**Agente:** Extractor de Regras
+**Última extração:** 08/01/2026  
+**Agente:** Extractor de Regras  
+**Padrão:** Snapshot Pattern
 
 ---
 
 ## 1. Visão Geral
 
-O módulo Pilares é responsável por:
-- Gerenciar catálogo global de pilares (CRUD admin)
-- Gerenciar pilares por empresa (vinculação e ordenação per-company)
-- Validação de dependências com rotinas ativas
-- Auditoria de operações em pilares
-- Auto-associação de pilares modelo a novas empresas
-- Gestão de responsáveis por pilar em cada empresa
-- Vinculação e ordenação de rotinas em pilares por empresa
+O módulo Pilares utiliza o **Snapshot Pattern** para separar templates globais de instâncias por empresa.
+
+### Responsabilidades:
+
+**Módulo Pilares (Templates Globais):**
+- Gerenciar catálogo de templates de pilares (CRUD admin)
+- Servir como biblioteca de pilares padrão
+- Validação de nome único (templates)
+- Auditoria de operações em templates
+
+**Módulo PilaresEmpresa (Instâncias Multi-Tenant):**
+- Criar pilares por empresa (cópia de template OU customizado)
+- Ordenação per-company independente
+- Gestão de responsáveis por pilar
+- Customização completa (nome, descrição editáveis)
+- Vinculação e ordenação de rotinas
 
 **Entidades principais:**
-- Pilar (catálogo global de pilares)
-- PilarEmpresa (vínculo pilar-empresa com ordenação e responsável)
-- RotinaEmpresa (vínculo rotina-pilar por empresa com ordenação)
+- Pilar (templates globais, biblioteca de padrões)
+- PilarEmpresa (instâncias snapshot com dados copiados + customizações)
 
-**Módulo Pilares (Catálogo Global):**
-- `POST /pilares` — Criar pilar (ADMINISTRADOR)
-- `GET /pilares` — Listar pilares ativos (todos)
-- `GET /pilares/:id` — Buscar pilar ativo com rotinas (todos)
-- `PATCH /pilares/:id` — Atualizar pilar (ADMINISTRADOR)
-- `DELETE /pilares/:id` — Desativar pilar (ADMINISTRADOR)
+**Módulo Pilares (Templates Globais):**
+- `POST /pilares` — Criar template (ADMINISTRADOR)
+- `GET /pilares` — Listar templates ativos (todos)
+- `GET /pilares/:id` — Buscar template ativo (todos)
+- `PATCH /pilares/:id` — Atualizar template (ADMINISTRADOR)
+- `DELETE /pilares/:id` — Desativar template (ADMINISTRADOR)
 
-**Módulo PilaresEmpresa (Multi-Tenant):**
+**Módulo PilaresEmpresa (Instâncias Multi-Tenant):**
 - `GET /empresas/:empresaId/pilares` — Listar pilares da empresa (todos)
+- `POST /empresas/:empresaId/pilares` — Criar pilar (cópia OU customizado) (ADMINISTRADOR, GESTOR)
 - `POST /empresas/:empresaId/pilares/reordenar` — Reordenar pilares (ADMINISTRADOR, GESTOR)
-- `POST /empresas/:empresaId/pilares/vincular` — Vincular pilares (ADMINISTRADOR, GESTOR)
+- `PATCH /empresas/:empresaId/pilares/:pilarEmpresaId` — Editar pilar da empresa (ADMINISTRADOR, GESTOR)
 - `DELETE /empresas/:empresaId/pilares/:pilarEmpresaId` — Remover pilar da empresa (ADMINISTRADOR, GESTOR)
 - `PATCH /empresas/:empresaId/pilares/:pilarEmpresaId/responsavel` — Definir responsável (ADMINISTRADOR, GESTOR)
 - `GET /empresas/:empresaId/pilares/:pilarEmpresaId/rotinas` — Listar rotinas (todos)
@@ -44,19 +53,120 @@ O módulo Pilares é responsável por:
 
 ---
 
+## 1.1. Migração do Modelo Antigo para Snapshot Pattern
+
+### Estratégia de Migração
+
+A migração do modelo antigo (campo `modelo`) para Snapshot Pattern ocorre em 4 etapas:
+
+**Etapa 1: Preparação do Schema**
+- Adicionar campos `nome`, `descricao` em `PilarEmpresa`
+- Adicionar campo `pilarTemplateId` (nullable) em `PilarEmpresa`
+- Tornar `pilarId` nullable temporariamente
+
+**Etapa 2: Migração de Dados**
+
+```sql
+-- 1. Atualizar registros existentes de PilarEmpresa (snapshot de pilares template)
+UPDATE pilares_empresa pe
+SET 
+  pilar_template_id = pe.pilar_id,
+  nome = (SELECT nome FROM pilares p WHERE p.id = pe.pilar_id),
+  descricao = (SELECT descricao FROM pilares p WHERE p.id = pe.pilar_id)
+WHERE pe.pilar_id IS NOT NULL;
+
+-- 2. Migrar pilares customizados (modelo=false) para PilarEmpresa
+-- Identificar empresa proprietária através do primeiro vínculo
+INSERT INTO pilares_empresa (id, pilar_template_id, nome, descricao, empresa_id, ordem, ativo, created_at, updated_at, created_by)
+SELECT 
+  gen_random_uuid(),
+  NULL, -- customizado (sem template)
+  p.nome,
+  p.descricao,
+  pe_first.empresa_id, -- empresa do primeiro vínculo
+  (SELECT COALESCE(MAX(ordem), 0) + 1 FROM pilares_empresa WHERE empresa_id = pe_first.empresa_id),
+  p.ativo,
+  p.created_at,
+  NOW(),
+  p.created_by
+FROM pilares p
+LEFT JOIN LATERAL (
+  SELECT empresa_id FROM pilares_empresa WHERE pilar_id = p.id LIMIT 1
+) pe_first ON true
+WHERE p.modelo = false;
+
+-- 3. Remover pilares customizados da tabela Pilar
+DELETE FROM pilares WHERE modelo = false;
+
+-- 4. Remover campo modelo (todos registros restantes são templates)
+ALTER TABLE pilares DROP COLUMN modelo;
+```
+
+**Etapa 3: Atualização de Constraints**
+
+```sql
+-- Remover constraint antiga
+ALTER TABLE pilares_empresa DROP CONSTRAINT pilares_empresa_empresa_id_pilar_id_key;
+
+-- Adicionar nova constraint (empresaId + nome único)
+ALTER TABLE pilares_empresa ADD CONSTRAINT pilares_empresa_empresa_id_nome_key UNIQUE (empresa_id, nome);
+
+-- Remover pilarId (não é mais obrigatório)
+ALTER TABLE pilares_empresa DROP COLUMN pilar_id;
+
+-- Tornar pilarTemplateId a única referência ao template
+ALTER TABLE pilares_empresa 
+  ADD CONSTRAINT pilares_empresa_pilar_template_id_fkey 
+  FOREIGN KEY (pilar_template_id) REFERENCES pilares(id);
+```
+
+**Etapa 4: Atualização de Ordem em Pilares**
+
+```sql
+-- Tornar ordem obrigatória em Pilar (auto-incremento)
+UPDATE pilares SET ordem = (SELECT COALESCE(MAX(ordem), 0) + ROW_NUMBER() OVER (ORDER BY created_at) FROM pilares p2 WHERE p2.ordem IS NULL) WHERE ordem IS NULL;
+
+ALTER TABLE pilares ALTER COLUMN ordem SET NOT NULL;
+
+-- Manter constraint unique (ordem é apenas referência visual)
+-- @@unique([ordem]) permanece
+```
+
+### Comportamento Pós-Migração
+
+**Templates Desativados:**
+- Quando template é desativado (`Pilar.ativo = false`), empresas **mantêm cópias ativas**
+- Snapshots são independentes (não há propagação automática)
+- `pilarTemplateId` preserva rastreabilidade (analytics)
+
+**Sincronização:**
+- **NÃO implementada** (snapshot congelado é feature, não bug)
+- Empresas editam livremente sem afetar outras
+- Template serve apenas como ponto de partida
+
+### Auditoria de Migração
+
+- Criar log de auditoria para cada registro migrado
+- Ação: `MIGRATION`
+- Entidade: `pilares_empresa`
+- Dados: `{ migratedFrom: 'pilares', pilarId, modelo: false }`
+
+---
+
 ## 2. Entidades
 
-### 2.1. Pilar
+### 2.1. Pilar (Template Global)
 
 **Localização:** `backend/prisma/schema.prisma`
 
+**Descrição:** Tabela de templates globais. Todos os registros são templates reutilizáveis.
+
 | Campo | Tipo | Descrição |
 |-------|------|-----------|
-| id | String (UUID) | Identificador único |
-| nome | String (unique) | Nome do pilar (ex: "Estratégia e Governança") |
-| descricao | String? | Descrição detalhada do pilar |
-| ordem | Int? | Ordem de referência (opcional, apenas visual) |
-| modelo | Boolean (default: false) | Se true, é auto-associado a novas empresas |
+| id | String (UUID) | Identificador único do template |
+| nome | String (unique) | Nome do template (ex: "Estratégia e Governança") |
+| descricao | String? | Descrição detalhada do template |
+| ordem | Int (obrigatório) | Ordem de referência visual auto-incrementada (única) |
 | ativo | Boolean (default: true) | Soft delete flag |
 | createdAt | DateTime | Data de criação |
 | updatedAt | DateTime | Data da última atualização |
@@ -64,56 +174,201 @@ O módulo Pilares é responsável por:
 | updatedBy | String? | ID do usuário que atualizou |
 
 **Relações:**
-- `rotinas`: Rotina[] (rotinas vinculadas ao pilar)
-- `empresas`: PilarEmpresa[] (empresas que usam este pilar)
+- `rotinas`: Rotina[] (templates de rotinas vinculadas ao pilar template)
+- `empresas`: PilarEmpresa[] (instâncias criadas a partir deste template)
 
 **Índices:**
 - `nome` (unique)
-- `ordem` (unique) ⚠️
+- `ordem` (unique)
 
-**⚠️ Observação sobre constraint `@@unique([ordem])`:**
-- Schema atual possui constraint de unicidade em `ordem`
-- Pode causar erro se dois pilares tiverem mesma ordem
-- Campo `ordem` é opcional (Int?) mas constraint exige valores únicos quando não-null
-- **Recomendação futura:** Considerar remover constraint ou tornar ordem obrigatória
-- **Comportamento atual:** Ordem null é permitida (não viola unique), mas valores duplicados não-null são bloqueados
+**⚙️ Campo `ordem` — Comportamento:**
+- **Obrigatório** e **único** (auto-incrementado na criação)
+- Apenas referência visual (não afeta funcionalidade)
+- Usado como valor padrão ao criar snapshot em `PilarEmpresa`
+- Sistema calcula automaticamente: `MAX(ordem) + 1`
+- Admin pode reordenar manualmente após criação
+
+**📝 Mudanças do Snapshot Pattern:**
+- ❌ Campo `modelo` REMOVIDO (todos registros são templates)
+- ✅ Campo `ordem` tornado obrigatório com auto-incremento
+- ✅ Tabela é biblioteca de padrões (não contém dados empresa-específicos)
 
 ---
 
-### 2.2. PilarEmpresa
+### 2.2. PilarEmpresa (Instância Snapshot)
 
 **Localização:** `backend/prisma/schema.prisma`
 
+**Descrição:** Instância snapshot de pilar por empresa. Contém cópia dos dados do template OU dados customizados.
+
 | Campo | Tipo | Descrição |
 |-------|------|-----------|
-| id | String (UUID) | Identificador único |
-| empresaId | String | FK para Empresa |
-| pilarId | String | FK para Pilar |
-| ordem | Int | Ordem de exibição do pilar na empresa (per-company) |
+| id | String (UUID) | Identificador único da instância |
+| pilarTemplateId | String? | FK para Pilar (null = customizado, uuid = cópia de template) |
+| pilarTemplate | Pilar? | Relação com template de origem (se aplicável) |
+| nome | String | Nome do pilar (SEMPRE preenchido, copiado OU customizado) |
+| descricao | String? | Descrição (SEMPRE preenchido, copiado OU customizado) |
+| empresaId | String | FK para Empresa (obrigatório) |
+| empresa | Empresa | Relação com empresa dona da instância |
+| ordem | Int | Ordem de exibição per-company (independente do template) |
 | responsavelId | String? | FK para Usuario (responsável pelo pilar na empresa) |
+| responsavel | Usuario? | Relação com usuário responsável |
 | ativo | Boolean (default: true) | Soft delete flag |
-| createdAt | DateTime | Data de criação |
+| createdAt | DateTime | Data de criação da instância |
 | updatedAt | DateTime | Data da última atualização |
 | createdBy | String? | ID do usuário que criou |
 | updatedBy | String? | ID do usuário que atualizou |
 
 **Relações:**
-- `empresa`: Empresa (empresa associada)
-- `pilar`: Pilar (pilar associado)
-- `responsavel`: Usuario? (usuário responsável pelo acompanhamento do pilar)
+- `pilarTemplate`: Pilar? (template de origem, se aplicável)
+- `empresa`: Empresa (empresa dona)
+- `responsavel`: Usuario? (usuário responsável)
 - `rotinasEmpresa`: RotinaEmpresa[] (rotinas vinculadas ao pilar na empresa)
-- `evolucao`: PilarEvolucao[] (histórico de evolução do pilar)
+- `evolucao`: PilarEvolucao[] (histórico de evolução)
 
 **Índices:**
-- `[empresaId, pilarId]` (unique)
+- `@@unique([empresaId, nome])` — Nome único por empresa
+
+**📝 Mudanças do Snapshot Pattern:**
+- ✅ Campo `pilarTemplateId` (nullable) substitui `pilarId` (obrigatório)
+- ✅ Campos `nome` e `descricao` adicionados (SEMPRE preenchidos)
+- ✅ Constraint `@@unique([empresaId, pilarId])` substituída por `@@unique([empresaId, nome])`
+- ✅ Permite customização total (empresa pode editar nome/descrição)
 
 ---
 
-## 3. Regras Implementadas
+## 2.3. Snapshot Pattern — Conceito e Funcionamento
 
-### R-PIL-001: Criação de Pilar com Nome Único
+### O que é Snapshot Pattern?
 
-**Descrição:** Sistema valida que o nome do pilar é único antes de criar.
+O **Snapshot Pattern** separa **templates globais** de **instâncias por empresa**:
+
+1. **Tabela `Pilar`**: Biblioteca de templates (padrões reutilizáveis)
+2. **Tabela `PilarEmpresa`**: Instâncias snapshot (cópias + customizações)
+
+### Por que usar?
+
+✅ **Preserva normalização:** N:N correto (PilarEmpresa é tabela de junção)  
+✅ **Customização total:** Empresas editam nome/descrição sem afetar outras  
+✅ **Queries simples:** Sempre lê de `PilarEmpresa` (dados completos)  
+✅ **Escalabilidade:** Padrão usado em SaaS B2B, e-commerce, CMS
+
+### Fluxos Principais
+
+#### Fluxo 1: Criar Pilar a partir de Template
+
+```typescript
+// 1. Usuário escolhe template "Estratégia" (id: uuid-estrategia)
+const template = await prisma.pilar.findUnique({ 
+  where: { id: 'uuid-estrategia' } 
+});
+
+// 2. Sistema COPIA dados para PilarEmpresa
+const pilarEmpresa = await prisma.pilarEmpresa.create({
+  data: {
+    pilarTemplateId: template.id,      // Referência ao template
+    nome: template.nome,                // Cópia
+    descricao: template.descricao,      // Cópia
+    empresaId: 'empresa-123',
+    ordem: 1,
+    createdBy: userId,
+  }
+});
+```
+
+**Resultado:**
+- Empresa tem **cópia independente**
+- Pode editar `nome` e `descricao` sem afetar outras empresas
+- `pilarTemplateId` preserva origem (analytics, sincronização opcional)
+
+---
+
+#### Fluxo 2: Criar Pilar Customizado
+
+```typescript
+await prisma.pilarEmpresa.create({
+  data: {
+    pilarTemplateId: null,              // ❌ Não veio de template
+    nome: 'Pilar Específico XYZ',       // Original
+    descricao: 'Customizado...',        // Original
+    empresaId: 'empresa-123',
+    ordem: 2,
+    createdBy: userId,
+  }
+});
+```
+
+**Resultado:**
+- Pilar existe apenas para esta empresa
+- `pilarTemplateId = null` indica customização
+- Não contamina tabela `Pilar` (templates limpos)
+
+---
+
+#### Fluxo 3: Listar Pilares da Empresa
+
+```typescript
+const pilares = await prisma.pilarEmpresa.findMany({
+  where: { 
+    empresaId: 'empresa-123',
+    ativo: true
+  },
+  orderBy: { ordem: 'asc' },
+  include: {
+    pilarTemplate: true,  // Opcional (para mostrar origem)
+  }
+});
+
+// Sempre lê nome/descrição de PilarEmpresa (dados completos)
+pilares.forEach(p => {
+  console.log(p.nome);       // Dado da instância (não precisa JOIN)
+  console.log(p.descricao);  // Dado da instância
+});
+```
+
+**Vantagem:**
+- Query simples (não precisa `COALESCE`)
+- Todos dados estão em `PilarEmpresa`
+
+---
+
+#### Fluxo 4: Atualizar Template (Não Propaga Automaticamente)
+
+```typescript
+// Admin atualiza template
+await prisma.pilar.update({
+  where: { id: 'uuid-estrategia' },
+  data: { descricao: 'Nova descrição do template' }
+});
+
+// ❌ Empresas que já copiaram NÃO são afetadas
+// Comportamento de snapshot (dados congelados no momento da cópia)
+```
+
+**Solução (Opcional):**
+- Criar endpoint "Sincronizar com template" (opt-in)
+- Mostrar badge "Atualização disponível" na UI
+- Aceitar desatualização (feature, não bug)
+
+---
+
+### Trade-offs
+
+| Aspecto | Snapshot Pattern |
+|---------|------------------|
+| **Normalização** | ✅ Preserva 3NF |
+| **Customização** | ✅ Total |
+| **Queries** | ✅ Simples |
+| **Propagação** | ❌ Manual (ou opt-in) |
+| **Espaço** | ⚠️ Denormalização intencional |
+
+---
+
+## 3. Regras Implementadas (Templates Globais)
+
+### R-PIL-001: Criação de Template de Pilar com Nome Único
+
+**Descrição:** Sistema cria template global de pilar com validação de nome único.
 
 **Implementação:**
 - **Endpoint:** `POST /pilares` (restrito a ADMINISTRADOR)
@@ -127,28 +382,30 @@ const existingPilar = await this.prisma.pilar.findUnique({
 });
 
 if (existingPilar) {
-  throw new ConflictException('Já existe um pilar com este nome');
+  throw new ConflictException('Já existe um template de pilar com este nome');
 }
 ```
 
 **Validação de DTO:**
 - `nome`: string, required, 2-100 caracteres
 - `descricao`: string, optional, 0-500 caracteres
-- `ordem`: number, optional, >= 1 (apenas referência, não obrigatório)
-- `modelo`: boolean, optional (default: false)
+- `ordem`: number, optional, >= 1 (apenas referência visual)
 
 **Auditoria:**
 - Registra criação em tabela de auditoria
 - Ação: CREATE
-- Dados completos do pilar criado
+- Dados completos do template criado
 
 **Arquivo:** [pilares.service.ts](../../backend/src/modules/pilares/pilares.service.ts#L11-L41)
 
+**📝 Mudança do Snapshot Pattern:**
+- ❌ Campo `modelo` removido do DTO (todos são templates)
+
 ---
 
-### R-PIL-002: Listagem de Pilares Ativos com Contadores
+### R-PIL-002: Listagem de Templates Ativos com Contadores
 
-**Descrição:** Endpoint retorna apenas pilares ativos, ordenados por `ordem`, incluindo contagem de rotinas e empresas.
+**Descrição:** Endpoint retorna apenas templates ativos, ordenados por `ordem`, incluindo contagem de rotinas templates e instâncias criadas.
 
 **Implementação:**
 - **Endpoint:** `GET /pilares` (autenticado, todos os perfis)
@@ -169,17 +426,17 @@ orderBy: { ordem: 'asc' }
 include: {
   _count: {
     select: {
-      rotinas: true,
-      empresas: true,
+      rotinas: true,     // Templates de rotinas vinculadas
+      empresas: true,    // Instâncias criadas a partir deste template
     },
   },
 }
 ```
 
-**Retorno:** Pilares ordenados com:
-- Todos os campos do pilar
-- `_count.rotinas`: Quantidade de rotinas vinculadas
-- `_count.empresas`: Quantidade de empresas usando o pilar
+**Retorno:** Templates ordenados com:
+- Todos os campos do template
+- `_count.rotinas`: Quantidade de templates de rotinas vinculadas
+- `_count.empresas`: Quantidade de instâncias criadas (via PilarEmpresa)
 
 **Arquivo:** [pilares.service.ts](../../backend/src/modules/pilares/pilares.service.ts#L43-L55)
 

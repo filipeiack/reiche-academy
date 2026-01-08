@@ -119,19 +119,6 @@ export class EmpresasController {
       return this.empresasService.remove(id, req.user.id, req.user);
     }
   
-    @Post(':id/pilares')
-    @ApiBearerAuth()
-    @UseGuards(JwtAuthGuard, RolesGuard)
-    @Roles('ADMINISTRADOR', 'GESTOR')
-    @ApiOperation({ summary: 'Vincular pilares à empresa' })
-    vincularPilares(
-      @Param('id') id: string,
-      @Body('pilaresIds') pilaresIds: string[],
-      @Request() req: ExpressRequest & { user: any },
-    ) {
-      return this.empresasService.vincularPilares(id, pilaresIds, req.user.id, req.user);
-    }
-
   @Post(':id/logo')
   @ApiBearerAuth()
   @UseGuards(JwtAuthGuard, RolesGuard)

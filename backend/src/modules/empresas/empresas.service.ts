@@ -53,29 +53,9 @@ export class EmpresasService {
       },
     });
 
-    // Auto-associar pilares padrão (modelo: true) à nova empresa
-    const autoAssociate = process.env.AUTO_ASSOCIAR_PILARES_PADRAO !== 'false';
-    
-    if (autoAssociate) {
-      const pilaresModelo = await this.prisma.pilar.findMany({
-        where: { 
-          modelo: true, 
-          ativo: true 
-        },
-        orderBy: { ordem: 'asc' },
-      });
-      
-      if (pilaresModelo.length > 0) {
-        await this.prisma.pilarEmpresa.createMany({
-          data: pilaresModelo.map((pilar, index) => ({
-            empresaId: created.id,
-            pilarId: pilar.id,
-            ordem: pilar.ordem ?? (index + 1),
-            createdBy: userId,
-          })),
-        });
-      }
-    }
+    // TODO: Auto-associar pilares padrão à nova empresa usando Snapshot Pattern
+    // Use createPilarEmpresa() do PilaresEmpresaService para criar snapshots
+    // ao invés da lógica antiga com modelo: true e pilarId
 
     return created;
   }
@@ -125,7 +105,7 @@ export class EmpresasService {
         },
         pilares: {
           include: {
-            pilar: true,
+            pilarTemplate: true,
           },
         },
         _count: {
@@ -264,45 +244,6 @@ export class EmpresasService {
       entidade: 'empresas',
       entidadeId: id,
       acao: 'DELETE',
-      dadosAntes: before,
-      dadosDepois: after,
-    });
-
-    return after;
-  }
-
-  async vincularPilares(empresaId: string, pilaresIds: string[], userId: string, requestUser: RequestUser) {
-    const before = await this.findOne(empresaId);
-
-    // RA-EMP-001: Validar isolamento multi-tenant
-    this.validateTenantAccess(before, requestUser, 'vincular pilares em');
-
-    // Remove vínculos antigos
-    await this.prisma.pilarEmpresa.deleteMany({
-      where: { empresaId },
-    });
-
-    // Cria novos vínculos
-    const vinculos = pilaresIds.map((pilarId, index) => ({
-      empresaId,
-      pilarId,
-      ordem: index + 1,
-      createdBy: userId,
-    }));
-
-    await this.prisma.pilarEmpresa.createMany({
-      data: vinculos,
-    });
-
-    const after = await this.findOne(empresaId);
-
-    await this.audit.log({
-      usuarioId: userId,
-      usuarioNome: requestUser.nome,
-      usuarioEmail: requestUser.email,
-      entidade: 'empresas',
-      entidadeId: empresaId,
-      acao: 'UPDATE',
       dadosAntes: before,
       dadosDepois: after,
     });

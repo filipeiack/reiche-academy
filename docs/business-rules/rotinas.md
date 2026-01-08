@@ -3,191 +3,410 @@
 **Módulo:** Rotinas  
 **Backend:** `backend/src/modules/rotinas/`  
 **Frontend:** `frontend/src/app/views/pages/rotinas/`  
-**Última extração:** 02/01/2026  
-**Agente:** Extractor de Regras
+**Última extração:** 08/01/2026  
+**Agente:** Extractor de Regras  
+**Padrão:** Snapshot Pattern
 
 ---
 
 ## 1. Visão Geral
 
-O módulo Rotinas é responsável por:
-- Gerenciar rotinas do sistema (CRUD completo)
-- Ordenação customizável de rotinas dentro de cada pilar
-- Validação de dependência com pilares
-- Validação de uso por empresas antes de desativar
-- Auditoria de operações em rotinas
-- Filtragem de rotinas por pilar
-- Criação com vínculo automático a empresa (via pilarEmpresaId)
-- Reordenação de rotinas por pilar
+O módulo Rotinas utiliza o **Snapshot Pattern** para separar templates globais de instâncias por empresa.
+
+### Responsabilidades:
+
+**Módulo Rotinas (Templates Globais):**
+- Gerenciar catálogo de templates de rotinas (CRUD admin)
+- Servir como biblioteca de rotinas padrão
+- Vinculação de rotinas templates a pilares templates
+- Validação e auditoria de templates
+
+**Módulo RotinaEmpresa (Instâncias Multi-Tenant):**
+- Criar rotinas por empresa (cópia de template OU customizado)
+- Vinculação a pilares da empresa (via PilarEmpresa)
+- Ordenação per-company independente
+- Customização completa (nome, descrição editáveis)
+- Avaliação e observações específicas
 
 **Entidades principais:**
-- Rotina (rotinas vinculadas a pilares)
-- RotinaEmpresa (vínculo rotina-empresa via PilarEmpresa)
+- Rotina (templates globais, biblioteca de padrões)
+- RotinaEmpresa (instâncias snapshot com dados copiados + customizações)
 
-**Endpoints implementados:**
-- `POST /rotinas` — Criar rotina (ADMINISTRADOR, GESTOR)
-- `GET /rotinas?pilarId=uuid` — Listar rotinas ativas (todos, filtro opcional)
-- `GET /rotinas/:id` — Buscar rotina por ID (todos)
-- `PATCH /rotinas/:id` — Atualizar rotina (ADMINISTRADOR)
-- `DELETE /rotinas/:id` — Desativar rotina (ADMINISTRADOR)
-- `POST /rotinas/pilar/:pilarId/reordenar` — Reordenar rotinas de um pilar (ADMINISTRADOR)
+**Endpoints Rotinas (Templates Globais):**
+- `POST /rotinas` — Criar template (ADMINISTRADOR)
+- `GET /rotinas?pilarId=uuid` — Listar templates ativos (todos, filtro opcional)
+- `GET /rotinas/:id` — Buscar template por ID (todos)
+- `PATCH /rotinas/:id` — Atualizar template (ADMINISTRADOR)
+- `DELETE /rotinas/:id` — Desativar template (ADMINISTRADOR)
+
+**Endpoints RotinaEmpresa (Instâncias Multi-Tenant):**
+- `GET /empresas/:empresaId/pilares/:pilarEmpresaId/rotinas` — Listar rotinas do pilar (todos)
+- `POST /empresas/:empresaId/pilares/:pilarEmpresaId/rotinas` — Criar rotina (cópia OU customizado) (ADMINISTRADOR, GESTOR)
+- `PATCH /empresas/:empresaId/pilares/:pilarEmpresaId/rotinas/:rotinaEmpresaId` — Editar rotina (ADMINISTRADOR, GESTOR)
+- `DELETE /empresas/:empresaId/pilares/rotinas/:rotinaEmpresaId` — Remover rotina (ADMINISTRADOR, GESTOR)
+- `PATCH /empresas/:empresaId/pilares/:pilarEmpresaId/rotinas/reordenar` — Reordenar rotinas (ADMINISTRADOR, GESTOR)
+
+---
+
+### 1.1. Migração de Dados (Modelo Antigo → Snapshot Pattern)
+
+**Contexto:**
+O sistema atual possui rotinas com campo `modelo: Boolean`, onde:
+- `modelo = true` → template global
+- `modelo = false` → rotina específica de empresa (sem customização)
+
+**Objetivo:** Migrar para Snapshot Pattern, preservando dados existentes.
+
+**Estratégia de Migração:**
+
+**Etapa 1: Preparação do Schema**
+```sql
+-- Adicionar novos campos a RotinaEmpresa
+ALTER TABLE "RotinaEmpresa" 
+  ADD COLUMN "rotinaTemplateId" TEXT,
+  ADD COLUMN "nome" TEXT,
+  ADD COLUMN "descricao" TEXT;
+
+-- Tornar rotinaId nullable temporariamente
+ALTER TABLE "RotinaEmpresa" 
+  ALTER COLUMN "rotinaId" DROP NOT NULL;
+
+-- Criar índice para performance
+CREATE INDEX "RotinaEmpresa_rotinaTemplateId_idx" ON "RotinaEmpresa"("rotinaTemplateId");
+```
+
+**Etapa 2: Migração de Dados**
+```sql
+-- Migrar rotinas modelo=false para tabela RotinaEmpresa
+INSERT INTO "RotinaEmpresa" (
+  id, nome, descricao, ordem, "pilarEmpresaId", "rotinaTemplateId",
+  "createdAt", "updatedAt", "createdBy", "updatedBy"
+)
+SELECT
+  gen_random_uuid(),  -- Novo ID para instância
+  r.nome,             -- Copiar nome
+  r.descricao,        -- Copiar descrição
+  re.ordem,           -- Preservar ordem
+  re."pilarEmpresaId",
+  r.id,               -- Template original (se aplicável)
+  r."createdAt",
+  r."updatedAt",
+  r."createdBy",
+  r."updatedBy"
+FROM "Rotina" r
+INNER JOIN "RotinaEmpresa" re ON re."rotinaId" = r.id
+WHERE r.modelo = false;
+
+-- Remover registros modelo=false da tabela Rotina
+DELETE FROM "Rotina" WHERE modelo = false;
+```
+
+**Etapa 3: Atualizar Constraints**
+```sql
+-- Remover constraint antiga
+ALTER TABLE "RotinaEmpresa"
+  DROP CONSTRAINT "RotinaEmpresa_pilarEmpresaId_rotinaId_key";
+
+-- Remover campo rotinaId (substituído por rotinaTemplateId)
+ALTER TABLE "RotinaEmpresa" DROP COLUMN "rotinaId";
+
+-- Tornar nome obrigatório
+ALTER TABLE "RotinaEmpresa" 
+  ALTER COLUMN "nome" SET NOT NULL;
+
+-- Adicionar constraint de nome único por pilar
+ALTER TABLE "RotinaEmpresa"
+  ADD CONSTRAINT "RotinaEmpresa_pilarEmpresaId_nome_key" 
+  UNIQUE ("pilarEmpresaId", "nome");
+
+-- Remover campo modelo da tabela Rotina
+ALTER TABLE "Rotina" DROP COLUMN "modelo";
+```
+
+**Etapa 4: Adicionar FK e Completar Migração**
+```sql
+-- Adicionar FK para rotinaTemplateId (nullable)
+ALTER TABLE "RotinaEmpresa"
+  ADD CONSTRAINT "RotinaEmpresa_rotinaTemplateId_fkey"
+  FOREIGN KEY ("rotinaTemplateId")
+  REFERENCES "Rotina"(id)
+  ON DELETE SET NULL;
+```
+
+**Decisões de Migração:**
+- ✅ **Rotinas modelo=false movidas** para RotinaEmpresa como snapshots
+- ✅ **Histórico preservado** (createdAt, updatedAt, createdBy, updatedBy copiados)
+- ✅ **Ordem mantida** (campo ordem copiado de RotinaEmpresa antigo)
+- ✅ **Template tracking** (rotinaTemplateId aponta para template original, se houver)
+- ✅ **Hard delete** (rotinas antigas modelo=false deletadas após migração bem-sucedida)
 
 ---
 
 ## 2. Entidades
 
-### 2.1. Rotina
+### 2.1. Rotina (Template Global)
 
 **Localização:** `backend/prisma/schema.prisma`
 
+**Descrição:** Tabela de templates globais. Todos os registros são templates reutilizáveis.
+
 | Campo | Tipo | Descrição |
 |-------|------|-----------|
-| id | String (UUID) | Identificador único |
-| nome | String | Nome da rotina (ex: "Planejamento Estratégico Anual") |
-| descricao | String? | Descrição detalhada da rotina |
-| ordem | Int | Ordem de exibição dentro do pilar |
-| modelo | Boolean (default: false) | Indica se é rotina modelo (template) |
+| id | String (UUID) | Identificador único do template |
+| nome | String | Nome do template (ex: "Planejamento Estratégico Anual") |
+| descricao | String? | Descrição detalhada do template |
+| ordem | Int? | Ordem de referência visual dentro do pilar (opcional) |
 | ativo | Boolean (default: true) | Soft delete flag |
-| pilarId | String | FK para Pilar (obrigatório) |
+| pilarId | String | FK para Pilar template (obrigatório) |
 | createdAt | DateTime | Data de criação |
 | updatedAt | DateTime | Data da última atualização |
 | createdBy | String? | ID do usuário que criou |
 | updatedBy | String? | ID do usuário que atualizou |
 
 **Relações:**
-- `pilar`: Pilar (pilar ao qual a rotina pertence)
-- `rotinaEmpresas`: RotinaEmpresa[] (vinculação com empresas via PilarEmpresa)
+- `pilar`: Pilar (pilar template ao qual pertence)
+- `rotinaEmpresas`: RotinaEmpresa[] (instâncias criadas a partir deste template)
 
 **Características:**
-- Rotina sempre pertence a um pilar
-- Não há constraint de nome único (pode haver rotinas com mesmo nome em pilares diferentes)
+- Rotina template sempre vinculada a Pilar template
+- Não há constraint de nome único (pilares diferentes podem ter rotinas com mesmo nome)
+
+**📝 Mudança do Snapshot Pattern:**
+- ❌ Campo `modelo` REMOVIDO (todos registros são templates)
+- ✅ Tabela é biblioteca de padrões (não contém dados empresa-específicos)
 
 ---
 
-### 2.2. RotinaEmpresa
+### 2.2. RotinaEmpresa (Instância Snapshot)
 
 **Localização:** `backend/prisma/schema.prisma`
 
+**Descrição:** Instância snapshot de rotina por empresa. Contém cópia dos dados do template OU dados customizados.
+
 | Campo | Tipo | Descrição |
 |-------|------|-----------|
-| id | String (UUID) | Identificador único |
+| id | String (UUID) | Identificador único da instância |
+| rotinaTemplateId | String? | FK para Rotina (null = customizado, uuid = cópia de template) |
+| rotinaTemplate | Rotina? | Relação com template de origem (se aplicável) |
+| nome | String | Nome da rotina (SEMPRE preenchido, copiado OU customizado) |
+| descricao | String? | Descrição (SEMPRE preenchido, copiado OU customizado) |
 | pilarEmpresaId | String | FK para PilarEmpresa (obrigatório) |
-| rotinaId | String | FK para Rotina (obrigatório) |
+| pilarEmpresa | PilarEmpresa | Relação com pilar da empresa |
+| ordem | Int | Ordem de exibição per-company (independente do template) |
 | observacao | String? | Observação específica da empresa sobre a rotina |
-| createdAt | DateTime | Data de criação |
+| ativo | Boolean (default: true) | Soft delete flag |
+| createdAt | DateTime | Data de criação da instância |
 | updatedAt | DateTime | Data da última atualização |
 | createdBy | String? | ID do usuário que criou |
 | updatedBy | String? | ID do usuário que atualizou |
 
 **Relações:**
-- `pilarEmpresa`: PilarEmpresa (vínculo pilar-empresa)
-- `rotina`: Rotina (rotina template)
+- `rotinaTemplate`: Rotina? (template de origem, se aplicável)
+- `pilarEmpresa`: PilarEmpresa (pilar da empresa)
 - `notas`: NotaRotina[] (avaliações da rotina)
 
 **Índices:**
-- `[pilarEmpresaId, rotinaId]` (unique)
+- `@@unique([pilarEmpresaId, nome])` — Nome único por pilar da empresa
 
 **Características:**
-- Rotina só pode ser vinculada uma vez por PilarEmpresa
-- Permite observações customizadas por empresa
+- Cada empresa tem sua própria coleção de rotinas (snapshots) por pilar
+- Nome deve ser único dentro do pilar da empresa
+- Ordem é obrigatória e determina exibição (independente do template)
+- `rotinaTemplateId = null` indica rotina customizada (não veio de template)
+- `rotinaTemplateId != null` indica cópia de template (origem rastreável)
+
+**📝 Mudanças do Snapshot Pattern:**
+- ✅ Campo `rotinaTemplateId` (nullable) substitui `rotinaId` (obrigatório)
+- ✅ Campos `nome`, `descricao` e `ordem` adicionados (SEMPRE preenchidos)
+- ✅ Constraint `@@unique([pilarEmpresaId, rotinaId])` substituída por `@@unique([pilarEmpresaId, nome])`
+- ✅ Empresa pode editar `nome`, `descricao` e `ordem` sem afetar outras empresas
+- ✅ Template pode ser atualizado sem propagar mudanças (snapshot congelado)
 
 ---
 
 ## 3. Regras Implementadas
 
-### R-ROT-001: Criação de Rotina com Validação de Pilar e Vínculo Automático
+### R-ROT-001: Criação de Template de Rotina
 
-**Descrição:** Sistema valida que o pilar existe antes de criar rotina. Opcionalmente, pode criar o vínculo RotinaEmpresa automaticamente se `pilarEmpresaId` for fornecido.
+**Descrição:** Endpoint permite criar templates globais de rotinas (biblioteca de padrões), vinculados a Pilar template.
 
 **Implementação:**
-- **Endpoint:** `POST /rotinas` (restrito a ADMINISTRADOR, GESTOR)
+- **Endpoint:** `POST /rotinas` (restrito a ADMINISTRADOR)
 - **Método:** `RotinasService.create()`
 - **DTO:** CreateRotinaDto
 
 **Validações:**
 
-1. **Validação de Pilar:**
+1. **Validação de Pilar Template:**
 ```typescript
 const pilar = await this.prisma.pilar.findUnique({
   where: { id: createRotinaDto.pilarId },
 });
 
 if (!pilar) {
-  throw new NotFoundException('Pilar não encontrado');
+  throw new NotFoundException('Template de pilar não encontrado');
 }
 ```
 
-2. **Validação Multi-Tenant (se pilarEmpresaId fornecido):**
+2. **Criação do Template:**
 ```typescript
-if (createRotinaDto.pilarEmpresaId) {
-  const pilarEmpresa = await this.prisma.pilarEmpresa.findUnique({
-    where: { id: createRotinaDto.pilarEmpresaId },
-    include: { empresa: true },
-  });
-
-  if (!pilarEmpresa) {
-    throw new NotFoundException('PilarEmpresa não encontrado');
-  }
-
-  // GESTOR só pode criar rotinas para sua própria empresa
-  if (user.perfil === 'GESTOR' && pilarEmpresa.empresaId !== user.empresaId) {
-    throw new NotFoundException('PilarEmpresa não encontrado');
-  }
-}
-```
-
-3. **Criação Transacional:**
-```typescript
-const created = await this.prisma.$transaction(async (tx) => {
-  const rotina = await tx.rotina.create({
-    data: {
-      ...rotinaData,
-      createdBy: user.id,
-    },
-  });
-
-  // Se pilarEmpresaId foi fornecido, criar também o vínculo RotinaEmpresa
-  if (pilarEmpresaId) {
-    const ultimaRotina = await tx.rotinaEmpresa.findFirst({
-      where: { pilarEmpresaId },
-      orderBy: { ordem: 'desc' },
-    });
-
-    const proximaOrdem = ultimaRotina ? ultimaRotina.ordem + 1 : 1;
-
-    await tx.rotinaEmpresa.create({
-      data: {
-        pilarEmpresaId,
-        rotinaId: rotina.id,
-        ordem: proximaOrdem,
-        createdBy: user.id,
-      },
-    });
-  }
-
-  return rotina;
+const rotina = await this.prisma.rotina.create({
+  data: {
+    nome: createRotinaDto.nome,
+    descricao: createRotinaDto.descricao,
+    ordem: createRotinaDto.ordem,
+    pilarId: createRotinaDto.pilarId,
+    createdBy: user.id,
+  },
+  include: { pilar: true },
 });
 ```
 
 **Validação de DTO:**
-- `nome`: string, required, 2-200 caracteres
-- `descricao`: string, optional, 0-500 caracteres
-- `ordem`: number, optional, >= 1
-- `modelo`: boolean, optional (default: false)
-- `pilarId`: UUID, required
-- `pilarEmpresaId`: UUID, optional (se fornecido, cria RotinaEmpresa automaticamente)
+```typescript
+export class CreateRotinaDto {
+  @IsNotEmpty()
+  @Length(2, 200)
+  nome: string;
+
+  @IsOptional()
+  @MaxLength(500)
+  descricao?: string;
+
+  @IsOptional()
+  @IsInt()
+  @Min(1)
+  ordem?: number;
+
+  @IsNotEmpty()
+  @IsUUID('4')
+  pilarId: string;
+}
+```
 
 **Retorno:**
-- Rotina criada com pilar incluído
+- Template de rotina criado com pilar incluído
 
 **Auditoria:**
 - Registra criação em tabela de auditoria
 - Ação: CREATE
-- Dados completos da rotina criada + pilarEmpresaId (se fornecido)
+- Entidade: rotinas
+- Dados: rotina completa
 
-**Perfis autorizados:** ADMINISTRADOR, GESTOR (com restrição multi-tenant)
+**Perfis autorizados:** ADMINISTRADOR (apenas admin gerencia biblioteca global)
 
-**Arquivo:** [rotinas.service.ts](../../backend/src/modules/rotinas/rotinas.service.ts#L11-L88)
+**Arquivo:** [rotinas.service.ts](../../backend/src/modules/rotinas/rotinas.service.ts#L11-L88) (a reimplementar com Snapshot Pattern)
+
+---
+
+### R-ROTEMP-001: Criação de Instância de Rotina por Empresa (Snapshot)
+
+**Descrição:** Endpoint permite criar rotina snapshot (cópia de template OU customizado) vinculada a PilarEmpresa.
+
+**Implementação:**
+- **Endpoint:** `POST /empresas/:empresaId/pilares/:pilarEmpresaId/rotinas` (ADMINISTRADOR, GESTOR)
+- **Método:** `RotinaEmpresaService.create()`
+- **DTO:** CreateRotinaEmpresaDto
+
+**Validações:**
+
+1. **Validação Multi-Tenant:**
+```typescript
+this.validateTenantAccess(empresaId, user);
+```
+
+2. **Validação de PilarEmpresa:**
+```typescript
+const pilarEmpresa = await this.prisma.pilarEmpresa.findFirst({
+  where: {
+    id: pilarEmpresaId,
+    empresaId: empresaId,
+  },
+});
+
+if (!pilarEmpresa) {
+  throw new NotFoundException('Pilar não encontrado nesta empresa');
+}
+```
+
+3. **Criação com XOR (Template OU Customizado):**
+```typescript
+let nome: string;
+let descricao: string | null;
+
+if (createRotinaEmpresaDto.rotinaTemplateId) {
+  // Copiar dados do template
+  const template = await this.prisma.rotina.findUnique({
+    where: { id: createRotinaEmpresaDto.rotinaTemplateId },
+  });
+
+  if (!template) {
+    throw new NotFoundException('Template de rotina não encontrado');
+  }
+
+  nome = template.nome;
+  descricao = template.descricao;
+} else {
+  // Usar dados customizados (nome obrigatório)
+  nome = createRotinaEmpresaDto.nome!;
+  descricao = createRotinaEmpresaDto.descricao ?? null;
+}
+```
+
+4. **Validação de Nome Único:**
+```typescript
+const existing = await this.prisma.rotinaEmpresa.findFirst({
+  where: {
+    pilarEmpresaId,
+    nome,
+  },
+});
+
+if (existing) {
+  throw new ConflictException('Já existe uma rotina com este nome neste pilar');
+}
+```
+
+5. **Cálculo de Ordem (Auto-increment):**
+```typescript
+const ultimaRotina = await this.prisma.rotinaEmpresa.findFirst({
+  where: { pilarEmpresaId },
+  orderBy: { ordem: 'desc' },
+  select: { ordem: true },
+});
+
+const proximaOrdem = ultimaRotina ? ultimaRotina.ordem + 1 : 1;
+```
+
+6. **Criação da Instância:**
+```typescript
+const rotinaEmpresa = await this.prisma.rotinaEmpresa.create({
+  data: {
+    rotinaTemplateId: createRotinaEmpresaDto.rotinaTemplateId ?? null,
+    nome,
+    descricao,
+    pilarEmpresaId,
+    ordem: proximaOrdem,
+    createdBy: user.id,
+  },
+  include: {
+    rotinaTemplate: true,
+    pilarEmpresa: { include: { empresa: true } },
+  },
+});
+```
+
+**Retorno:**
+- RotinaEmpresa criada com relações
+
+**Auditoria:**
+- Ação: CREATE
+- Entidade: rotinas_empresa
+- Dados: rotinaEmpresa completa + flag isCustom (rotinaTemplateId === null)
+
+**Perfis autorizados:** ADMINISTRADOR, GESTOR (com validação multi-tenant)
+
+**Arquivo:** [rotina-empresa.service.ts](../../backend/src/modules/rotina-empresa/rotina-empresa.service.ts) (a implementar)
 
 ---
 
@@ -1438,6 +1657,318 @@ frontend/src/app/modules/rotinas/
 **Padrões a seguir:**
 - [docs/conventions/frontend.md](../conventions/frontend.md)
 - [docs/business-rules/pilares.md](pilares.md#11-regras-de-interface-frontend) (referência)
+
+---
+
+## 4. DTOs e Validações
+
+### 4.1. CreateRotinaDto (Template)
+
+**Localização:** `backend/src/modules/rotinas/dto/create-rotina.dto.ts`
+
+**Descrição:** DTO para criação de template global de rotina.
+
+**Campos:**
+
+| Campo | Tipo | Validações | Descrição |
+|-------|------|-----------|-----------|
+| nome | string | `@IsNotEmpty()`, `@Length(2, 200)` | Nome do template |
+| descricao | string? | `@IsOptional()`, `@MaxLength(500)` | Descrição detalhada |
+| ordem | number? | `@IsOptional()`, `@IsInt()`, `@Min(1)` | Ordem visual no pilar |
+| pilarId | string | `@IsNotEmpty()`, `@IsUUID('4')` | UUID do pilar template |
+
+**Código:**
+```typescript
+import { IsNotEmpty, IsOptional, IsUUID, Length, MaxLength, IsInt, Min } from 'class-validator';
+
+export class CreateRotinaDto {
+  @IsNotEmpty({ message: 'Nome é obrigatório' })
+  @Length(2, 200, { message: 'Nome deve ter entre 2 e 200 caracteres' })
+  nome: string;
+
+  @IsOptional()
+  @MaxLength(500, { message: 'Descrição deve ter no máximo 500 caracteres' })
+  descricao?: string;
+
+  @IsOptional()
+  @IsInt({ message: 'Ordem deve ser um número inteiro' })
+  @Min(1, { message: 'Ordem deve ser no mínimo 1' })
+  ordem?: number;
+
+  @IsNotEmpty({ message: 'pilarId é obrigatório' })
+  @IsUUID('4', { message: 'pilarId deve ser um UUID válido' })
+  pilarId: string;
+}
+```
+
+---
+
+### 4.2. CreateRotinaEmpresaDto (Snapshot)
+
+**Localização:** `backend/src/modules/rotina-empresa/dto/create-rotina-empresa.dto.ts`
+
+**Descrição:** DTO para criação de instância snapshot de rotina por empresa.
+
+**Campos:**
+
+| Campo | Tipo | Validações | Descrição |
+|-------|------|-----------|-----------|
+| rotinaTemplateId | string? | `@IsOptional()`, `@IsUUID()` | UUID do template (null = customizado) |
+| nome | string? | `@ValidateIf(o => !o.rotinaTemplateId)`, `@IsNotEmpty()`, `@Length(2, 200)` | Obrigatório se rotinaTemplateId=null |
+| descricao | string? | `@IsOptional()`, `@MaxLength(500)` | Descrição opcional |
+
+**Código:**
+```typescript
+import { ValidateIf, IsNotEmpty, IsOptional, IsUUID, Length, MaxLength } from 'class-validator';
+
+export class CreateRotinaEmpresaDto {
+  @IsOptional()
+  @IsUUID('4', { message: 'rotinaTemplateId deve ser um UUID válido' })
+  rotinaTemplateId?: string;
+
+  @ValidateIf(o => !o.rotinaTemplateId)
+  @IsNotEmpty({ message: 'Nome é obrigatório para rotinas customizadas' })
+  @Length(2, 200, { message: 'Nome deve ter entre 2 e 200 caracteres' })
+  nome?: string;
+
+  @IsOptional()
+  @MaxLength(500, { message: 'Descrição deve ter no máximo 500 caracteres' })
+  descricao?: string;
+}
+```
+
+**Validação XOR:**
+- Se `rotinaTemplateId` fornecido → copiar nome/descrição do template
+- Se `rotinaTemplateId = null` → `nome` é obrigatório (customizado)
+
+---
+
+### 4.3. UpdateRotinaEmpresaDto
+
+**Localização:** `backend/src/modules/rotina-empresa/dto/update-rotina-empresa.dto.ts`
+
+**Campos:**
+
+| Campo | Tipo | Validações | Descrição |
+|-------|------|-----------|-----------|
+| nome | string? | `@IsOptional()`, `@Length(2, 200)` | Nome customizado |
+| descricao | string? | `@IsOptional()`, `@MaxLength(500)` | Descrição customizada |
+| observacoes | string? | `@IsOptional()`, `@MaxLength(1000)` | Observações específicas |
+| avaliacao | number? | `@IsOptional()`, `@IsInt()`, `@Min(0)`, `@Max(100)` | Avaliação percentual |
+
+**Código:**
+```typescript
+export class UpdateRotinaEmpresaDto {
+  @IsOptional()
+  @Length(2, 200)
+  nome?: string;
+
+  @IsOptional()
+  @MaxLength(500)
+  descricao?: string;
+
+  @IsOptional()
+  @MaxLength(1000)
+  observacoes?: string;
+
+  @IsOptional()
+  @IsInt()
+  @Min(0)
+  @Max(100)
+  avaliacao?: number;
+}
+```
+
+**Regras:**
+- Nome deve ser único dentro do pilar (validado no service)
+- `rotinaTemplateId` NÃO pode ser alterado (imutável após criação)
+
+---
+
+### 4.4. Exemplos de Erros
+
+**400 Bad Request:**
+```json
+{
+  "statusCode": 400,
+  "message": [
+    "Nome é obrigatório para rotinas customizadas",
+    "Nome deve ter entre 2 e 200 caracteres"
+  ],
+  "error": "Bad Request"
+}
+```
+
+**404 Not Found:**
+```json
+{
+  "statusCode": 404,
+  "message": "Template de rotina não encontrado",
+  "error": "Not Found"
+}
+```
+
+**409 Conflict:**
+```json
+{
+  "statusCode": 409,
+  "message": "Já existe uma rotina com este nome neste pilar",
+  "error": "Conflict"
+}
+```
+
+**403 Forbidden (Multi-tenant):**
+```json
+{
+  "statusCode": 403,
+  "message": "Você não pode acessar dados de outra empresa",
+  "error": "Forbidden"
+}
+```
+
+---
+
+## 5. Regras de Deleção e Reordenação
+
+### R-ROTEMP-004: Deleção de Rotina da Empresa (Hard Delete com Auditoria)
+
+**Descrição:** Sistema remove rotina da empresa (hard delete). Deleção é auditada.
+
+**Implementação:**
+- **Endpoint:** `DELETE /empresas/:empresaId/pilares/rotinas/:rotinaEmpresaId` (ADMINISTRADOR, GESTOR)
+- **Método:** `RotinaEmpresaService.delete()`
+
+**Validações:**
+
+1. **Multi-Tenant:**
+```typescript
+this.validateTenantAccess(empresaId, user);
+```
+
+2. **Buscar Rotina para Auditoria:**
+```typescript
+const rotinaEmpresa = await this.prisma.rotinaEmpresa.findFirst({
+  where: {
+    id: rotinaEmpresaId,
+    pilarEmpresa: { empresaId },
+  },
+  include: {
+    pilarEmpresa: { select: { empresaId: true, nome: true } },
+  },
+});
+
+if (!rotinaEmpresa) {
+  throw new NotFoundException('Rotina não encontrada nesta empresa');
+}
+```
+
+3. **Hard Delete:**
+```typescript
+await this.prisma.rotinaEmpresa.delete({
+  where: { id: rotinaEmpresaId },
+});
+```
+
+**Auditoria (Rotina Deletada):**
+```typescript
+await this.audit.log({
+  usuarioId: user.id,
+  usuarioNome: user.nome,
+  usuarioEmail: user.email,
+  entidade: 'rotinas_empresa',
+  entidadeId: rotinaEmpresaId,
+  acao: 'DELETE',
+  dadosAntes: {
+    id: rotinaEmpresa.id,
+    nome: rotinaEmpresa.nome,
+    pilarEmpresaId: rotinaEmpresa.pilarEmpresaId,
+    rotinaTemplateId: rotinaEmpresa.rotinaTemplateId,
+  },
+  dadosDepois: null,
+});
+```
+
+**Retorno:** HTTP 204 No Content
+
+**Exceções:**
+- HTTP 404: Rotina não encontrada
+- HTTP 403: Usuário tentando deletar rotina de outra empresa
+
+**Arquivo:** [rotina-empresa.service.ts](../../backend/src/modules/rotina-empresa/rotina-empresa.service.ts) (a implementar)
+
+---
+
+### R-ROTEMP-005: Reordenação de Rotinas dentro de PilarEmpresa
+
+**Descrição:** Endpoint permite reordenar rotinas dentro de um pilar específico da empresa.
+
+**Implementação:**
+- **Endpoint:** `PATCH /empresas/:empresaId/pilares/:pilarEmpresaId/rotinas/reordenar`
+- **Método:** `RotinaEmpresaService.reordenar()`
+- **DTO:** ReordenarRotinasDto
+
+**Input:**
+```typescript
+{
+  "ordens": [
+    { "id": "uuid-rotina-empresa-1", "ordem": 1 },
+    { "id": "uuid-rotina-empresa-2", "ordem": 2 },
+    { "id": "uuid-rotina-empresa-3", "ordem": 3 }
+  ]
+}
+```
+
+**Validações:**
+- Multi-tenant
+- IDs pertencem ao pilarEmpresa especificado
+- Transação atômica
+
+**Implementação:**
+```typescript
+async reordenar(
+  empresaId: string,
+  pilarEmpresaId: string,
+  dto: ReordenarRotinasDto,
+  user: JwtPayload,
+) {
+  this.validateTenantAccess(empresaId, user);
+
+  // Validar que pilarEmpresa pertence à empresa
+  const pilarEmpresa = await this.prisma.pilarEmpresa.findFirst({
+    where: { id: pilarEmpresaId, empresaId },
+  });
+
+  if (!pilarEmpresa) {
+    throw new NotFoundException('Pilar não encontrado nesta empresa');
+  }
+
+  // Reordenar em transação
+  await this.prisma.$transaction(
+    dto.ordens.map((item) =>
+      this.prisma.rotinaEmpresa.update({
+        where: { id: item.id },
+        data: { ordem: item.ordem },
+      }),
+    ),
+  );
+
+  // Auditoria
+  await this.audit.log({
+    usuarioId: user.id,
+    entidade: 'rotinas_empresa',
+    acao: 'REORDER',
+    dadosAntes: null,
+    dadosDepois: { ordens: dto.ordens },
+  });
+}
+```
+
+**Auditoria:**
+- Ação: REORDER (ou UPDATE com metadata)
+- Entidade: rotinas_empresa
+- Dados: lista completa de reordenação
+
+**Arquivo:** [rotina-empresa.service.ts](../../backend/src/modules/rotina-empresa/rotina-empresa.service.ts) (já implementado, verificar adequação)
 
 ---
 

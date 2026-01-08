@@ -170,8 +170,7 @@ model Pilar {
   id          String   @id @default(uuid())
   nome        String   @unique
   descricao   String?
-  ordem       Int?
-  modelo      Boolean  @default(false)
+  ordem       Int
   ativo       Boolean  @default(true)
   
   createdAt   DateTime @default(now())
@@ -183,7 +182,6 @@ model Pilar {
   rotinas     Rotina[]
   empresas    PilarEmpresa[]
   
-  @@unique([ordem]) 
   @@map("pilares")
 }
 
@@ -192,7 +190,6 @@ model Rotina {
   nome        String
   descricao   String?
   ordem       Int?
-  modelo      Boolean  @default(false)
   ativo       Boolean  @default(true)
   
   pilarId     String
@@ -215,8 +212,13 @@ model PilarEmpresa {
   empresaId   String
   empresa     Empresa  @relation(fields: [empresaId], references: [id])
   
-  pilarId     String
-  pilar       Pilar    @relation(fields: [pilarId], references: [id])
+  // Snapshot Pattern: nullable template reference
+  pilarTemplateId String?
+  pilarTemplate   Pilar? @relation(fields: [pilarTemplateId], references: [id], onDelete: SetNull)
+  
+  // Snapshot data (copied from template OR custom)
+  nome        String
+  descricao   String?
   
   ordem       Int
   ativo       Boolean  @default(true)
@@ -234,7 +236,7 @@ model PilarEmpresa {
   rotinasEmpresa RotinaEmpresa[]
   evolucao       PilarEvolucao[]
   
-  @@unique([empresaId, pilarId])
+  @@unique([empresaId, nome])
   @@map("pilares_empresa")
 }
 
@@ -244,8 +246,13 @@ model RotinaEmpresa {
   pilarEmpresaId String
   pilarEmpresa   PilarEmpresa @relation(fields: [pilarEmpresaId], references: [id], onDelete: Cascade)
   
-  rotinaId      String
-  rotina        Rotina      @relation(fields: [rotinaId], references: [id])
+  // Snapshot Pattern: nullable template reference
+  rotinaTemplateId String?
+  rotinaTemplate   Rotina? @relation(fields: [rotinaTemplateId], references: [id], onDelete: SetNull)
+  
+  // Snapshot data (copied from template OR custom)
+  nome        String
+  descricao   String?
   
   ordem         Int
 
@@ -261,8 +268,8 @@ model RotinaEmpresa {
   notas         NotaRotina[]
   
   @@index([pilarEmpresaId])
-  @@index([rotinaId])
-  @@unique([pilarEmpresaId, rotinaId])
+  @@index([rotinaTemplateId])
+  @@unique([pilarEmpresaId, nome])
   @@map("rotinas_empresa")
 }
 

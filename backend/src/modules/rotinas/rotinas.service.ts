@@ -9,7 +9,7 @@ export class RotinasService {
   constructor(private prisma: PrismaService, private audit: AuditService) {}
 
   async create(createRotinaDto: CreateRotinaDto, user: any) {
-    // Verifica se o pilar existe
+    // Verifica se o pilar template existe
     const pilar = await this.prisma.pilar.findUnique({
       where: { id: createRotinaDto.pilarId },
     });
@@ -18,59 +18,26 @@ export class RotinasService {
       throw new NotFoundException('Pilar não encontrado');
     }
 
-    // Se pilarEmpresaId foi fornecido, validar multi-tenant para GESTOR
-    if (createRotinaDto.pilarEmpresaId) {
-      const pilarEmpresa = await this.prisma.pilarEmpresa.findUnique({
-        where: { id: createRotinaDto.pilarEmpresaId },
-        include: { empresa: true },
+    // Se ordem não fornecida, auto-incrementar
+    let ordem = createRotinaDto.ordem;
+    if (ordem === undefined || ordem === null) {
+      const ultimaRotina = await this.prisma.rotina.findFirst({
+        where: { pilarId: createRotinaDto.pilarId },
+        orderBy: { ordem: 'desc' },
+        select: { ordem: true },
       });
-
-      if (!pilarEmpresa) {
-        throw new NotFoundException('PilarEmpresa não encontrado');
-      }
-
-      // GESTOR só pode criar rotinas para sua própria empresa
-      if (user.perfil === 'GESTOR' && pilarEmpresa.empresaId !== user.empresaId) {
-        throw new NotFoundException('PilarEmpresa não encontrado');
-      }
+      ordem = (ultimaRotina?.ordem ?? 0) + 1;
     }
 
-    // Criar rotina e RotinaEmpresa em transação se pilarEmpresaId fornecido
-    const { pilarEmpresaId, ...rotinaData } = createRotinaDto;
-    
-    const created = await this.prisma.$transaction(async (tx) => {
-      const rotina = await tx.rotina.create({
-        data: {
-          ...rotinaData,
-          createdBy: user.id,
-        },
-        include: {
-          pilar: true,
-        },
-      });
-
-      // Se pilarEmpresaId foi fornecido, criar também o vínculo RotinaEmpresa
-      if (pilarEmpresaId) {
-        // Buscar a maior ordem existente no pilar para adicionar a nova rotina no final
-        const ultimaRotina = await tx.rotinaEmpresa.findFirst({
-          where: { pilarEmpresaId },
-          orderBy: { ordem: 'desc' },
-          select: { ordem: true },
-        });
-
-        const proximaOrdem = ultimaRotina ? ultimaRotina.ordem + 1 : 1;
-
-        await tx.rotinaEmpresa.create({
-          data: {
-            pilarEmpresaId,
-            rotinaId: rotina.id,
-            createdBy: user.id,
-            ordem: proximaOrdem,
-          },
-        });
-      }
-
-      return rotina;
+    const created = await this.prisma.rotina.create({
+      data: {
+        ...createRotinaDto,
+        ordem,
+        createdBy: user.id,
+      },
+      include: {
+        pilar: true,
+      },
     });
 
     const usuario = await this.prisma.usuario.findUnique({ where: { id: user.id } });
@@ -81,7 +48,7 @@ export class RotinasService {
       entidade: 'rotinas',
       entidadeId: created.id,
       acao: 'CREATE',
-      dadosDepois: { ...created, pilarEmpresaId },
+      dadosDepois: created,
     });
 
     return created;
@@ -163,9 +130,9 @@ export class RotinasService {
   async remove(id: string, userId: string) {
     const before = await this.findOne(id);
 
-    // R-ROT-BE-002: Validar se rotina está em uso por empresas
+    // R-ROT-BE-002: Validar se rotina template está em uso por empresas (snapshot pattern)
     const rotinaEmpresasEmUso = await this.prisma.rotinaEmpresa.findMany({
-      where: { rotinaId: id },
+      where: { rotinaTemplateId: id },
       include: {
         pilarEmpresa: {
           include: {

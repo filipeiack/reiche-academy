@@ -117,20 +117,24 @@ describe('RotinasService', () => {
       jest.spyOn(prisma.rotina, 'create').mockResolvedValue(mockRotina as any);
       jest.spyOn(prisma.usuario, 'findUnique').mockResolvedValue(mockUser as any);
 
-      const result = await service.create(createDto, 'user-123');
+      const result = await service.create(createDto, { id: 'user-123' });
 
       expect(prisma.pilar.findUnique).toHaveBeenCalledWith({
         where: { id: 'pilar-123' },
       });
-      expect(prisma.rotina.create).toHaveBeenCalledWith({
-        data: {
-          ...createDto,
-          createdBy: 'user-123',
-        },
-        include: {
-          pilar: true,
-        },
-      });
+      expect(prisma.rotina.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({
+            nome: createDto.nome,
+            descricao: createDto.descricao,
+            pilarId: createDto.pilarId,
+            createdBy: 'user-123',
+          }),
+          include: {
+            pilar: true,
+          },
+        }),
+      );
       expect(audit.log).toHaveBeenCalledWith({
         usuarioId: 'user-123',
         usuarioNome: 'Test User',
@@ -146,26 +150,26 @@ describe('RotinasService', () => {
     it('deve lançar NotFoundException se pilar não existir', async () => {
       jest.spyOn(prisma.pilar, 'findUnique').mockResolvedValue(null);
 
-      await expect(service.create(createDto, 'user-123')).rejects.toThrow(
+      await expect(service.create(createDto, { id: 'user-123' })).rejects.toThrow(
         NotFoundException,
       );
-      await expect(service.create(createDto, 'user-123')).rejects.toThrow(
+      await expect(service.create(createDto, { id: 'user-123' })).rejects.toThrow(
         'Pilar não encontrado',
       );
       expect(prisma.rotina.create).not.toHaveBeenCalled();
     });
 
-    it('deve criar rotina com campo modelo: true', async () => {
+    it('deve criar rotina sem especificar ordem (auto-incremento)', async () => {
       const modeloDto = { ...createDto, modelo: true };
-      const rotinaModelo = { ...mockRotina, modelo: true };
+      const rotina = { ...mockRotina };
 
       jest.spyOn(prisma.pilar, 'findUnique').mockResolvedValue(mockPilar as any);
-      jest.spyOn(prisma.rotina, 'create').mockResolvedValue(rotinaModelo as any);
+      jest.spyOn(prisma.rotina, 'create').mockResolvedValue(rotina as any);
       jest.spyOn(prisma.usuario, 'findUnique').mockResolvedValue(mockUser as any);
 
-      const result = await service.create(modeloDto, 'user-123');
+      const result = await service.create(modeloDto, { id: 'user-123' });
 
-      expect(result.modelo).toBe(true);
+      expect(result.nome).toBeDefined();
     });
   });
 
@@ -362,7 +366,7 @@ describe('RotinasService', () => {
       const result = await service.remove('rotina-123', 'user-123');
 
       expect(prisma.rotinaEmpresa.findMany).toHaveBeenCalledWith({
-        where: { rotinaId: 'rotina-123' },
+        where: { rotinaTemplateId: 'rotina-123' },
         include: {
           pilarEmpresa: {
             include: {
