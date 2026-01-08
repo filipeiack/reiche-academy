@@ -14,6 +14,7 @@ import { ApiTags, ApiOperation, ApiBearerAuth, ApiResponse } from '@nestjs/swagg
 import { PilaresService } from './pilares.service';
 import { CreatePilarDto } from './dto/create-pilar.dto';
 import { UpdatePilarDto } from './dto/update-pilar.dto';
+import { ReordenarPilarDto } from './dto/reordenar-pilar.dto';
 import { RequestUser } from '../../common/interfaces/request-user.interface';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../auth/guards/roles.guard';
@@ -34,9 +35,17 @@ export class PilaresController {
     return this.pilaresService.create(createPilarDto, req.user);
   }
 
+  @Post('reordenar')
+  @Roles('ADMINISTRADOR')
+  @ApiOperation({ summary: 'Reordenar pilares' })
+  @ApiResponse({ status: 200, description: 'Pilares reordenados com sucesso' })
+  reordenar(@Body() reordenarPilarDto: ReordenarPilarDto, @Request() req: { user: RequestUser }) {
+    return this.pilaresService.reordenar(reordenarPilarDto, req.user);
+  }
+
   @Get()
   @Roles('ADMINISTRADOR', 'CONSULTOR', 'GESTOR', 'COLABORADOR', 'LEITURA')
-  @ApiOperation({ summary: 'Listar todos os pilares ativos' })
+  @ApiOperation({ summary: 'Listar todos os pilares' })
   @ApiResponse({ status: 200, description: 'Lista de pilares ordenada' })
   findAll() {
     return this.pilaresService.findAll();

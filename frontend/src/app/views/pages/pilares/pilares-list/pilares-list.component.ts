@@ -2,6 +2,7 @@ import { Component, OnInit, inject, TemplateRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
+import { CdkDragDrop, DragDropModule, moveItemInArray } from '@angular/cdk/drag-drop';
 import Swal from 'sweetalert2';
 import { PilaresService, Pilar } from '../../../../core/services/pilares.service';
 import { NgbPaginationModule, NgbTooltipModule, NgbOffcanvas, NgbOffcanvasModule } from '@ng-bootstrap/ng-bootstrap';
@@ -19,7 +20,8 @@ import { TranslatePipe } from '../../../../core/pipes/translate.pipe';
     NgbTooltipModule,
     NgSelectModule,
     NgbOffcanvasModule,
-    TranslatePipe
+    TranslatePipe,
+    DragDropModule
   ],
   templateUrl: './pilares-list.component.html',
   styleUrl: './pilares-list.component.scss'
@@ -147,48 +149,87 @@ export class PilaresListComponent implements OnInit {
     return Math.ceil(this.filteredPilares.length / this.pageSize);
   }
 
+  getStartIndex(): number {
+    if (this.filteredPilares.length === 0) return 0;
+    return (this.currentPage - 1) * this.pageSize;
+  }
+
+  getEndIndex(): number {
+    const end = this.currentPage * this.pageSize;
+    return Math.min(end, this.filteredPilares.length);
+  }
+
   // UI-PIL-009: Ações por linha
-  confirmDesativar(pilar: Pilar): void {
-    // UI-PIL-006: Modal de Confirmação de Desativação
+  confirmarExclusao(pilar: Pilar): void {
+    // UI-PIL-006: Modal de Confirmação de Exclusão
     
-    // Primeiro, buscar detalhes do pilar (rotinas ativas)
+    // Primeiro, buscar detalhes do pilar
     this.pilaresService.findOne(pilar.id).subscribe({
       next: (pilarDetalhado) => {
-        const rotinasAtivas = pilarDetalhado._count?.rotinas || 0;
+        const rotinasCount = pilarDetalhado._count?.rotinas || 0;
+        const empresasUsando = pilarDetalhado._count?.empresas || 0;
         
-        if (rotinasAtivas > 0) {
-          // Bloquear desativação
+        if (empresasUsando > 0) {
+          // Se houver empresas, permitir apenas desativação
           Swal.fire({
-            title: 'Não é possível desativar',
+            title: 'Pilar em Uso',
             html: `
-              Este pilar possui <strong>${rotinasAtivas} rotinas ativas</strong> vinculadas.<br>
-              Desative as rotinas primeiro.
+              <span class="text-muted">Este pilar está sendo usado por <strong>${empresasUsando} empresa(s)</strong>.<br><br>
+              Não é possível excluí-lo permanentemente, mas você pode <strong>desativá-lo</strong>.<br><br>
+              Deseja desativar o pilar <strong>"${pilar.nome}"</strong>?</span>
             `,
-            confirmButtonText: 'Entendi',
-            confirmButtonColor: '#3085d6'
+            showCancelButton: true,
+            confirmButtonText: 'Sim, desativar',
+            cancelButtonText: 'Cancelar',
+            confirmButtonColor: '#ffc107',
+            cancelButtonColor: '#6c757d',
+          }).then((result) => {
+            if (result.isConfirmed) {
+              this.excluir(pilar.id);
+            }
           });
           return;
         }
 
-        // Permitir desativação
-        const empresasUsando = pilarDetalhado._count?.empresas || 0;
-        
-        Swal.fire({
-          title: 'Confirmar Desativação',
-          html: `
-            Deseja desativar o pilar <strong>"${pilar.nome}"</strong>?
-            ${empresasUsando > 0 ? `<br><br>Obs: ${empresasUsando} empresa(s) está(ão) usando este pilar.<br>Elas não poderão mais vê-lo após desativação.` : ''}
-          `,
-          showCancelButton: true,
-          confirmButtonText: 'Desativar',
-          cancelButtonText: 'Cancelar',
-          confirmButtonColor: '#d33',
-          cancelButtonColor: '#6c757d'
-        }).then((result) => {
-          if (result.isConfirmed) {
-            this.desativar(pilar.id);
-          }
-        });
+        // Se não houver empresas, permitir exclusão permanente (com ou sem rotinas)
+        if (rotinasCount > 0) {
+          // Avisar sobre exclusão em cascata
+          Swal.fire({
+            title: 'Confirmar Exclusão em Cascata',
+            html: `
+              <span class="text-muted">O pilar <strong>"${pilar.nome}"</strong> possui <strong>${rotinasCount} rotina(s)</strong> vinculada(s).<br><br>
+              Ao excluir o pilar, todas as rotinas vinculadas também serão <strong>excluídas permanentemente</strong>.</span><br><br>
+              <span class="text-danger">Esta ação não pode ser desfeita!</span>
+            `,
+            showCancelButton: true,
+            confirmButtonText: 'Sim, excluir tudo',
+            cancelButtonText: 'Cancelar',
+            confirmButtonColor: '#d33',
+            cancelButtonColor: '#6c757d',
+          }).then((result) => {
+            if (result.isConfirmed) {
+              this.excluir(pilar.id);
+            }
+          });
+        } else {
+          // Sem rotinas, exclusão simples
+          Swal.fire({
+            title: 'Confirmar Exclusão Permanente',
+            html: `
+              <span class="text-muted">Tem certeza que deseja <strong>excluir permanentemente</strong> o pilar <strong>"${pilar.nome}"</strong>?</span><br><br>
+              <span class="text-danger">Esta ação não pode ser desfeita!</span>
+            `,
+            showCancelButton: true,
+            confirmButtonText: 'Sim, excluir permanentemente',
+            cancelButtonText: 'Cancelar',
+            confirmButtonColor: '#d33',
+            cancelButtonColor: '#6c757d',
+          }).then((result) => {
+            if (result.isConfirmed) {
+              this.excluir(pilar.id);
+            }
+          });
+        }
       },
       error: (err) => {
         this.showToast('Erro ao verificar pilar', 'error');
@@ -196,37 +237,48 @@ export class PilaresListComponent implements OnInit {
     });
   }
 
-  desativar(id: string): void {
+  excluir(id: string): void {
     this.pilaresService.remove(id).subscribe({
-      next: () => {
-        this.showToast('Pilar desativado com sucesso', 'success');
+      next: (response) => {
+        // Verificar se foi desativado ou excluído baseado no response
+        const mensagem = response.ativo === false 
+          ? 'Pilar desativado com sucesso' 
+          : 'Pilar excluído com sucesso';
+        this.showToast(mensagem, 'success');
         this.loadPilares();
       },
       error: (err) => {
-        const message = err?.error?.message || 'Erro ao desativar pilar';
+        const message = err?.error?.message || 'Erro ao excluir pilar';
         this.showToast(message, 'error');
       }
     });
   }
 
-  reativar(id: string): void {
+  toggleStatus(id: string, nome: string, ativo: boolean): void {
+    const action = ativo ? 'inativar' : 'ativar';
+    const actionCapitalized = ativo ? 'Inativar' : 'Ativar';
+    
     Swal.fire({
-      title: 'Confirmar Reativação',
-      text: 'Deseja reativar este pilar?',
+      title: `Confirmar ${actionCapitalized}`,
+      text: `Deseja ${action} o pilar "${nome}"?`,
       showCancelButton: true,
-      confirmButtonText: 'Reativar',
+      confirmButtonText: actionCapitalized,
       cancelButtonText: 'Cancelar',
-      confirmButtonColor: '#28a745',
+      confirmButtonColor: ativo ? '#dc3545' : '#28a745',
       cancelButtonColor: '#6c757d'
     }).then((result) => {
       if (result.isConfirmed) {
-        this.pilaresService.reativar(id).subscribe({
+        const service$ = ativo 
+          ? this.pilaresService.desativar(id)
+          : this.pilaresService.reativar(id);
+        
+        service$.subscribe({
           next: () => {
-            this.showToast('Pilar reativado com sucesso', 'success');
+            this.showToast(`Pilar ${ativo ? 'inativado' : 'ativado'} com sucesso`, 'success');
             this.loadPilares();
           },
-          error: (err) => {
-            const message = err?.error?.message || 'Erro ao reativar pilar';
+          error: (err: any) => {
+            const message = err?.error?.message || `Erro ao ${action} pilar`;
             this.showToast(message, 'error');
           }
         });
@@ -234,10 +286,35 @@ export class PilaresListComponent implements OnInit {
     });
   }
 
-  // Utilitários
-  truncate(text: string | undefined, length: number): string {
-    if (!text) return '';
-    return text.length > length ? text.substring(0, length) + '...' : text;
+  onDropPilares(event: CdkDragDrop<Pilar[]>): void {
+    if (event.previousIndex !== event.currentIndex) {
+      moveItemInArray(this.filteredPilares, event.previousIndex, event.currentIndex);
+      
+      // Atualizar a ordem de todos os pilares
+      this.filteredPilares.forEach((pilar, index) => {
+        pilar.ordem = index + 1;
+      });
+      
+      // Salvar automaticamente
+      this.salvarOrdem();
+    }
+  }
+
+  async salvarOrdem(): Promise<void> {
+    try {
+      const novasOrdens = this.filteredPilares.map((p, idx) => ({
+        id: p.id,
+        ordem: idx + 1
+      }));
+
+      await this.pilaresService.reordenar(novasOrdens).toPromise();
+      
+      this.showToast('Ordem dos pilares atualizada com sucesso.', 'success');
+      
+      this.loadPilares();
+    } catch (error) {
+      this.showToast('Erro ao salvar a ordem dos pilares. Tente novamente', 'error');
+    }
   }
 
   openDetailsOffcanvas(id: string, content: TemplateRef<any>): void {

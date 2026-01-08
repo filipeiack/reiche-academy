@@ -26,6 +26,14 @@ $box-shadow-lg-dark:                0 4px 16px rgba(0, 0, 0, 0.4) !default;
 $card-box-shadow-dark:              0 2px 8px rgba(0, 0, 0, 0.3) !default;
 $card-border-color-dark:            $gray-800 !default;
 
+// Sidebar
+$sidebar-box-shadow-color-dark:     #08101e;
+$sidebar-color-dark:                #E0E0E0; // Texto claro no sidebar escuro
+
+// Navbar
+$navbar-box-shadow-color-dark:      #08101e;
+$navbar-item-color-dark:            #E0E0E0; // Texto claro no navbar escuro
+
 @media (min-width: 1400px) {
   .container-xxl, .container-xl, .container-lg, .container-md, .container-sm, .container {
     max-width: 1144px !important;

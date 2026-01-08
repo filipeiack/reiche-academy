@@ -130,6 +130,16 @@ export class EmpresasListComponent implements OnInit {
     return this.filteredEmpresas.slice(start, end);
   }
 
+  getStartIndex(): number {
+    if (this.filteredEmpresas.length === 0) return 0;
+    return (this.currentPage - 1) * this.pageSize;
+  }
+
+  getEndIndex(): number {
+    const end = this.currentPage * this.pageSize;
+    return Math.min(end, this.filteredEmpresas.length);
+  }
+
   // Seleção múltipla
   toggleHeaderCheckbox(): void {
     this.headerCheckboxChecked = !this.headerCheckboxChecked;

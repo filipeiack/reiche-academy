@@ -19,13 +19,16 @@ export interface Rotina {
     nome: string;
     ordem?: number;
   };
+  _count?: {
+    empresas: number;
+  };
 }
 
 export interface CreateRotinaDto {
   nome: string;
   descricao?: string;
   ordem?: number;
-  pilarId: string;
+  pilarId?: string; // Opcional para rotinas customizadas
   pilarEmpresaId?: string;
 }
 
@@ -81,5 +84,9 @@ export class RotinasService {
 
   reativar(id: string): Observable<Rotina> {
     return this.http.patch<Rotina>(`${this.apiUrl}/${id}`, { ativo: true });
+  }
+
+  desativar(id: string): Observable<Rotina> {
+    return this.http.patch<Rotina>(`${this.apiUrl}/${id}`, { ativo: false });
   }
 }

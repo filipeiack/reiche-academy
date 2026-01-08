@@ -34,6 +34,11 @@ export interface UpdatePilarDto {
   ativo?: boolean;
 }
 
+export interface ReordenarPilarDto {
+  id: string;
+  ordem: number;
+}
+
 @Injectable({
   providedIn: 'root'
 })
@@ -64,5 +69,13 @@ export class PilaresService {
 
   reativar(id: string): Observable<Pilar> {
     return this.http.patch<Pilar>(`${this.apiUrl}/${id}`, { ativo: true });
+  }
+
+  desativar(id: string): Observable<Pilar> {
+    return this.http.patch<Pilar>(`${this.apiUrl}/${id}`, { ativo: false });
+  }
+
+  reordenar(ordens: ReordenarPilarDto[]): Observable<Pilar[]> {
+    return this.http.post<Pilar[]>(`${this.apiUrl}/reordenar`, { ordens });
   }
 }

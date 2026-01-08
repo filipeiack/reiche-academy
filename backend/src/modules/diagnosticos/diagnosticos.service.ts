@@ -51,16 +51,8 @@ export class DiagnosticosService {
       where: {
         empresaId,
         ativo: true,
-        pilar: { ativo: true },
       },
       include: {
-        pilar: {
-          select: {
-            id: true,
-            nome: true,
-            descricao: true,
-          },
-        },
         responsavel: {
           select: {
             id: true,
@@ -72,16 +64,8 @@ export class DiagnosticosService {
         rotinasEmpresa: {
           where: {
             ativo: true,
-            rotina: { ativo: true },
           },
           include: {
-            rotina: {
-              select: {
-                id: true,
-                nome: true,
-                descricao: true,
-              },
-            },
             notas: {
               orderBy: { createdAt: 'desc' },
               take: 1, // Pegar apenas a nota mais recente
@@ -127,10 +111,10 @@ export class DiagnosticosService {
         },
         include: {
           rotinaEmpresa: {
-            include: {
-              rotina: { select: { nome: true } },
+            select: {
+              nome: true,
               pilarEmpresa: {
-                include: { pilar: { select: { nome: true } } },
+                select: { nome: true },
               },
             },
           },
@@ -166,10 +150,10 @@ export class DiagnosticosService {
         },
         include: {
           rotinaEmpresa: {
-            include: {
-              rotina: { select: { nome: true } },
+            select: {
+              nome: true,
               pilarEmpresa: {
-                include: { pilar: { select: { nome: true } } },
+                select: { nome: true },
               },
             },
           },
@@ -213,19 +197,11 @@ export class DiagnosticosService {
       where: {
         empresaId,
         ativo: true,
-        pilar: { ativo: true },
       },
       include: {
-        pilar: {
-          select: {
-            id: true,
-            nome: true,
-          },
-        },
         rotinasEmpresa: {
           where: {
             ativo: true,
-            rotina: { ativo: true },
           },
           include: {
             notas: {
@@ -254,8 +230,8 @@ export class DiagnosticosService {
 
         return {
           pilarEmpresaId: pilar.id,
-          pilarId: pilar.pilarId,
-          pilarNome: pilar.pilar.nome,
+          pilarTemplateId: pilar.pilarTemplateId,
+          pilarNome: pilar.nome,
           mediaAtual: Number(mediaAtual.toFixed(2)),
           totalRotinasAvaliadas: notasValidas.length,
           totalRotinas: pilar.rotinasEmpresa.length,
@@ -415,13 +391,9 @@ export class DiagnosticosService {
       orderBy: { createdAt: 'asc' },
       include: {
         pilarEmpresa: {
-          include: {
-            pilar: {
-              select: {
-                id: true,
-                nome: true,
-              },
-            },
+          select: {
+            nome: true,
+            pilarTemplateId: true,
           },
         },
       },
@@ -431,8 +403,8 @@ export class DiagnosticosService {
       id: item.id,
       mediaNotas: item.mediaNotas,
       createdAt: item.createdAt,
-      pilarNome: item.pilarEmpresa.pilar.nome,
-      pilarId: item.pilarEmpresa.pilarId,
+      pilarNome: item.pilarEmpresa.nome,
+      pilarTemplateId: item.pilarEmpresa.pilarTemplateId,
     }));
   }
 }

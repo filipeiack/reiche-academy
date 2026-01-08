@@ -85,7 +85,7 @@
                     <span class="badge bg-light text-dark small d-inline-flex align-items-center"
                         [title]="'Taxa de respostas para o ' + ('PILARES.PILAR' | translate) + ' ' + pilar.nome">
                         Tx respostas:
-                        {{ getPilarProgress(pilar) }} %
+                        {{ getPilarProgress(pilar) | number:'1.0-0' }} %
                     </span>
 
                     <span class="d-inline-flex align-items-center">
@@ -248,7 +248,7 @@
 </app-responsavel-pilar-modal>
 
 <!-- Modal para criar nova rotina -->
-<app-nova-rotina-modal (rotinaCriada)="onRotinaCriada()">
+<app-nova-rotina-modal [empresaId]="selectedEmpresaId || ''" (rotinaCriada)="onRotinaCriada()">
 </app-nova-rotina-modal>
 
 <!-- Modal para gerenciar rotinas do pilar -->

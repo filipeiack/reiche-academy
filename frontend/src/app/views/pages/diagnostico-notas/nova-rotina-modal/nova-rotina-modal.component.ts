@@ -3,7 +3,7 @@ import { CommonModule } from '@angular/common';
 import { NgbModal, NgbModalModule } from '@ng-bootstrap/ng-bootstrap';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import Swal from 'sweetalert2';
-import { RotinasService, CreateRotinaDto } from '../../../../core/services/rotinas.service';
+import { PilaresEmpresaService, CreateRotinaEmpresaDto } from '../../../../core/services/pilares-empresa.service';
 import { PilarEmpresa } from '../../../../core/services/diagnostico-notas.service';
 
 @Component({
@@ -29,28 +29,28 @@ import { PilarEmpresa } from '../../../../core/services/diagnostico-notas.servic
 
         <form [formGroup]="form">
           <div class="mb-3">
-            <label class="form-label">Nome da Rotina <span class="text-danger">*</span></label>
-            <input 
-              type="text" 
+            <label class="form-label">Descrição da sua Rotina <span class="text-danger">*</span></label>
+            <textarea 
               class="form-control" 
               formControlName="nome"
               [class.is-invalid]="form.get('nome')?.invalid && form.get('nome')?.touched"
-              placeholder="Digite o nome da rotina">
+              placeholder="Digite a rotina"
+              rows="3"></textarea>
             @if (form.get('nome')?.invalid && form.get('nome')?.touched) {
             <div class="invalid-feedback d-block">
-              Nome é obrigatório (mínimo 3 caracteres)
+              Rotina (mínimo 3 caracteres)
             </div>
             }
           </div>
 
-          <div class="mb-3">
+          <!-- <div class="mb-3">
             <label class="form-label">Descrição</label>
             <textarea 
               class="form-control" 
               formControlName="descricao"
               rows="3"
               placeholder="Descreva os detalhes desta rotina (opcional)"></textarea>
-          </div>
+          </div> -->
         </form>
         }
       </div>
@@ -73,10 +73,11 @@ import { PilarEmpresa } from '../../../../core/services/diagnostico-notas.servic
 })
 export class NovaRotinaModalComponent {
   private modalService = inject(NgbModal);
-  private rotinasService = inject(RotinasService);
+  private pilaresEmpresaService = inject(PilaresEmpresaService);
   private fb = inject(FormBuilder);
   
   @ViewChild('modalContent') modalContent!: TemplateRef<any>;
+  @Input() empresaId?: string;
   @Input() pilarEmpresa?: PilarEmpresa;
   @Output() rotinaCriada = new EventEmitter<void>();
 
@@ -104,21 +105,16 @@ export class NovaRotinaModalComponent {
   }
 
   salvar(): void {
-    if (this.form.invalid || !this.pilarEmpresa) return;
+    if (this.form.invalid || !this.pilarEmpresa || !this.empresaId) return;
 
     const formValue = this.form.value;
-    const dto: CreateRotinaDto = {
-      nome: formValue.nome!,
-      descricao: formValue.descricao || undefined,
-      pilarId: this.pilarEmpresa.pilarTemplateId || undefined,
-      modelo: false, // Rotina customizada, não é modelo
-      pilarEmpresaId: this.pilarEmpresa.id // Vincula automaticamente a RotinaEmpresa
+    const dto: CreateRotinaEmpresaDto = {
+      nome: formValue.nome! // Rotina customizada (não baseada em template)
     };
 
     this.saving = true;
-    this.rotinasService.create(dto).subscribe({
+    this.pilaresEmpresaService.criarRotinaEmpresa(this.empresaId, this.pilarEmpresa.id, dto).subscribe({
       next: (rotina) => {
-        // Rotina criada e já vinculada automaticamente ao PilarEmpresa no backend
         this.showToast(`Rotina "${rotina.nome}" criada com sucesso!`, 'success');
         this.rotinaCriada.emit();
         this.saving = false;

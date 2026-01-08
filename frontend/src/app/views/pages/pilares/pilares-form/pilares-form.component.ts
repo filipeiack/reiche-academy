@@ -112,8 +112,7 @@ export class PilaresFormComponent implements OnInit {
     const dto: CreatePilarDto = {
       nome: data.nome!,
       descricao: data.descricao || undefined,
-      ordem: data.ordem ?? undefined,
-      modelo: data.modelo ?? false
+      ordem: data.ordem || undefined
     };
 
     this.pilaresService.create(dto).subscribe({
@@ -134,7 +133,6 @@ export class PilaresFormComponent implements OnInit {
       nome: data.nome || undefined,
       descricao: data.descricao || undefined,
       ordem: data.ordem === null || data.ordem === '' ? null : data.ordem,
-      modelo: data.modelo ?? undefined,
       ativo: data.ativo ?? undefined
     };
 

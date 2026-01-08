@@ -91,7 +91,7 @@
                         (click)="toggleStatusUsuario(usuario.id, usuario.nome, usuario.ativo)"
                         [title]="usuario.ativo ? 'Inativar usuário' : 'Ativar usuário'">
                         <i class="feather"
-                          [ngClass]="{'icon-toggle-right': usuario.ativo, 'icon-toggle-left': !usuario.ativo}"></i>
+                          [ngClass]="{'icon-toggle-right': usuario.ativo, 'icon-toggle-left text-danger': !usuario.ativo}"></i>
                       </button>
                       <button class="btn btn-icon text-secondary" [routerLink]="['/usuarios', usuario.id, 'editar']"
                         title="{{ 'BUTTONS.EDIT' | translate }}">
@@ -125,7 +125,9 @@
               <option [ngValue]="6">6 items per page</option>
             </select> -->
 
-            <span class="text-muted fs-12">{{ filteredUsuarios.length }} {{ 'COMMON.ITEMS' | translate }}</span>
+            <span class="text-muted fs-12">
+              Mostrando {{ getStartIndex() + 1 }}-{{ getEndIndex() }} de {{ filteredUsuarios.length }} {{ 'COMMON.ITEMS' | translate }}
+            </span>
 
             @if (totalPages > 1) {
               <ngb-pagination [collectionSize]="filteredUsuarios.length" [(page)]="currentPage" size="sm"

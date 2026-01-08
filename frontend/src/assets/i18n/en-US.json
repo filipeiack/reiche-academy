@@ -184,17 +184,29 @@
     "YEAR": "Year"
   },
   "PILARES": {
+    "TITLE": "Pillars Template",
     "NEW": "New Pillar",
+    "NEW_PILAR": "New Pillar",
+    "NEW_PILAR_TOOLTIP": "New Pillar Template",
     "EDIT": "Edit Pillar",
     "DETAILS": "Pillar Details",
     "PILAR": "Pillar",
+    "SEARCH_PLACEHOLDER": "Search by name...",
+    "NO_PILARES_FOUND": "No pillars found",
+    "ROTINAS_LINKED": "linked routines",
+    "EMPRESAS_USING": "companies using",
+    "DETAILS_TOOLTIP": "Pillar details",
+    "EDIT_TOOLTIP": "Edit pillar",
+    "DEACTIVATE_TOOLTIP": "Deactivate pillar",
+    "REACTIVATE_TOOLTIP": "Reactivate pillar",
     "FIELDS": {
       "NAME": "Name",
       "DESCRIPTION": "Description",
       "ORDER": "Order",
       "TYPE": "Type",
       "CONFIGURATION": "Configuration",
-      "IS_MODEL": "Default Pillar"
+      "IS_MODEL": "Default Pillar",
+      "ROTINAS": "Routines"
     },
     "PLACEHOLDERS": {
       "NAME": "Enter pillar name",
@@ -223,6 +235,26 @@
     "DETAILS_INFO": {
       "ROTINAS_COUNT": "Linked Routines",
       "EMPRESAS_COUNT": "Companies Using"
+    }
+  },
+  "ROTINAS": {
+    "TITLE": "Routines Template",
+    "NEW_ROTINA": "Add Routine",
+    "NEW_ROTINA_TOOLTIP": "Add New Routine Template",
+    "ALL_PILARES": "All Pillars",
+    "SELECT_PILAR_TO_REORDER": "Select a pillar to enable drag-and-drop reordering",
+    "DRAG_TO_REORDER": "Drag routines to reorder",
+    "DETAILS": "Routine Details",
+    "DETAILS_TOOLTIP": "Routine details",
+    "EDIT_TOOLTIP": "Edit routine",
+    "DEACTIVATE_TOOLTIP": "Deactivate routine",
+    "REACTIVATE_TOOLTIP": "Reactivate routine",
+    "FIELDS": {
+      "NAME": "Name",
+      "DESCRIPTION": "Description",
+      "ORDER": "Order",
+      "PILAR": "Pillar",
+      "ROTINA": "Routine"
     }
   }
 }

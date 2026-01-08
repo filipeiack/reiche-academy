@@ -130,45 +130,39 @@ export class RotinasService {
   async remove(id: string, userId: string) {
     const before = await this.findOne(id);
 
-    // R-ROT-BE-002: Validar se rotina template está em uso por empresas (snapshot pattern)
-    const rotinaEmpresasEmUso = await this.prisma.rotinaEmpresa.findMany({
+    // Verificar se há empresas usando a rotina
+    const empresasCount = await this.prisma.rotinaEmpresa.count({
       where: { rotinaTemplateId: id },
-      include: {
-        pilarEmpresa: {
-          include: {
-            empresa: {
-              select: {
-                id: true,
-                nome: true,
-              },
-            },
-          },
-        },
-      },
     });
 
-    if (rotinaEmpresasEmUso.length > 0) {
-      const empresasAfetadas = rotinaEmpresasEmUso.map(
-        (re) => ({
-          id: re.pilarEmpresa.empresa.id,
-          nome: re.pilarEmpresa.empresa.nome,
-        })
-      );
-
-      // Bloqueio rígido com 409 Conflict + lista de empresas
-      throw new ConflictException({
-        message: 'Não é possível desativar esta rotina pois está em uso por empresas',
-        empresasAfetadas,
-        totalEmpresas: empresasAfetadas.length,
+    if (empresasCount > 0) {
+      // Se houver empresas usando, apenas desativa (soft delete)
+      const after = await this.prisma.rotina.update({
+        where: { id },
+        data: {
+          ativo: false,
+          updatedBy: userId,
+        },
       });
+
+      const user = await this.prisma.usuario.findUnique({ where: { id: userId } });
+      await this.audit.log({
+        usuarioId: userId,
+        usuarioNome: user?.nome ?? '',
+        usuarioEmail: user?.email ?? '',
+        entidade: 'rotinas',
+        entidadeId: id,
+        acao: 'DEACTIVATE',
+        dadosAntes: before,
+        dadosDepois: after,
+      });
+
+      return after;
     }
 
-    const after = await this.prisma.rotina.update({
+    // Se não houver empresas, excluir permanentemente
+    const deleted = await this.prisma.rotina.delete({
       where: { id },
-      data: {
-        ativo: false,
-        updatedBy: userId,
-      },
     });
 
     const user = await this.prisma.usuario.findUnique({ where: { id: userId } });
@@ -180,10 +174,9 @@ export class RotinasService {
       entidadeId: id,
       acao: 'DELETE',
       dadosAntes: before,
-      dadosDepois: after,
     });
 
-    return after;
+    return deleted;
   }
 
   async reordenarPorPilar(

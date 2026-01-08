@@ -5,14 +5,15 @@
         <i class="feather icon-layers"></i>
       </li>
       <li class="breadcrumb-item active" aria-current="page">
-        Pilares
+        {{ 'PILARES.TITLE' | translate }}
       </li>
     </ol>
   </nav>
 
-  <button type="button" class="btn btn-primary btn-icon-text btn-xs" [routerLink]="['/pilares/novo']">
+  <button type="button" class="btn btn-primary btn-icon-text btn-xs" [routerLink]="['/pilares/novo']"
+    [ngbTooltip]="'PILARES.NEW_PILAR_TOOLTIP' | translate">
     <i class="feather icon-plus btn-icon-prepend"></i>
-    Novo Pilar
+    {{ 'PILARES.NEW_PILAR' | translate }}
   </button>
 </div>
 
@@ -27,8 +28,8 @@
               <span class="input-icon-addon">
                 <i class="feather icon-search"></i>
               </span>
-              <input type="text" class="form-control" placeholder="Buscar por nome..." [value]="searchQuery"
-                (input)="onSearchInput($event)" />
+              <input type="text" class="form-control" [placeholder]="'PILARES.SEARCH_PLACEHOLDER' | translate"
+                [value]="searchQuery" (input)="onSearchInput($event)" />
             </div>
           </div>
 
@@ -43,7 +44,7 @@
         @if (loading) {
         <div class="text-center py-5">
           <div class="spinner-border text-primary" role="status">
-            <span class="visually-hidden">Carregando...</span>
+            <span class="visually-hidden">{{ 'COMMON.LOADING' | translate }}</span>
           </div>
         </div>
         } @else {
@@ -51,43 +52,36 @@
           <table class="table table-hover table-striped mb-2">
             <thead>
               <tr>
-                <th scope="col">Nome</th>
-                <th scope="col" class="text-center">Rotinas</th>
-                <th scope="col" class="text-center">Empresas</th>
-                <th scope="col">Status</th>
-                <th scope="col">Ações</th>
+                <th scope="col" class="w-100">{{ 'PILARES.FIELDS.NAME' | translate }}</th>
+                <th scope="col" class="text-center">{{ 'PILARES.FIELDS.ROTINAS' | translate }}</th>
+                <th scope="col">{{ 'COMMON.STATUS' | translate }}</th>
+                <th scope="col">{{ 'COMMON.ACTIONS' | translate }}</th>
               </tr>
             </thead>
-            <tbody>
+            <tbody cdkDropList (cdkDropListDropped)="onDropPilares($event)">
               @for (pilar of paginatedPilares; track pilar.id) {
-              <tr>
+              <tr cdkDrag>
                 <!-- Nome -->
                 <td>
-                  <span class="badge bg-secondary small" ngbTooltip="Ordem">{{ pilar.ordem }}</span>
+                  <i class="feather icon-menu me-2" cdkDragHandle style="cursor: move;"></i>
+                  <span class="badge bg-secondary small me-2" [ngbTooltip]="'PILARES.FIELDS.ORDER' | translate">{{
+                    pilar.ordem }}</span>
                   {{ pilar.nome }}
                 </td>
 
                 <!-- UI-PIL-003: Contadores -->
                 <td class="text-muted text-center">
                   <span
-                    [ngbTooltip]="pilar.nome + '\n├─ ' + (pilar._count?.rotinas || 0) + ' rotinas vinculadas\n└─ ' + (pilar._count?.empresas || 0) + ' empresas usando'"
+                    [ngbTooltip]="pilar.nome + '\n├─ ' + (pilar._count?.rotinas || 0) + ' ' + ('PILARES.ROTINAS_LINKED' | translate) + '\n└─ ' + (pilar._count?.empresas || 0) + ' ' + ('PILARES.EMPRESAS_USING' | translate)"
                     placement="top">
                     {{ pilar._count?.rotinas || 0 }}
-                  </span>
-                </td>
-
-                <td class="text-muted text-center">
-                  <span
-                    [ngbTooltip]="pilar.nome + '\n├─ ' + (pilar._count?.rotinas || 0) + ' rotinas vinculadas\n└─ ' + (pilar._count?.empresas || 0) + ' empresas usando'"
-                    placement="top">
-                    {{ pilar._count?.empresas || 0 }}
                   </span>
                 </td>
 
                 <!-- Status -->
                 <td class="text-muted">
                   <span>
-                    {{ pilar.ativo ? 'Ativo' : 'Inativo' }}
+                    {{ pilar.ativo ? ('COMMON.ACTIVE' | translate) : ('COMMON.INACTIVE' | translate) }}
                   </span>
                 </td>
 
@@ -96,36 +90,37 @@
                   <div class="btn-group btn-group-sm" role="group">
                     <!-- Detalhes -->
                     <button class="btn btn-icon text-primary" (click)="openDetailsOffcanvas(pilar.id, detailsOffcanvas)"
-                      [title]="'Detalhes do pilar' | translate">
+                      [title]="'PILARES.DETAILS_TOOLTIP' | translate">
                       <i class="feather icon-info"></i>
+                    </button>
+
+                    <!-- Toggle Ativar/Inativar -->
+                    <button class="btn btn-icon text-primary" (click)="toggleStatus(pilar.id, pilar.nome, pilar.ativo)"
+                      [title]="pilar.ativo ? 'Inativar pilar' : 'Ativar pilar'">
+                      <i class="feather"
+                        [ngClass]="{'icon-toggle-right': pilar.ativo, 'icon-toggle-left text-danger': !pilar.ativo}"></i>
                     </button>
 
                     <!-- Editar (sempre visível) -->
                     <button class="btn btn-icon text-secondary" [routerLink]="['/pilares', pilar.id, 'editar']"
-                      title="Editar pilar">
+                      [title]="'PILARES.EDIT_TOOLTIP' | translate">
                       <i class="feather icon-edit"></i>
                     </button>
 
-                    <!-- Desativar (visível se ativo) -->
-                    @if (pilar.ativo) {
-                    <button class="btn btn-icon text-danger" (click)="confirmDesativar(pilar)" title="Desativar pilar">
+                    <!-- Excluir (visível se ativo) -->
+
+                    <button class="btn btn-icon text-danger" (click)="confirmarExclusao(pilar)"
+                      [title]="'PILARES.DELETE_TOOLTIP' | translate">
                       <i class="feather icon-trash-2"></i>
                     </button>
-                    }
 
-                    <!-- Reativar (visível se inativo) -->
-                    @if (!pilar.ativo) {
-                    <button class="btn btn-icon text-success" (click)="reativar(pilar.id)" title="Reativar pilar">
-                      <i class="feather icon-check-circle"></i>
-                    </button>
-                    }
                   </div>
                 </td>
               </tr>
               } @empty {
               <tr>
                 <td colspan="7" class="border-bottom text-center text-muted py-4">
-                  Nenhum pilar encontrado
+                  {{ 'PILARES.NO_PILARES_FOUND' | translate }}
                 </td>
               </tr>
               }
@@ -134,7 +129,9 @@
         </div>
 
         <div class="d-flex justify-content-between p-2">
-          <span class="text-muted fs-12">{{ filteredPilares.length }} itens</span>
+          <span class="text-muted fs-12">
+            Mostrando {{ getStartIndex() + 1 }}-{{ getEndIndex() }} de {{ filteredPilares.length }} {{ 'COMMON.ITEMS' | translate }}
+          </span>
 
           @if (totalPages > 1) {
           <ngb-pagination [collectionSize]="filteredPilares.length" [(page)]="currentPage" size="sm"
@@ -190,11 +187,11 @@
         }
         <div class="mb-2">
           <span class="text-muted small">{{ 'PILARES.DETAILS.ROTINAS_COUNT' | translate }}</span>
-          <div>{{ selectedPilar._count?.rotinas || 0 }} rotinas vinculadas</div>
+          <div>{{ selectedPilar._count?.rotinas || 0 }} {{ 'PILARES.ROTINAS_LINKED' | translate }}</div>
         </div>
         <div class="mb-0">
           <span class="text-muted small">{{ 'PILARES.DETAILS.EMPRESAS_COUNT' | translate }}</span>
-          <div>{{ selectedPilar._count?.empresas || 0 }} empresas usando</div>
+          <div>{{ selectedPilar._count?.empresas || 0 }} {{ 'PILARES.EMPRESAS_USING' | translate }}</div>
         </div>
       </div>
     </div>

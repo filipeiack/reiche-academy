@@ -184,17 +184,28 @@
     "YEAR": "Ano"
   },
   "PILARES": {
-    "NEW": "Adicionar Pilar",
+    "TITLE": "Pilares Template",
+    "NEW_PILAR": "Adicionar Pilar",
+    "NEW_PILAR_TOOLTIP": "Adicionar Novo Pilar Template",
     "EDIT": "Editar Pilar",
     "DETAILS": "Detalhes do Pilar",
     "PILAR": "Pilar",
+    "SEARCH_PLACEHOLDER": "Buscar por nome...",
+    "NO_PILARES_FOUND": "Nenhum pilar encontrado",
+    "ROTINAS_LINKED": "rotinas vinculadas",
+    "EMPRESAS_USING": "empresas usando",
+    "DETAILS_TOOLTIP": "Detalhes do pilar",
+    "EDIT_TOOLTIP": "Editar pilar",
+    "DEACTIVATE_TOOLTIP": "Desativar pilar",
+    "REACTIVATE_TOOLTIP": "Reativar pilar",
     "FIELDS": {
       "NAME": "Nome",
       "DESCRIPTION": "Descrição",
       "ORDER": "Ordem",
       "TYPE": "Tipo",
       "CONFIGURATION": "Configuração",
-      "IS_MODEL": "Pilar Padrão"
+      "IS_MODEL": "Pilar Padrão",
+      "ROTINAS": "Rotinas"
     },
     "PLACEHOLDERS": {
       "NAME": "Digite o nome do pilar",
@@ -253,6 +264,26 @@
     "NO_MEDIAS": "Esta empresa não possui pilares com notas avaliadas.",
     "NO_HISTORICO": "Este pilar ainda não possui histórico de evolução. Congele as médias para criar o primeiro registro.",
     "NO_EMPRESA_ASSOCIATED": "Você não possui empresa associada. Entre em contato com o administrador."
+  },
+  "ROTINAS": {
+    "TITLE": "Rotinas Template",
+    "NEW_ROTINA": "Adicionar Rotina",
+    "NEW_ROTINA_TOOLTIP": "Adicionar Nova Rotina Template",
+    "ALL_PILARES": "Todos os Pilares",
+    "SELECT_PILAR_TO_REORDER": "Selecione um pilar para habilitar a reordenação drag-and-drop",
+    "DRAG_TO_REORDER": "Arraste as rotinas para reordenar",
+    "DETAILS": "Detalhes da Rotina",
+    "DETAILS_TOOLTIP": "Detalhes da rotina",
+    "EDIT_TOOLTIP": "Editar rotina",
+    "DEACTIVATE_TOOLTIP": "Desativar rotina",
+    "REACTIVATE_TOOLTIP": "Reativar rotina",
+    "FIELDS": {
+      "NAME": "Nome",
+      "DESCRIPTION": "Descrição",
+      "ORDER": "Ordem",
+      "PILAR": "Pilar",
+      "ROTINA": "Rotina"
+    }
   }
 }
 

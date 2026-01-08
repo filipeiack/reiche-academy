@@ -100,7 +100,7 @@ import { TranslatePipe } from "../../../../core/pipes/translate.pipe";
     </ng-template>
 
     <!-- Modal de Nova Rotina -->
-    <app-nova-rotina-modal (rotinaCriada)="onRotinaCriada()"></app-nova-rotina-modal>
+    <app-nova-rotina-modal [empresaId]="empresaId" (rotinaCriada)="onRotinaCriada()"></app-nova-rotina-modal>
   `,
   styles: [`
     .rotinas-list {
@@ -274,14 +274,14 @@ export class RotinasPilarModalComponent implements OnInit {
   abrirModalNovaRotina(): void {
     if (!this.novaRotinaModal) return;
 
-    // Criar objeto PilarEmpresa para passar ao modal
+    // Criar objeto PilarEmpresa para passar ao modal (usando campos snapshot)
     const pilarEmpresa: PilarEmpresa = {
       id: this.pilarEmpresaId,
-      pilarId: this.pilarId,
-      pilar: {
-        id: this.pilarId,
-        nome: this.pilarNome,
-      } as any,
+      pilarTemplateId: this.pilarId,
+      nome: this.pilarNome,
+      empresaId: '', // Será preenchido pelo backend
+      ordem: 0,
+      ativo: true,
       rotinasEmpresa: this.rotinasEmpresa
     } as PilarEmpresa;
 

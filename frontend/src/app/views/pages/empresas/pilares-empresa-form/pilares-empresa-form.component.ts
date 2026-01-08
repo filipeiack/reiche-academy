@@ -37,8 +37,7 @@ export class PilaresEmpresaFormComponent implements OnInit {
 
   addPilarTag = (nome: string): Pilar | Promise<Pilar> => {
     const novoPilar: CreatePilarDto = {
-      nome: nome,
-      modelo: false
+      nome: nome
     };
 
     return new Promise((resolve, reject) => {

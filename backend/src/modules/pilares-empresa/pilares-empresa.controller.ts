@@ -13,6 +13,7 @@ import { Request as ExpressRequest } from 'express';
 import { ApiTags, ApiOperation, ApiBearerAuth, ApiResponse } from '@nestjs/swagger';
 import { PilaresEmpresaService } from './pilares-empresa.service';
 import { ReordenarPilaresDto } from './dto/reordenar-pilares.dto';
+import { VincularPilaresDto } from './dto/vincular-pilares.dto';
 import { DefinirResponsavelDto } from './dto/definir-responsavel.dto';
 import { ReordenarRotinasDto } from './dto/reordenar-rotinas.dto';
 import { CreatePilarEmpresaDto } from './dto/create-pilar-empresa.dto';
@@ -53,6 +54,21 @@ export class PilaresEmpresaController {
     @Request() req: ExpressRequest & { user: any },
   ) {
     return this.pilaresEmpresaService.createPilarEmpresa(empresaId, dto, req.user);
+  }
+
+  @Post('vincular')
+  @Roles('ADMINISTRADOR', 'GESTOR')
+  @ApiOperation({ summary: 'Vincular múltiplos pilares templates a uma empresa' })
+  @ApiResponse({ status: 201, description: 'Pilares vinculados com sucesso (adição incremental)' })
+  @ApiResponse({ status: 400, description: 'Array de IDs vazio ou inválido' })
+  @ApiResponse({ status: 403, description: 'Acesso negado (multi-tenant)' })
+  @ApiResponse({ status: 404, description: 'Nenhum template encontrado' })
+  vincularPilares(
+    @Param('empresaId') empresaId: string,
+    @Body() dto: VincularPilaresDto,
+    @Request() req: ExpressRequest & { user: any },
+  ) {
+    return this.pilaresEmpresaService.vincularPilares(empresaId, dto.pilaresIds, req.user);
   }
 
   @Post('reordenar')

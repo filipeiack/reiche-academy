@@ -288,6 +288,16 @@ export class UsuariosListComponent implements OnInit {
     return Math.ceil(this.filteredUsuarios.length / this.pageSize);
   }
 
+  getStartIndex(): number {
+    if (this.filteredUsuarios.length === 0) return 0;
+    return (this.currentPage - 1) * this.pageSize;
+  }
+
+  getEndIndex(): number {
+    const end = this.currentPage * this.pageSize;
+    return Math.min(end, this.filteredUsuarios.length);
+  }
+
   get paginatedUsuarios(): Usuario[] {
     const start = (this.currentPage - 1) * this.pageSize;
     const end = start + this.pageSize;

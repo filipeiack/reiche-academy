@@ -5,14 +5,14 @@
         <i class="feather icon-repeat"></i>
       </li>
       <li class="breadcrumb-item active" aria-current="page">
-        Rotinas
+        {{ 'ROTINAS.TITLE' | translate }}
       </li>
     </ol>
   </nav>
 
-  <button type="button" class="btn btn-primary btn-icon-text btn-xs" [routerLink]="['/rotinas/novo']">
+  <button type="button" class="btn btn-primary btn-icon-text btn-xs" [routerLink]="['/rotinas/novo']" [ngbTooltip]="'ROTINAS.NEW_ROTINA_TOOLTIP' | translate">
     <i class="feather icon-plus btn-icon-prepend"></i>
-    Adicionar Rotina
+    {{ 'ROTINAS.NEW_ROTINA' | translate }}
   </button>
 </div>
 
@@ -25,7 +25,7 @@
         <div class="row mb-3">
           <div class="col-md-4">
             <ng-select id="pilarFilter" [(ngModel)]="pilarIdFiltro" (ngModelChange)="onFilterChange()"
-              placeholder="Todos os Pilares" [clearable]="true">
+              [placeholder]="'ROTINAS.ALL_PILARES' | translate" [clearable]="true">
               <ng-option *ngFor="let pilar of pilares" [value]="pilar.id">
                 {{ pilar.nome }}
               </ng-option>
@@ -33,12 +33,10 @@
           </div>
           <div class="col-md-8">
             <div class="alert alert-info mb-0" *ngIf="!canReorder">
-
-              Selecione um pilar para habilitar a reordenação drag-and-drop
+              {{ 'ROTINAS.SELECT_PILAR_TO_REORDER' | translate }}
             </div>
             <div class="alert alert-success mb-0" *ngIf="canReorder">
-
-              Arraste as rotinas para reordenar
+              {{ 'ROTINAS.DRAG_TO_REORDER' | translate }}
             </div>
           </div>
         </div>
@@ -47,7 +45,7 @@
         <!-- Loading -->
         <div class="text-center py-5" *ngIf="loading">
           <div class="spinner-border text-primary" role="status">
-            <span class="visually-hidden">Carregando...</span>
+            <span class="visually-hidden">{{ 'COMMON.LOADING' | translate }}</span>
           </div>
         </div>
         } @else {
@@ -60,20 +58,19 @@
             <thead>
               <tr>
                 <th *ngIf="canReorder" style="width: 40px;"></th>
-                <th>Pilar</th>
-                <th>Rotina</th>
-                <th style="width: 120px;">Ações</th>
+                <th>{{ 'ROTINAS.FIELDS.PILAR' | translate }}</th>
+                <th>{{ 'ROTINAS.FIELDS.ROTINA' | translate }}</th>
+                <th style="width: 120px;">{{ 'COMMON.ACTIONS' | translate }}</th>
               </tr>
             </thead>
             <tbody cdkDropList [cdkDropListDisabled]="!canReorder" (cdkDropListDropped)="onDrop($event)">
               <tr *ngFor="let rotina of paginatedRotinas" cdkDrag [cdkDragDisabled]="!canReorder">
                 <td *ngIf="canReorder" class="text-center">
-                  <i class="bi bi-grip-vertical text-muted cursor-grab">
-                  </i>
+                  <i class="feather icon-list me-2"></i>
                 </td>
                 <td>{{ rotina.pilar?.nome || '—' }}</td>
                 <td style="max-width: 600px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
-                  <span class="badge bg-secondary small" ngbTooltip="Ordem">{{ rotina.ordem }}</span>
+                  <span class="badge bg-secondary small" [ngbTooltip]="'ROTINAS.FIELDS.ORDER' | translate">{{ rotina.ordem }}</span>
                   <span [ngbTooltip]="rotina.nome"> {{ rotina.nome }} </span>
                 </td>
                 <td class="text-nowrap">
@@ -81,28 +78,29 @@
                     <!-- Detalhes -->
                     <button class="btn btn-icon text-primary"
                       (click)="openDetailsOffcanvas(rotina.id, detailsOffcanvas)"
-                      [title]="'Detalhes da rotina' | translate">
+                      [title]="'ROTINAS.DETAILS_TOOLTIP' | translate">
                       <i class="feather icon-info"></i>
+                    </button>
+
+                    <!-- Toggle Ativar/Inativar -->
+                    <button class="btn btn-icon text-primary"
+                        (click)="toggleStatus(rotina.id, rotina.nome, rotina.ativo)"
+                        [title]="rotina.ativo ? 'Inativar rotina' : 'Ativar rotina'">
+                        <i class="feather"
+                          [ngClass]="{'icon-toggle-right': rotina.ativo, 'icon-toggle-left': !rotina.ativo}"></i>
                     </button>
 
                     <!-- Editar (sempre visível) -->
                     <button class="btn btn-icon text-secondary" [routerLink]="['/rotinas/editar', rotina.id]"
-                      title="Editar rotina">
+                      [title]="'ROTINAS.EDIT_TOOLTIP' | translate">
                       <i class="feather icon-edit"></i>
                     </button>
 
-                    <!-- Desativar (visível se ativo) -->
+                    <!-- Excluir (visível se ativo) -->
                     @if (rotina.ativo) {
-                    <button class="btn btn-icon text-danger" (click)="confirmDesativar(rotina)"
-                      title="Desativar rotina">
+                    <button class="btn btn-icon text-danger" (click)="confirmarExclusao(rotina)"
+                      [title]="'ROTINAS.DELETE_TOOLTIP' | translate">
                       <i class="feather icon-trash-2"></i>
-                    </button>
-                    }
-
-                    <!-- Reativar (visível se inativo) -->
-                    @if (!rotina.ativo) {
-                    <button class="btn btn-icon text-success" (click)="reativar(rotina.id)" title="Reativar rotina">
-                      <i class="feather icon-check-circle"></i>
                     </button>
                     }
                   </div>
@@ -114,7 +112,9 @@
 
         <!-- Pagination -->
         <div class="d-flex justify-content-between p-2">
-          <span class="text-muted fs-12">{{ totalRotinas }} {{ 'COMMON.ITEMS' | translate }}</span>
+          <span class="text-muted fs-12">
+            Mostrando {{ getStartIndex() + 1 }}-{{ getEndIndex() }} de {{ totalRotinas }} {{ 'COMMON.ITEMS' | translate }}
+          </span>
           <ngb-pagination [(page)]="page" [pageSize]="pageSize" [collectionSize]="totalRotinas" size="sm"
             [rotate]="true" [boundaryLinks]="true">
           </ngb-pagination>

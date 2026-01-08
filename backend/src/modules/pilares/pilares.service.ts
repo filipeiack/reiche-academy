@@ -2,6 +2,7 @@ import { Injectable, NotFoundException, ConflictException } from '@nestjs/common
 import { PrismaService } from '../../common/prisma/prisma.service';
 import { CreatePilarDto } from './dto/create-pilar.dto';
 import { UpdatePilarDto } from './dto/update-pilar.dto';
+import { ReordenarPilarDto } from './dto/reordenar-pilar.dto';
 import { RequestUser } from '../../common/interfaces/request-user.interface';
 import { AuditService } from '../audit/audit.service';
 
@@ -52,7 +53,6 @@ export class PilaresService {
 
   async findAll() {
     return this.prisma.pilar.findMany({
-      where: { ativo: true },
       include: {
         _count: {
           select: {
@@ -69,11 +69,9 @@ export class PilaresService {
     const pilar = await this.prisma.pilar.findFirst({
       where: { 
         id,
-        ativo: true,
       },
       include: {
         rotinas: {
-          where: { ativo: true },
           orderBy: { ordem: 'asc' },
         },
         empresas: {
@@ -85,6 +83,12 @@ export class PilaresService {
                 cnpj: true,
               },
             },
+          },
+        },
+        _count: {
+          select: {
+            rotinas: true,
+            empresas: true,
           },
         },
       },
@@ -138,26 +142,48 @@ export class PilaresService {
   async remove(id: string, requestUser: RequestUser) {
     const before = await this.findOne(id);
 
-    // Verifica se há rotinas ativas vinculadas
-    const rotiasCount = await this.prisma.rotina.count({
+    // Verifica se há empresas usando o pilar
+    const empresasCount = await this.prisma.pilarEmpresa.count({
       where: {
-        pilarId: id,
-        ativo: true,
+        pilarTemplateId: id,
       },
     });
 
-    if (rotiasCount > 0) {
-      throw new ConflictException(
-        'Não é possível desativar um pilar que possui rotinas ativas',
-      );
+    if (empresasCount > 0) {
+      // Se houver empresas usando, apenas desativa (soft delete)
+      const after = await this.prisma.pilar.update({
+        where: { id },
+        data: {
+          ativo: false,
+          updatedBy: requestUser.id,
+        },
+      });
+
+      await this.audit.log({
+        usuarioId: requestUser.id,
+        usuarioNome: requestUser.nome,
+        usuarioEmail: requestUser.email,
+        entidade: 'pilares',
+        entidadeId: id,
+        acao: 'DEACTIVATE',
+        dadosAntes: before,
+        dadosDepois: after,
+      });
+
+      return after;
     }
 
-    const after = await this.prisma.pilar.update({
-      where: { id },
-      data: {
-        ativo: false,
-        updatedBy: requestUser.id,
+    // Se não houver empresas, excluir permanentemente (com cascata de rotinas)
+    // Primeiro deletar todas as rotinas vinculadas
+    await this.prisma.rotina.deleteMany({
+      where: {
+        pilarId: id,
       },
+    });
+
+    // Depois deletar o pilar
+    const deleted = await this.prisma.pilar.delete({
+      where: { id },
     });
 
     await this.audit.log({
@@ -168,9 +194,37 @@ export class PilaresService {
       entidadeId: id,
       acao: 'DELETE',
       dadosAntes: before,
-      dadosDepois: after,
     });
 
-    return after;
+    return deleted;
+  }
+
+  async reordenar(reordenarPilarDto: ReordenarPilarDto, requestUser: RequestUser) {
+    const { ordens } = reordenarPilarDto;
+
+    // Atualizar todas as ordens em uma transação
+    const updates = ordens.map((item) =>
+      this.prisma.pilar.update({
+        where: { id: item.id },
+        data: { 
+          ordem: item.ordem,
+          updatedBy: requestUser.id
+        },
+      }),
+    );
+
+    const pilares = await this.prisma.$transaction(updates);
+
+    await this.audit.log({
+      usuarioId: requestUser.id,
+      usuarioNome: requestUser.nome,
+      usuarioEmail: requestUser.email,
+      entidade: 'pilares',
+      entidadeId: 'bulk',
+      acao: 'UPDATE',
+      dadosDepois: { ordens },
+    });
+
+    return pilares;
   }
 }

@@ -545,8 +545,7 @@ export class EmpresasFormComponent implements OnInit {
 
   addPilarTag = (nome: string): Pilar | Promise<Pilar> => {
     const novoPilar: CreatePilarDto = {
-      nome: nome,
-      modelo: false
+      nome: nome
     };
 
     return new Promise((resolve, reject) => {
@@ -596,10 +595,27 @@ export class EmpresasFormComponent implements OnInit {
   removePillarAssociation(pilarEmpresa: PilarEmpresa): void {
     Swal.fire({
       title: 'Remover Pilar',
-      html: `Deseja remover <strong>${pilarEmpresa.nome}</strong> desta empresa?<br><small class="text-muted">Isso também removerá as rotinas associadas.</small>`,
+      html: `
+        <div class="text-start text-muted">
+          <p>Deseja remover <strong>${pilarEmpresa.nome}</strong> desta empresa?</p>
+          <div class="alert alert-warning mt-3">
+            <strong>⚠️ Atenção!</strong><br>
+            Esta ação removerá <strong>permanentemente</strong>:<br>
+            <ul class="mt-2 mb-0">
+              <li>O pilar <strong>${pilarEmpresa.nome}</strong></li>
+              <li>Todas as <strong>rotinas</strong> vinculadas a este pilar</li>
+              <li>Todas as <strong>notas</strong> vinculadas às rotinas (se houver)</li>
+            </ul>
+          </div>
+          <p class="text-danger mt-2 mb-0"><small>Esta ação não pode ser desfeita!</small></p>
+        </div>
+      `,
       showCancelButton: true,
-      confirmButtonText: 'Sim, remover',
-      cancelButtonText: 'Cancelar'
+      confirmButtonText: 'Sim, remover tudo',
+      cancelButtonText: 'Cancelar',
+      confirmButtonColor: '#d33',
+      cancelButtonColor: '#6c757d',
+      width: '600px'
     }).then((result) => {
       if (result.isConfirmed) {
         if (!this.empresaId) {

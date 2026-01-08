@@ -108,6 +108,22 @@ export class RotinasListComponent implements OnInit {
     });
   }
 
+  applyFilters(): void {
+    let filtered = [...this.rotinas];
+    
+    // Aplicar filtro de busca por nome/descrição
+    if (this.searchQuery && this.searchQuery.trim() !== '') {
+      const query = this.searchQuery.toLowerCase().trim();
+      filtered = filtered.filter(rotina => 
+        rotina.nome.toLowerCase().includes(query) ||
+        (rotina.descricao && rotina.descricao.toLowerCase().includes(query))
+      );
+    }
+    
+    this.rotinasFiltered = filtered;
+    this.page = 1; // Resetar para primeira página ao filtrar
+  }
+
   onFilterChange(): void {
     this.page = 1;
     this.loadRotinas();
@@ -123,6 +139,16 @@ export class RotinasListComponent implements OnInit {
     return this.rotinasFiltered.length;
   }
 
+  getStartIndex(): number {
+    if (this.rotinasFiltered.length === 0) return 0;
+    return (this.page - 1) * this.pageSize;
+  }
+
+  getEndIndex(): number {
+    const end = this.page * this.pageSize;
+    return Math.min(end, this.rotinasFiltered.length);
+  }
+
   get rotinasCountText(): string {
     if (this.pilarIdFiltro) {
       const pilar = this.pilares.find(p => p.id === this.pilarIdFiltro);
@@ -134,12 +160,6 @@ export class RotinasListComponent implements OnInit {
 
   get canReorder(): boolean {
     return !!this.pilarIdFiltro;
-  }
-
-  truncateText(text: string | undefined, maxLength: number): string {
-    if (!text) return '';
-    if (text.length <= maxLength) return text;
-    return text.substring(0, maxLength) + '...';
   }
 
   onDrop(event: CdkDragDrop<Rotina[]>): void {
@@ -168,76 +188,100 @@ export class RotinasListComponent implements OnInit {
     });
   }
 
-  confirmDesativar(rotina: Rotina): void {
-    Swal.fire({
-      title: 'Confirmar Desativação',
-      html: `Deseja desativar a rotina <strong>"${rotina.nome}"</strong>?`,
-      showCancelButton: true,
-      confirmButtonText: 'Desativar',
-      cancelButtonText: 'Cancelar',
-      confirmButtonColor: '#d33',
-      cancelButtonColor: '#6c757d'
-    }).then((result) => {
-      if (result.isConfirmed) {
-        this.deleteRotina(rotina);
+  confirmarExclusao(rotina: Rotina): void {
+    // Buscar detalhes da rotina (empresas usando)
+    this.rotinasService.findOne(rotina.id).subscribe({
+      next: (rotinaDetalhada) => {
+        const empresasUsando = rotinaDetalhada._count?.empresas || 0;
+        
+        if (empresasUsando > 0) {
+          // Se houver empresas, permitir apenas desativação
+          Swal.fire({
+            title: 'Rotina em Uso',
+            html: `
+              <span class="text-muted">Esta rotina está sendo usada por <strong>${empresasUsando} empresa(s)</strong>.<br><br>
+              Não é possível excluí-la permanentemente, mas você pode <strong>desativá-la</strong>.<br><br>
+              Deseja desativar a rotina <strong>"${rotina.nome}"</strong>?</span>
+            `,
+            showCancelButton: true,
+            confirmButtonText: 'Sim, desativar',
+            cancelButtonText: 'Cancelar',
+            confirmButtonColor: '#ffc107',
+            cancelButtonColor: '#6c757d',
+          }).then((result) => {
+            if (result.isConfirmed) {
+              this.excluir(rotina.id);
+            }
+          });
+          return;
+        }
+
+        // Permitir exclusão permanente se não houver vínculos
+        Swal.fire({
+          title: 'Confirmar Exclusão Permanente',
+          html: `
+            <span class="text-muted">Tem certeza que deseja <strong>excluir permanentemente</strong> a rotina <strong>"${rotina.nome}"</strong>?</span><br><br>
+            <span class="text-danger">Esta ação não pode ser desfeita!</span>
+          `,
+          showCancelButton: true,
+          confirmButtonText: 'Sim, excluir permanentemente',
+          cancelButtonText: 'Cancelar',
+          confirmButtonColor: '#d33',
+          cancelButtonColor: '#6c757d',
+        }).then((result) => {
+          if (result.isConfirmed) {
+            this.excluir(rotina.id);
+          }
+        });
+      },
+      error: (err) => {
+        this.showToast('Erro ao verificar rotina', 'error');
       }
     });
   }
 
-  deleteRotina(rotina: Rotina): void {
-    this.rotinasService.remove(rotina.id).subscribe({
-      next: () => {
-        this.showToast('Rotina desativada com sucesso', 'success');
+  excluir(id: string): void {
+    this.rotinasService.remove(id).subscribe({
+      next: (response) => {
+        // Verificar se foi desativado ou excluído baseado no response
+        const mensagem = response.ativo === false 
+          ? 'Rotina desativada com sucesso' 
+          : 'Rotina excluída com sucesso';
+        this.showToast(mensagem, 'success');
         this.loadRotinas();
       },
-      error: (error: HttpErrorResponse) => {
-        if (error.status === 409) {
-          const errorData = error.error;
-          this.showConflictError(errorData);
-        } else if (error.status === 404) {
-          this.showToast('Rotina não encontrada', 'error');
-        } else {
-          this.showToast('Erro ao desativar rotina', 'error');
-        }
-        console.error('Erro ao deletar rotina:', error);
+      error: (err) => {
+        const message = err?.error?.message || 'Erro ao excluir rotina';
+        this.showToast(message, 'error');
       }
     });
   }
 
-  showConflictError(errorData: any): void {
-    const empresas = errorData.empresasAfetadas || [];
-    const empresasText = empresas.map((e: any) => `<li>${e.nome}</li>`).join('');
+  toggleStatus(id: string, nome: string, ativo: boolean): void {
+    const action = ativo ? 'inativar' : 'ativar';
+    const actionCapitalized = ativo ? 'Inativar' : 'Ativar';
     
     Swal.fire({
-      title: 'Não é possível desativar',
-      html: `
-        Esta rotina está em uso por <strong>${errorData.totalEmpresas} empresa(s)</strong>:<br><br>
-        <ul style="text-align: left;">${empresasText}</ul>
-        <br>Remova o vínculo primeiro.
-      `,
-      confirmButtonText: 'Entendi',
-      confirmButtonColor: '#3085d6'
-    });
-  }
-
-  reativar(id: string): void {
-    Swal.fire({
-      title: 'Confirmar Reativação',
-      text: 'Deseja reativar esta rotina?',
+      title: `Confirmar ${actionCapitalized}`,
+      text: `Deseja ${action} a rotina "${nome}"?`,
       showCancelButton: true,
-      confirmButtonText: 'Reativar',
+      confirmButtonText: actionCapitalized,
       cancelButtonText: 'Cancelar',
-      confirmButtonColor: '#28a745',
+      confirmButtonColor: ativo ? '#dc3545' : '#28a745',
       cancelButtonColor: '#6c757d'
     }).then((result) => {
       if (result.isConfirmed) {
-        this.rotinasService.reativar(id).subscribe({
+        const service$ = ativo 
+          ? this.rotinasService.desativar(id)
+          : this.rotinasService.reativar(id);
+        
+        service$.subscribe({
           next: () => {
-            this.showToast('Rotina reativada com sucesso', 'success');
+            this.showToast(`Rotina ${ativo ? 'inativada' : 'ativada'} com sucesso`, 'success');
             this.loadRotinas();
           },
-          error: (err) => {
-            const message = err?.error?.message || 'Erro ao reativar rotina';
+          error: (err: any) => {
+            const message = err?.error?.message || `Erro ao ${action} rotina`;
             this.showToast(message, 'error');
           }
         });
@@ -259,9 +303,5 @@ export class RotinasListComponent implements OnInit {
         this.showToast('Erro ao carregar detalhes', 'error');
       }
     });
-  }
-
-  retry(): void {
-    this.loadRotinas();
   }
 }

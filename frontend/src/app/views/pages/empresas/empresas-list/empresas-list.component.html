@@ -56,7 +56,7 @@
                   <th>
                     <input class="form-check-input" type="checkbox" [(ngModel)]="headerCheckboxChecked" (change)="toggleHeaderCheckbox()">
                   </th>
-                  <th scope="col" sortable="nome" (sort)="onSort($event)">{{ 'COMPANIES.NAME' | translate }}</th>
+                  <th scope="col" sortable="nome" (sort)="onSort($event)" class="w-100">{{ 'COMPANIES.NAME' | translate }}</th>
                   <th scope="col" sortable="cnpj" (sort)="onSort($event)">{{ 'COMPANIES.CNPJ' | translate }}</th>
                   <!-- <th scope="col" sortable="cidade" (sort)="onSort($event)">{{ 'COMPANIES.CIDADE' | translate }}</th> -->
                   <th scope="col" sortable="estado" (sort)="onSort($event)">{{ 'COMPANIES.ESTADO' | translate }}</th>
@@ -107,7 +107,9 @@
           </div>
 
           <div class="d-flex justify-content-between p-2">
-            <span class="text-muted fs-12">{{ filteredEmpresas.length }} {{ 'COMMON.ITEMS' | translate }}</span>
+            <span class="text-muted fs-12">
+              Mostrando {{ getStartIndex() + 1 }}-{{ getEndIndex() }} de {{ filteredEmpresas.length }} {{ 'COMMON.ITEMS' | translate }}
+            </span>
             @if (totalPages > 1) {
             <ngb-pagination [collectionSize]="filteredEmpresas.length" [(page)]="currentPage" size="sm" [pageSize]="pageSize"></ngb-pagination>
             }
