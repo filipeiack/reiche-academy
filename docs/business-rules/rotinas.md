@@ -64,8 +64,7 @@ O sistema atual possui rotinas com campo `modelo: Boolean`, onde:
 -- Adicionar novos campos a RotinaEmpresa
 ALTER TABLE "RotinaEmpresa" 
   ADD COLUMN "rotinaTemplateId" TEXT,
-  ADD COLUMN "nome" TEXT,
-  ADD COLUMN "descricao" TEXT;
+  ADD COLUMN "nome" TEXT;
 
 -- Tornar rotinaId nullable temporariamente
 ALTER TABLE "RotinaEmpresa" 
@@ -79,13 +78,12 @@ CREATE INDEX "RotinaEmpresa_rotinaTemplateId_idx" ON "RotinaEmpresa"("rotinaTemp
 ```sql
 -- Migrar rotinas modelo=false para tabela RotinaEmpresa
 INSERT INTO "RotinaEmpresa" (
-  id, nome, descricao, ordem, "pilarEmpresaId", "rotinaTemplateId",
+  id, nome, ordem, "pilarEmpresaId", "rotinaTemplateId",
   "createdAt", "updatedAt", "createdBy", "updatedBy"
 )
 SELECT
   gen_random_uuid(),  -- Novo ID para instância
   r.nome,             -- Copiar nome
-  r.descricao,        -- Copiar descrição
   re.ordem,           -- Preservar ordem
   re."pilarEmpresaId",
   r.id,               -- Template original (se aplicável)
@@ -189,7 +187,6 @@ ALTER TABLE "RotinaEmpresa"
 | rotinaTemplateId | String? | FK para Rotina (null = customizado, uuid = cópia de template) |
 | rotinaTemplate | Rotina? | Relação com template de origem (se aplicável) |
 | nome | String | Nome da rotina (SEMPRE preenchido, copiado OU customizado) |
-| descricao | String? | Descrição (SEMPRE preenchido, copiado OU customizado) |
 | pilarEmpresaId | String | FK para PilarEmpresa (obrigatório) |
 | pilarEmpresa | PilarEmpresa | Relação com pilar da empresa |
 | ordem | Int | Ordem de exibição per-company (independente do template) |

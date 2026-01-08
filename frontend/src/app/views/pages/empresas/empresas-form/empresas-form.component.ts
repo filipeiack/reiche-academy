@@ -596,7 +596,7 @@ export class EmpresasFormComponent implements OnInit {
   removePillarAssociation(pilarEmpresa: PilarEmpresa): void {
     Swal.fire({
       title: 'Remover Pilar',
-      html: `Deseja remover <strong>${pilarEmpresa.pilar.nome}</strong> desta empresa?<br><small class="text-muted">Isso também removerá as rotinas associadas.</small>`,
+      html: `Deseja remover <strong>${pilarEmpresa.nome}</strong> desta empresa?<br><small class="text-muted">Isso também removerá as rotinas associadas.</small>`,
       showCancelButton: true,
       confirmButtonText: 'Sim, remover',
       cancelButtonText: 'Cancelar'
@@ -604,9 +604,16 @@ export class EmpresasFormComponent implements OnInit {
       if (result.isConfirmed) {
         if (!this.empresaId) {
           // Modo criação: remover da lista pendente
-          this.pilaresPendentesAssociacao = this.pilaresPendentesAssociacao.filter(p => p.id !== pilarEmpresa.pilar.id);
-          this.pilaresDisponiveis.push(pilarEmpresa.pilar);
-          this.showToast(`Pilar ${pilarEmpresa.pilar.nome} removido da lista`, 'success');
+          // Nota: No modo criação, ainda trabalhamos com IDs de templates
+          const templateId = pilarEmpresa.pilarTemplateId;
+          if (templateId) {
+            this.pilaresPendentesAssociacao = this.pilaresPendentesAssociacao.filter(p => p.id !== templateId);
+            const template = this.pilaresDisponiveis.find(p => p.id === templateId) || pilarEmpresa.pilarTemplate;
+            if (template && !this.pilaresDisponiveis.find(p => p.id === template.id)) {
+              this.pilaresDisponiveis.push(template);
+            }
+          }
+          this.showToast(`Pilar ${pilarEmpresa.nome} removido da lista`, 'success');
         } else {
           // Modo edição: remover via API
           this.confirmarRemocaoPilar(pilarEmpresa);
@@ -620,9 +627,12 @@ export class EmpresasFormComponent implements OnInit {
 
     this.pilaresEmpresaService.removerPilar(this.empresaId, pilarEmpresa.id).subscribe({
       next: (response) => {
-        this.showToast(response.message || `Pilar ${pilarEmpresa.pilar.nome} removido com sucesso!`, 'success');
+        this.showToast(response.message || `Pilar ${pilarEmpresa.nome} removido com sucesso!`, 'success');
         this.pilaresAssociados = this.pilaresAssociados.filter(p => p.id !== pilarEmpresa.id);
-        this.pilaresDisponiveis.push(pilarEmpresa.pilar);
+        // Se tiver template, adicionar de volta aos disponíveis
+        if (pilarEmpresa.pilarTemplate) {
+          this.pilaresDisponiveis.push(pilarEmpresa.pilarTemplate);
+        }
       },
       error: (err) => {
         this.showToast(err?.error?.message || 'Erro ao remover pilar', 'error');

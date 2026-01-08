@@ -7,11 +7,6 @@ export class UpdatePilarEmpresaDto {
   @Length(2, 200)
   nome?: string;
 
-  @ApiPropertyOptional({ example: 'Descrição atualizada do pilar' })
-  @IsOptional()
-  @MaxLength(500)
-  descricao?: string;
-
   @ApiPropertyOptional({ example: 'uuid-do-usuario-responsavel' })
   @IsOptional()
   @IsUUID('4')

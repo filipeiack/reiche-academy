@@ -26,7 +26,7 @@ import { PilarEmpresa } from '../../../../core/services/diagnostico-notas.servic
         @if (pilarEmpresa) {
         <div class="mb-3">
           <p class="text-muted">
-            <strong>Pilar:</strong> {{ pilarEmpresa.pilar.nome }}
+            <strong>Pilar:</strong> {{ pilarEmpresa.nome }}
           </p>
         </div>
 

@@ -106,7 +106,7 @@ export class PilaresEmpresaFormComponent implements OnInit {
   removePillarAssociation(pilarEmpresa: PilarEmpresa): void {
     Swal.fire({
       title: 'Remover Pilar',
-      html: `Deseja remover o pilar <strong>${pilarEmpresa.pilar.nome}</strong> desta empresa?`,
+      html: `Deseja remover o pilar <strong>${pilarEmpresa.nome}</strong> desta empresa?`,
       showCancelButton: true,
       confirmButtonText: 'Sim, remover',
       cancelButtonText: 'Cancelar'
@@ -114,9 +114,12 @@ export class PilaresEmpresaFormComponent implements OnInit {
       if (result.isConfirmed && this.empresaId) {
         this.pilaresEmpresaService.removerPilar(this.empresaId, pilarEmpresa.id).subscribe({
           next: () => {
-            this.showToast(`Pilar ${pilarEmpresa.pilar.nome} removido com sucesso!`, 'success');
+            this.showToast(`Pilar ${pilarEmpresa.nome} removido com sucesso!`, 'success');
             this.pilaresAssociados = this.pilaresAssociados.filter(p => p.id !== pilarEmpresa.id);
-            this.pilaresDisponiveis.push(pilarEmpresa.pilar);
+            // Se tiver template, adicionar de volta aos disponíveis
+            if (pilarEmpresa.pilarTemplate) {
+              this.pilaresDisponiveis.push(pilarEmpresa.pilarTemplate);
+            }
             this.pilaresChanged.emit();
           },
           error: (err: any) => {

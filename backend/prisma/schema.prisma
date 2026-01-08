@@ -218,7 +218,6 @@ model PilarEmpresa {
   
   // Snapshot data (copied from template OR custom)
   nome        String
-  descricao   String?
   
   ordem       Int
   ativo       Boolean  @default(true)
@@ -252,7 +251,6 @@ model RotinaEmpresa {
   
   // Snapshot data (copied from template OR custom)
   nome        String
-  descricao   String?
   
   ordem         Int
 

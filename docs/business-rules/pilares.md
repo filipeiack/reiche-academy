@@ -71,18 +71,16 @@ A migração do modelo antigo (campo `modelo`) para Snapshot Pattern ocorre em 4
 UPDATE pilares_empresa pe
 SET 
   pilar_template_id = pe.pilar_id,
-  nome = (SELECT nome FROM pilares p WHERE p.id = pe.pilar_id),
-  descricao = (SELECT descricao FROM pilares p WHERE p.id = pe.pilar_id)
+  nome = (SELECT nome FROM pilares p WHERE p.id = pe.pilar_id)
 WHERE pe.pilar_id IS NOT NULL;
 
 -- 2. Migrar pilares customizados (modelo=false) para PilarEmpresa
 -- Identificar empresa proprietária através do primeiro vínculo
-INSERT INTO pilares_empresa (id, pilar_template_id, nome, descricao, empresa_id, ordem, ativo, created_at, updated_at, created_by)
+INSERT INTO pilares_empresa (id, pilar_template_id, nome, empresa_id, ordem, ativo, created_at, updated_at, created_by)
 SELECT 
   gen_random_uuid(),
   NULL, -- customizado (sem template)
   p.nome,
-  p.descricao,
   pe_first.empresa_id, -- empresa do primeiro vínculo
   (SELECT COALESCE(MAX(ordem), 0) + 1 FROM pilares_empresa WHERE empresa_id = pe_first.empresa_id),
   p.ativo,
@@ -207,7 +205,6 @@ ALTER TABLE pilares ALTER COLUMN ordem SET NOT NULL;
 | pilarTemplateId | String? | FK para Pilar (null = customizado, uuid = cópia de template) |
 | pilarTemplate | Pilar? | Relação com template de origem (se aplicável) |
 | nome | String | Nome do pilar (SEMPRE preenchido, copiado OU customizado) |
-| descricao | String? | Descrição (SEMPRE preenchido, copiado OU customizado) |
 | empresaId | String | FK para Empresa (obrigatório) |
 | empresa | Empresa | Relação com empresa dona da instância |
 | ordem | Int | Ordem de exibição per-company (independente do template) |
@@ -268,7 +265,6 @@ const pilarEmpresa = await prisma.pilarEmpresa.create({
   data: {
     pilarTemplateId: template.id,      // Referência ao template
     nome: template.nome,                // Cópia
-    descricao: template.descricao,      // Cópia
     empresaId: 'empresa-123',
     ordem: 1,
     createdBy: userId,
@@ -278,7 +274,7 @@ const pilarEmpresa = await prisma.pilarEmpresa.create({
 
 **Resultado:**
 - Empresa tem **cópia independente**
-- Pode editar `nome` e `descricao` sem afetar outras empresas
+- Pode editar `nome` sem afetar outras empresas
 - `pilarTemplateId` preserva origem (analytics, sincronização opcional)
 
 ---
@@ -290,7 +286,6 @@ await prisma.pilarEmpresa.create({
   data: {
     pilarTemplateId: null,              // ❌ Não veio de template
     nome: 'Pilar Específico XYZ',       // Original
-    descricao: 'Customizado...',        // Original
     empresaId: 'empresa-123',
     ordem: 2,
     createdBy: userId,
@@ -319,10 +314,9 @@ const pilares = await prisma.pilarEmpresa.findMany({
   }
 });
 
-// Sempre lê nome/descrição de PilarEmpresa (dados completos)
+// Sempre lê nome de PilarEmpresa (dados completos)
 pilares.forEach(p => {
   console.log(p.nome);       // Dado da instância (não precisa JOIN)
-  console.log(p.descricao);  // Dado da instância
 });
 ```
 
@@ -338,7 +332,7 @@ pilares.forEach(p => {
 // Admin atualiza template
 await prisma.pilar.update({
   where: { id: 'uuid-estrategia' },
-  data: { descricao: 'Nova descrição do template' }
+  data: { nome: 'Novo Nome do Template' }
 });
 
 // ❌ Empresas que já copiaram NÃO são afetadas

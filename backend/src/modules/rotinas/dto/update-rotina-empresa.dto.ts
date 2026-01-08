@@ -7,11 +7,6 @@ export class UpdateRotinaEmpresaDto {
   @Length(2, 200)
   nome?: string;
 
-  @ApiPropertyOptional({ example: 'Descrição atualizada da rotina' })
-  @IsOptional()
-  @MaxLength(500)
-  descricao?: string;
-
   @ApiPropertyOptional({ example: 'Observações específicas sobre a execução' })
   @IsOptional()
   @MaxLength(1000)

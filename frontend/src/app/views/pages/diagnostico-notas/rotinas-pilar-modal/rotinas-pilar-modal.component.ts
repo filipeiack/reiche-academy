@@ -67,7 +67,7 @@ import { TranslatePipe } from "../../../../core/pipes/translate.pipe";
                 <div class="d-flex align-items-center gap-2">
                   <i class="feather icon-menu drag-handle" cdkDragHandle ngbTooltip="Arrastar para reordenar"></i>
                   <span class="badge bg-secondary small">{{ rotinaEmpresa.ordem }}</span>
-                  <span class="flex-grow-1 small">{{ rotinaEmpresa.rotina.nome }}</span>
+                  <span class="flex-grow-1 small">{{ rotinaEmpresa.nome }}</span>
                   <button type="button" class="btn btn-icon text-danger"
                         (click)="confirmarRemocao(rotinaEmpresa)" title="Remover rotina">
                         <i class="feather icon-trash-2"></i>
@@ -237,7 +237,7 @@ export class RotinasPilarModalComponent implements OnInit {
   async confirmarRemocao(rotinaEmpresa: RotinaEmpresa): Promise<void> {
     const result = await Swal.fire({
       title: 'Remover Rotina',
-      text: `Deseja remover a rotina "${rotinaEmpresa.rotina.nome}" deste pilar?`,
+      text: `Deseja remover a rotina "${rotinaEmpresa.nome}" deste pilar?`,
       showCancelButton: true,
       confirmButtonColor: '#d33',
       cancelButtonColor: '#6c757d',

@@ -355,7 +355,6 @@ describe('PilaresEmpresaService - Validação Completa', () => {
       // Então deve criar snapshot com dados copiados do template
       expect(result.pilarTemplateId).toBe(templateId);
       expect(result.nome).toBe(templateMock.nome); // Copiado
-      expect(result.descricao).toBe(templateMock.descricao); // Copiado
       expect(result.ordem).toBe(3); // Auto-increment
       expect(audit.log).toHaveBeenCalledWith(expect.objectContaining({
         acao: 'CREATE',
@@ -369,7 +368,6 @@ describe('PilaresEmpresaService - Validação Completa', () => {
     it('R-PILEMP-002: deve criar pilar customizado quando nome fornecido (sem template)', async () => {
       // Dado nome customizado sem templateId
       const customNome = 'Pilar Customizado XYZ';
-      const customDescricao = 'Descrição específica da empresa';
 
       jest.spyOn(prisma.pilarEmpresa, 'findFirst').mockResolvedValueOnce(null); // Nome não existe
       jest.spyOn(prisma.pilarEmpresa, 'findFirst').mockResolvedValueOnce(null); // Sem pilares (ordem = 1)
@@ -377,7 +375,6 @@ describe('PilaresEmpresaService - Validação Completa', () => {
         id: 'custom-pilar-id',
         pilarTemplateId: null,
         nome: customNome,
-        descricao: customDescricao,
         empresaId,
         ordem: 1,
         createdBy: mockGestorEmpresaA.id,
@@ -388,14 +385,13 @@ describe('PilaresEmpresaService - Validação Completa', () => {
       // Quando createPilarEmpresa sem templateId
       const result = await service.createPilarEmpresa(
         empresaId,
-        { nome: customNome, descricao: customDescricao },
+        { nome: customNome },
         mockGestorEmpresaA,
       );
 
       // Então deve criar customizado
       expect(result.pilarTemplateId).toBeNull();
       expect(result.nome).toBe(customNome);
-      expect(result.descricao).toBe(customDescricao);
       expect(result.ordem).toBe(1); // Primeiro pilar
       expect(audit.log).toHaveBeenCalledWith(expect.objectContaining({
         dadosDepois: expect.objectContaining({
@@ -431,7 +427,7 @@ describe('PilaresEmpresaService - Validação Completa', () => {
       await expect(
         service.createPilarEmpresa(
           empresaId,
-          { nome: 'Nome Duplicado', descricao: 'test' },
+          { nome: 'Nome Duplicado' },
           mockGestorEmpresaA,
         ),
       ).rejects.toThrow(ConflictException);
@@ -680,7 +676,6 @@ describe('PilaresEmpresaService - Validação Completa', () => {
 
       expect(result.rotinaTemplateId).toBe(templateId);
       expect(result.nome).toBe(templateMock.nome);
-      expect(result.descricao).toBe(templateMock.descricao);
       expect(result.ordem).toBe(3);
       expect(audit.log).toHaveBeenCalledWith(expect.objectContaining({
         dadosDepois: expect.objectContaining({ isCustom: false }),
@@ -689,7 +684,6 @@ describe('PilaresEmpresaService - Validação Completa', () => {
 
     it('R-ROTEMP-001: deve criar rotina customizada sem template', async () => {
       const customNome = 'Rotina Específica';
-      const customDescricao = 'Descrição customizada';
 
       jest.spyOn(prisma.rotinaEmpresa, 'findFirst').mockResolvedValueOnce(null);
       jest.spyOn(prisma.rotinaEmpresa, 'findFirst').mockResolvedValueOnce(null); // Primeira rotina
@@ -697,7 +691,6 @@ describe('PilaresEmpresaService - Validação Completa', () => {
         id: 'custom-rotina-id',
         rotinaTemplateId: null,
         nome: customNome,
-        descricao: customDescricao,
         pilarEmpresaId,
         ordem: 1,
       } as any);
@@ -707,7 +700,7 @@ describe('PilaresEmpresaService - Validação Completa', () => {
       const result = await service.createRotinaEmpresa(
         empresaId,
         pilarEmpresaId,
-        { nome: customNome, descricao: customDescricao },
+        { nome: customNome },
         mockGestorEmpresaA,
       );
 
@@ -855,7 +848,6 @@ describe('PilaresEmpresaService - Validação Completa', () => {
 
       // 3. Validar que snapshot NÃO foi afetado
       expect(snapshots[0].nome).toBe('Nome Original do Template');
-      expect(snapshots[0].descricao).toBe('Descrição Original');
       expect(snapshots[0].nome).not.toBe(templateAtualizado.nome);
       
       // Snapshot é CONGELADO no momento da criação

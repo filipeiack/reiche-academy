@@ -68,7 +68,7 @@
                     <button class="btn btn-link p-0 d-flex align-items-center" type="button" (click)="togglePilar(i)">
                         <i [ngClass]="pilarExpandido[i] ? 'feather icon-chevron-up' : 'feather icon-chevron-down'"></i>
                         <span class="fw-bold text-muted">{{ ('PILARES.PILAR' | translate).toUpperCase() }} {{
-                            pilar.pilar.nome.toUpperCase()
+                            pilar.nome.toUpperCase()
                             }}</span>
                     </button>
                 </div>
@@ -83,7 +83,7 @@
                     @if (pilar.rotinasEmpresa.length > 0) {
 
                     <span class="badge bg-light text-dark small d-inline-flex align-items-center"
-                        [title]="'Taxa de respostas para o ' + ('PILARES.PILAR' | translate) + ' ' + pilar.pilar.nome">
+                        [title]="'Taxa de respostas para o ' + ('PILARES.PILAR' | translate) + ' ' + pilar.nome">
                         Tx respostas:
                         {{ getPilarProgress(pilar) }} %
                     </span>
@@ -149,7 +149,7 @@
                     <div class="row justify-content-center align-items-center">
                         <div class="col-md-8">
                             <i class="feather icon-check-circle text-primary small"></i>
-                            <span> {{ rotina.rotina.nome }} </span>
+                            <span> {{ rotina.nome }} </span>
                         </div>
 
                         <div class="col-md-4 ">

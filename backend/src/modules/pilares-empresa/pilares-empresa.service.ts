@@ -306,7 +306,6 @@ export class PilaresEmpresaService {
     this.validateTenantAccess(empresaId, user);
 
     let nome: string;
-    let descricao: string | null;
 
     // XOR validation: pilarTemplateId OU nome (nunca ambos, nunca nenhum)
     if (dto.pilarTemplateId) {
@@ -320,11 +319,9 @@ export class PilaresEmpresaService {
       }
 
       nome = template.nome;
-      descricao = template.descricao;
     } else {
       // Usar dados customizados (nome obrigatório via DTO validation)
       nome = dto.nome!;
-      descricao = dto.descricao ?? null;
     }
 
     // Validar nome único na empresa
@@ -353,7 +350,6 @@ export class PilaresEmpresaService {
       data: {
         pilarTemplateId: dto.pilarTemplateId ?? null,
         nome,
-        descricao,
         empresaId,
         ordem: proximaOrdem,
         createdBy: user.id,
@@ -488,7 +484,6 @@ export class PilaresEmpresaService {
     }
 
     let nome: string;
-    let descricao: string | null;
 
     // XOR validation
     if (dto.rotinaTemplateId) {
@@ -502,11 +497,9 @@ export class PilaresEmpresaService {
       }
 
       nome = template.nome;
-      descricao = template.descricao;
     } else {
       // Usar dados customizados
       nome = dto.nome!;
-      descricao = dto.descricao ?? null;
     }
 
     // Validar nome único no pilar
@@ -535,7 +528,6 @@ export class PilaresEmpresaService {
       data: {
         rotinaTemplateId: dto.rotinaTemplateId ?? null,
         nome,
-        descricao,
         pilarEmpresaId,
         ordem: proximaOrdem,
         createdBy: user.id,

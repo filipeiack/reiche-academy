@@ -23,7 +23,7 @@ import { PilarEmpresa } from '../../../../core/services/diagnostico-notas.servic
         @if (pilarEmpresa) {
         <div class="mb-3">
           <p class="text-muted">
-            <strong>Pilar:</strong> {{ pilarEmpresa.pilar.nome }}
+            <strong>Pilar:</strong> {{ pilarEmpresa.nome }}
           </p>
         </div>
 
@@ -110,7 +110,7 @@ export class NovaRotinaModalComponent {
     const dto: CreateRotinaDto = {
       nome: formValue.nome!,
       descricao: formValue.descricao || undefined,
-      pilarId: this.pilarEmpresa.pilarId,
+      pilarId: this.pilarEmpresa.pilarTemplateId || undefined,
       modelo: false, // Rotina customizada, não é modelo
       pilarEmpresaId: this.pilarEmpresa.id // Vincula automaticamente a RotinaEmpresa
     };

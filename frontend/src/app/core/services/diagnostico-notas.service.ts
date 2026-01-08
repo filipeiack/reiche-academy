@@ -23,11 +23,12 @@ export interface Rotina {
 export interface RotinaEmpresa {
   id: string;
   pilarEmpresaId: string;
-  rotinaId: string;
+  rotinaTemplateId?: string | null;
+  nome: string;
   ordem: number;
-  donoRotina?: string;
   observacao?: string;
-  rotina: Rotina;
+  ativo: boolean;
+  rotinaTemplate?: Rotina;
   notas: NotaRotina[];
 }
 
@@ -47,10 +48,12 @@ export interface ResponsavelPilar {
 export interface PilarEmpresa {
   id: string;
   empresaId: string;
-  pilarId: string;
+  pilarTemplateId?: string | null;
+  nome: string;
   ordem: number;
+  ativo: boolean;
   responsavelId?: string;
-  pilar: Pilar;
+  pilarTemplate?: Pilar;
   responsavel?: ResponsavelPilar;
   rotinasEmpresa: RotinaEmpresa[];
 }

@@ -229,8 +229,8 @@ export class DiagnosticoNotasComponent implements OnInit, OnDestroy {
     if (this.rotinasPilarModal && this.selectedEmpresaId) {
       this.rotinasPilarModal.empresaId = this.selectedEmpresaId;
       this.rotinasPilarModal.pilarEmpresaId = pilarEmpresa.id;
-      this.rotinasPilarModal.pilarNome = pilarEmpresa.pilar.nome;
-      this.rotinasPilarModal.pilarId = pilarEmpresa.pilarId;
+      this.rotinasPilarModal.pilarNome = pilarEmpresa.nome;
+      this.rotinasPilarModal.pilarId = pilarEmpresa.pilarTemplateId ?? '';
       this.rotinasPilarModal.rotinasEmpresa = [...pilarEmpresa.rotinasEmpresa];
       this.rotinasPilarModal.open();
     }

@@ -25,12 +25,4 @@ export class CreateRotinaEmpresaDto {
   @IsNotEmpty({ message: 'Nome é obrigatório para rotinas customizadas' })
   @Length(2, 200, { message: 'Nome deve ter entre 2 e 200 caracteres' })
   nome?: string;
-
-  @ApiPropertyOptional({ 
-    example: 'Rotina de planejamento realizada a cada trimestre',
-    description: 'Descrição opcional da rotina'
-  })
-  @IsOptional()
-  @MaxLength(500, { message: 'Descrição deve ter no máximo 500 caracteres' })
-  descricao?: string;
 }

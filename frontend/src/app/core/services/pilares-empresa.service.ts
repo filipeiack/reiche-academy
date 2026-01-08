@@ -7,7 +7,8 @@ import { Pilar } from './pilares.service';
 export interface PilarEmpresa {
   id: string;
   empresaId: string;
-  pilarId: string;
+  pilarTemplateId?: string | null;
+  nome: string;
   ordem: number;
   ativo: boolean;
   responsavelId?: string | null;
@@ -15,7 +16,7 @@ export interface PilarEmpresa {
   updatedAt: string;
   createdBy?: string;
   updatedBy?: string;
-  pilar: Pilar;
+  pilarTemplate?: Pilar;
 }
 
 export interface VincularPilaresDto {

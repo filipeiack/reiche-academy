@@ -25,12 +25,4 @@ export class CreatePilarEmpresaDto {
   @IsNotEmpty({ message: 'Nome é obrigatório para pilares customizados' })
   @Length(2, 200, { message: 'Nome deve ter entre 2 e 200 caracteres' })
   nome?: string;
-
-  @ApiPropertyOptional({ 
-    example: 'Pilar focado em controle financeiro e orçamentário',
-    description: 'Descrição opcional do pilar'
-  })
-  @IsOptional()
-  @MaxLength(500, { message: 'Descrição deve ter no máximo 500 caracteres' })
-  descricao?: string;
 }
