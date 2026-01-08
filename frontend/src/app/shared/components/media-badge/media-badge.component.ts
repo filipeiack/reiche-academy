@@ -21,13 +21,13 @@ import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
     </span>
   `,
   styles: [`
-    span {
-      display: inline-block;
-      padding: 0.25rem 0.5rem;
-      font-size: 0.75rem;
-      font-weight: 600;
-      border-radius: 0.25rem;
-    }
+    // span {
+    //   display: inline-block;
+    //   padding: 0.25rem 0.5rem;
+    //   font-size: 0.8rem;
+    //   font-weight: 600;
+    //   border-radius: 0.25rem;
+    // }
   `]
 })
 export class MediaBadgeComponent {
@@ -35,7 +35,7 @@ export class MediaBadgeComponent {
   @Input() title?: string;
 
   get label(): string {
-    return `Média do pilar: ${this.media.toFixed(1)}`;
+    return `MÉDIA DO PILAR: ${this.media.toFixed(1)}`;
   }
 
   get badgeClass(): string {

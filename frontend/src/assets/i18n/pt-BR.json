@@ -226,7 +226,7 @@
     }
   },
   "DIAGNOSTICO": {
-    "TITLE": "Diagnóstico - Notas",
+    "TITLE": "Dashboard da Empresa",
     "SELECT_EMPRESA": "Selecione a Empresa",
     "SELECT_EMPRESA_PLACEHOLDER": "Escolha uma empresa para trabalhar",
     "INSTRUCTIONS": "Avalie cada rotina atribuindo uma nota de 1 a 10 e definindo o nível de criticidade. As alterações são salvas automaticamente.",

@@ -43,7 +43,7 @@
                         <a ngbDropdownItem class="d-flex align-items-center gap-1"
                             (click)="abrirModalPilares(); $event.preventDefault()">
                             <i class="feather icon-edit icon-sm"></i>
-                            <span class="">Editar Pilares</span>
+                            <span class="">Gerenciar Pilares</span>
                         </a>
                     </div>
                 </div>
@@ -68,33 +68,35 @@
                     <button class="btn btn-link p-0 d-flex align-items-center" type="button" (click)="togglePilar(i)">
                         <i [ngClass]="pilarExpandido[i] ? 'feather icon-chevron-up' : 'feather icon-chevron-down'"></i>
                         <span class="fw-bold text-muted">{{ ('PILARES.PILAR' | translate).toUpperCase() }} {{
-                            pilar.pilar.nome
+                            pilar.pilar.nome.toUpperCase()
                             }}</span>
                     </button>
                 </div>
 
                 <div class="ms-auto d-flex align-items-center gap-3">
 
-                    <span class="badge bg-light text-dark small">
+                    <span class="badge bg-light text-dark small d-inline-flex align-items-center">
                         {{ pilar.rotinasEmpresa.length }}
                         {{ pilar.rotinasEmpresa.length === 1 ? 'rotina' : 'rotinas' }}
                     </span>
 
                     @if (pilar.rotinasEmpresa.length > 0) {
 
-                    <span class="badge bg-light text-dark small"
+                    <span class="badge bg-light text-dark small d-inline-flex align-items-center"
                         [title]="'Taxa de respostas para o ' + ('PILARES.PILAR' | translate) + ' ' + pilar.pilar.nome">
                         Tx respostas:
                         {{ getPilarProgress(pilar) }} %
                     </span>
 
-
-                    <app-media-badge [media]="getPilarMediaNotas(pilar)"></app-media-badge>
+                    <span class="d-inline-flex align-items-center">
+                        <app-media-badge [media]="getPilarMediaNotas(pilar)"></app-media-badge>
+                    </span>
                     }
 
+                    <div ngbDropdown class="w-30px">
                     @if (pilarExpandido[i]) {
                     <div ngbDropdown class="mb-2">
-                        <a class="no-dropdown-toggle-icon" ngbDropdownToggle id="dropdownMenuButton">
+                        <a class="no-dropdown-toggle-icon btn btn-link" ngbDropdownToggle id="dropdownMenuButton">
                             <i class="feather icon-more-horizontal"></i>
                         </a>
                         <div ngbDropdownMenu aria-labelledby="dropdownMenuButton">
@@ -117,6 +119,7 @@
                         </div>
                     </div>
                     }
+                    </div>
                 </div>
             </div>
         </div>
@@ -198,7 +201,7 @@
     }
 </div>
 
-} 
+}
 
 @else if (loading) {
 <div class="text-center py-5">
@@ -219,15 +222,19 @@
 <!-- Estado vazio -->
 @else if (!loading && !error && pilares.length === 0 && selectedEmpresaId) {
 <div class="empty-state">
-    <i class="feather icon-folder"></i>
     <p>{{ 'DIAGNOSTICO.NO_PILARES' | translate }}</p>
 </div>
 }
 
 @else if (!loading && !error && !selectedEmpresaId && !isAdmin) {
 <div class="empty-state">
-    <i class="feather icon-alert-circle"></i>
     <p>{{ 'DIAGNOSTICO.NO_EMPRESA_ASSOCIATED' | translate }}</p>
+</div>
+}
+
+@else if (!selectedEmpresaId && isAdmin) {
+<div class="empty-state">
+    <p>{{ 'DIAGNOSTICO.SELECT_EMPRESA_PLACEHOLDER' | translate }}</p>
 </div>
 }
 
