@@ -58,10 +58,10 @@
                   </th>
                   <th scope="col" sortable="nome" (sort)="onSort($event)">{{ 'COMPANIES.NAME' | translate }}</th>
                   <th scope="col" sortable="cnpj" (sort)="onSort($event)">{{ 'COMPANIES.CNPJ' | translate }}</th>
-                  <th scope="col" sortable="cidade" (sort)="onSort($event)">{{ 'COMPANIES.CIDADE' | translate }}</th>
+                  <!-- <th scope="col" sortable="cidade" (sort)="onSort($event)">{{ 'COMPANIES.CIDADE' | translate }}</th> -->
                   <th scope="col" sortable="estado" (sort)="onSort($event)">{{ 'COMPANIES.ESTADO' | translate }}</th>
                   <th scope="col">{{ 'COMPANIES.USUARIOS_COUNT' | translate }}</th>
-                  <th scope="col">{{ 'COMPANIES.PILARES_COUNT' | translate }}</th>
+                  <!-- <th scope="col">{{ 'COMPANIES.PILARES_COUNT' | translate }}</th> -->
                   <th>{{ 'COMMON.STATUS' | translate }}</th>
                   <th>{{ 'COMMON.ACTIONS' | translate }}</th>
                 </tr>
@@ -74,10 +74,10 @@
                   </td>
                   <td>{{ empresa.nome }}</td>
                   <td class="text-muted">{{ empresa.cnpj }}</td>
-                  <td class="text-muted">{{ empresa.cidade }}</td>
+                  <!-- <td class="text-muted">{{ empresa.cidade }}</td> -->
                   <td class="text-muted">{{ empresa.estado }}</td>
                   <td class="text-muted">{{ empresa._count?.usuarios ?? 0 }}</td>
-                  <td class="text-muted">{{ empresa._count?.pilares ?? 0 }}</td>
+                  <!-- <td class="text-muted">{{ empresa._count?.pilares ?? 0 }}</td> -->
                   <td class="text-muted">
                     {{ empresa.ativo ? ('COMMON.ACTIVE' | translate) : ('COMMON.INACTIVE' | translate) }}
                   </td>
@@ -137,7 +137,7 @@
     <!-- Logo da Empresa -->
     @if (selectedEmpresa.logoUrl) {
     <div class="mb-3 text-center">
-      <img [src]="selectedEmpresa.logoUrl" alt="Logo de {{ selectedEmpresa.nome }}" class="img-fluid rounded" style="max-height: 120px; max-width: 100%;">
+      <img [src]="selectedEmpresa.logoUrl" alt="Logo de {{ selectedEmpresa.nome }}" class="img-fluid rounded" style="max-height: 120px">
     </div>
     }
 

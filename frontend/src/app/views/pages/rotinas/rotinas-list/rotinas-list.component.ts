@@ -41,7 +41,6 @@ export class RotinasListComponent implements OnInit {
   pilares: Pilar[] = [];
   
   loading = false;
-  error: string | null = null;
   
   // Filtros
   pilarIdFiltro: string | null = null;
@@ -96,7 +95,6 @@ export class RotinasListComponent implements OnInit {
 
   loadRotinas(): void {
     this.loading = true;
-    this.error = null;
     
     this.rotinasService.findAll(this.pilarIdFiltro || undefined).subscribe({
       next: (rotinas) => {
@@ -105,7 +103,7 @@ export class RotinasListComponent implements OnInit {
         this.loading = false;
       },
       error: (error: HttpErrorResponse) => {
-        this.error = 'Erro ao carregar rotinas. Tente novamente.';
+        this.showToast('Erro ao carregar rotinas. Tente novamente.', 'error');
         this.loading = false;
         console.error('Erro ao carregar rotinas:', error);
       }

@@ -9,8 +9,8 @@
 .cdk-drag-preview {
   box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
   opacity: 0.8;
-  background: white;
-  border: 1px solid #dee2e6;
+  background: var(--bs-body-bg);
+  border: 1px solid var(--bs-border-color);
 }
 
 .cdk-drag-animating {

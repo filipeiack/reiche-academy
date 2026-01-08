@@ -102,7 +102,7 @@ export class UsuariosListComponent implements OnInit {
       const query = this.searchQuery.toLowerCase();
       this.filteredUsuarios = this.usuarios.filter(u =>
         u.nome.toLowerCase().includes(query) ||
-        u.email.toLowerCase().includes(query) ||
+        u.email?.toLowerCase().includes(query) ||
         u.cargo?.toLowerCase().includes(query)
       );
     }

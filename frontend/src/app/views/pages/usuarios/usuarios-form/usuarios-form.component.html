@@ -7,7 +7,7 @@
         <li class="breadcrumb-item">
             {{ "MENU.USUARIOS" | translate }}
         </li>
-        <li class="breadcrumb-item active text-primary" aria-current="page">
+        <li class="breadcrumb-item active" aria-current="page">
             @if (isEditMode) {
             {{ "USERS.EDIT" | translate }}
             } @else {
@@ -82,7 +82,7 @@
                             <div class="col-md-4 mb-3">
                                 <label class="form-label" for="perfilId">{{ "USERS.ROLE" | translate }}
                                     <span class="text-danger">*</span></label>
-                                <ng-select [items]="perfis" bindLabel="nome" bindValue="id"
+                                <ng-select [items]="perfisDisponiveis" bindLabel="nome" bindValue="id"
                                     placeholder="Selecione um perfil" formControlName="perfilId"
                                     [class.is-invalid]="isFieldInvalid('perfilId')">
                                 </ng-select>
@@ -90,6 +90,12 @@
                                 <div class="invalid-feedback d-block">
                                     {{ getFieldError("perfilId") }}
                                 </div>
+                                }
+                                @if (!isCurrentUserAdmin) {
+                                <small class="text-muted d-block mt-1">
+                                    <i class="feather icon-info"></i>
+                                    Apenas administradores podem criar outros administradores
+                                </small>
                                 }
                             </div>
                         </div>
@@ -146,7 +152,7 @@
                 </div>
 
                 <!-- Empresa Associada (dentro do formulário) -->
-                @if (!modalMode) {
+                @if (!modalMode && !shouldHideEmpresaField) {
                 <div class="card mb-3">
                     <div class="card-body">
                         <div class="mb-3">
@@ -181,6 +187,19 @@
                                 Associe o usuário a uma empresa específica
                             </small>
                             }
+                        </div>
+                    </div>
+                </div>
+                } @else if (!modalMode && shouldHideEmpresaField) {
+                <div class="card mb-3">
+                    <div class="card-body">
+                        <div class="alert alert-info mb-0">
+                            <i class="feather icon-info me-2"></i>
+                            <strong>Administrador Geral</strong><br>
+                            <small>
+                                Usuários com perfil ADMINISTRADOR são administradores gerais do sistema e não são associados a nenhuma empresa específica. 
+                                Eles podem selecionar qualquer empresa para trabalhar através do seletor no navbar.
+                            </small>
                         </div>
                     </div>
                 </div>

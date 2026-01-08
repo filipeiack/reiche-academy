@@ -8,7 +8,7 @@ export class AuditService {
   async log(params: {
     usuarioId: string;
     usuarioNome: string;
-    usuarioEmail: string;
+    usuarioEmail?: string | null;
     entidade: string;
     entidadeId: string;
     acao: 'CREATE' | 'UPDATE' | 'DELETE';
@@ -19,7 +19,7 @@ export class AuditService {
       data: {
         usuarioId: params.usuarioId,
         usuarioNome: params.usuarioNome,
-        usuarioEmail: params.usuarioEmail,
+        usuarioEmail: params.usuarioEmail ?? null,
         entidade: params.entidade,
         entidadeId: params.entidadeId,
         acao: params.acao,

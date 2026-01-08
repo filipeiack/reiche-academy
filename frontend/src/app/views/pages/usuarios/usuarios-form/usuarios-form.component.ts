@@ -3,7 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router, ActivatedRoute } from '@angular/router';
 import Swal from 'sweetalert2';
-import { UsersService, CreateUsuarioRequest, UpdateUsuarioRequest } from '../../../../core/services/users.service';
+import { UsersService, CreateUsuarioDto, UpdateUsuarioDto } from '../../../../core/services/users.service';
 import { Usuario } from '../../../../core/models/auth.model';
 import { UserProfileService } from '../../../../core/services/user-profile.service';
 import { AuthService } from '../../../../core/services/auth.service';
@@ -75,13 +75,46 @@ export class UsuariosFormComponent implements OnInit {
     return ['GESTOR', 'COLABORADOR', 'LEITURA'].includes(perfilCodigo);
   }
 
+  get isCurrentUserAdmin(): boolean {
+    if (!this.currentLoggedUser?.perfil) return false;
+    const perfilCodigo = typeof this.currentLoggedUser.perfil === 'object' 
+      ? this.currentLoggedUser.perfil.codigo 
+      : this.currentLoggedUser.perfil;
+    return perfilCodigo === 'ADMINISTRADOR';
+  }
+
+  get isSelectedPerfilAdmin(): boolean {
+    const perfilIdSelecionado = this.form.get('perfilId')?.value;
+    if (!perfilIdSelecionado) return false;
+    
+    const perfilSelecionado = this.perfis.find(p => p.id === perfilIdSelecionado);
+    return perfilSelecionado?.codigo === 'ADMINISTRADOR';
+  }
+
+  get perfisDisponiveis(): PerfilUsuario[] {
+    // Apenas administradores podem criar/atribuir perfil ADMINISTRADOR
+    if (!this.isCurrentUserAdmin) {
+      return this.perfis.filter(p => p.codigo !== 'ADMINISTRADOR');
+    }
+    return this.perfis;
+  }
+
   get isEditingOwnUser(): boolean {
     return this.isEditMode && this.currentLoggedUser?.id === this.usuarioId;
   }
 
   get shouldDisableEmpresaField(): boolean {
+    // ADMINISTRADOR nunca pode ter empresa associada
+    if (this.isSelectedPerfilAdmin) {
+      return true;
+    }
     // Perfis de cliente não podem alterar a associação com empresa ao editar seus próprios dados
     return this.isPerfilCliente && this.isEditingOwnUser;
+  }
+
+  get shouldHideEmpresaField(): boolean {
+    // Ocultar campo empresa quando perfil selecionado é ADMINISTRADOR
+    return this.isSelectedPerfilAdmin;
   }
 
   togglePasswordVisibility(): void {
@@ -128,6 +161,14 @@ export class UsuariosFormComponent implements OnInit {
       this.form.get('senha')?.setValidators([Validators.required, Validators.minLength(6)]);
       this.form.get('senha')?.updateValueAndValidity();
     }
+
+    // Observer: limpar empresaId quando perfil ADMINISTRADOR for selecionado
+    this.form.get('perfilId')?.valueChanges.subscribe(perfilId => {
+      const perfilSelecionado = this.perfis.find(p => p.id === perfilId);
+      if (perfilSelecionado?.codigo === 'ADMINISTRADOR') {
+        this.form.patchValue({ empresaId: null });
+      }
+    });
   }
 
   private loadEmpresas(): void {
@@ -217,7 +258,7 @@ export class UsuariosFormComponent implements OnInit {
 
     if (this.isEditMode && this.usuarioId) {
       // Atualizar usuário - enviar apenas campos modificados
-      const updateData: Partial<UpdateUsuarioRequest> = {};
+      const updateData: Partial<UpdateUsuarioDto> = {};
 
       // Campos de dados pessoais - enviar se foram alterados
       if (this.form.get('nome')?.dirty && formValue.nome) {
@@ -236,9 +277,23 @@ export class UsuariosFormComponent implements OnInit {
       // Campos privilegiados - enviar apenas se foram alterados
       if (this.form.get('perfilId')?.dirty && formValue.perfilId) {
         updateData.perfilId = formValue.perfilId;
+        
+        // Se perfil for ADMINISTRADOR, forçar empresaId = null
+        const perfilSelecionado = this.perfis.find(p => p.id === formValue.perfilId);
+        if (perfilSelecionado?.codigo === 'ADMINISTRADOR') {
+          updateData.empresaId = null;
+        }
       }
       if (this.form.get('empresaId')?.dirty) {
-        updateData.empresaId = formValue.empresaId || null;
+        // ADMINISTRADOR nunca pode ter empresa associada
+        const perfilId = formValue.perfilId || this.currentUsuario?.perfil?.id;
+        const perfilSelecionado = this.perfis.find(p => p.id === perfilId);
+        
+        if (perfilSelecionado?.codigo === 'ADMINISTRADOR') {
+          updateData.empresaId = null;
+        } else {
+          updateData.empresaId = formValue.empresaId || null;
+        }
       }
       if (this.form.get('ativo')?.dirty) {
         if (typeof formValue.ativo === 'boolean') {
@@ -251,7 +306,7 @@ export class UsuariosFormComponent implements OnInit {
         updateData.senha = formValue.senha;
       }
 
-      this.usersService.update(this.usuarioId, updateData as UpdateUsuarioRequest).subscribe({
+      this.usersService.update(this.usuarioId, updateData as UpdateUsuarioDto).subscribe({
         next: () => {
           this.showToast('Usuário atualizado com sucesso!', 'success');
           this.loading = false;
@@ -266,14 +321,17 @@ export class UsuariosFormComponent implements OnInit {
       });
     } else {
       // Criar novo usuário
-      const createData: CreateUsuarioRequest = {
+      const perfilSelecionado = this.perfis.find(p => p.id === formValue.perfilId);
+      
+      const createData: CreateUsuarioDto = {
         nome: formValue.nome || '',
         telefone: formValue.telefone || '',
         email: formValue.email || '',
         cargo: formValue.cargo || '',
         perfilId: formValue.perfilId || '',
         senha: formValue.senha || '',
-        empresaId: formValue.empresaId || undefined
+        // ADMINISTRADOR nunca pode ter empresa associada
+        empresaId: perfilSelecionado?.codigo === 'ADMINISTRADOR' ? undefined : (formValue.empresaId || undefined)
       };
 
       this.usersService.create(createData).subscribe({

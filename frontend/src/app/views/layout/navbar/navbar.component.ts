@@ -2,10 +2,13 @@ import { Component, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router, RouterLink } from '@angular/router';
 import { NgbDropdownModule } from '@ng-bootstrap/ng-bootstrap';
+import { FormsModule } from '@angular/forms';
+import { NgSelectModule } from '@ng-select/ng-select';
 import { ThemeModeService } from '../../../core/services/theme-mode.service';
 import { TranslateService, LanguageOption } from '../../../core/services/translate.service';
 import { AuthService } from '../../../core/services/auth.service';
-import { EmpresasService } from '../../../core/services/empresas.service';
+import { EmpresasService, Empresa } from '../../../core/services/empresas.service';
+import { EmpresaContextService } from '../../../core/services/empresa-context.service';
 import { TranslatePipe } from '../../../core/pipes/translate.pipe';
 import { UserAvatarComponent } from '../../../shared/components/user-avatar/user-avatar.component';
 import { Usuario } from '../../../core/models/auth.model';
@@ -17,6 +20,8 @@ import { Usuario } from '../../../core/models/auth.model';
     CommonModule,
     NgbDropdownModule,
     RouterLink,
+    FormsModule,
+    NgSelectModule,
     TranslatePipe,
     UserAvatarComponent
   ],
@@ -29,9 +34,15 @@ export class NavbarComponent implements OnInit {
   translateService = inject(TranslateService);
   authService = inject(AuthService);
   empresasService = inject(EmpresasService);
+  empresaContextService = inject(EmpresaContextService);
   languages: LanguageOption[] = [];
   currentLanguage: LanguageOption | undefined;
   currentUser: Usuario | null = null;
+  
+  // Empresa context
+  empresas: Empresa[] = [];
+  selectedEmpresaId: string | null = null;
+  isAdmin = false;
 
   get hasEmpresa(): boolean {
     return !!this.currentUser?.empresaId;
@@ -78,6 +89,17 @@ export class NavbarComponent implements OnInit {
     // Subscribe to current user
     this.authService.currentUser$.subscribe(user => {
       this.currentUser = user;
+      this.isAdmin = user?.perfil?.codigo === 'ADMINISTRADOR';
+      
+      // Carregar empresas se for admin
+      if (this.isAdmin) {
+        this.loadEmpresas();
+      }
+    });
+
+    // Subscribe to empresa context
+    this.empresaContextService.selectedEmpresaId$.subscribe(empresaId => {
+      this.selectedEmpresaId = empresaId;
     });
   }
 
@@ -129,12 +151,67 @@ export class NavbarComponent implements OnInit {
   }
 
   /**
+   * Carrega lista de empresas ativas (apenas para admin)
+   */
+  private loadEmpresas(): void {
+    this.empresasService.getAll().subscribe({
+      next: (data) => {
+        this.empresas = data.filter(e => e.ativo);
+        
+        // Se já havia empresa selecionada no contexto, manter
+        const empresaContextId = this.empresaContextService.getEmpresaId();
+        if (empresaContextId) {
+          this.selectedEmpresaId = empresaContextId;
+        }
+      },
+      error: (err) => {
+        console.error('Erro ao carregar empresas:', err);
+      }
+    });
+  }
+
+  /**
+   * Quando admin seleciona uma empresa
+   */
+  onEmpresaChange(event: any): void {
+    const empresaId = typeof event === 'string' ? event : event?.id || this.selectedEmpresaId;
+    this.empresaContextService.setSelectedEmpresa(empresaId);
+  }
+
+  /**
+   * Retorna o nome da empresa do usuário logado (para perfis cliente)
+   */
+  getEmpresaNomeUsuario(): string {
+    if (!this.currentUser?.empresa) return '';
+    return typeof this.currentUser.empresa === 'object' 
+      ? this.currentUser.empresa.nome 
+      : '';
+  }
+
+  getEmpresaCnpj(): string {
+    if (!this.currentUser?.empresa) return '';
+    return typeof this.currentUser.empresa === 'object' 
+      ? this.currentUser.empresa.cnpj
+      : '';
+  }
+
+  getEmpresaLocalizacao(): string {
+    if (!this.currentUser?.empresa) return '';
+    return typeof this.currentUser.empresa === 'object' 
+      ? this.currentUser.empresa.cidade + '/' + this.currentUser.empresa.estado
+      : '';
+  }
+
+  /**
    * Logout
    */
   onLogout(e: Event) {
     e.preventDefault();
     
     const currentUser = this.authService.getCurrentUser();
+    
+    // Limpar contexto de empresa
+    this.empresaContextService.clearSelectedEmpresa();
     
     // Se o usuário tem empresa, buscar a loginUrl e redirecionar
     if (currentUser?.empresaId) {

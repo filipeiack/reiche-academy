@@ -4,23 +4,23 @@ import { Observable } from 'rxjs';
 import { environment } from '../../../environments/environment';
 import { Usuario, PerfilUsuarioBasic, EmpresaBasic } from '../models/auth.model';
 
-export interface CreateUsuarioRequest {
-  email: string;
+export interface CreateUsuarioDto {
   nome: string;
-  senha: string;
-  cargo: string;
-  telefone?: string;
   perfilId: string;
-  empresaId?: string;
-}
-
-export interface UpdateUsuarioRequest {
   email?: string;
-  nome?: string;
   senha?: string;
   cargo?: string;
   telefone?: string;
+  empresaId?: string;
+}
+
+export interface UpdateUsuarioDto {
+  nome?: string;
   perfilId?: string;
+  email?: string;
+  senha?: string;
+  cargo?: string;
+  telefone?: string;
   ativo?: boolean;
   empresaId?: string | null;
 }
@@ -56,14 +56,14 @@ export class UsersService {
   /**
    * Criar novo usuário
    */
-  create(data: CreateUsuarioRequest): Observable<Usuario> {
+  create(data: CreateUsuarioDto): Observable<Usuario> {
     return this.http.post<Usuario>(this.API_URL, data);
   }
 
   /**
    * Atualizar usuário
    */
-  update(id: string, data: UpdateUsuarioRequest): Observable<Usuario> {
+  update(id: string, data: UpdateUsuarioDto): Observable<Usuario> {
     return this.http.patch<Usuario>(`${this.API_URL}/${id}`, data);
   }
 

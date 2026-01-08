@@ -11,7 +11,7 @@ pre {
   font-family: $font-family-sans-serif;
   background-color: rgba($secondary, .1);
   padding: 15px;
-  font-size: 14px;
+  font-size: var(--bs-font-size-base);
 }
 
 code {

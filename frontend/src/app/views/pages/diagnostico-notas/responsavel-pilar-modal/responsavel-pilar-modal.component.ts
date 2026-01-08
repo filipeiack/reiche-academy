@@ -4,7 +4,7 @@ import { NgbModal, NgbModalModule } from '@ng-bootstrap/ng-bootstrap';
 import { NgSelectModule } from '@ng-select/ng-select';
 import { FormsModule } from '@angular/forms';
 import Swal from 'sweetalert2';
-import { UsersService } from '../../../../core/services/users.service';
+import { UsersService, CreateUsuarioDto } from '../../../../core/services/users.service';
 import { PilaresEmpresaService } from '../../../../core/services/pilares-empresa.service';
 import { Usuario } from '../../../../core/models/auth.model';
 import { PilarEmpresa } from '../../../../core/services/diagnostico-notas.service';
@@ -44,8 +44,9 @@ import { PilarEmpresa } from '../../../../core/services/diagnostico-notas.servic
             bindLabel="nome" 
             bindValue="id"
             [(ngModel)]="responsavelIdSelecionado"
-            placeholder="Selecione um usuário da empresa"
-            [clearable]="true">
+            placeholder="Digite para adicionar ou selecione um usuário existente"
+            [clearable]="true"
+            [addTag]="addUsuarioTag">
             <ng-template ng-option-tmp let-item="item">
               <div>
                 <div><strong>{{ item.nome }}</strong></div>
@@ -134,6 +135,35 @@ export class ResponsavelPilarModalComponent implements OnInit {
       }
     });
   }
+
+  addUsuarioTag = (nome: string): Usuario | Promise<Usuario> => {
+    const nomeParts = nome.trim().split(/\s+/);
+    if (nomeParts.length < 2) {
+      this.showToast('Por favor, informe nome e sobrenome', 'error');
+      return Promise.reject('Nome e sobrenome são obrigatórios');
+    }
+
+    const novoUsuario: CreateUsuarioDto = {
+      nome: nome,
+      empresaId: this.empresaId!,
+      perfilId: '336f17cb-f9d3-4401-bebf-2187888edd51' // COLABORADOR
+    };
+
+    return new Promise((resolve, reject) => {
+      this.usersService.create(novoUsuario).subscribe({
+        next: (usuario) => {
+          this.showToast(`Usuário "${nome}" criado com sucesso!`, 'success');
+          this.usuarios.push(usuario);
+          this.responsavelIdSelecionado = usuario.id;
+          resolve(usuario);
+        },
+        error: (err) => {
+          this.showToast(err?.error?.message || 'Erro ao criar usuário', 'error');
+          reject(err);
+        }
+      });
+    });
+  };
 
   salvar(): void {
     if (!this.pilarEmpresa || !this.empresaId) return;

@@ -42,7 +42,7 @@ export class MediaBadgeComponent {
     if (this.media >= 8) {
       return 'badge bg-success text-white';
     } else if (this.media >= 6) {
-      return 'badge bg-warning text-dark';
+      return 'badge bg-warning text-white';
     } else {
       return 'badge bg-danger text-white';
     }

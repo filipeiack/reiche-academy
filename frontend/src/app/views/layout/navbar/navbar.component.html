@@ -6,14 +6,44 @@
       <img src="assets/images/logo-mini-dark.png" class="logo-mini logo-mini-dark" alt="logo">
     </div>
 
-    <!-- <form class="search-form">
-      <div class="input-group">
-        <div class="input-group-text">
-          <i class="feather icon-search"></i>
+    <!-- Seletor de Empresa (Admin) ou Exibição (Cliente) -->
+    <div class="empresa-selector-wrapper">
+      @if (isAdmin) {
+      <!-- Admin: combo para selecionar empresa -->
+      <ng-select id="empresaNavbarSelect" [items]="empresas" bindLabel="nome" bindValue="id"
+        [(ngModel)]="selectedEmpresaId" (change)="onEmpresaChange($event)" placeholder="Selecione uma empresa..."
+        [clearable]="false" class="empresa-navbar-select">
+        <ng-template ng-option-tmp let-item="item">
+          <div>
+            <strong>{{ item.nome }}</strong>
+            @if (item.cnpj) {
+            <br />
+            <small class="text-muted">{{ item.cnpj }}</small>
+            }
+          </div>
+        </ng-template>
+      </ng-select>
+      } @else if (currentUser?.empresa) {
+
+      <div class="d-flex gap-3 align-items-center">
+        <i class="feather icon-briefcase"></i>
+        <span class="h3">
+          {{ getEmpresaNomeUsuario() }}
+        </span>
+
+        <div class="d-flex flex-column gap-1">
+
+          @if (getEmpresaCnpj()) {
+          <span class="text-muted fs-12px">{{ getEmpresaCnpj() }}</span>
+          }
+          @if (getEmpresaLocalizacao()) {
+          <span class="text-muted fs-12px">{{ getEmpresaLocalizacao() }}</span>
+          }
         </div>
-        <input type="text" class="form-control" id="navbarForm" placeholder="Procurar aqui...">
+
       </div>
-    </form> -->
+      }
+    </div>
 
     <ul class="navbar-nav">
       <li class="theme-switcher-wrapper nav-item">
@@ -30,17 +60,18 @@
       </li>
       <li class="nav-item" ngbDropdown>
         <a class="nav-link" ngbDropdownToggle id="languageDropdown" role="button">
-          <img [src]="currentLanguage?.flag" class="w-20px" [title]="currentLanguage?.code" [alt]="currentLanguage?.code">
-          <span class="ms-2 d-none d-md-inline-block">{{ currentLanguage?.name }}</span>
+          <img [src]="currentLanguage?.flag" class="w-20px" [title]="currentLanguage?.code"
+            [alt]="currentLanguage?.code">
+          <!-- <span class="ms-2 d-none d-md-inline-block">{{ currentLanguage?.name }}</span> -->
         </a>
         <div ngbDropdownMenu aria-labelledby="languageDropdown">
           @for (lang of languages; track lang.code) {
-            @if (lang.code !== currentLanguage?.code) {
-              <a ngbDropdownItem class="py-2 d-flex" (click)="changeLanguage(lang, $event)"> 
-                <img [src]="lang.flag" class="w-20px me-1" [title]="lang.code" [alt]="lang.code"> 
-                <span class="ms-2">{{ lang.name }}</span>
-              </a>
-            }
+          @if (lang.code !== currentLanguage?.code) {
+          <a ngbDropdownItem class="py-2 d-flex" (click)="changeLanguage(lang, $event)">
+            <img [src]="lang.flag" class="w-20px me-1" [title]="lang.code" [alt]="lang.code">
+            <span class="ms-2">{{ lang.name }}</span>
+          </a>
+          }
           }
         </div>
       </li>
@@ -58,49 +89,54 @@
           </div>
           <div class="p-1">
             <a href="" (click)="false" class="dropdown-item d-flex align-items-center py-2">
-              <div class="w-30px h-30px d-flex align-items-center justify-content-center bg-primary rounded-circle me-3">
+              <div
+                class="w-30px h-30px d-flex align-items-center justify-content-center bg-primary rounded-circle me-3">
                 <i class="feather icon-gift icon-sm text-white"></i>
               </div>
               <div class="flex-grow-1 me-2">
                 <p>New Order Recieved</p>
                 <p class="fs-12px text-secondary">30 min ago</p>
-              </div>	
+              </div>
             </a>
             <a href="" (click)="false" class="dropdown-item d-flex align-items-center py-2">
-              <div class="w-30px h-30px d-flex align-items-center justify-content-center bg-primary rounded-circle me-3">
+              <div
+                class="w-30px h-30px d-flex align-items-center justify-content-center bg-primary rounded-circle me-3">
                 <i class="feather icon-alert-circle icon-sm text-white"></i>
               </div>
               <div class="flex-grow-1 me-2">
                 <p>Server Limit Reached!</p>
                 <p class="fs-12px text-secondary">1 hrs ago</p>
-              </div>	
+              </div>
             </a>
             <a href="" (click)="false" class="dropdown-item d-flex align-items-center py-2">
-              <div class="w-30px h-30px d-flex align-items-center justify-content-center bg-primary rounded-circle me-3">
+              <div
+                class="w-30px h-30px d-flex align-items-center justify-content-center bg-primary rounded-circle me-3">
                 <img class="w-30px h-30px rounded-circle" src="https://placehold.co/30x30" alt="userr">
               </div>
               <div class="flex-grow-1 me-2">
                 <p>New customer registered</p>
                 <p class="fs-12px text-secondary">2 sec ago</p>
-              </div>	
+              </div>
             </a>
             <a href="" (click)="false" class="dropdown-item d-flex align-items-center py-2">
-              <div class="w-30px h-30px d-flex align-items-center justify-content-center bg-primary rounded-circle me-3">
+              <div
+                class="w-30px h-30px d-flex align-items-center justify-content-center bg-primary rounded-circle me-3">
                 <i class="feather icon-layers icon-sm text-white"></i>
               </div>
               <div class="flex-grow-1 me-2">
                 <p>Apps are ready for update</p>
                 <p class="fs-12px text-secondary">5 hrs ago</p>
-              </div>	
+              </div>
             </a>
             <a href="" (click)="false" class="dropdown-item d-flex align-items-center py-2">
-              <div class="w-30px h-30px d-flex align-items-center justify-content-center bg-primary rounded-circle me-3">
+              <div
+                class="w-30px h-30px d-flex align-items-center justify-content-center bg-primary rounded-circle me-3">
                 <i class="feather icon-download icon-sm text-white"></i>
               </div>
               <div class="flex-grow-1 me-2">
                 <p>Download completed</p>
                 <p class="fs-12px text-secondary">6 hrs ago</p>
-              </div>	
+              </div>
             </a>
           </div>
           <div class="px-3 py-2 d-flex align-items-center justify-content-center border-top">
@@ -110,19 +146,13 @@
       </li>
       <li class="nav-item nav-profile" ngbDropdown>
         <a class="nav-link" ngbDropdownToggle id="profileDropdown">
-          <app-user-avatar 
-            [nome]="currentUser?.nome" 
-            [fotoUrl]="currentUser?.fotoUrl"
-            size="small">
+          <app-user-avatar [nome]="currentUser?.nome" [fotoUrl]="currentUser?.fotoUrl" size="small">
           </app-user-avatar>
         </a>
         <div ngbDropdownMenu class="px-0" aria-labelledby="profileDropdown">
           <div class="d-flex flex-column align-items-center border-bottom px-5 py-3">
             <div class="mb-3">
-              <app-user-avatar 
-                [nome]="currentUser?.nome" 
-                [fotoUrl]="currentUser?.fotoUrl"
-                size="large">
+              <app-user-avatar [nome]="currentUser?.nome" [fotoUrl]="currentUser?.fotoUrl" size="large">
               </app-user-avatar>
             </div>
             <div class="text-center">
@@ -141,23 +171,23 @@
           <ul class="list-unstyled p-1">
             <!-- Meu Usuário - Todos os perfis podem acessar -->
             <li>
-              <a [routerLink]="currentUser ? ['/usuarios', currentUser.id, 'editar'] : null" class="dropdown-item py-2 d-flex ms-0">
+              <a [routerLink]="currentUser ? ['/usuarios', currentUser.id, 'editar'] : null"
+                class="dropdown-item py-2 d-flex ms-0">
                 <i class="feather icon-user me-2 icon-md"></i>
                 <span>Meu Usuário</span>
               </a>
             </li>
-            
+
             <!-- Minha Empresa - Exibir quando usuário tem empresa associada -->
             @if (hasEmpresa) {
             <li>
-              <a [routerLink]="['/empresas', currentUser?.empresaId, 'editar']" 
-                 class="dropdown-item py-2 d-flex ms-0">
+              <a [routerLink]="['/empresas', currentUser?.empresaId, 'editar']" class="dropdown-item py-2 d-flex ms-0">
                 <i class="feather icon-briefcase me-2 icon-md"></i>
                 <span>Minha Empresa</span>
               </a>
             </li>
             }
-            
+
             <li>
               <a href="" (click)="onLogout($event)" class="dropdown-item py-2 d-flex ms-0">
                 <i class="feather icon-log-out me-2 icon-md"></i>
@@ -172,6 +202,6 @@
     <a href="" class="sidebar-toggler" (click)="toggleSidebar($event)">
       <i class="feather icon-menu"></i>
     </a>
-    
+
   </div>
 </nav>

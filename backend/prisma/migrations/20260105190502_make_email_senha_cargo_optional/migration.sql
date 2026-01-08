@@ -1,0 +1,4 @@
+-- AlterTable
+ALTER TABLE "usuarios" ALTER COLUMN "email" DROP NOT NULL,
+ALTER COLUMN "senha" DROP NOT NULL,
+ALTER COLUMN "cargo" DROP NOT NULL;

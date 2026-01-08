@@ -73,10 +73,10 @@ model PerfilUsuario {
 
 model Usuario {
   id        String   @id @default(uuid())
-  email     String   @unique
+  email     String?  @unique
   nome      String
-  senha     String
-  cargo     String
+  senha     String?
+  cargo     String?
   telefone  String?
   fotoUrl   String?
   ativo     Boolean  @default(true)
@@ -326,7 +326,7 @@ model AuditLog {
   
   usuarioId   String   // ID para referência (se precisar)
   usuarioNome String   // Nome no momento da ação
-  usuarioEmail String  // Email no momento da ação
+  usuarioEmail String? // Email no momento da ação (opcional para usuários sem email)
   
   entidade    String   // Nome da tabela
   entidadeId  String   // ID do registro

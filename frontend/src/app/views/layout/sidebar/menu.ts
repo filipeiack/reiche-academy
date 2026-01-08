@@ -3,22 +3,22 @@ import { MenuItem } from './menu.model';
 // Single source of truth for raw menu definitions (translation keys)
 // The MenuService will import this and apply translations dynamically.
 export const MENU: MenuItem[] = [
+  // {
+  //   label: 'MENU.MAIN',
+  //   isTitle: true
+  // },
+  // {
+  //   label: 'MENU.DASHBOARD',
+  //   icon: 'home',
+  //   link: '/dashboard'
+  // },
+  // {
+  //   label: 'MENU.CALENDAR',
+  //   icon: 'calendar',
+  //   link: '/calendario'
+  // },
   {
-    label: 'MENU.MAIN',
-    isTitle: true
-  },
-  {
-    label: 'MENU.DASHBOARD',
-    icon: 'home',
-    link: '/dashboard'
-  },
-  {
-    label: 'MENU.CALENDAR',
-    icon: 'calendar',
-    link: '/calendario'
-  },
-  {
-    label: 'MENU.WEB_APPS',
+    label: 'MENU.CADASTROS',
     isTitle: true
   },
   {
@@ -48,7 +48,7 @@ export const MENU: MenuItem[] = [
     link: '/rotinas'
   },
   {
-    label: 'MENU.DIAGNOSTICOS',
+    label: 'MENU.PAINEL_CONTROLE',
     isTitle: true
   },
   {
@@ -63,13 +63,13 @@ export const MENU: MenuItem[] = [
   },
 
   
-  {
-    label: 'MENU.DOCS',
-    isTitle: true
-  },
-  {
-    label: 'MENU.DOCUMENTATION',
-    icon: 'hash',
-    link: '/documentos'
-  }
+  // {
+  //   label: 'MENU.DOCS',
+  //   isTitle: true
+  // },
+  // {
+  //   label: 'MENU.DOCUMENTATION',
+  //   icon: 'hash',
+  //   link: '/documentos'
+  // }
 ];

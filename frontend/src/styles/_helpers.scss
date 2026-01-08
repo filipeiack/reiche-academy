@@ -97,6 +97,67 @@ svg.icon-xxl {
   width: 40px;
   height: 40px;
 }
+
+// Feather icon sizes (para ícones do Feather)
+i.icon-xs {
+  width: 12px;
+  height: 12px;
+  font-size: 12px;
+}
+i.icon-sm {
+  width: 14px;
+  height: 14px;
+  font-size: 14px;
+}
+i.icon-md {
+  width: 16px;
+  height: 16px;
+  font-size: 16px;
+}
+i.icon-lg {
+  width: 20px;
+  height: 20px;
+  font-size: 20px;
+}
+i.icon-xl {
+  width: 26px;
+  height: 26px;
+  font-size: 26px;
+}
+i.icon-xxl {
+  width: 40px;
+  height: 40px;
+  font-size: 40px;
+}
+
+// Progress bar sizes
+.progress-sm {
+  height: 5px;
+}
+.progress-md {
+  height: 10px;
+}
+.progress-lg {
+  height: 20px;
+}
+
+// Position helpers
+.position-center {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+}
+
+// Cursor helpers
+.cursor-grab {
+  cursor: grab;
+  
+  &:active {
+    cursor: grabbing;
+  }
+}
+
 svg.icon-xxxl {
   width: 80px;
   height: 80px;

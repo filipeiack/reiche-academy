@@ -60,10 +60,10 @@
       .input-group-text {
         padding: 0;
         border: 0;
-        color: $secondary;
+        color: var(--bs-text-muted);
         background: $input-bg;
         i {
-          font-size: 20px;
+          font-size: var(--bs-font-size-lg);
           cursor: pointer;
         }
       }
@@ -113,7 +113,7 @@
             display: none;
           }
           .link-icon {
-            font-size: 20px;
+            font-size: var(--bs-font-size-lg);
             line-height: inherit;
           }
           .indicator {
@@ -237,8 +237,8 @@
     padding: 0 0 0 12px;
     display: none;
     i {
-      font-size: 26px;
-      color: $secondary;
+      font-size: 1.625rem;
+      color: var(--bs-body-color);
     }
     @media(max-width: 991px) {
       display: flex;    

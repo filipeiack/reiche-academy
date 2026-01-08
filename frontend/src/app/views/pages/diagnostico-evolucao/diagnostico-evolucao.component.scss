@@ -13,13 +13,13 @@
 
   i {
     font-size: 4rem;
-    color: #ccc;
+    color: var(--bs-gray-300);
     margin-bottom: 1rem;
   }
 
   p {
-    color: #999;
-    font-size: 1.1rem;
+    color: var(--bs-text-muted);
+    font-size: var(--bs-font-size-lg);
   }
 }
 

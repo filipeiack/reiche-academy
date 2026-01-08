@@ -4,7 +4,7 @@ import { IsEmail, IsNotEmpty, IsString, Length, IsUUID, IsOptional, MinLength, M
 export class CreateUsuarioDto {
   @ApiProperty({ example: 'joao.silva@reiche.com.br' })
   @IsEmail()
-  @IsNotEmpty()
+  @IsOptional()
   email: string;
 
   @ApiProperty({ example: 'João Silva' })
@@ -15,7 +15,7 @@ export class CreateUsuarioDto {
 
   @ApiProperty({ example: 'SenhaForte1@' })
   @IsString()
-  @IsNotEmpty()
+  @IsOptional()
   @MinLength(8)
   @Matches(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]/, {
     message: 'A senha deve conter pelo menos uma letra maiúscula, uma minúscula, um número e um caractere especial (@$!%*?&)',
@@ -24,8 +24,8 @@ export class CreateUsuarioDto {
 
   @ApiProperty({ example: 'Diretor de Operações' })
   @IsString()
-  @IsNotEmpty()
   @Length(2, 100)
+  @IsOptional()
   cargo: string;
 
   @ApiPropertyOptional({ example: '(11) 98765-4321' })

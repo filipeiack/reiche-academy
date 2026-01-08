@@ -6,7 +6,7 @@
         <li class="breadcrumb-item">
             {{ 'MENU.EMPRESAS' | translate }}
         </li>
-        <li class="breadcrumb-item active text-primary" aria-current="page">
+        <li class="breadcrumb-item active" aria-current="page">
             @if (isEditMode) {
             {{ 'COMPANIES.EDIT' | translate }}
             } @else {
@@ -149,17 +149,13 @@
                         }
                     </div>
                     <div class="card-body">
-                        <!-- Buscar e adicionar usuários existentes - Apenas para ADMINISTRADOR -->
+                        <!-- Buscar e adicionar usuários - Apenas para ADMINISTRADOR -->
                         @if (!isPerfilCliente) {
                         <div class="mb-4">
                             <label class="form-label">
-                                @if (isEditMode) {
-                                Adicionar Usuário Existente
-                                } @else {
-                                Selecionar Usuários para Associar
-                                }
+                                Selecione ou adicione usuários à empresa
                             </label>
-                            <ng-select [items]="usuariosDisponiveis" [addTag]="true" bindLabel="nome"
+                            <ng-select [items]="usuariosDisponiveis" [addTag]="addUsuarioTag" bindLabel="nome"
                                 [searchable]="true" [clearable]="true" placeholder="Busque por nome ou email..."
                                 (change)="associarUsuario($event)">
                                 <ng-template ng-option-tmp let-item="item">
@@ -174,11 +170,7 @@
                                 </ng-template>
                             </ng-select>
                             <small class="text-muted">
-                                @if (isEditMode) {
-                                Selecione um usuário para associar a esta empresa
-                                } @else {
-                                Os usuários serão associados após criar a empresa
-                                }
+                                Selecione um usuário existente ou crie um novo usuário escrevendo o nome completo dele.
                             </small>
                         </div>
                         }
@@ -358,18 +350,13 @@
         <!-- Logo Sidebar -->
         <div class="col-md-4">
             <div class="card mb-3">
-                <!-- <div class="card-header">
-                    <h3 class="card-title">Logotipo da Empresa</h3>
-                </div> -->
                 <div class="card-body text-center">
                     <div class="mb-3 d-flex justify-content-center">
                         @if (previewUrl || logoUrl) {
-                        <img [src]="previewUrl || logoUrl" alt="Logo da empresa" class="img-fluid rounded"
-                            style="max-height: 140px; max-width: 100%;">
+                        <img [src]="previewUrl || logoUrl" alt="Logo da empresa" class="img-fluid rounded" style="max-height: 140px">
                         } @else {
-                        <div class="d-flex align-items-center justify-content-center bg-light rounded text-muted"
-                            style="height: 140px; width: 300px;">
-                            <span>Imagem 300 x 115</span>
+                        <div class="d-flex align-items-center justify-content-center bg-light rounded text-muted w-100" style="height: 115px;">
+                            <span>Logotipo 300 x 115</span>
                         </div>
                         }
                     </div>

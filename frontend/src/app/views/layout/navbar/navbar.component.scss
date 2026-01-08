@@ -1,0 +1,44 @@
+// Estilos para o seletor de empresa no navbar
+
+.empresa-selector-wrapper {
+  flex: 1;
+  max-width: 500px;
+  left: 0;
+  top: 0;
+  padding: 10px 0;
+
+  .empresa-navbar-select {
+    width: 100%;
+  }
+
+  .empresa-display {
+    color: var(--text-color);
+    font-weight: 500;
+
+    .empresa-nome {
+      font-size: 0.95rem;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      max-width: 300px;
+    }
+
+    i {
+      font-size: 1.1rem;
+      opacity: 0.8;
+    }
+  }
+}
+
+// Responsividade
+@media (max-width: 768px) {
+  .empresa-selector-wrapper {
+    max-width: 200px;
+    margin-left: 10px;
+
+    .empresa-display .empresa-nome {
+      max-width: 150px;
+      font-size: 0.85rem;
+    }
+  }
+}

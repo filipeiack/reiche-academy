@@ -591,7 +591,7 @@ export class UsersService {
 getAll(): Observable<Usuario[]> { }
 getDisponiveis(): Observable<Usuario[]> { }
 getById(id: string): Observable<Usuario> { }
-create(data: CreateUsuarioRequest): Observable<Usuario> { }
+create(data: CreateUsuarioDto): Observable<Usuario> { }
 update(id: string, data: UpdateUsuarioRequest): Observable<Usuario> { }
 delete(id: string): Observable<any> { }
 inactivate(id: string): Observable<any> { }

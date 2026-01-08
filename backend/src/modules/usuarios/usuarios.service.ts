@@ -55,6 +55,45 @@ export class UsuariosService {
     }
   }
 
+  /**
+   * RA-005: Valida que apenas ADMINISTRADOR pode criar outros ADMINISTRADOR
+   */
+  private async validateAdminCreation(targetPerfilId: string, requestUser: RequestUser) {
+    const targetPerfil = await this.prisma.perfilUsuario.findUnique({
+      where: { id: targetPerfilId },
+    });
+
+    if (!targetPerfil) {
+      throw new NotFoundException('Perfil não encontrado');
+    }
+
+    // Se está tentando criar/atribuir perfil ADMINISTRADOR
+    if (targetPerfil.codigo === 'ADMINISTRADOR') {
+      // Apenas ADMINISTRADOR pode fazer isso
+      if (requestUser.perfil?.codigo !== 'ADMINISTRADOR') {
+        throw new ForbiddenException('Apenas administradores podem criar ou atribuir perfil ADMINISTRADOR');
+      }
+    }
+  }
+
+  /**
+   * RA-006: Valida que ADMINISTRADOR não pode ter empresaId
+   */
+  private async validateAdminEmpresaRestriction(perfilId: string, empresaId: string | null | undefined) {
+    const perfil = await this.prisma.perfilUsuario.findUnique({
+      where: { id: perfilId },
+    });
+
+    if (!perfil) {
+      throw new NotFoundException('Perfil não encontrado');
+    }
+
+    // Se perfil é ADMINISTRADOR e há empresaId definida
+    if (perfil.codigo === 'ADMINISTRADOR' && empresaId) {
+      throw new ForbiddenException('Usuários com perfil ADMINISTRADOR não podem ter empresa associada');
+    }
+  }
+
   private getAbsolutePublicPath(relativePath: string): string {
     return path.join(process.cwd(), 'public', relativePath.replace(/^[/\\]+/, ''));
   }
@@ -191,16 +230,35 @@ export class UsuariosService {
   }
 
   async create(data: CreateUsuarioDto, requestUser: RequestUser) {
-    const existingUser = await this.findByEmail(data.email);
-    
-    if (existingUser) {
-      throw new ConflictException('Email já cadastrado');
+    // Só valida email se ele foi fornecido
+    if (data.email) {
+      const existingUser = await this.findByEmail(data.email);
+      
+      if (existingUser) {
+        throw new ConflictException('Email já cadastrado');
+      }
     }
 
     // RA-004: Validar elevação de perfil
     await this.validateProfileElevation(data.perfilId, requestUser, 'criar');
 
-    const hashedPassword = await argon2.hash(data.senha);
+    // RA-005: Validar que apenas ADMINISTRADOR pode criar outros ADMINISTRADOR
+    await this.validateAdminCreation(data.perfilId, requestUser);
+
+    // RA-006: Validar que ADMINISTRADOR não pode ter empresaId
+    await this.validateAdminEmpresaRestriction(data.perfilId, data.empresaId);
+
+    // Forçar empresaId = undefined se perfil for ADMINISTRADOR
+    const perfil = await this.prisma.perfilUsuario.findUnique({
+      where: { id: data.perfilId },
+    });
+    
+    if (perfil?.codigo === 'ADMINISTRADOR') {
+      data.empresaId = undefined;
+    }
+
+    // Hash da senha somente se fornecida
+    const hashedPassword = data.senha ? await argon2.hash(data.senha) : null;
 
     const created = await this.prisma.usuario.create({
       data: {
@@ -263,6 +321,27 @@ export class UsuariosService {
     // RA-004: Validar elevação de perfil se houver mudança de perfilId
     if (data.perfilId && data.perfilId !== before.perfil.id) {
       await this.validateProfileElevation(data.perfilId, requestUser, 'atribuir');
+      
+      // RA-005: Validar que apenas ADMINISTRADOR pode atribuir perfil ADMINISTRADOR
+      await this.validateAdminCreation(data.perfilId, requestUser);
+      
+      // RA-006: Validar que ADMINISTRADOR não pode ter empresaId
+      await this.validateAdminEmpresaRestriction(data.perfilId, data.empresaId ?? before.empresaId);
+      
+      // Forçar empresaId = undefined se novo perfil for ADMINISTRADOR
+      const novoPerfil = await this.prisma.perfilUsuario.findUnique({
+        where: { id: data.perfilId },
+      });
+      
+      if (novoPerfil?.codigo === 'ADMINISTRADOR') {
+        data.empresaId = undefined;
+      }
+    }
+
+    // RA-006: Validar empresaId se houver mudança
+    if (data.empresaId !== undefined && data.empresaId !== before.empresaId) {
+      const perfilId = data.perfilId || before.perfil.id;
+      await this.validateAdminEmpresaRestriction(perfilId, data.empresaId);
     }
 
     // R-USU-030: Validar unicidade de email se houver mudança

@@ -1,21 +1,21 @@
 // ========================================
-// Backup das cores originais comentadas no final do arquivo
+// Tema Escuro - Ajustado para Alto Contraste
 // ========================================
 
-$app-bg-dark:                       #0A0A0A !default; // Fundo geral do app
-$primary-dark:                      #8C6E45 !default; 
-$secondary-dark:                    $gray-500 !default;
+$app-bg-dark:                       #121212 !default; // Fundo geral do app (Material Design dark)
+$primary-dark:                      #B6915D !default; // Primary mais claro para contraste em fundo escuro
+$secondary-dark:                    #E0E0E0 !default; // Texto secundário claro
 
-$body-color-dark:                   #f0f0f0 !default; // Texto principal branco
-$body-bg-dark:                      $gray-900 !default; // Background escuro profundo
+$body-color-dark:                   #FFFFFF !default; // Texto principal branco puro
+$body-bg-dark:                      #1E1E1E !default; // Background escuro com algum contraste
 //$body-emphasis-color-dark:          #A66532 !default;
 
-$body-tertiary-bg-dark:             $gray-900 !default; // Cards e componentes
+$body-tertiary-bg-dark:             #2A2A2A !default; // Cards e componentes ligeiramente mais claros
 
-$body-secondary-color-dark:         $secondary-dark !default; // Texto secundário
-$link-color-dark:                   $primary-dark !default; // Links usando primary
+$body-secondary-color-dark:         #BDBDBD !default; // Texto secundário bem legível
+$link-color-dark:                   #D4AF6A !default; // Links ainda mais claros para visibilidade
 
-$border-color-dark:                 $gray-900 !default; // Bordas sutis
+$border-color-dark:                 #3A3A3A !default; // Bordas visíveis mas sutis
 
 // Shadows
 $box-shadow-dark:                   0 2px 8px rgba(0, 0, 0, 0.3) !default;

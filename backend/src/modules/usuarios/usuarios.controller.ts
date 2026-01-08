@@ -33,7 +33,7 @@ export class UsuariosController {
   constructor(private readonly usuariosService: UsuariosService) {}
 
   @Post()
-  @Roles('ADMINISTRADOR')
+  @Roles('ADMINISTRADOR', 'GESTOR')
   @ApiOperation({ summary: 'Criar novo usuário' })
   @ApiResponse({ status: 201, description: 'Usuário criado com sucesso' })
   @ApiResponse({ status: 409, description: 'Email já cadastrado' })
@@ -43,7 +43,7 @@ export class UsuariosController {
   }
 
   @Get()
-  @Roles('ADMINISTRADOR')
+  @Roles('ADMINISTRADOR', 'GESTOR', 'COLABORADOR')
   @ApiOperation({ summary: 'Listar todos os usuários' })
   @ApiResponse({ status: 200, description: 'Lista de usuários retornada com sucesso' })
   findAll(@Request() req: { user: RequestUser }) {

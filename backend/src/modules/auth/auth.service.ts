@@ -28,6 +28,12 @@ export class AuthService {
       throw new UnauthorizedException('Credenciais inválidas');
     }
 
+    // Usuários sem senha não podem fazer login
+    if (!usuario.senha) {
+      await this.registrarLogin(usuario.id, email, false, 'Usuário sem senha cadastrada', ip, userAgent);
+      throw new UnauthorizedException('Credenciais inválidas');
+    }
+
     const isPasswordValid = await argon2.verify(usuario.senha, senha);
     
     if (!isPasswordValid) {
@@ -151,6 +157,11 @@ export class AuthService {
       },
     });
 
+    // Validar se usuário tem email
+    if (!usuario.email) {
+      throw new BadRequestException('Usuário não possui email cadastrado');
+    }
+
     // Monta link de reset (ajustar URL conforme ambiente)
     const frontendUrl = this.configService.get('FRONTEND_URL', 'http://localhost:4200');
     const resetLink = `${frontendUrl}/auth/reset-password?token=${token}`;
@@ -204,11 +215,13 @@ export class AuthService {
       data: { used: true },
     });
 
-    // Envia email de confirmação
-    await this.emailService.sendPasswordChangedEmail(
-      passwordReset.usuario.email,
-      passwordReset.usuario.nome,
-    );
+    // Envia email de confirmação (se usuário tiver email)
+    if (passwordReset.usuario.email) {
+      await this.emailService.sendPasswordChangedEmail(
+        passwordReset.usuario.email,
+        passwordReset.usuario.nome,
+      );
+    }
 
     return { message: 'Senha alterada com sucesso!' };
   }

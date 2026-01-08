@@ -23,7 +23,7 @@
 
 .drag-handle {
     cursor: grab;
-    color: #6c757d;
+    color: var(--bs-text-muted);
 }
 
 .drag-handle:active {

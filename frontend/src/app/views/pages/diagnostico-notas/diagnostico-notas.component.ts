@@ -9,6 +9,7 @@ import { TranslatePipe } from '../../../core/pipes/translate.pipe';
 import { DiagnosticoNotasService, PilarEmpresa, RotinaEmpresa, UpdateNotaRotinaDto } from '../../../core/services/diagnostico-notas.service';
 import { EmpresasService, Empresa } from '../../../core/services/empresas.service';
 import { AuthService } from '../../../core/services/auth.service';
+import { EmpresaContextService } from '../../../core/services/empresa-context.service';
 import { EmpresaBasic } from '@app/core/models/auth.model';
 import { NgbDropdownModule } from '@ng-bootstrap/ng-bootstrap';
 import { PilaresEmpresaModalComponent } from '../empresas/pilares-empresa-modal/pilares-empresa-modal.component';
@@ -33,7 +34,7 @@ interface AutoSaveQueueItem {
     NgbDropdownModule,
     NgSelectModule,
     TranslatePipe,
-    NgbProgressbar,
+    //NgbProgressbar,
     PilaresEmpresaModalComponent,
     ResponsavelPilarModalComponent,
     NovaRotinaModalComponent,
@@ -47,6 +48,7 @@ export class DiagnosticoNotasComponent implements OnInit, OnDestroy {
   private diagnosticoService = inject(DiagnosticoNotasService);
   private empresasService = inject(EmpresasService);
   private authService = inject(AuthService);
+  private empresaContextService = inject(EmpresaContextService);
 
   @ViewChild(PilaresEmpresaModalComponent) pilaresModal!: PilaresEmpresaModalComponent;
   @ViewChild(ResponsavelPilarModalComponent) responsavelModal!: ResponsavelPilarModalComponent;
@@ -54,12 +56,13 @@ export class DiagnosticoNotasComponent implements OnInit, OnDestroy {
   @ViewChild(RotinasPilarModalComponent) rotinasPilarModal!: RotinasPilarModalComponent;
 
   pilares: PilarEmpresa[] = [];
-  empresas: Empresa[] = [];
   empresaLogada: EmpresaBasic | null = null;
   selectedEmpresaId: string | null = null;
   isAdmin = false;
   loading = false;
   error = '';
+  
+  private empresaContextSubscription?: Subscription;
 
   get isReadOnlyPerfil(): boolean {
     const user = this.authService.getCurrentUser();
@@ -84,18 +87,31 @@ export class DiagnosticoNotasComponent implements OnInit, OnDestroy {
 
   // Opções de criticidade
   criticidadeOptions = [
-    { value: 'BAIXO', label: 'Baixa' },
-    { value: 'MEDIO', label: 'Média' },
-    { value: 'ALTO', label: 'Alta' },
+    { value: 'BAIXO', label: 'BAIXO' },
+    { value: 'MEDIO', label: 'MEDIO' },
+    { value: 'ALTO', label: 'ALTO' },
   ];
 
   ngOnInit(): void {
     this.checkUserPerfil();
     this.setupAutoSave();
+    
+    // Subscrever às mudanças no contexto de empresa
+    this.empresaContextSubscription = this.empresaContextService.selectedEmpresaId$.subscribe(empresaId => {
+      if (this.isAdmin && empresaId !== this.selectedEmpresaId) {
+        this.selectedEmpresaId = empresaId;
+        if (empresaId) {
+          this.loadDiagnostico();
+        } else {
+          this.pilares = [];
+        }
+      }
+    });
   }
 
   ngOnDestroy(): void {
     this.autoSaveSubscription?.unsubscribe();
+    this.empresaContextSubscription?.unsubscribe();
   }
 
   private checkUserPerfil(): void {
@@ -109,8 +125,11 @@ export class DiagnosticoNotasComponent implements OnInit, OnDestroy {
     this.isAdmin = user.perfil?.codigo === 'ADMINISTRADOR';
 
     if (this.isAdmin) {
-      // Admin: carregar lista de empresas para seleção
-      this.loadEmpresas();
+      // Admin: usar empresa do contexto global (selecionada no navbar)
+      this.selectedEmpresaId = this.empresaContextService.getEmpresaId();
+      if (this.selectedEmpresaId) {
+        this.loadDiagnostico();
+      }
     } else if (user.empresaId) {
       // Perfil cliente: usar empresa do usuário logado
       this.selectedEmpresaId = user.empresaId;
@@ -119,28 +138,6 @@ export class DiagnosticoNotasComponent implements OnInit, OnDestroy {
     } else {
       // Usuário sem empresa associada
       this.error = 'Você não possui empresa associada';
-    }
-  }
-
-private loadEmpresas(): void {
-    this.empresasService.getAll().subscribe({
-        next: (data) => {
-            this.empresas = data.filter(e => e.ativo);
-        },
-        error: (err) => {
-            this.error = err?.error?.message || 'Erro ao carregar empresas';
-        }
-    });
-}
-
-  onEmpresaChange(event: any): void {
-    // ng-select retorna o objeto inteiro ou apenas o ID dependendo do evento
-    const empresaId = typeof event === 'string' ? event : event?.id || this.selectedEmpresaId;
-    this.selectedEmpresaId = empresaId;
-    if (empresaId) {
-      this.loadDiagnostico();
-    } else {
-      this.pilares = [];
     }
   }
 
@@ -157,10 +154,10 @@ private loadEmpresas(): void {
     this.diagnosticoService.getDiagnosticoByEmpresa(this.selectedEmpresaId).subscribe({
       next: (data) => {
         this.pilares = data;
-        // Inicializar todos como expandidos
+        // Inicializar todos como encolhidos
         this.pilarExpandido = {};
         data.forEach((_, index) => {
-          this.pilarExpandido[index] = true;
+          this.pilarExpandido[index] = false;
         });
         this.loading = false;
       },
@@ -321,8 +318,8 @@ private loadEmpresas(): void {
 
     // Validar range de nota
     const notaNum = Number(notaFinal);
-    if (notaNum < 1 || notaNum > 10) {
-      this.showToast('Nota deve estar entre 1 e 10', 'error');
+    if (notaNum < 0 || notaNum > 10) {
+      this.showToast('Nota deve estar entre 0 e 10', 'error');
       return;
     }
 
@@ -445,14 +442,33 @@ private loadEmpresas(): void {
   getCriticidadeClass(criticidade: string | null): string {
     switch (criticidade) {
       case 'ALTO':
-        return 'badge bg-danger';
+        return 'bg-danger';
       case 'MEDIO':
-        return 'badge bg-warning text-dark';
+        return 'bg-warning';
       case 'BAIXO':
-        return 'badge bg-success';
+        return 'bg-success';
       default:
-        return 'badge bg-secondary';
+        return '';
     }
+  }
+
+  /**
+   * Retorna a classe CSS baseada no valor da nota
+   */
+  getNotaClass(nota: number | null): string {
+    if (nota === null || nota === undefined) {
+      return '';
+    }
+    
+    if (nota >= 1 && nota <= 5) {
+      return 'bg-danger';
+    } else if (nota >= 6 && nota <= 8) {
+      return 'bg-warning';
+    } else if (nota >= 9 && nota <= 10) {
+      return 'bg-success';
+    }
+    
+    return '';
   }
 
   /**

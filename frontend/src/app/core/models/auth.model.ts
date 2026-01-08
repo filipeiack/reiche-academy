@@ -24,25 +24,17 @@ export interface EmpresaBasic {
 export interface LoginResponse {
   accessToken: string;
   refreshToken: string;
-  usuario: {
-    id: string;
-    email: string;
-    nome: string;
-    cargo?: string;
-    perfil: PerfilUsuarioBasic;
-    empresaId: string;
-    fotoUrl?: string | null;
-  };
+  usuario: Usuario;
 }
 
 export interface Usuario {
   id: string;
-  email: string;
   nome: string;
-  cargo?: string;
-  telefone?: string;
   perfil: PerfilUsuarioBasic;
   ativo: boolean;
+  email?: string;
+  cargo?: string;
+  telefone?: string;
   empresaId?: string;
   empresa?: EmpresaBasic;
   fotoUrl?: string | null;

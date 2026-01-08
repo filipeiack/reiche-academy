@@ -175,7 +175,7 @@ export class UsersService {
   /**
    * Criar novo usuário
    */
-  create(data: CreateUsuarioRequest): Observable<Usuario> {
+  create(data: CreateUsuarioDto): Observable<Usuario> {
     return this.http.post<Usuario>(this.API_URL, data);
   }
 
@@ -702,7 +702,7 @@ export interface Usuario {
   updatedAt: Date;
 }
 
-export interface CreateUsuarioRequest {
+export interface CreateUsuarioDto {
   email: string;
   nome: string;
   senha: string;
@@ -712,7 +712,7 @@ export interface CreateUsuarioRequest {
   empresaId?: string;
 }
 
-export interface UpdateUsuarioRequest {
+export interface UpdateUsuarioDto {
   email?: string;
   nome?: string;
   senha?: string;
@@ -1609,14 +1609,14 @@ export class UsersService {
   /**
    * Criar novo usuário
    */
-  create(data: CreateUsuarioRequest): Observable<Usuario> {
+  create(data: CreateUsuarioDto): Observable<Usuario> {
     return this.http.post<Usuario>(this.API_URL, data);
   }
 
   /**
    * Atualizar usuário
    */
-  update(id: string, data: UpdateUsuarioRequest): Observable<Usuario> {
+  update(id: string, data: UpdateUsuarioDto): Observable<Usuario> {
     return this.http.patch<Usuario>(`${this.API_URL}/${id}`, data);
   }
 
@@ -1942,7 +1942,7 @@ export interface Usuario {
 | **Arquivo** | `models/auth.model.ts` (um por feature) | Centralizado por domínio |
 | **Export** | Named export (interfaces, não classes) | `export interface X` |
 | **Nomes** | PascalCase para interfaces | `Usuario`, `LoginRequest` |
-| **Request DTOs** | Sufixo `Request` ou `Dto` | `LoginRequest`, `CreateUsuarioRequest` |
+| **Request DTOs** | Sufixo `Request` ou `Dto` | `LoginRequest`, `CreateUsuarioDto` |
 | **Response DTOs** | Sufixo `Response` | `LoginResponse` |
 | **Basic Models** | Sufixo `Basic` para versões reduzidas | `PerfilUsuarioBasic` |
 | **Tipagem** | Campos exatos, sem generics | Simples e direto |

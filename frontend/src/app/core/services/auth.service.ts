@@ -39,6 +39,8 @@ export class AuthService {
       localStorage.removeItem(this.TOKEN_KEY);
       localStorage.removeItem(this.REFRESH_TOKEN_KEY);
       localStorage.removeItem(this.USER_KEY);
+      // Limpar também o contexto de empresa selecionada
+      localStorage.removeItem('selected_empresa_context');
     } catch {}
     try {
       sessionStorage.removeItem(this.TOKEN_KEY);

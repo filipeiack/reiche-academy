@@ -5,7 +5,7 @@ import { Router, ActivatedRoute } from '@angular/router';
 import { CdkDragDrop, DragDropModule, moveItemInArray } from '@angular/cdk/drag-drop';
 import Swal from 'sweetalert2';
 import { EmpresasService, Empresa, CreateEmpresaRequest, UpdateEmpresaRequest, EstadoBrasil } from '../../../../core/services/empresas.service';
-import { UsersService } from '../../../../core/services/users.service';
+import { CreateUsuarioDto, UsersService } from '../../../../core/services/users.service';
 import { Usuario } from '../../../../core/models/auth.model';
 import { AuthService } from '../../../../core/services/auth.service';
 import { PilaresService, Pilar, CreatePilarDto } from '../../../../core/services/pilares.service';
@@ -412,6 +412,34 @@ export class EmpresasFormComponent implements OnInit {
       }
     });
   }
+
+  addUsuarioTag = (nome: string): Usuario | Promise<Usuario> => {
+    // Validar se tem nome e sobrenome
+    const nomeParts = nome.trim().split(/\s+/);
+    if (nomeParts.length < 2) {
+      this.showToast('Por favor, informe nome e sobrenome', 'error');
+      return Promise.reject('Nome e sobrenome são obrigatórios');
+    }
+
+    const novoUsuario: CreateUsuarioDto = {
+      nome: nome,
+      perfilId: '336f17cb-f9d3-4401-bebf-2187888edd51' // Perfil padrão "Colaborador"
+    };
+
+    return new Promise((resolve, reject) => {
+      this.usersService.create(novoUsuario).subscribe({
+        next: (usuario) => {
+          this.showToast(`Usuário "${nome}" criado com sucesso!`, 'success');
+          resolve(usuario);
+        },
+        error: (err) => {
+          this.showToast(err?.error?.message || 'Erro ao criar usuário', 'error');
+          reject(err);
+        }
+      });
+    });
+  };
+
 
   desassociarUsuario(usuario: Usuario): void {
     Swal.fire({

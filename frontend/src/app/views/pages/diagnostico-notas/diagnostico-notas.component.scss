@@ -14,14 +14,18 @@
   position: sticky;
   z-index: 1;
   background: var(--bs-body-bg);
+  
+  &.collapsed {
+    padding: 0.3rem 1rem;
+  }
 }
 
 .saving-indicator {
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  color: #6c757d;
-  font-size: 0.875rem;
+  color: var(--bs-text-muted);
+  font-size: var(--bs-font-size-sm);
   
   .spinner-border {
     width: 1rem;
@@ -52,23 +56,28 @@
 }
 
 .rotina-descricao {
-  font-size: x-small;
-  color: #6c757d;
+  font-size: var(--bs-font-size-sm);
+  color: var(--bs-text-muted);
   margin-bottom: 0;
 }
 
 .form-label {
-  font-size: x-small;
+  font-size: var(--bs-font-size-sm);
+  margin-bottom: 0.2rem;
+}
+
+.form-label-xs {
+  font-size: 0.75rem; // 12px
   margin-bottom: 0.2rem;
 }
 
 .empty-state {
   text-align: center;
   padding: 3rem 1rem;
-  color: #6c757d;
+  color: var(--bs-text-muted);
   
   i {
-    font-size: 3rem;
+    font-size: var(--bs-h1-font-size);
     margin-bottom: 1rem;
     opacity: 0.3;
   }
@@ -77,4 +86,69 @@
     margin-bottom: 0;
     font-size: 1.125rem;
   }
+}
+
+/* Garante que as setas de incremento/decremento sempre apareçam */
+input[type=number]::-webkit-inner-spin-button,
+input[type=number]::-webkit-outer-spin-button {
+    opacity: 1;
+}
+
+/* Para Firefox, a aparência é 'number-input' por padrão. 
+   Não é necessário CSS extra para mantê-lo sempre visível. */
+input[type=number] {
+    -moz-appearance: number-input; 
+}
+
+/* Garantir mesma altura para ng-select e input */
+::ng-deep ng-select .ng-select-container {
+  min-height: calc(1.5em + 0.75rem + 2px);
+  height: calc(1.5em + 0.75rem + 2px);
+}
+
+::ng-deep ng-select .ng-select-container .ng-value-container {
+  padding-top: 0.375rem;
+  padding-bottom: 0.375rem;
+}
+
+input[type=number].form-control {
+  height: calc(1.5em + 0.75rem + 2px);
+  padding: 0.375rem 0.75rem;
+}
+
+/* Classes de criticidade para ng-select */
+::ng-deep ng-select.bg-danger .ng-select-container {
+  background-color: var(--bs-danger-bg-subtle) !important;
+  border-color: var(--bs-danger) !important;
+}
+
+::ng-deep ng-select.bg-warning .ng-select-container {
+  background-color: var(--bs-warning-bg-subtle) !important;
+  border-color: var(--bs-warning) !important;
+}
+
+::ng-deep ng-select.bg-warning .ng-value-label,
+::ng-deep ng-select.bg-warning .ng-placeholder {
+  color: var(--bs-emphasis-color) !important;
+}
+
+::ng-deep ng-select.bg-success .ng-select-container {
+  background-color: var(--bs-success-bg-subtle) !important;
+  border-color: var(--bs-success) !important;
+}
+
+/* Classes de nota para input */
+input.bg-danger {
+  background-color: var(--bs-danger-bg-subtle) !important;
+  border-color: var(--bs-danger) !important;
+}
+
+input.bg-warning {
+  background-color: var(--bs-warning-bg-subtle) !important;
+  border-color: var(--bs-warning) !important;
+}
+
+input.bg-success {
+  background-color: var(--bs-success-bg-subtle) !important;
+  border-color: var(--bs-success) !important;
 }

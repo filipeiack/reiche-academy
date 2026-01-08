@@ -11,9 +11,9 @@
     th {
       border-top: 0;
       font-weight: 600;
-      font-size: 14px;
+      font-size: var(--bs-font-size-sm);
       text-transform: uppercase;
-      color: $secondary;
+      color: var(--bs-emphasis-color);
       i {
         margin-left: 0.325rem;
       }
@@ -37,7 +37,7 @@ th[sortable].desc:before,
 th[sortable].asc:before {
   font: normal normal normal 16px/1 "feather";
   content: "";
-  color: $secondary;
+  color: var(--bs-emphasis-color);
 	width: 16px;
 	height: 16px;
 	float: left;

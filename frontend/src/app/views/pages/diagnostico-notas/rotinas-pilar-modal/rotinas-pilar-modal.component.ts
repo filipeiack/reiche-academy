@@ -9,6 +9,7 @@ import { DiagnosticoNotasService, RotinaEmpresa, PilarEmpresa } from '../../../.
 import { RotinasService, Rotina } from '../../../../core/services/rotinas.service';
 import { HttpErrorResponse } from '@angular/common/http';
 import { NovaRotinaModalComponent } from '../nova-rotina-modal/nova-rotina-modal.component';
+import { TranslatePipe } from "../../../../core/pipes/translate.pipe";
 
 @Component({
   selector: 'app-rotinas-pilar-modal',
@@ -20,14 +21,15 @@ import { NovaRotinaModalComponent } from '../nova-rotina-modal/nova-rotina-modal
     DragDropModule,
     NgSelectModule,
     FormsModule,
-    NovaRotinaModalComponent
-  ],
+    NovaRotinaModalComponent,
+    TranslatePipe
+],
   template: `
     <ng-template #modalContent let-modal>
       <div class="modal-header">
         <h5 class="modal-title">
           <i class="feather icon-list me-2"></i>
-          Gerenciar Rotinas do Pilar {{ pilarNome }}
+          {{'PILARES.PILAR' | translate}} {{ pilarNome }}
         </h5>
         <button type="button" class="btn-close" aria-label="Close" (click)="modal.dismiss()"></button>
       </div>

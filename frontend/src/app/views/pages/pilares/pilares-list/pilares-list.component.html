@@ -4,7 +4,7 @@
       <li class="breadcrumb-item">
         <i class="feather icon-layers"></i>
       </li>
-      <li class="breadcrumb-item active text-primary" aria-current="page">
+      <li class="breadcrumb-item active" aria-current="page">
         Pilares
       </li>
     </ol>
@@ -27,36 +27,22 @@
               <span class="input-icon-addon">
                 <i class="feather icon-search"></i>
               </span>
-              <input 
-                type="text" 
-                class="form-control" 
-                placeholder="Buscar por nome..."
-                [value]="searchQuery" 
+              <input type="text" class="form-control" placeholder="Buscar por nome..." [value]="searchQuery"
                 (input)="onSearchInput($event)" />
             </div>
           </div>
 
           <div class="col-md-3">
-            <ng-select
-              [items]="statusOptions"
-              bindLabel="label"
-              bindValue="value"
-              placeholder="{{ 'PILARES.FILTERS.STATUS' | translate }}"
-              [(ngModel)]="statusFilter"
-              (ngModelChange)="onStatusFilterChange($event)"
-              [clearable]="false">
+            <ng-select [items]="statusOptions" bindLabel="label" bindValue="value"
+              placeholder="{{ 'PILARES.FILTERS.STATUS' | translate }}" [(ngModel)]="statusFilter"
+              (ngModelChange)="onStatusFilterChange($event)" [clearable]="false">
             </ng-select>
           </div>
 
           <div class="col-md-3">
-            <ng-select
-              [items]="tipoOptions"
-              bindLabel="label"
-              bindValue="value"
-              placeholder="{{ 'PILARES.FILTERS.TYPE' | translate }}"
-              [(ngModel)]="tipoFilter"
-              (ngModelChange)="onTipoFilterChange($event)"
-              [clearable]="false">
+            <ng-select [items]="tipoOptions" bindLabel="label" bindValue="value"
+              placeholder="{{ 'PILARES.FILTERS.TYPE' | translate }}" [(ngModel)]="tipoFilter"
+              (ngModelChange)="onTipoFilterChange($event)" [clearable]="false">
             </ng-select>
           </div>
         </div>
@@ -74,7 +60,6 @@
               <tr>
                 <th scope="col">Nome</th>
                 <th scope="col">Tipo</th>
-                <th scope="col">Ordem</th>
                 <th scope="col" class="text-center">Rotinas</th>
                 <th scope="col" class="text-center">Empresas</th>
                 <th scope="col">Status</th>
@@ -85,17 +70,17 @@
               @for (pilar of paginatedPilares; track pilar.id) {
               <tr>
                 <!-- Nome -->
-                <td> {{ pilar.nome }} </td>
-                
+                <td>
+                  <span class="badge bg-secondary small" ngbTooltip="Ordem">{{ pilar.ordem }}</span>
+                  {{ pilar.nome }}
+                </td>
+
                 <!-- UI-PIL-002: Badge de Tipo -->
                 <td class="text-muted">
-                  <app-modelo-badge 
-                    [modelo]="pilar.modelo"
+                  <app-modelo-badge [modelo]="pilar.modelo"
                     [title]="pilar.modelo ? 'Pilar padrão (auto-associado a novas empresas)' : 'Pilar customizado'">
                   </app-modelo-badge>
                 </td>
-                
-                <td class="text-muted"> {{ pilar.ordem }} </td>
 
                 <!-- UI-PIL-003: Contadores -->
                 <td class="text-muted text-center">
@@ -105,59 +90,49 @@
                     {{ pilar._count?.rotinas || 0 }}
                   </span>
                 </td>
-                
+
                 <td class="text-muted text-center">
-                  <span 
+                  <span
                     [ngbTooltip]="pilar.nome + '\n├─ ' + (pilar._count?.rotinas || 0) + ' rotinas vinculadas\n└─ ' + (pilar._count?.empresas || 0) + ' empresas usando'"
                     placement="top">
                     {{ pilar._count?.empresas || 0 }}
                   </span>
                 </td>
-                
+
                 <!-- Status -->
                 <td class="text-muted">
                   <span>
                     {{ pilar.ativo ? 'Ativo' : 'Inativo' }}
                   </span>
                 </td>
-                
+
                 <!-- UI-PIL-009: Ações por linha -->
                 <td class="text-nowrap">
                   <div class="btn-group btn-group-sm" role="group">
                     <!-- Detalhes -->
-                    <button
-                      class="btn btn-icon text-primary"
-                      (click)="openDetailsOffcanvas(pilar.id, detailsOffcanvas)"
+                    <button class="btn btn-icon text-primary" (click)="openDetailsOffcanvas(pilar.id, detailsOffcanvas)"
                       [title]="'Detalhes do pilar' | translate">
                       <i class="feather icon-info"></i>
                     </button>
-                    
+
                     <!-- Editar (sempre visível) -->
-                    <button 
-                      class="btn btn-icon text-secondary" 
-                      [routerLink]="['/pilares', pilar.id, 'editar']"
+                    <button class="btn btn-icon text-secondary" [routerLink]="['/pilares', pilar.id, 'editar']"
                       title="Editar pilar">
                       <i class="feather icon-edit"></i>
                     </button>
-                    
+
                     <!-- Desativar (visível se ativo) -->
                     @if (pilar.ativo) {
-                      <button 
-                        class="btn btn-icon text-danger"
-                        (click)="confirmDesativar(pilar)"
-                        title="Desativar pilar">
-                        <i class="feather icon-trash-2"></i>
-                      </button>
+                    <button class="btn btn-icon text-danger" (click)="confirmDesativar(pilar)" title="Desativar pilar">
+                      <i class="feather icon-trash-2"></i>
+                    </button>
                     }
-                    
+
                     <!-- Reativar (visível se inativo) -->
                     @if (!pilar.ativo) {
-                      <button 
-                        class="btn btn-icon text-success"
-                        (click)="reativar(pilar.id)"
-                        title="Reativar pilar">
-                        <i class="feather icon-check-circle"></i>
-                      </button>
+                    <button class="btn btn-icon text-success" (click)="reativar(pilar.id)" title="Reativar pilar">
+                      <i class="feather icon-check-circle"></i>
+                    </button>
                     }
                   </div>
                 </td>
@@ -177,12 +152,9 @@
           <span class="text-muted fs-12">{{ filteredPilares.length }} itens</span>
 
           @if (totalPages > 1) {
-            <ngb-pagination 
-              [collectionSize]="filteredPilares.length" 
-              [(page)]="currentPage" 
-              size="sm"
-              [pageSize]="pageSize">
-            </ngb-pagination>
+          <ngb-pagination [collectionSize]="filteredPilares.length" [(page)]="currentPage" size="sm"
+            [pageSize]="pageSize">
+          </ngb-pagination>
           }
         </div>
         }
@@ -209,7 +181,7 @@
     <div class="mb-4">
       <h4 class="mb-2">{{ selectedPilar.nome }}</h4>
       @if (selectedPilar.descricao) {
-        <!-- <p class="text-muted">{{ selectedPilar.descricao }}</p> -->
+      <!-- <p class="text-muted">{{ selectedPilar.descricao }}</p> -->
       }
       <span class="badge" [ngClass]="{ 'bg-success': selectedPilar.ativo, 'bg-danger': !selectedPilar.ativo }">
         {{ selectedPilar.ativo ? ('COMMON.ACTIVE' | translate) : ('COMMON.INACTIVE' | translate) }}
@@ -247,7 +219,8 @@
     </div>
 
     <div class="d-grid gap-2">
-      <button type="button" class="btn btn-primary" [routerLink]="['/pilares', selectedPilar.id, 'editar']" (click)="offcanvas.dismiss()">
+      <button type="button" class="btn btn-primary" [routerLink]="['/pilares', selectedPilar.id, 'editar']"
+        (click)="offcanvas.dismiss()">
         <i class="feather icon-edit"></i> {{ 'BUTTONS.EDIT' | translate }}
       </button>
     </div>
