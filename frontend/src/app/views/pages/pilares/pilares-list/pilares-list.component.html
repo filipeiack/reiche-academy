@@ -38,13 +38,6 @@
               (ngModelChange)="onStatusFilterChange($event)" [clearable]="false">
             </ng-select>
           </div>
-
-          <div class="col-md-3">
-            <ng-select [items]="tipoOptions" bindLabel="label" bindValue="value"
-              placeholder="{{ 'PILARES.FILTERS.TYPE' | translate }}" [(ngModel)]="tipoFilter"
-              (ngModelChange)="onTipoFilterChange($event)" [clearable]="false">
-            </ng-select>
-          </div>
         </div>
 
         @if (loading) {
@@ -59,7 +52,6 @@
             <thead>
               <tr>
                 <th scope="col">Nome</th>
-                <th scope="col">Tipo</th>
                 <th scope="col" class="text-center">Rotinas</th>
                 <th scope="col" class="text-center">Empresas</th>
                 <th scope="col">Status</th>
@@ -73,13 +65,6 @@
                 <td>
                   <span class="badge bg-secondary small" ngbTooltip="Ordem">{{ pilar.ordem }}</span>
                   {{ pilar.nome }}
-                </td>
-
-                <!-- UI-PIL-002: Badge de Tipo -->
-                <td class="text-muted">
-                  <app-modelo-badge [modelo]="pilar.modelo"
-                    [title]="pilar.modelo ? 'Pilar padrão (auto-associado a novas empresas)' : 'Pilar customizado'">
-                  </app-modelo-badge>
                 </td>
 
                 <!-- UI-PIL-003: Contadores -->
@@ -197,10 +182,6 @@
           <div class="mt-1">{{ selectedPilar.descricao }}</div>
         </div>
         }
-        <div class="mb-2">
-          <span class="text-muted small">{{ 'PILARES.FIELDS.TYPE' | translate }}</span>
-          <div>{{ selectedPilar.modelo ? 'Padrão' : 'Customizado' }}</div>
-        </div>
         @if (selectedPilar.ordem) {
         <div class="mb-2">
           <span class="text-muted small">{{ 'PILARES.FIELDS.ORDER' | translate }}</span>

@@ -6,7 +6,6 @@ import Swal from 'sweetalert2';
 import { PilaresService, Pilar } from '../../../../core/services/pilares.service';
 import { NgbPaginationModule, NgbTooltipModule, NgbOffcanvas, NgbOffcanvasModule } from '@ng-bootstrap/ng-bootstrap';
 import { NgSelectModule } from '@ng-select/ng-select';
-import { ModeloBadgeComponent } from '../../../../shared/components/modelo-badge/modelo-badge.component';
 import { TranslatePipe } from '../../../../core/pipes/translate.pipe';
 
 @Component({
@@ -20,7 +19,6 @@ import { TranslatePipe } from '../../../../core/pipes/translate.pipe';
     NgbTooltipModule,
     NgSelectModule,
     NgbOffcanvasModule,
-    ModeloBadgeComponent,
     TranslatePipe
   ],
   templateUrl: './pilares-list.component.html',
@@ -38,19 +36,12 @@ export class PilaresListComponent implements OnInit {
   
   // Filtros UI-PIL-007
   statusFilter: 'all' | 'active' | 'inactive' = 'all';
-  tipoFilter: 'all' | 'modelo' | 'customizado' = 'modelo';
 
   // Opções para ng-select
   statusOptions = [
     { value: 'all', label: 'Todos os Status' },
     { value: 'active', label: 'Ativos' },
     { value: 'inactive', label: 'Inativos' }
-  ];
-
-  tipoOptions = [
-    { value: 'all', label: 'Todos os Tipos' },
-    { value: 'modelo', label: 'Padrão' },
-    { value: 'customizado', label: 'Customizados' }
   ];
 
   // Paginação
@@ -109,11 +100,6 @@ export class PilaresListComponent implements OnInit {
     this.applyFiltersAndSort();
   }
 
-  onTipoFilterChange(tipo: 'all' | 'modelo' | 'customizado'): void {
-    this.tipoFilter = tipo;
-    this.applyFiltersAndSort();
-  }
-
   applyFiltersAndSort(): void {
     let filtered = [...this.pilares];
 
@@ -132,13 +118,6 @@ export class PilaresListComponent implements OnInit {
       filtered = filtered.filter(p => !p.ativo);
     }
 
-    // Filtro de tipo
-    if (this.tipoFilter === 'modelo') {
-      filtered = filtered.filter(p => p.modelo);
-    } else if (this.tipoFilter === 'customizado') {
-      filtered = filtered.filter(p => !p.modelo);
-    }
-
     // UI-PIL-004: Ordenação
     this.filteredPilares = this.sortPilares(filtered);
   }
@@ -146,18 +125,14 @@ export class PilaresListComponent implements OnInit {
   // UI-PIL-004: Ordenação de Exibição
   sortPilares(pilares: Pilar[]): Pilar[] {
     return pilares.sort((a, b) => {
-      // 1. Padrões primeiro
-      if (a.modelo && !b.modelo) return -1;
-      if (!a.modelo && b.modelo) return 1;
+      // Ordenar por ordem se definida, senão alfabético
+      const ordemA = a.ordem ?? 9999;
+      const ordemB = b.ordem ?? 9999;
       
-      // 2. Entre padrões: por ordem (se definida)
-      if (a.modelo && b.modelo) {
-        const ordemA = a.ordem ?? 9999;
-        const ordemB = b.ordem ?? 9999;
+      if (ordemA !== ordemB) {
         return ordemA - ordemB;
       }
       
-      // 3. Entre customizados: alfabético
       return a.nome.localeCompare(b.nome);
     });
   }

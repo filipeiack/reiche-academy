@@ -24,7 +24,6 @@ export class PilaresFormComponent implements OnInit {
     nome: ['', [Validators.required, Validators.minLength(2), Validators.maxLength(100)]],
     descricao: ['', [Validators.maxLength(500)]],
     ordem: [null as number | null, [Validators.min(1)]],
-    modelo: [false],
     ativo: [true]
   });
 
@@ -42,13 +41,6 @@ export class PilaresFormComponent implements OnInit {
 
       if (this.isEditMode && this.pilarId) {
         this.loadPilar(this.pilarId);
-      } else {
-        // Modo criação: sugerir próxima ordem se modelo === true
-        this.form.get('modelo')?.valueChanges.subscribe(isModelo => {
-          if (isModelo && !this.form.get('ordem')?.value) {
-            this.suggestNextOrdem();
-          }
-        });
       }
     });
   }
@@ -74,7 +66,6 @@ export class PilaresFormComponent implements OnInit {
           nome: pilar.nome,
           descricao: pilar.descricao || '',
           ordem: pilar.ordem ?? null,
-          modelo: pilar.modelo,
           ativo: pilar.ativo
         });
         this.loading = false;
@@ -92,7 +83,7 @@ export class PilaresFormComponent implements OnInit {
     this.pilaresService.findAll().subscribe({
       next: (pilares) => {
         const maxOrdem = pilares
-          .filter(p => p.modelo && p.ordem !== null && p.ordem !== undefined)
+          .filter(p => p.ordem !== null && p.ordem !== undefined)
           .reduce((max, p) => Math.max(max, p.ordem!), 0);
         
         this.form.patchValue({ ordem: maxOrdem + 1 });

@@ -41,7 +41,6 @@ describe('RotinasService', () => {
     nome: 'Planejamento Anual',
     descricao: 'Planejamento estratégico anual',
     ordem: 1,
-    modelo: false,
     ativo: true,
     pilarId: 'pilar-123',
     createdAt: new Date(),
@@ -109,7 +108,6 @@ describe('RotinasService', () => {
       descricao: 'Descrição da rotina',
       ordem: 1,
       pilarId: 'pilar-123',
-      modelo: false,
     };
 
     it('deve criar rotina com pilar válido', async () => {
@@ -157,19 +155,6 @@ describe('RotinasService', () => {
         'Pilar não encontrado',
       );
       expect(prisma.rotina.create).not.toHaveBeenCalled();
-    });
-
-    it('deve criar rotina sem especificar ordem (auto-incremento)', async () => {
-      const modeloDto = { ...createDto, modelo: true };
-      const rotina = { ...mockRotina };
-
-      jest.spyOn(prisma.pilar, 'findUnique').mockResolvedValue(mockPilar as any);
-      jest.spyOn(prisma.rotina, 'create').mockResolvedValue(rotina as any);
-      jest.spyOn(prisma.usuario, 'findUnique').mockResolvedValue(mockUser as any);
-
-      const result = await service.create(modeloDto, { id: 'user-123' });
-
-      expect(result.nome).toBeDefined();
     });
   });
 

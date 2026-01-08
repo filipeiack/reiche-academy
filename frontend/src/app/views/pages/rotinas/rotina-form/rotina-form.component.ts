@@ -72,7 +72,6 @@ export class RotinaFormComponent implements OnInit, AfterViewInit {
       descricao: ['', [Validators.maxLength(500)]],
       pilarId: ['', [Validators.required]],
       ordem: [null, [Validators.min(1)]],
-      modelo: [false],
     });
   }
 
@@ -99,7 +98,6 @@ export class RotinaFormComponent implements OnInit, AfterViewInit {
           descricao: rotina.descricao || '',
           pilarId: rotina.pilarId,
           ordem: rotina.ordem,
-          modelo: rotina.modelo,
         });
         
         // Desabilitar pilarId em modo de edição (conforme regra UI-ROT-005)
@@ -171,7 +169,6 @@ export class RotinaFormComponent implements OnInit, AfterViewInit {
       nome: data.nome,
       descricao: data.descricao,
       ordem: data.ordem,
-      modelo: data.modelo,
     };
     
     this.rotinasService.update(this.rotinaId, updateData).subscribe({

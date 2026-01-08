@@ -31,13 +31,7 @@
               </ng-option>
             </ng-select>
           </div>
-          <div class="col-md-4">
-            <ng-select [items]="tipoOptions" bindLabel="label" bindValue="value"
-              placeholder="Filtrar por tipo" [(ngModel)]="tipoFilter"
-              (ngModelChange)="onTipoFilterChange($event)" [clearable]="false">
-            </ng-select>
-          </div>
-          <div class="col-md-4">
+          <div class="col-md-8">
             <div class="alert alert-info mb-0" *ngIf="!canReorder">
 
               Selecione um pilar para habilitar a reordenação drag-and-drop
@@ -68,7 +62,6 @@
                 <th *ngIf="canReorder" style="width: 40px;"></th>
                 <th>Pilar</th>
                 <th>Rotina</th>
-                <th>Tipo</th>
                 <th style="width: 120px;">Ações</th>
               </tr>
             </thead>
@@ -82,9 +75,6 @@
                 <td style="max-width: 600px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
                   <span class="badge bg-secondary small" ngbTooltip="Ordem">{{ rotina.ordem }}</span>
                   <span [ngbTooltip]="rotina.nome"> {{ rotina.nome }} </span>
-                </td>
-                <td>
-                  <app-modelo-badge [modelo]="rotina.modelo"></app-modelo-badge>
                 </td>
                 <td class="text-nowrap">
                   <div class="btn-group btn-group-sm" role="group">
@@ -168,12 +158,6 @@
           <div class="mt-1">{{ selectedRotina.descricao }}</div>
         </div>
         }
-        <div class="mb-2">
-          <span class="text-muted small">{{ 'ROTINAS.FIELDS.TYPE' | translate }}</span>
-          <div>
-            <app-modelo-badge [modelo]="selectedRotina.modelo"></app-modelo-badge>
-          </div>
-        </div>
         @if (selectedRotina.ordem) {
         <div class="mb-2">
           <span class="text-muted small">{{ 'ROTINAS.FIELDS.ORDER' | translate }}</span>

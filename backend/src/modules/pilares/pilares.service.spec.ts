@@ -28,7 +28,7 @@ describe('PilaresService', () => {
     nome: 'Estratégia',
     descricao: 'Pilar estratégico',
     ordem: 1,
-    modelo: true,
+
     ativo: true,
     createdAt: new Date(),
     updatedAt: new Date(),
@@ -41,7 +41,6 @@ describe('PilaresService', () => {
     nome: 'Inovação',
     descricao: 'Pilar customizado',
     ordem: null,
-    modelo: false,
     ativo: true,
     createdAt: new Date(),
     updatedAt: new Date(),
@@ -86,11 +85,11 @@ describe('PilaresService', () => {
   });
 
   // ============================================================
-  // GAP-1: Campo modelo em CreatePilarDto
+  // Criação de Pilares
   // ============================================================
 
-  describe('GAP-1: Campo modelo em criação', () => {
-    it('deve criar pilar com modelo: true', async () => {
+  describe('Criação de pilares', () => {
+    it('deve criar pilar com ordem especificada', async () => {
       jest.spyOn(prisma.pilar, 'findUnique').mockResolvedValue(null);
       jest.spyOn(prisma.pilar, 'create').mockResolvedValue(mockPilarPadrao as any);
 
@@ -105,7 +104,7 @@ describe('PilaresService', () => {
 
     it('deve criar pilar sem especificar ordem (auto-incremento)', async () => {
       jest.spyOn(prisma.pilar, 'findUnique').mockResolvedValue(null);
-      jest.spyOn(prisma.pilar, 'create').mockResolvedValue({ ...mockPilarCustomizado, modelo: false } as any);
+      jest.spyOn(prisma.pilar, 'create').mockResolvedValue(mockPilarCustomizado as any);
 
       const result = await service.create(
         { nome: 'Outro Pilar' },

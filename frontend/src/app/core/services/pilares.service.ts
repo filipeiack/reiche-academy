@@ -8,7 +8,6 @@ export interface Pilar {
   nome: string;
   descricao?: string;
   ordem?: number;
-  modelo: boolean;
   ativo: boolean;
   createdAt: string;
   updatedAt: string;
@@ -26,14 +25,12 @@ export interface CreatePilarDto {
   nome: string;
   descricao?: string;
   ordem?: number;
-  modelo?: boolean;
 }
 
 export interface UpdatePilarDto {
   nome?: string;
   descricao?: string;
   ordem?: number;
-  modelo?: boolean;
   ativo?: boolean;
 }
 

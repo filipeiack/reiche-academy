@@ -14,14 +14,9 @@ export class CreatePilarDto {
   @Length(0, 500)
   descricao?: string;
 
-  @ApiPropertyOptional({ example: 1, description: 'Ordem de exibição (apenas para pilares padrão)' })
+  @ApiPropertyOptional({ example: 1, description: 'Ordem de exibição' })
   @IsInt()
   @Min(1)
   @IsOptional()
   ordem?: number;
-
-  @ApiPropertyOptional({ example: false, description: 'Se true, pilar é auto-associado a novas empresas' })
-  @IsBoolean()
-  @IsOptional()
-  modelo?: boolean;
 }

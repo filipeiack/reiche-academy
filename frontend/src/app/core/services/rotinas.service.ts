@@ -8,7 +8,6 @@ export interface Rotina {
   nome: string;
   descricao?: string;
   ordem?: number;
-  modelo: boolean;
   ativo: boolean;
   pilarId: string;
   createdAt: string;
@@ -27,7 +26,6 @@ export interface CreateRotinaDto {
   descricao?: string;
   ordem?: number;
   pilarId: string;
-  modelo?: boolean;
   pilarEmpresaId?: string;
 }
 
@@ -35,7 +33,6 @@ export interface UpdateRotinaDto {
   nome?: string;
   descricao?: string;
   ordem?: number;
-  modelo?: boolean;
   ativo?: boolean;
 }
 

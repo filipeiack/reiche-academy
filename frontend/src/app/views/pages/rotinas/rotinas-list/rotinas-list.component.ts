@@ -9,7 +9,6 @@ import { NgSelectModule } from '@ng-select/ng-select';
 
 import { RotinasService, Rotina } from '../../../../core/services/rotinas.service';
 import { PilaresService, Pilar } from '../../../../core/services/pilares.service';
-import { ModeloBadgeComponent } from '../../../../shared/components/modelo-badge/modelo-badge.component';
 import { HttpErrorResponse } from '@angular/common/http';
 import { TranslatePipe } from "../../../../core/pipes/translate.pipe";
 
@@ -25,7 +24,6 @@ import { TranslatePipe } from "../../../../core/pipes/translate.pipe";
     NgbOffcanvasModule,
     NgSelectModule,
     DragDropModule,
-    ModeloBadgeComponent,
     TranslatePipe
 ],
   templateUrl: './rotinas-list.component.html',
@@ -45,14 +43,6 @@ export class RotinasListComponent implements OnInit {
   // Filtros
   pilarIdFiltro: string | null = null;
   searchQuery = '';
-  tipoFilter: 'all' | 'modelo' | 'customizado' = 'modelo';
-  
-  // Opções para ng-select (filtro de tipo)
-  tipoOptions = [
-    { value: 'all', label: 'Todos os Tipos' },
-    { value: 'modelo', label: 'Padrão' },
-    { value: 'customizado', label: 'Customizados' }
-  ];
   
   // Offcanvas de detalhes
   selectedRotina: Rotina | null = null;
@@ -121,25 +111,6 @@ export class RotinasListComponent implements OnInit {
   onFilterChange(): void {
     this.page = 1;
     this.loadRotinas();
-  }
-
-  onTipoFilterChange(tipo: 'all' | 'modelo' | 'customizado'): void {
-    this.tipoFilter = tipo;
-    this.page = 1;
-    this.applyFilters();
-  }
-
-  applyFilters(): void {
-    let filtered = [...this.rotinas];
-
-    // Filtro de tipo
-    if (this.tipoFilter === 'modelo') {
-      filtered = filtered.filter(r => r.modelo);
-    } else if (this.tipoFilter === 'customizado') {
-      filtered = filtered.filter(r => !r.modelo);
-    }
-
-    this.rotinasFiltered = filtered;
   }
 
   get paginatedRotinas(): Rotina[] {
