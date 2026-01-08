@@ -13,6 +13,7 @@ import { AuthService } from '../../../core/services/auth.service';
 import { EmpresaContextService } from '../../../core/services/empresa-context.service';
 import { Chart, registerables } from 'chart.js';
 import annotationPlugin from 'chartjs-plugin-annotation';
+import { MediaBadgeComponent } from '../../../shared/components/media-badge/media-badge.component';
 
 Chart.register(...registerables, annotationPlugin);
 
@@ -25,7 +26,8 @@ Chart.register(...registerables, annotationPlugin);
     NgSelectModule,
     NgbAlertModule,
     TranslatePipe,
-    NgbTooltip
+    NgbTooltip,
+    MediaBadgeComponent
 ],
   templateUrl: './diagnostico-evolucao.component.html',
   styleUrl: './diagnostico-evolucao.component.scss'
@@ -46,24 +48,9 @@ export class DiagnosticoEvolucaoComponent implements OnInit, OnDestroy {
 
   medias: MediaPilar[] = [];
   historico: any[] = []; // Agora armazena histórico de todos os pilares
-  chart: Chart | null = null;
   barChart: Chart | null = null;
 
   canCongelar = false; // ADMINISTRADOR, CONSULTOR, GESTOR
-
-  // Paleta de cores contrastantes para os pilares
-private readonly COLORS = [
-    { border: 'rgb(231, 76, 60)', bg: 'rgba(231, 76, 60, 0.2)' },      // Vermelho
-    { border: 'rgb(52, 152, 219)', bg: 'rgba(52, 152, 219, 0.2)' },    // Azul
-    { border: 'rgb(46, 204, 113)', bg: 'rgba(46, 204, 113, 0.2)' },    // Verde
-    { border: 'rgb(230, 126, 34)', bg: 'rgba(230, 126, 34, 0.2)' },    // Laranja
-    { border: 'rgb(155, 89, 182)', bg: 'rgba(155, 89, 182, 0.2)' },    // Roxo
-    { border: 'rgb(236, 64, 122)', bg: 'rgba(236, 64, 122, 0.2)' },    // Rosa
-    { border: 'rgb(26, 188, 156)', bg: 'rgba(26, 188, 156, 0.2)' },    // Turquesa
-    { border: 'rgb(241, 196, 15)', bg: 'rgba(241, 196, 15, 0.2)' },    // Amarelo
-    { border: 'rgb(52, 73, 94)', bg: 'rgba(52, 73, 94, 0.2)' },        // Cinza Escuro
-    { border: 'rgb(149, 165, 166)', bg: 'rgba(149, 165, 166, 0.2)' }   // Cinza Claro
-];
 
   // Paleta de tons de cinza para o gráfico de barras
   private readonly GRAY_COLORS = [
@@ -90,7 +77,7 @@ private readonly COLORS = [
           this.loadMedias();
         } else {
           this.medias = [];
-          this.destroyCharts();
+          this.destroyBarChart();
         }
       }
     });
@@ -98,9 +85,6 @@ private readonly COLORS = [
 
   ngOnDestroy(): void {
     this.empresaContextSubscription?.unsubscribe();
-    if (this.chart) {
-      this.chart.destroy();
-    }
     if (this.barChart) {
       this.barChart.destroy();
     }
@@ -145,7 +129,7 @@ private readonly COLORS = [
     this.loading = true;
     this.error = '';
     this.medias = [];
-    this.destroyCharts();
+    this.destroyBarChart();
 
     this.diagnosticoService.calcularMediasPilares(this.selectedEmpresaId).subscribe({
       next: (data) => {
@@ -209,7 +193,7 @@ private readonly COLORS = [
   private async loadAllHistorico(): Promise<void> {
     if (!this.selectedEmpresaId || this.medias.length === 0) {
       this.historico = [];
-      this.destroyCharts();
+      this.destroyBarChart();
       return;
     }
 
@@ -237,165 +221,16 @@ private readonly COLORS = [
       
       // Pequeno delay para garantir que o DOM foi atualizado
       setTimeout(() => {
-        this.renderChart();
         this.renderBarChart();
       }, 100);
     } catch (err) {
       console.error('Erro ao carregar histórico de pilares:', err);
       this.showToast('Erro ao carregar histórico', 'error');
       this.historico = [];
-      this.destroyCharts();
+      this.destroyBarChart();
     }
   }
 
-  private renderChart(): void {
-    this.destroyChart();
-
-    if (this.historico.length === 0) {
-      return;
-    }
-
-    const ctx = document.getElementById('evolucaoChart') as HTMLCanvasElement;
-    if (!ctx) return;
-
-    // Coletar todas as datas únicas de todos os pilares
-    const allDates = new Set<string>();
-    this.historico.forEach(pilar => {
-      pilar.data.forEach((item: HistoricoEvolucao) => {
-        allDates.add(new Date(item.createdAt).toLocaleDateString('pt-BR'));
-      });
-    });
-    const labels = Array.from(allDates).sort((a, b) => {
-      const dateA = a.split('/').reverse().join('-');
-      const dateB = b.split('/').reverse().join('-');
-      return dateA.localeCompare(dateB);
-    });
-
-    // Criar dataset para cada pilar
-    const datasets = this.historico.map((pilar, index) => {
-      const colorIndex = index % this.COLORS.length;
-      const color = this.COLORS[colorIndex];
-
-      // Mapear dados do pilar para as datas correspondentes
-      const data = labels.map(label => {
-        const item = pilar.data.find((h: HistoricoEvolucao) => 
-          new Date(h.createdAt).toLocaleDateString('pt-BR') === label
-        );
-        return item ? item.mediaNotas : null;
-      });
-
-      return {
-        label: pilar.pilarNome,
-        data: data,
-        borderColor: color.border,
-        backgroundColor: color.bg,
-        tension: 0.3,
-        fill: false,
-        spanGaps: true // Conecta pontos mesmo se houver valores null
-      };
-    });
-
-    this.chart = new Chart(ctx, {
-      type: 'line',
-      data: {
-        labels: labels,
-        datasets: datasets
-      },
-      options: {
-        responsive: true,
-        maintainAspectRatio: false,
-        interaction: {
-          mode: 'index',
-          intersect: false,
-        },
-        scales: {
-          y: {
-            beginAtZero: true,
-            max: 10,
-            ticks: {
-              stepSize: 1
-            },
-            title: {
-              display: true,
-              text: 'Média das Notas'
-            }
-          },
-          x: {
-            title: {
-              display: true,
-              text: 'Data'
-            }
-          }
-        },
-        plugins: {
-          legend: {
-            display: true,
-            position: 'top',
-            onClick: (e, legendItem, legend) => {
-              // Permitir ocultar/mostrar linhas clicando na legenda
-              const index = legendItem.datasetIndex!;
-              const ci = legend.chart;
-              if (ci.isDatasetVisible(index)) {
-                ci.hide(index);
-                legendItem.hidden = true;
-              } else {
-                ci.show(index);
-                legendItem.hidden = false;
-              }
-            }
-          },
-          tooltip: {
-            callbacks: {
-              label: function(context) {
-                let label = context.dataset.label || '';
-                if (label) {
-                  label += ': ';
-                }
-                if (context.parsed.y !== null) {
-                  label += context.parsed.y.toFixed(2);
-                }
-                return label;
-              }
-            }
-          },
-          annotation: {
-            annotations: {
-              // Zona Vermelha: 0-6
-              zonaVermelha: {
-                type: 'box',
-                yMin: 0,
-                yMax: 5,
-                backgroundColor: 'rgba(250, 30, 30, 0.15)',
-                //borderColor: 'rgba(252, 30, 30, 0.5)',
-                borderWidth: 0,
-                drawTime: 'beforeDatasetsDraw'
-              },
-              // Zona Amarela: 6-8
-              zonaAmarela: {
-                type: 'box',
-                yMin: 5,
-                yMax: 8,
-                backgroundColor: 'rgba(247, 226, 36, 0.15)',
-                //borderColor: 'rgba(255, 206, 86, 0.5)',
-                borderWidth: 0,
-                drawTime: 'beforeDatasetsDraw'
-              },
-              // Zona Verde: 8-10
-              zonaVerde: {
-                type: 'box',
-                yMin: 8,
-                yMax: 10,
-                backgroundColor: 'rgba(61, 172, 57, 0.15)',
-                //borderColor: 'rgba(33, 206, 27, 0.5)',
-                borderWidth: 0,
-                drawTime: 'beforeDatasetsDraw'
-              }
-            }
-          }
-        }
-      }
-    });
-  }
 renderBarChart(): void {
     this.destroyBarChart();
 
@@ -406,38 +241,43 @@ renderBarChart(): void {
     const ctx = document.getElementById('evolucaoBarChart') as HTMLCanvasElement;
     if (!ctx) return;
 
-    // Coletar todas as datas únicas de todos os pilares
+    // Coletar todas as datas únicas de todos os pilares e ordenar
     const allDates = new Set<string>();
     this.historico.forEach(pilar => {
       pilar.data.forEach((item: HistoricoEvolucao) => {
         allDates.add(new Date(item.createdAt).toLocaleDateString('pt-BR'));
       });
     });
-    const labels = Array.from(allDates).sort((a, b) => {
+    const sortedDates = Array.from(allDates).sort((a, b) => {
       const dateA = a.split('/').reverse().join('-');
       const dateB = b.split('/').reverse().join('-');
       return dateA.localeCompare(dateB);
     });
 
-    // Criar dataset para cada pilar
-    const datasets = this.historico.map((pilar, index) => {
+    // Labels são os nomes dos pilares
+    const labels = this.historico.map(pilar => pilar.pilarNome);
+
+    // Criar dataset para cada data
+    const datasets = sortedDates.map((date, index) => {
       const colorIndex = index % this.GRAY_COLORS.length;
       const grayColor = this.GRAY_COLORS[colorIndex];
 
-      // Mapear dados do pilar para as datas correspondentes
-      const data = labels.map(label => {
+      // Para cada pilar, pegar a média da data correspondente
+      const data = this.historico.map(pilar => {
         const item = pilar.data.find((h: HistoricoEvolucao) => 
-          new Date(h.createdAt).toLocaleDateString('pt-BR') === label
+          new Date(h.createdAt).toLocaleDateString('pt-BR') === date
         );
         return item ? item.mediaNotas : null;
       });
 
       return {
-        label: pilar.pilarNome,
+        label: date,
         data: data,
         backgroundColor: grayColor,
         borderColor: grayColor,
-        borderWidth: 1
+        borderWidth: 1,
+        barPercentage: 1.05,
+        categoryPercentage: 0.75
       };
     });
 
@@ -447,6 +287,30 @@ renderBarChart(): void {
         labels: labels,
         datasets: datasets
       },
+      plugins: [{
+        id: 'datalabels',
+        afterDatasetsDraw: (chart: any) => {
+          const ctx = chart.ctx;
+          // Obter a cor do texto do tema atual
+          const textColor = getComputedStyle(document.documentElement).getPropertyValue('--bs-body-color').trim() || '#212121';
+          
+          chart.data.datasets.forEach((dataset: any, datasetIndex: number) => {
+            const meta = chart.getDatasetMeta(datasetIndex);
+            if (!meta.hidden) {
+              meta.data.forEach((bar: any, index: number) => {
+                const data = dataset.data[index];
+                if (data !== null && data !== undefined) {
+                  ctx.fillStyle = textColor;
+                  ctx.font = 'bold 11px Arial';
+                  ctx.textAlign = 'center';
+                  ctx.textBaseline = 'bottom';
+                  ctx.fillText(data.toFixed(1), bar.x, bar.y - 5);
+                }
+              });
+            }
+          });
+        }
+      }],
       options: {
         responsive: true,
         maintainAspectRatio: false,
@@ -469,7 +333,7 @@ renderBarChart(): void {
           x: {
             title: {
               display: true,
-              text: 'Data'
+              text: 'Pilar'
             }
           }
         },
@@ -505,30 +369,30 @@ renderBarChart(): void {
           },
           annotation: {
             annotations: {
-              // Zona Vermelha: 0-5
+              // Zona Vermelha: 0-6 (usando cor do tema $danger: #C34D38)
               zonaVermelha: {
                 type: 'box',
                 yMin: 0,
-                yMax: 5,
-                backgroundColor: 'rgba(250, 30, 30, 0.15)',
+                yMax: 6,
+                backgroundColor: 'rgba(195, 77, 56, 0.3)',
                 borderWidth: 0,
                 drawTime: 'beforeDatasetsDraw'
               },
-              // Zona Amarela: 5-8
+              // Zona Amarela: 6-8 (usando cor do tema $warning: #A67C00)
               zonaAmarela: {
                 type: 'box',
-                yMin: 5,
+                yMin: 6,
                 yMax: 8,
-                backgroundColor: 'rgba(247, 226, 36, 0.15)',
+                backgroundColor: 'rgba(166, 124, 0, 0.3)',
                 borderWidth: 0,
                 drawTime: 'beforeDatasetsDraw'
               },
-              // Zona Verde: 8-10
+              // Zona Verde: 8-10 (usando cor do tema $success: #5CB870)
               zonaVerde: {
                 type: 'box',
                 yMin: 8,
                 yMax: 10,
-                backgroundColor: 'rgba(61, 172, 57, 0.15)',
+                backgroundColor: 'rgba(92, 184, 112, 0.3)',
                 borderWidth: 0,
                 drawTime: 'beforeDatasetsDraw'
               }
@@ -539,13 +403,6 @@ renderBarChart(): void {
     });
   }
 
-  private destroyChart(): void {
-    if (this.chart) {
-      this.chart.destroy();
-      this.chart = null;
-    }
-  }
-
   private destroyBarChart(): void {
     if (this.barChart) {
       this.barChart.destroy();
@@ -553,15 +410,14 @@ renderBarChart(): void {
     }
   }
 
-  private destroyCharts(): void {
-    this.destroyChart();
-    this.destroyBarChart();
-  }
-
   getProgressColor(percentual: number): string {
     if (percentual >= 80) return 'success';
     if (percentual >= 50) return 'warning';
     return 'danger';
+  }
+
+  getSortedMedias(): MediaPilar[] {
+    return [...this.medias].sort((a, b) => b.mediaAtual - a.mediaAtual);
   }
 
   private showToast(title: string, icon: 'success' | 'error' | 'info' | 'warning', timer: number = 3000): void {

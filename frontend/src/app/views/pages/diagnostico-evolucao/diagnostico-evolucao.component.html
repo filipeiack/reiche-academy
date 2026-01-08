@@ -11,104 +11,37 @@
             </ol>
         </nav>
     </div>
-
-    <div class="card">
-        <div class="card-body py-2">
-            @if (isAdmin || empresaLogada) {
-            <div class="row">
-                <!-- Exibição da empresa (para ambos admin e cliente) -->
-                @if (isAdmin && selectedEmpresaId) {
-                <div class="col-12 d-flex gap-3 align-items-center">
-                    <i class="feather icon-briefcase"></i>
-                    <span class="h5 mb-0">
-                        Visualizando evolução
-                    </span>
-                </div>
-                } @else if (empresaLogada) {
-                <div class="col-12 d-flex gap-3 align-items-center">
-                    <i class="feather icon-briefcase"></i>
-                    <span class="h3">
-                        {{ empresaLogada.nome }}
-                    </span>
-                    @if (empresaLogada.cnpj) {
-                    <span class="text-muted small d-block">{{ empresaLogada.cnpj }} - {{ empresaLogada.cidade }}/{{
-                        empresaLogada.estado }}</span>
-                    }
-                </div>
-                }
-            </div>
-            }
-
-            <!-- Loading -->
-            @if (loading) {
-            <div class="text-center py-5">
-                <div class="spinner-border text-primary" role="status">
-                    <span class="visually-hidden">{{ 'COMMON.LOADING' | translate }}...</span>
-                </div>
-            </div>
-            }
-
-            <!-- Error -->
-            @if (error && !loading) {
-            <ngb-alert type="danger" [dismissible]="false">
-                <i class="feather icon-alert-circle"></i>
-                {{ error }}
-            </ngb-alert>
-            }
-
-            <!-- Estado vazio -->
-            @if (!loading && !error && medias.length === 0 && selectedEmpresaId) {
-            <div class="empty-state">
-                <i class="feather icon-folder"></i>
-                <p>{{ 'EVOLUCAO.NO_MEDIAS' | translate }}</p>
-            </div>
-            }
-
-            @if (!loading && !error && !selectedEmpresaId && !isAdmin) {
-            <div class="empty-state">
-                <i class="feather icon-alert-circle"></i>
-                <p>{{ 'EVOLUCAO.NO_EMPRESA_ASSOCIATED' | translate }}</p>
-            </div>
-            }
-
-        </div>
-    </div>
 </div>
 
 <!-- Conteúdo principal -->
 @if (!loading && !error && selectedEmpresaId && medias.length > 0) {
-<div class="row">
-    <!-- Cards de Pilares com Médias -->
-    @for (media of medias; track media.pilarEmpresaId) {
-    <div class="col-md-4 mb-3">
-        <div class="card">
-            <div class="card-body">
-                <h5 class="card-title mb-2">{{ 'PILARES.PILAR' | translate }} {{ media.pilarNome }}</h5>
-                <div class="d-flex justify-content-between align-items-center mb-2">
-                    <span class="text-muted">{{ 'EVOLUCAO.MEDIA_ATUAL' | translate }}:</span>
-                    <h3 class="mb-0 text-primary">{{ media.mediaAtual.toFixed(1) }}</h3>
-                </div>
-                <div class="d-flex justify-content-between align-items-center mb-2">
-                    <span class="text-muted small">{{ 'EVOLUCAO.ROTINAS_AVALIADAS' | translate }}:</span>
-                    <span class="badge bg-info">{{ media.totalRotinasAvaliadas }}/{{ media.totalRotinas }}</span>
-                </div>
-                <div class="progress progress-sm">
-                    <div class="progress-bar"
-                        [class.bg-success]="(media.totalRotinasAvaliadas / media.totalRotinas * 100) >= 80"
-                        [class.bg-warning]="(media.totalRotinasAvaliadas / media.totalRotinas * 100) >= 50 && (media.totalRotinasAvaliadas / media.totalRotinas * 100) < 80"
-                        [class.bg-danger]="(media.totalRotinasAvaliadas / media.totalRotinas * 100) < 50"
-                        role="progressbar" [style.width.%]="media.totalRotinasAvaliadas / media.totalRotinas * 100"
-                        [attr.aria-valuenow]="media.totalRotinasAvaliadas / media.totalRotinas * 100" aria-valuemin="0"
-                        aria-valuemax="100">
-                    </div>
-                </div>
-            </div>
+<!-- Tabela de Pilares com Médias -->
+<div class="card mb-3">
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-hover">
+                <thead>
+                    <tr>
+                        <th>{{ 'PILARES.PILAR' | translate }}</th>
+                        <th class="text-end">{{ 'EVOLUCAO.MEDIA_ATUAL' | translate }}</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @for (media of getSortedMedias(); track media.pilarEmpresaId) {
+                    <tr>
+                        <td>{{ media.pilarNome }}</td>
+                        <td class="text-end">
+                            <app-media-badge [media]="media.mediaAtual"></app-media-badge>
+                        </td>
+                    </tr>
+                    }
+                </tbody>
+            </table>
         </div>
     </div>
-    }
 </div>
 
-<!-- Gráfico de Evolução -->
+<!-- Gráfico de Colunas por Data -->
 <div class="card">
     <div class="card-body">
         <div class="d-flex justify-content-between align-items-center mb-3">
@@ -116,40 +49,18 @@
             <!-- Botão Congelar -->
             @if (canCongelar) {
             <button type="button" class="btn btn-primary" ngbTooltip="{{('EVOLUCAO.CONGELAR_DESC' | translate)}}"
-            (click)="congelarMedias()" [disabled]="medias.length === 0">
-            <i class="feather icon-archive"></i>
-            {{ 'EVOLUCAO.CONGELAR_BTN' | translate }}
+                (click)="congelarMedias()" [disabled]="medias.length === 0">
+                <i class="feather icon-archive"></i>
+                {{ 'EVOLUCAO.CONGELAR_BTN' | translate }}
             </button>
             }
         </div>
         <p class="text-muted small mb-3">
             <i class="feather icon-info me-1"></i>
-            Clique nas legendas para ocultar/mostrar pilares individualmente
+            Cada pilar exibe suas médias congeladas ao longo do tempo
         </p>
 
-        <div style="height: 450px;">
-            <canvas id="evolucaoChart"></canvas>
-        </div>
-
-        @if (historico.length === 0) {
-        <div class="empty-state" style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);">
-            <i class="feather icon-bar-chart-2"></i>
-            <p>{{ 'EVOLUCAO.NO_HISTORICO' | translate }}</p>
-        </div>
-        }
-    </div>
-</div>
-
-<!-- Gráfico de Colunas por Data -->
-<div class="card mt-3">
-    <div class="card-body">
-        <h5 class="card-title mb-3">{{ 'EVOLUCAO.GRAFICO_COLUNAS_TITLE' | translate }}</h5>
-        <p class="text-muted small mb-3">
-            <i class="feather icon-info me-1"></i>
-            Comparação das médias dos pilares agrupadas por data
-        </p>
-
-        <div style="height: 450px;">
+        <div style="height: 500px;">
             <canvas id="evolucaoBarChart"></canvas>
         </div>
 
@@ -160,5 +71,43 @@
         </div>
         }
     </div>
+</div>
+}
+
+<!-- Loading -->
+@else if (loading) {
+<div class="text-center py-5">
+    <div class="spinner-border text-primary" role="status">
+        <span class="visually-hidden">{{ 'COMMON.LOADING' | translate }}...</span>
+    </div>
+</div>
+}
+
+<!-- Error -->
+@else if (error && !loading) {
+<ngb-alert type="danger" [dismissible]="false">
+    <i class="feather icon-alert-circle"></i>
+    {{ error }}
+</ngb-alert>
+}
+
+<!-- Estado vazio -->
+@else if (!loading && !error && medias.length === 0 && selectedEmpresaId) {
+<div class="empty-state">
+    <i class="feather icon-folder"></i>
+    <p>{{ 'EVOLUCAO.NO_MEDIAS' | translate }}</p>
+</div>
+}
+
+@else if (!loading && !error && !selectedEmpresaId && !isAdmin) {
+<div class="empty-state">
+    <i class="feather icon-alert-circle"></i>
+    <p>{{ 'EVOLUCAO.NO_EMPRESA_ASSOCIATED' | translate }}</p>
+</div>
+}
+
+@else if (!selectedEmpresaId && isAdmin) {
+<div class="empty-state">
+    <p>{{ 'EVOLUCAO.SELECT_EMPRESA_PLACEHOLDER' | translate }}</p>
 </div>
 }
