@@ -14,6 +14,7 @@ import { EmpresaContextService } from '../../../core/services/empresa-context.se
 import { Chart, registerables } from 'chart.js';
 import annotationPlugin from 'chartjs-plugin-annotation';
 import { MediaBadgeComponent } from '../../../shared/components/media-badge/media-badge.component';
+import { SortableDirective, SortEvent } from '../../../shared/directives/sortable.directive';
 
 Chart.register(...registerables, annotationPlugin);
 
@@ -27,7 +28,8 @@ Chart.register(...registerables, annotationPlugin);
     NgbAlertModule,
     TranslatePipe,
     NgbTooltip,
-    MediaBadgeComponent
+    MediaBadgeComponent,
+    SortableDirective
 ],
   templateUrl: './diagnostico-evolucao.component.html',
   styleUrl: './diagnostico-evolucao.component.scss'
@@ -51,6 +53,10 @@ export class DiagnosticoEvolucaoComponent implements OnInit, OnDestroy {
   barChart: Chart | null = null;
 
   canCongelar = false; // ADMINISTRADOR, CONSULTOR, GESTOR
+
+  // Ordenação
+  sortColumn: string = '';
+  sortDirection: 'asc' | 'desc' = 'asc';
 
   // Paleta de tons de cinza para o gráfico de barras
   private readonly GRAY_COLORS = [
@@ -416,8 +422,38 @@ renderBarChart(): void {
     return 'danger';
   }
 
+  onSort(event: SortEvent): void {
+    const column = event.column;
+    if (this.sortColumn === column) {
+      this.sortDirection = this.sortDirection === 'asc' ? 'desc' : 'asc';
+    } else {
+      this.sortColumn = column;
+      this.sortDirection = event.direction as 'asc' | 'desc';
+    }
+  }
+
   getSortedMedias(): MediaPilar[] {
-    return [...this.medias].sort((a, b) => b.mediaAtual - a.mediaAtual);
+    const sorted = [...this.medias];
+    
+    if (!this.sortColumn) {
+      // Ordenação padrão: por média decrescente
+      return sorted.sort((a, b) => b.mediaAtual - a.mediaAtual);
+    }
+
+    // Aplicar ordenação
+    sorted.sort((a: any, b: any) => {
+      let valueA = a[this.sortColumn];
+      let valueB = b[this.sortColumn];
+      
+      if (typeof valueA === 'string') valueA = valueA.toLowerCase();
+      if (typeof valueB === 'string') valueB = valueB.toLowerCase();
+      
+      if (valueA < valueB) return this.sortDirection === 'asc' ? -1 : 1;
+      if (valueA > valueB) return this.sortDirection === 'asc' ? 1 : -1;
+      return 0;
+    });
+    
+    return sorted;
   }
 
   private showToast(title: string, icon: 'success' | 'error' | 'info' | 'warning', timer: number = 3000): void {

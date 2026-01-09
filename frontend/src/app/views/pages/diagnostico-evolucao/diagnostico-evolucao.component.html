@@ -1,4 +1,4 @@
-<div id="headerEmpresa" class="sticky-header-empresa mb-0">
+<div id="headerEmpresa" class="mb-0">
     <div class="mb-0 align-items-center d-flex justify-content-between flex-wrap">
         <nav aria-label="breadcrumb">
             <ol class="breadcrumb breadcrumb-arrow">
@@ -18,20 +18,20 @@
 <!-- Tabela de Pilares com Médias -->
 <div class="card mb-2">
     <div class="card-body">
-        <div class="table-responsive">
-            <table class="table table-hover">
+        <div class="table-responsive" style="max-width: 80%; margin: 0 auto;">
+            <table class="table table-striped">
                 <thead>
                     <tr>
                         <th>{{ 'PILARES.PILAR' | translate }}</th>
-                        <th class="text-end">{{ 'EVOLUCAO.MEDIA_ATUAL' | translate }}</th>
+                        <th sortable="mediaAtual" (sort)="onSort($event)" class="text-center">{{ 'EVOLUCAO.MEDIA_ATUAL' | translate }}</th>
                     </tr>
                 </thead>
                 <tbody>
                     @for (media of getSortedMedias(); track media.pilarEmpresaId) {
                     <tr>
                         <td>{{ media.pilarNome }}</td>
-                        <td class="text-end">
-                            <app-media-badge [media]="media.mediaAtual"></app-media-badge>
+                        <td class="text-center">
+                            <app-media-badge [media]="media.mediaAtual" [justMedia]="true"></app-media-badge>
                         </td>
                     </tr>
                     }
@@ -60,7 +60,7 @@
             Cada pilar exibe suas médias congeladas ao longo do tempo
         </p>
 
-        <div style="height: 500px;">
+        <div>
             <canvas id="evolucaoBarChart"></canvas>
         </div>
 

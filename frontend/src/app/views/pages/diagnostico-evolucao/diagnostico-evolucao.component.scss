@@ -1,32 +1,21 @@
-.sticky-header-empresa {
-  position: sticky;
-  top: 0;
-  z-index: 10;
-  //background: #f8f9fa;
-  padding: 1rem 0;
-  margin-bottom: 1rem;
-}
-
 .empty-state {
   text-align: center;
   padding: 3rem 1rem;
-
+  color: var(--bs-text-muted);
+  
   i {
-    font-size: 4rem;
-    color: var(--bs-gray-300);
+    font-size: var(--bs-h1-font-size);
     margin-bottom: 1rem;
+    opacity: 0.3;
   }
-
+  
   p {
     color: var(--bs-text-muted);
     font-size: var(--bs-font-size-lg);
   }
 }
 
-.progress {
-  border-radius: 0.25rem;
-}
-
 canvas {
-  max-height: 400px;
+  max-height: 500px;
+  height: 400px;
 }
