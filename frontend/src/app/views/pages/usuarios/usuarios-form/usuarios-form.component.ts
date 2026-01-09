@@ -43,7 +43,7 @@ export class UsuariosFormComponent implements OnInit {
     cargo: ['', []],
     perfilId: ['', Validators.required],
     empresaId: [''],
-    senha: ['', []],
+    senha: ['', []], // Validadores adicionados dinamicamente no ngOnInit
     ativo: [true]
   });
 
@@ -155,10 +155,19 @@ export class UsuariosFormComponent implements OnInit {
 
     if (this.isEditMode && this.usuarioId) {
       this.loadUsuario(this.usuarioId);
-      this.form.get('senha')?.setValidators([Validators.minLength(6)]);
+      // Senha é opcional ao editar, mas se preenchida deve ser forte
+      this.form.get('senha')?.setValidators([
+        Validators.minLength(8),
+        Validators.pattern(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]/)
+      ]);
       this.form.get('senha')?.updateValueAndValidity();
     } else {
-      this.form.get('senha')?.setValidators([Validators.required, Validators.minLength(6)]);
+      // Senha obrigatória ao criar, com requisitos de senha forte
+      this.form.get('senha')?.setValidators([
+        Validators.required,
+        Validators.minLength(8),
+        Validators.pattern(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]/)
+      ]);
       this.form.get('senha')?.updateValueAndValidity();
     }
 
@@ -166,8 +175,13 @@ export class UsuariosFormComponent implements OnInit {
     this.form.get('perfilId')?.valueChanges.subscribe(perfilId => {
       const perfilSelecionado = this.perfis.find(p => p.id === perfilId);
       if (perfilSelecionado?.codigo === 'ADMINISTRADOR') {
-        this.form.patchValue({ empresaId: null });
+        this.form.get('empresaId')?.setValue('');
+        this.form.get('empresaId')?.clearValidators();
+      } else {
+        // Empresa obrigatória para perfis não-ADMINISTRADOR
+        this.form.get('empresaId')?.setValidators([Validators.required]);
       }
+      this.form.get('empresaId')?.updateValueAndValidity();
     });
   }
 
@@ -374,6 +388,9 @@ export class UsuariosFormComponent implements OnInit {
     }
     if (field.hasError('email')) {
       return 'Email inválido';
+    }
+    if (field.hasError('pattern') && fieldName === 'senha') {
+      return 'A senha deve conter pelo menos uma letra maiúscula, uma minúscula, um número e um caractere especial (@$!%*?&)';
     }
 
     return 'Campo inválido';

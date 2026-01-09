@@ -8,6 +8,120 @@ async function main() {
   // Definir pilares e suas rotinas
   const pilaresData = [
     {
+      nome: 'ESTRATÉGICO',
+      descricao: 'Pilar responsável por planejamento e estratégias empresariais',
+      ordem: 1,
+      rotinas: [
+        {
+          nome: 'DEFINIÇÃO E ALINHAMENTO COM O TIME DE MISSÃO, VISÃO E VALORES (DO CEO ATÉ A OPERAÇÃO)',
+          descricao: 'Estabelecimento e comunicação dos princípios fundamentais da empresa',
+          ordem: 1,
+        },
+        {
+          nome: 'GESTÃO DO ORGANOGRAMA DA EMPRESA E MAPEAMENTO DOS CARGOS E FUNÇÕES',
+          descricao: 'Organização e definição clara da estrutura hierárquica e responsabilidades',
+          ordem: 2,
+        },
+        {
+          nome: 'ELABORAÇÃO E APRESENTAÇÃO DO REGULAMENTO INTERNO PARA GARANTIR REGRAS E PADRÕES DA EMPRESA',
+          descricao: 'Criação e divulgação de normas internas para manter a ordem e a conformidade',
+          ordem: 3,
+        },
+        {
+          nome: 'DEFINIÇÃO DE METAS ANUAIS E DESDOBRAMENTO DE METAS MÊS A MÊS',
+          descricao: 'Estabelecimento de objetivos anuais e seu detalhamento mensal para acompanhamento',
+          ordem: 4,
+        },
+        {
+          nome: 'ROTINA DE REUNIÃO MENSAL: PARA ANÁLISE DOS RESULTADOS (POR ÁREA E INDICADOR)',
+          descricao: 'Encontros mensais para avaliação de desempenho e indicadores por setor',
+          ordem: 5,
+        },
+        {
+          nome: 'ROTINA DE REUNIÃO SEMANAL: PARA ALINHAMENTO 1 A 1 (COM LÍDERES DE CADA ÁREA)',
+          descricao: 'Reuniões semanais individuais para alinhamento entre líderes e suas equipes',
+          ordem: 6,
+        },
+        {
+          nome: 'ROTINA DE REUNIÃO DIÁRIA: PARA ALINHAMENTO DO TIME (FOCO NAS ROTINAS E PADRÕES)',
+          descricao: 'Reuniões diárias para alinhamento rápido e foco nas rotinas e padrões',
+          ordem: 7,
+        },
+        {
+          nome: 'ROTINA DE TREINAMENTO E FORMAÇÃO DE NOVAS LIDERANÇAS PARA AS POSIÇÕES CRÍTICAS',
+          descricao: 'Programas de treinamento e desenvolvimento para preparar novas lideranças',
+          ordem: 8,
+        },
+        {
+          nome: 'AÇÕES DE DESENVOLVIMENTO E FORTALECIMENTO DA CULTURA ORGANIZACIONAL',
+          descricao: 'Iniciativas para fortalecer e desenvolver a cultura da empresa',
+          ordem: 9,
+        },
+        {
+          nome: 'ROTINA DE ANÁLISE DE CONCORRENTES E TENDÊNCIAS DE MERCADO PARA O SETOR (RISCOS E OPORTUNIDADES)',
+          descricao: 'Monitoramento e análise de concorrentes e tendências para identificar riscos e oportunidades',
+          ordem: 10,
+        },
+      ],
+    },
+    {
+      nome: 'MARKETING',
+      descricao: 'Pilar responsável por marketing e geração de leads',
+      ordem: 2,
+      rotinas: [
+        {
+          nome: 'RAIO-X DO CLIENTE DOS SONHOS, ANÁLISE DA CONCORRÊNCIA E ESTUDO DE MERCADO',
+          descricao: 'Análise detalhada do perfil do cliente ideal, estudo de concorrentes e tendências do mercado',
+          ordem: 1,
+        },
+        {
+          nome: 'GESTÃO DE PÁGINAS, SITES, GOOGLE MEU NEGÓCIO',
+          descricao: 'Gerenciamento e manutenção de páginas web, sites corporativos e perfil do Google Meu Negócio',
+          ordem: 2,
+        },
+        {
+          nome: 'GESTÃO DAS REDES SOCIAIS E CRIAÇÃO DE CONTEÚDOS ORGÂNICOS/VIRAIS',
+          descricao: 'Administração de redes sociais e produção de conteúdo orgânico com potencial viral',
+          ordem: 3,
+        },
+        {
+          nome: 'ROTINAS DE SOCIAL SELLER (PROSPECÇÃO ATIVA NAS REDES SOCIAIS)',
+          descricao: 'Estratégias de vendas sociais e prospecção ativa através das redes sociais',
+          ordem: 4,
+        },
+        {
+          nome: 'GESTÃO DE TRÁFEGO PAGO/ANÚNCIOS ONLINE',
+          descricao: 'Planejamento, execução e otimização de campanhas pagas em plataformas digitais',
+          ordem: 5,
+        },
+        {
+          nome: 'PARCERIAS COM EMPRESAS E NEGÓCIOS ESTRATÉGICOS',
+          descricao: 'Desenvolvimento e gestão de parcerias comerciais estratégicas',
+          ordem: 6,
+        },
+        {
+          nome: 'GESTÃO DE GRUPO VIP NO WHATSAPP/MENSAGENS VIA LISTA DE TRANSMISSÃO',
+          descricao: 'Gerenciamento de grupos VIP e listas de transmissão para comunicação segmentada',
+          ordem: 7,
+        },
+        {
+          nome: 'ROTINA DE LIVES SHOP PARA DIVULGAÇÃO DE PRODUTOS/OFERTAS ESPECIAIS',
+          descricao: 'Planejamento e execução de transmissões ao vivo para vendas e promoções',
+          ordem: 8,
+        },
+        {
+          nome: 'PARCERIAS COM INFLUENCERS E PROFISSIONAIS DO NICHO',
+          descricao: 'Desenvolvimento de parcerias com influenciadores digitais e especialistas do setor',
+          ordem: 9,
+        },
+        {
+          nome: 'ELABORAÇÃO DE MATERIAIS, FOLDERS, PANFLETOS INSTITUCIONAIS, CARTAZES, ETC',
+          descricao: 'Criação de materiais gráficos e institucionais para comunicação offline',
+          ordem: 10,
+        },
+      ],
+    },
+    {
       nome: 'VENDAS',
       descricao: 'Pilar responsável por vendas e relacionamento com clientes',
       ordem: 3,

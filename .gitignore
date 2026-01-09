@@ -48,3 +48,5 @@ backend/public/
 templates/
 frontend/test-results/
 frontend/test-results/.last-run.json
+frontend/playwright-report/
+frontend/playwright-report/index.html

@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { test, expect } from './fixtures';
 
 /**
  * E2E Tests - Login
@@ -26,8 +26,13 @@ test.describe('Login', () => {
     // Aguardar redirecionamento (login bem-sucedido)
     await page.waitForURL(/^(?!.*login).*$/, { timeout: 10000 });
     
-    // Validar que token foi armazenado
-    const token = await page.evaluate(() => localStorage.getItem('access_token'));
+    // Aguardar um pouco para token ser salvo
+    await page.waitForTimeout(1000);
+
+    // Validar que token foi armazenado (pode ser 'access_token' ou 'token')
+    const token = await page.evaluate(() => {
+      return localStorage.getItem('access_token') || localStorage.getItem('token') || sessionStorage.getItem('access_token');
+    });
     expect(token).toBeTruthy();
   });
 

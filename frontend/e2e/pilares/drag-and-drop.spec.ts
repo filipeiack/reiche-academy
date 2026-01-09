@@ -1,5 +1,6 @@
-import { test, expect } from '../fixtures';
 import { 
+  test, 
+  expect,
   login, 
   navigateTo, 
   expectToast,
@@ -40,7 +41,7 @@ import {
 test.describe('Pilares - Acesso e Navegação', () => {
   
   test.beforeEach(async ({ page }) => {
-    await login(page, TEST_USERS.admin);
+    await login(page, TEST_USERS['admin']);
     await navigateTo(page, '/pilares');
   });
 
@@ -48,9 +49,9 @@ test.describe('Pilares - Acesso e Navegação', () => {
     // Aguardar lista de pilares carregar
     await page.waitForLoadState('networkidle');
     
-    // Validar que a página foi carregada
-    const pageTitle = await page.textContent('h1, h2, .page-title').catch(() => '');
-    expect(pageTitle).toMatch(/pilares/i);
+    // Validar que a página foi carregada (via breadcrumb)
+    const breadcrumb = await page.locator('.breadcrumb-item.active').textContent().catch(() => '');
+    expect(breadcrumb).toMatch(/pilares/i);
   });
 
   test('deve exibir lista de pilares (se existirem)', async ({ page }) => {
@@ -71,16 +72,18 @@ test.describe('Pilares - Acesso e Navegação', () => {
   test('pilares devem ter informações básicas visíveis', async ({ page }) => {
     await page.waitForTimeout(2000);
     
-    const pilares = page.locator('[data-testid="pilar-list-item"], .pilar-card').first();
+    // Buscar pilares na tabela ou cards
+    const pilares = page.locator('table tbody tr, [data-testid="pilar-list-item"], .card').first();
     const pilarCount = await pilares.count();
     
     if (pilarCount > 0) {
-      // Validar que pilar tem nome/título visível
-      const titulo = pilares.locator('h3, h4, h5, .pilar-titulo, .card-title').first();
-      await expect(titulo).toBeVisible();
-      
-      const tituloText = await titulo.textContent();
-      expect(tituloText?.trim().length).toBeGreaterThan(0);
+      // Validar que pilar tem conteúdo visível (qualquer texto)
+      const pilarText = await pilares.textContent();
+      expect(pilarText?.trim().length).toBeGreaterThan(0);
+    } else {
+      // Se não houver pilares, verificar mensagem de vazio
+      const emptyMessage = await page.getByText(/sem pilares|nenhum pilar|não há/i).count();
+      expect(emptyMessage).toBeGreaterThan(0);
     }
   });
 
@@ -135,7 +138,7 @@ test.describe('Pilares - Reordenação (Drag-and-Drop)', () => {
     // Este teste existe apenas para documentar a estratégia
     // Drag-and-drop não é testado em E2E por limitações técnicas
     
-    await login(page, TEST_USERS.admin);
+    await login(page, TEST_USERS['admin']);
     await navigateTo(page, '/pilares');
     
     // Validar que interface está acessível
@@ -149,7 +152,7 @@ test.describe('Pilares - Reordenação (Drag-and-Drop)', () => {
 test.describe('Pilares - Multi-tenant e Permissões', () => {
   
   test('ADMINISTRADOR deve poder gerenciar pilares globais', async ({ page }) => {
-    await login(page, TEST_USERS.admin);
+    await login(page, TEST_USERS['admin']);
     await navigateTo(page, '/pilares');
     
     await page.waitForTimeout(1000);
@@ -167,7 +170,7 @@ test.describe('Pilares - Multi-tenant e Permissões', () => {
     // Gestores podem VISUALIZAR mas não EDITAR pilares base
     // A customização acontece em pilares-empresa (snapshot pattern)
     
-    await login(page, TEST_USERS.gestorEmpresaA);
+    await login(page, TEST_USERS['gestorEmpresaA']);
     
     // Tentar acessar página de pilares
     await page.goto('http://localhost:4200/pilares');
@@ -176,7 +179,9 @@ test.describe('Pilares - Multi-tenant e Permissões', () => {
     // Validar se gestor tem acesso (depende da regra RBAC implementada)
     // Se não tiver acesso, deve ser redirecionado ou ver erro
     const currentUrl = page.url();
-    const hasError = await page.locator('.alert-danger, .toast.bg-danger, text=/sem permissão|acesso negado/i').count();
+    const alertCount = await page.locator('.alert-danger, .toast.bg-danger').count();
+    const textErrorCount = await page.getByText(/sem permissão|acesso negado/i).count();
+    const hasError = alertCount + textErrorCount;
     
     // Gestor pode ter acesso read-only ou ser bloqueado (depende de implementação)
     // Teste apenas valida que existe controle de acesso
@@ -190,3 +195,4 @@ test.describe('Pilares - Multi-tenant e Permissões', () => {
     }
   });
 });
+

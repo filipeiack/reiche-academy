@@ -17,6 +17,13 @@ async function checkUser() {
   console.log('User ID:', user.id);
   console.log('User Name:', user.nome);
   console.log('User Active:', user.ativo);
+  
+  if (!user.senha) {
+    console.log('❌ User has no password set');
+    await prisma.$disconnect();
+    return;
+  }
+  
   console.log('Password Hash:', user.senha.substring(0, 50) + '...');
 
   // Test password verification

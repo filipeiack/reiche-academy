@@ -119,13 +119,10 @@
                                 <div class="mb-3">
                                     <label class="form-label" for="estado">{{ 'COMPANIES.ESTADO' | translate }}
                                         <span class="text-danger">*</span></label>
-                                    <select class="form-select" [class.is-invalid]="isFieldInvalid('estado')"
-                                        id="estado" formControlName="estado">
-                                        <option value="">Selecione</option>
-                                        @for (estado of estadosList; track estado) {
-                                        <option [value]="estado">{{ estado }}</option>
-                                        }
-                                    </select>
+                                    <ng-select [items]="estadosList" [searchable]="true" [clearable]="false"
+                                                placeholder="{{ 'COMMON.SELECT' | translate }}" formControlName="estado"
+                                                [class.is-invalid]="isFieldInvalid('estado')">
+                                            </ng-select>
                                     @if (isFieldInvalid('estado')) {
                                     <div class="invalid-feedback d-block">{{ getFieldError('estado') }}</div>
                                     }
@@ -138,13 +135,11 @@
                                 <div class="mb-3">
                                     <label class="form-label" for="tipoNegocio">{{ 'COMPANIES.TIPO_NEGOCIO' |
                                         translate }}</label>
-                                    <input type="text" class="form-control" id="tipoNegocio"
-                                        formControlName="tipoNegocio" list="tiposNegocioList" />
-                                    <datalist id="tiposNegocioList">
-                                        @for (tipo of tiposNegocioList; track tipo) {
-                                        <option [value]="tipo">{{ tipo }}</option>
-                                        }
-                                    </datalist>
+                                    <ng-select [items]="tiposNegocioList" [addTag]="true" [searchable]="true"
+                                                [clearable]="true" placeholder="Digite para buscar ou criar novo..."
+                                                formControlName="tipoNegocio"
+                                                [class.is-invalid]="isFieldInvalid('tipoNegocio')">
+                                            </ng-select>
                                     @if (isFieldInvalid('tipoNegocio')) {
                                     <div class="invalid-feedback d-block">
                                         {{ getFieldError('tipoNegocio') }}

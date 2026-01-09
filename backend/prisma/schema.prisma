@@ -182,6 +182,7 @@ model Pilar {
   rotinas     Rotina[]
   empresas    PilarEmpresa[]
   
+  @@unique([nome])
   @@map("pilares")
 }
 
@@ -203,6 +204,7 @@ model Rotina {
   // Relations
   rotinaEmpresas RotinaEmpresa[]
   
+  @@unique([nome])
   @@map("rotinas")
 }
 

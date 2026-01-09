@@ -1,15 +1,18 @@
-import { test as base, expect, Page } from '@playwright/test';
+import { Page } from '@playwright/test';
 
 /**
  * Fixtures E2E - Reiche Academy
  * 
- * Fornece utilitários compartilhados para testes E2E:
- * - Login automático
- * - Navegação
- * - Helpers de formulários
+ * Fornece utilitários compartilhados para testes E2E
  * 
- * Agente: E2E_Agent
+ * NOTA: Arquivo simplificado sem test.extend() para evitar conflitos
+ * 
+ * Agente: QA_E2E_Interface
+ * Data: 2026-01-09
  */
+
+// Re-export test e expect do Playwright
+export { test, expect } from '@playwright/test';
 
 export type TestUser = {
   email: string;
@@ -18,6 +21,21 @@ export type TestUser = {
   empresaId?: string;
 };
 
+/**
+ * TEST_USERS - Usuários de fixtures para testes E2E
+ * 
+ * ⚠️ ATENÇÃO: Estes usuários NUNCA devem ser deletados!
+ * 
+ * São criados via seed do backend e são essenciais para login nos testes.
+ * Qualquer cleanup de dados deve excluir apenas usuários criados durante
+ * o teste, NUNCA os TEST_USERS.
+ * 
+ * Usuários protegidos:
+ * - admin@reiche.com.br (ADMINISTRADOR)
+ * - gestor@empresa-a.com (GESTOR)
+ * - gestor@empresa-b.com (GESTOR)
+ * - colab@empresa-a.com (COLABORADOR)
+ */
 export const TEST_USERS: Record<string, TestUser> = {
   admin: {
     email: 'admin@reiche.com.br',
@@ -44,6 +62,23 @@ export const TEST_USERS: Record<string, TestUser> = {
   },
 };
 
+/**
+ * Emails dos TEST_USERS que nunca devem ser deletados
+ */
+export const PROTECTED_TEST_USER_EMAILS = [
+  'admin@reiche.com.br',
+  'gestor@empresa-a.com',
+  'gestor@empresa-b.com',
+  'colab@empresa-a.com',
+];
+
+/**
+ * Verifica se um email é de um TEST_USER protegido
+ */
+export function isProtectedTestUser(email: string): boolean {
+  return PROTECTED_TEST_USER_EMAILS.includes(email.toLowerCase());
+}
+
 // Helpers de autenticação
 export async function login(page: Page, user: TestUser) {
   await page.goto('/login');
@@ -55,11 +90,20 @@ export async function login(page: Page, user: TestUser) {
   // Buscar botão de login por type="submit"
   await page.click('button[type="submit"]');
   
-  // Aguardar redirecionamento após login bem-sucedido
-  await page.waitForURL(/^(?!.*login).*$/, { timeout: 10000 });
+  // Aguardar navegação acontecer (detecta qualquer mudança de URL)
+  await page.waitForNavigation({ waitUntil: 'networkidle', timeout: 15000 }).catch(async () => {
+    // Se não houver navegação, verificar se token foi criado
+    const token = await page.evaluate(() => localStorage.getItem('access_token'));
+    if (!token) {
+      throw new Error('Login falhou: sem navegação e sem token');
+    }
+  });
   
-  // Aguardar página carregar completamente
-  await page.waitForLoadState('networkidle');
+  // Validar que saiu da página de login
+  const currentUrl = page.url();
+  if (currentUrl.includes('/login')) {
+    throw new Error('Login falhou: ainda na página de login');
+  }
 }
 
 export async function logout(page: Page) {
@@ -74,7 +118,8 @@ export async function logout(page: Page) {
 
 // Helpers de navegação
 export async function navigateTo(page: Page, route: string) {
-  await page.goto(route);
+  const baseUrl = 'http://localhost:4200';
+  await page.goto(baseUrl + route);
   
   // Aguardar loader desaparecer (se existir)
   const loader = page.locator('.spinner-border, .loading-spinner').first();
@@ -86,8 +131,35 @@ export async function navigateTo(page: Page, route: string) {
 // Helpers de formulários
 export async function fillFormField(page: Page, fieldName: string, value: string) {
   const field = page.locator(`[formControlName="${fieldName}"], [name="${fieldName}"]`);
-  await field.clear();
-  await field.fill(value);
+  
+  // Verificar se é um ng-select
+  const tagName = await field.evaluate((el) => el.tagName.toLowerCase());
+  
+  if (tagName === 'ng-select') {
+    // Para ng-select, usar estratégia específica
+    await field.click(); // Abrir dropdown
+    await page.waitForTimeout(200);
+    
+    // Digitar no input de busca interno
+    const searchInput = page.locator('.ng-input input').first();
+    await searchInput.fill(value);
+    await page.waitForTimeout(300);
+    
+    // Selecionar primeira opção ou criar nova (taggable)
+    const firstOption = page.locator('.ng-option').first();
+    const optionCount = await firstOption.count();
+    
+    if (optionCount > 0) {
+      await firstOption.click();
+    } else {
+      // Se não houver opções, pressionar Enter para criar (taggable)
+      await searchInput.press('Enter');
+    }
+  } else {
+    // Input/textarea padrão
+    await field.clear();
+    await field.fill(value);
+  }
 }
 
 export async function selectDropdownOption(page: Page, fieldName: string, optionText: string) {
@@ -145,19 +217,24 @@ export async function expectToast(page: Page, type: 'success' | 'error' | 'warni
     // É um SweetAlert2
     if (type === 'success') {
       const successIcon = swal.locator('.swal2-icon-success, .swal2-success');
-      await expect(successIcon).toBeVisible({ timeout: 3000 });
+      await successIcon.waitFor({ state: 'visible', timeout: 3000 });
     } else if (type === 'error') {
       const errorIcon = swal.locator('.swal2-icon-error, .swal2-error');
-      await expect(errorIcon).toBeVisible({ timeout: 3000 });
+      await errorIcon.waitFor({ state: 'visible', timeout: 3000 });
     }
     
     if (message) {
       const titleOrContent = page.locator('.swal2-title, .swal2-html-container');
       if (typeof message === 'string') {
-        await expect(titleOrContent.first()).toContainText(message);
+        const text = await titleOrContent.first().textContent();
+        if (!text?.includes(message)) {
+          throw new Error(`Expected message "${message}" but got "${text}"`);
+        }
       } else {
         const text = await titleOrContent.first().textContent();
-        expect(text).toMatch(message);
+        if (!message.test(text || '')) {
+          throw new Error(`Expected message matching ${message} but got "${text}"`);
+        }
       }
     }
   } catch (e) {
@@ -165,14 +242,18 @@ export async function expectToast(page: Page, type: 'success' | 'error' | 'warni
     const toastSelector = `.toast.bg-${type === 'success' ? 'success' : type === 'error' ? 'danger' : type}`;
     const toast = page.locator(toastSelector).first();
     
-    await expect(toast).toBeVisible({ timeout: 3000 });
+    await toast.waitFor({ state: 'visible', timeout: 3000 });
     
     if (message) {
+      const text = await toast.textContent();
       if (typeof message === 'string') {
-        await expect(toast).toContainText(message);
+        if (!text?.includes(message)) {
+          throw new Error(`Expected message "${message}" but got "${text}"`);
+        }
       } else {
-        const text = await toast.textContent();
-        expect(text || '').toMatch(message);
+        if (!message.test(text || '')) {
+          throw new Error(`Expected message matching ${message} but got "${text}"`);
+        }
       }
     }
   }
@@ -180,7 +261,10 @@ export async function expectToast(page: Page, type: 'success' | 'error' | 'warni
 
 export async function expectErrorMessage(page: Page, fieldName: string, errorMessage: string) {
   const errorElement = page.locator(`[formControlName="${fieldName}"] ~ .invalid-feedback, [name="${fieldName}"] ~ .invalid-feedback`);
-  await expect(errorElement).toContainText(errorMessage);
+  const text = await errorElement.textContent();
+  if (!text?.includes(errorMessage)) {
+    throw new Error(`Expected error "${errorMessage}" but got "${text}"`);
+  }
 }
 
 // Helpers de tabelas
@@ -209,162 +293,3 @@ export async function closeModal(page: Page) {
     await page.waitForSelector('.modal.show, .offcanvas.show', { state: 'hidden' });
   }
 }
-
-// Helper para capturar ID de recurso criado via interceptação HTTP
-export async function captureCreatedResourceId(
-  page: Page, 
-  resourceType: 'usuario' | 'empresa' | 'pilar' | 'rotina',
-  cleanupRegistry: CleanupRegistry
-): Promise<void> {
-  const endpoints: Record<typeof resourceType, RegExp> = {
-    usuario: /\/api\/users$/,
-    empresa: /\/api\/empresas$/,
-    pilar: /\/api\/pilares$/,
-    rotina: /\/api\/rotinas$/,
-  };
-
-  page.on('response', async response => {
-    if (endpoints[resourceType].test(response.url()) && response.status() === 201) {
-      try {
-        const body = await response.json();
-        if (body.id) {
-          console.log(`[Capture] ✅ ${resourceType} criado com ID: ${body.id}`);
-          cleanupRegistry.add(resourceType, body.id);
-        }
-      } catch (e) {
-        // Response não é JSON ou não tem ID
-      }
-    }
-  });
-}
-
-// Cleanup automático de recursos criados em testes
-type CleanupResource = {
-  type: 'usuario' | 'empresa' | 'pilar' | 'rotina';
-  id: string;
-};
-
-export type CleanupRegistry = {
-  add: (type: CleanupResource['type'], id: string) => void;
-  addMultiple: (type: CleanupResource['type'], ids: string[]) => void;
-};
-
-async function cleanupResourceWithToken(page: Page, resource: CleanupResource, token: string | null): Promise<void> {
-  try {
-    const baseUrl = 'http://localhost:3000/api';
-    
-    if (!token) {
-      console.warn(`[Cleanup] ⚠️ Sem token de auth - pulando cleanup de ${resource.type}:${resource.id}`);
-      console.warn(`[Cleanup]    Recurso pode precisar de limpeza manual via SQL`);
-      return;
-    }
-
-    const endpoints: Record<CleanupResource['type'], string> = {
-      usuario: `${baseUrl}/users/${resource.id}`,
-      empresa: `${baseUrl}/empresas/${resource.id}`,
-      pilar: `${baseUrl}/pilares/${resource.id}`,
-      rotina: `${baseUrl}/rotinas/${resource.id}`,
-    };
-
-    const response = await page.request.delete(endpoints[resource.type], {
-      headers: {
-        'Authorization': `Bearer ${token}`,
-      },
-    });
-
-    if (response.ok()) {
-      console.log(`[Cleanup] ✅ ${resource.type}:${resource.id} removido com sucesso`);
-    } else if (response.status() === 404) {
-      console.log(`[Cleanup] ⚠️ ${resource.type}:${resource.id} já não existe (404)`);
-    } else if (response.status() === 401) {
-      console.warn(`[Cleanup] ❌ Token expirado ou inválido - ${resource.type}:${resource.id}`);
-    } else {
-      console.warn(`[Cleanup] ❌ Falha ao remover ${resource.type}:${resource.id} - Status ${response.status()}`);
-      const body = await response.text().catch(() => '');
-      if (body) console.warn(`[Cleanup]    Response: ${body.substring(0, 100)}`);
-    }
-  } catch (error) {
-    console.error(`[Cleanup] ❌ Erro ao limpar ${resource.type}:${resource.id}:`, error);
-  }
-}
-
-// Fixture customizado com login automático e cleanup
-type AuthFixtures = {
-  authenticatedPage: Page;
-  adminPage: Page;
-  gestorPage: Page;
-  cleanupRegistry: CleanupRegistry;
-};
-
-export const test = base.extend<AuthFixtures>({
-  // Registro de cleanup automático
-  cleanupRegistry: async ({ page }, use) => {
-    const resources: CleanupResource[] = [];
-    
-    // Capturar token no início (enquanto página está ativa)
-    let authToken: string | null = null;
-    
-    const registry: CleanupRegistry = {
-      add: (type, id) => {
-        resources.push({ type, id });
-        console.log(`[Cleanup] Registrado para limpeza: ${type}:${id}`);
-        
-        // Capturar token imediatamente quando recurso é registrado
-        if (!authToken) {
-          page.evaluate(() => {
-            return localStorage.getItem('access_token') || 
-                   sessionStorage.getItem('access_token');
-          }).then(token => {
-            if (token) authToken = token;
-          }).catch(() => {});
-        }
-      },
-      addMultiple: (type, ids) => {
-        ids.forEach(id => registry.add(type, id));
-      },
-    };
-    
-    // Fornece registry para o teste
-    await use(registry);
-    
-    // Cleanup automático após teste (ordem reversa = LIFO)
-    if (resources.length === 0) {
-      console.log('[Cleanup] Nenhum recurso para limpar');
-      return;
-    }
-    
-    console.log(`[Cleanup] Iniciando limpeza de ${resources.length} recurso(s)...`);
-    
-    // Garantir que temos token
-    if (!authToken) {
-      authToken = await page.evaluate(() => {
-        return localStorage.getItem('access_token') || 
-               sessionStorage.getItem('access_token');
-      }).catch(() => null);
-    }
-    
-    for (const resource of resources.reverse()) {
-      await cleanupResourceWithToken(page, resource, authToken);
-    }
-  },
-  
-  // Página autenticada genérica (usa admin por padrão)
-  authenticatedPage: async ({ page }, use) => {
-    await login(page, TEST_USERS['admin']);
-    await use(page);
-  },
-  
-  // Página autenticada como ADMINISTRADOR
-  adminPage: async ({ page }, use) => {
-    await login(page, TEST_USERS['admin']);
-    await use(page);
-  },
-  
-  // Página autenticada como GESTOR
-  gestorPage: async ({ page }, use) => {
-    await login(page, TEST_USERS['gestorEmpresaA']);
-    await use(page);
-  },
-});
-
-export { expect };
