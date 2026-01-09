@@ -44,9 +44,12 @@ backend/public/
 # Angular
 .angular/
 
+# Backup files
+*.backup
+*.bak
+*.tmp
 
+# Templates and test artifacts
 templates/
 frontend/test-results/
-frontend/test-results/.last-run.json
 frontend/playwright-report/
-frontend/playwright-report/index.html
