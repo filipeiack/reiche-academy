@@ -61,7 +61,7 @@
 <div class="diagnostico-content">
     <!-- Accordion de Pilares -->
     @for (pilar of pilares; track pilar.id; let i = $index) {
-    <div class="card mb-1">
+    <div class="card mb-1" data-testid="pilar-accordion">
         <div class="card-header sticky-header-pilar mb-0 collapsed">
             <div class="pilar-header">
                 <div class="d-flex align-items-center gap-2">
@@ -144,7 +144,7 @@
                     }}</span>
             </ngb-alert>
             @for (rotina of pilar.rotinasEmpresa; track rotina.id) {
-            <div class="row mb-1">
+            <div class="row mb-1" data-testid="rotina-row">
                 <div class="col-md-12 mb-1">
                     <div class="row justify-content-center align-items-center">
                         <div class="col-md-8">

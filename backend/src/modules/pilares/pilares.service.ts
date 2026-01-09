@@ -165,7 +165,7 @@ export class PilaresService {
         usuarioEmail: requestUser.email,
         entidade: 'pilares',
         entidadeId: id,
-        acao: 'DEACTIVATE',
+        acao: 'DELETE',
         dadosAntes: before,
         dadosDepois: after,
       });

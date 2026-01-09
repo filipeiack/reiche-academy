@@ -64,7 +64,7 @@
               </tr>
             </thead>
             <tbody cdkDropList [cdkDropListDisabled]="!canReorder" (cdkDropListDropped)="onDrop($event)">
-              <tr *ngFor="let rotina of paginatedRotinas" cdkDrag [cdkDragDisabled]="!canReorder">
+              <tr *ngFor="let rotina of paginatedRotinas" cdkDrag [cdkDragDisabled]="!canReorder" data-testid="rotina-list-item">
                 <td *ngIf="canReorder" class="text-center">
                   <i class="feather icon-list me-2"></i>
                 </td>

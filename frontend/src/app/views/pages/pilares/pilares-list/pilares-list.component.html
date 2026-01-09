@@ -60,7 +60,7 @@
             </thead>
             <tbody cdkDropList (cdkDropListDropped)="onDropPilares($event)">
               @for (pilar of paginatedPilares; track pilar.id) {
-              <tr cdkDrag>
+              <tr cdkDrag data-testid="pilar-list-item">
                 <!-- Nome -->
                 <td>
                   <i class="feather icon-menu me-2" cdkDragHandle style="cursor: move;"></i>

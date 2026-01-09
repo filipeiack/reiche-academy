@@ -10,7 +10,7 @@
     </ol>
   </nav>
 
-  <button id="btnNovo" type="button" class="btn btn-primary btn-icon-text btn-xs" [routerLink]="['/usuarios/novo']">
+  <button data-testid="novo-usuario-button" id="btnNovo" type="button" class="btn btn-primary btn-icon-text btn-xs" [routerLink]="['/usuarios/novo']">
     <i class="feather icon-plus btn-icon-prepend"></i>
     {{ 'USERS.ADD' | translate }}
   </button>
@@ -93,11 +93,11 @@
                         <i class="feather"
                           [ngClass]="{'icon-toggle-right': usuario.ativo, 'icon-toggle-left text-danger': !usuario.ativo}"></i>
                       </button>
-                      <button class="btn btn-icon text-secondary" [routerLink]="['/usuarios', usuario.id, 'editar']"
+                      <button data-testid="edit-usuario-button" class="btn btn-icon text-secondary" [routerLink]="['/usuarios', usuario.id, 'editar']"
                         title="{{ 'BUTTONS.EDIT' | translate }}">
                         <i class="feather icon-edit"></i>
                       </button>
-                      <button class="btn btn-icon text-danger" (click)="deleteUsuario(usuario.id, usuario.nome)"
+                      <button data-testid="delete-usuario-button" class="btn btn-icon text-danger" (click)="deleteUsuario(usuario.id, usuario.nome)"
                         title="{{ 'BUTTONS.DELETE' | translate }}">
                         <i class="feather icon-trash-2"></i>
                       </button>

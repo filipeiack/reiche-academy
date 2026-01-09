@@ -10,7 +10,7 @@
     <div class="empresa-selector-wrapper">
       @if (isAdmin) {
       <!-- Admin: combo para selecionar empresa -->
-      <ng-select id="empresaNavbarSelect" [items]="empresas" bindLabel="nome" bindValue="id"
+      <ng-select data-testid="empresa-select" id="empresaNavbarSelect" [items]="empresas" bindLabel="nome" bindValue="id"
         [(ngModel)]="selectedEmpresaId" (change)="onEmpresaChange($event)" placeholder="Selecione uma empresa..."
         [clearable]="false" class="empresa-navbar-select">
         <ng-template ng-option-tmp let-item="item">

@@ -152,7 +152,7 @@ export class RotinasService {
         usuarioEmail: user?.email ?? '',
         entidade: 'rotinas',
         entidadeId: id,
-        acao: 'DEACTIVATE',
+        acao: 'DELETE',
         dadosAntes: before,
         dadosDepois: after,
       });
