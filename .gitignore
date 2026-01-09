@@ -46,3 +46,5 @@ backend/public/
 
 
 templates/
+frontend/test-results/
+frontend/test-results/.last-run.json
