@@ -4,7 +4,10 @@
       <div class="logo-container">
         <!-- Logo Reiche Academy ou Logo da Empresa -->
         <div class="logo-wrapper mb-2">
-          <img [src]="logoUrl" [alt]="empresa?.nome || 'Reiche Academy'" class="img-fluid">
+          <img 
+            [src]="isDarkTheme ? logoUrlDark : logoUrlLight" 
+            [alt]="empresa?.nome || 'Reiche Academy'" 
+            class="img-fluid">
         </div>
 
         <div class="card auth-card">
