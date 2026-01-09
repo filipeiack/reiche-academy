@@ -662,40 +662,148 @@ async function main() {
   console.log(`✅ ${rotinasEmpresaCriadas} rotinas vinculadas às empresas`);
 
   // ========================================
-  // 8. CRIAR ALGUNS DIAGNÓSTICOS INICIAIS
+  // 8. CRIAR DIAGNÓSTICOS INICIAIS (NOTAS EM TODOS OS PILARES)
   // ========================================
 
-  // Preencher algumas notas na Empresa A
-  const rotinasEmpresaA = await prisma.rotinaEmpresa.findMany({
+  // Buscar todas as rotinas de todos os pilares da Empresa A
+  const todasRotinasEmpresaA = await prisma.rotinaEmpresa.findMany({
     where: {
       pilarEmpresa: {
         empresaId: empresaA.id,
       },
     },
-    take: 5, // Apenas primeiras 5
+    include: {
+      pilarEmpresa: true,
+    },
   });
 
-  for (const rotinaEmp of rotinasEmpresaA) {
+  let notasCriadas = 0;
+
+  for (const rotinaEmp of todasRotinasEmpresaA) {
     // Buscar ou criar NotaRotina
     const existingNota = await prisma.notaRotina.findFirst({
       where: { rotinaEmpresaId: rotinaEmp.id },
     });
 
     if (!existingNota) {
+      // Criar notas variadas por pilar para simular diferentes níveis de maturidade
+      let notaBase = 5;
+      
+      // Pilares com notas diferentes para simular realidade
+      if (rotinaEmp.pilarEmpresa.nome === 'ESTRATÉGICO') {
+        notaBase = 7; // Empresa mais madura no estratégico
+      } else if (rotinaEmp.pilarEmpresa.nome === 'VENDAS') {
+        notaBase = 8; // Boa em vendas
+      } else if (rotinaEmp.pilarEmpresa.nome === 'MARKETING') {
+        notaBase = 4; // Precisa melhorar marketing
+      } else if (rotinaEmp.pilarEmpresa.nome === 'FINANCEIRO') {
+        notaBase = 6; // Razoável no financeiro
+      } else if (rotinaEmp.pilarEmpresa.nome === 'PESSOAS') {
+        notaBase = 5; // Mediano em pessoas
+      } else if (rotinaEmp.pilarEmpresa.nome === 'COMPRAS/ESTOQUE') {
+        notaBase = 3; // Fraco em compras/estoque
+      }
+
+      // Adicionar variação de -2 a +2 à nota base
+      const variacao = Math.floor(Math.random() * 5) - 2; // -2, -1, 0, 1, 2
+      const notaFinal = Math.max(0, Math.min(10, notaBase + variacao));
+
+      // Definir criticidade baseada na nota
+      let criticidade: Criticidade;
+      if (notaFinal >= 7) {
+        criticidade = 'BAIXO';
+      } else if (notaFinal >= 4) {
+        criticidade = 'MEDIO';
+      } else {
+        criticidade = 'ALTO';
+      }
+
       await prisma.notaRotina.create({
         data: {
           rotinaEmpresaId: rotinaEmp.id,
-          nota: Math.floor(Math.random() * 11), // 0-10
-          criticidade: ['ALTO', 'MEDIO', 'BAIXO'][Math.floor(Math.random() * 3)] as Criticidade,
+          nota: notaFinal,
+          criticidade,
         },
       });
+      notasCriadas++;
     }
   }
 
-  console.log(`✅ Diagnósticos iniciais criados para Empresa A`);
+  console.log(`✅ ${notasCriadas} diagnósticos criados para Empresa A (todos os pilares)`);
 
   // ========================================
-  // 9. RESUMO FINAL
+  // 9. CRIAR EVOLUÇÃO DOS PILARES (4 TRIMESTRES)
+  // ========================================
+
+  // Calcular médias atuais de cada pilar da Empresa A
+  const pilaresComMedia = await Promise.all(
+    pilaresEmpresaA.map(async (pilarEmp) => {
+      // Buscar todas as notas das rotinas deste pilar
+      const notas = await prisma.notaRotina.findMany({
+        where: {
+          rotinaEmpresa: {
+            pilarEmpresaId: pilarEmp.id,
+          },
+        },
+      });
+
+      // Calcular média
+      const somaNotas = notas.reduce((acc, n) => acc + (n.nota || 0), 0);
+      const media = notas.length > 0 ? somaNotas / notas.length : 0;
+
+      return {
+        pilarEmpresaId: pilarEmp.id,
+        nome: pilarEmp.nome,
+        mediaAtual: media,
+      };
+    })
+  );
+
+  // Criar registros de evolução para 4 datas diferentes (trimestres)
+  const hoje = new Date();
+  const trimestres = [
+    new Date(hoje.getFullYear(), hoje.getMonth() - 9, 1), // 3 trimestres atrás
+    new Date(hoje.getFullYear(), hoje.getMonth() - 6, 1), // 2 trimestres atrás
+    new Date(hoje.getFullYear(), hoje.getMonth() - 3, 1), // 1 trimestre atrás
+    hoje, // trimestre atual
+  ];
+
+  let evoluçõesCriadas = 0;
+
+  for (const pilarComMedia of pilaresComMedia) {
+    for (let i = 0; i < trimestres.length; i++) {
+      const dataRegistro = trimestres[i];
+      
+      // Simular evolução gradual: começar com nota mais baixa e evoluir até a média atual
+      // Por exemplo: se média atual é 7, começar em 4 e evoluir gradualmente
+      const mediaFinal = pilarComMedia.mediaAtual;
+      const evolucaoFactor = (i + 1) / trimestres.length; // 0.25, 0.5, 0.75, 1.0
+      
+      // Começar com 60% da nota final no primeiro trimestre e evoluir até 100%
+      const mediaBase = mediaFinal * 0.6;
+      const diferenca = mediaFinal - mediaBase;
+      const mediaNoTrimestre = mediaBase + (diferenca * evolucaoFactor);
+
+      // Adicionar pequena variação aleatória (-0.3 a +0.3)
+      const variacao = (Math.random() - 0.5) * 0.6;
+      const mediaComVariacao = Math.max(0, Math.min(10, mediaNoTrimestre + variacao));
+
+      await prisma.pilarEvolucao.create({
+        data: {
+          pilarEmpresaId: pilarComMedia.pilarEmpresaId,
+          mediaNotas: parseFloat(mediaComVariacao.toFixed(2)),
+          createdAt: dataRegistro,
+          updatedAt: dataRegistro,
+        },
+      });
+      evoluçõesCriadas++;
+    }
+  }
+
+  console.log(`✅ ${evoluçõesCriadas} registros de evolução criados (${trimestres.length} trimestres para ${pilaresComMedia.length} pilares)`);
+
+  // ========================================
+  // 10. RESUMO FINAL
   // ========================================
 
   console.log('\n🎉 E2E Seed completed!');

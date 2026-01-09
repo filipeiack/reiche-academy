@@ -223,9 +223,9 @@ ALTER TABLE "RotinaEmpresa"
 
 ## 3. Regras Implementadas
 
-### R-ROT-001: Criação de Template de Rotina
+### R-ROT-001: Criação de Template de Rotina com Nome Único (Case-Insensitive)
 
-**Descrição:** Endpoint permite criar templates globais de rotinas (biblioteca de padrões), vinculados a Pilar template.
+**Descrição:** Endpoint permite criar templates globais de rotinas (biblioteca de padrões), vinculados a Pilar template, com validação de nome único case-insensitive.
 
 **Implementação:**
 - **Endpoint:** `POST /rotinas` (restrito a ADMINISTRADOR)
@@ -245,7 +245,29 @@ if (!pilar) {
 }
 ```
 
-2. **Criação do Template:**
+2. **Validação de Nome Único (Case-Insensitive):**
+```typescript
+const existingRotina = await this.prisma.rotina.findFirst({
+  where: { 
+    nome: {
+      equals: createRotinaDto.nome,
+      mode: 'insensitive'
+    }
+  },
+});
+
+if (existingRotina) {
+  throw new ConflictException('Já existe uma rotina com este nome');
+}
+```
+
+**Constraint no Banco:**
+```sql
+-- Índice único case-insensitive
+CREATE UNIQUE INDEX "rotinas_nome_key" ON "rotinas"(LOWER("nome"));
+```
+
+3. **Criação do Template:**
 ```typescript
 const rotina = await this.prisma.rotina.create({
   data: {
@@ -264,7 +286,7 @@ const rotina = await this.prisma.rotina.create({
 export class CreateRotinaDto {
   @IsNotEmpty()
   @Length(2, 200)
-  nome: string;
+  nome: string;  // Único globalmente, case-insensitive
 
   @IsOptional()
   @MaxLength(500)
@@ -292,7 +314,11 @@ export class CreateRotinaDto {
 
 **Perfis autorizados:** ADMINISTRADOR (apenas admin gerencia biblioteca global)
 
-**Arquivo:** [rotinas.service.ts](../../backend/src/modules/rotinas/rotinas.service.ts#L11-L88) (a reimplementar com Snapshot Pattern)
+**Arquivo:** [rotinas.service.ts](../../backend/src/modules/rotinas/rotinas.service.ts#L11-L88)
+
+**📝 Mudança (Jan/2026):**
+- ✅ Validação case-insensitive implementada
+- ✅ Índice único LOWER(nome) no banco
 
 ---
 
@@ -927,22 +953,61 @@ await this.audit.log({
 
 ---
 
-### 6.6. Validação de Nome Único Não Implementada
+### 6.6. Validação de Nome Único (Case-Insensitive)
 
-**Status:** ❌ NÃO VALIDADO
+**Status:** ✅ IMPLEMENTADO (Jan/2026)
 
 **Descrição:**
-- Sistema NÃO valida unicidade de nome de rotina
-- Possível criar múltiplas rotinas com mesmo nome
-- Não há constraint unique em `nome`
+- Sistema valida unicidade de nome de rotina (global, case-insensitive)
+- Bloqueia criação/atualização com nome duplicado
+- Constraint unique no banco usando LOWER(nome)
 
-**Comportamento atual:**
-- Rotinas podem ter nomes duplicados (mesmo dentro do mesmo pilar)
+**Implementação:**
 
-**TODO:**
-- Decidir se nome deve ser único globalmente
-- Ou único por pilar: `@@unique([pilarId, nome])`
-- Ou permitir duplicatas (pode ser intencional para templates)
+**Create:**
+```typescript
+const existingRotina = await this.prisma.rotina.findFirst({
+  where: { 
+    nome: {
+      equals: createRotinaDto.nome,
+      mode: 'insensitive'
+    }
+  },
+});
+
+if (existingRotina) {
+  throw new ConflictException('Já existe uma rotina com este nome');
+}
+```
+
+**Update:**
+```typescript
+if (updateRotinaDto.nome) {
+  const existingRotina = await this.prisma.rotina.findFirst({
+    where: {
+      nome: {
+        equals: updateRotinaDto.nome,
+        mode: 'insensitive'
+      },
+      id: { not: id },
+    },
+  });
+
+  if (existingRotina) {
+    throw new ConflictException('Já existe uma rotina com este nome');
+  }
+}
+```
+
+**Banco de Dados:**
+```sql
+CREATE UNIQUE INDEX "rotinas_nome_key" ON "rotinas"(LOWER("nome"));
+```
+
+**Comportamento:**
+- "Planejamento" e "PLANEJAMENTO" são considerados duplicados
+- Validação tanto no create quanto no update
+- Erro 409 (ConflictException) retornado ao cliente
 
 ---
 

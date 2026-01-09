@@ -360,9 +360,9 @@ await prisma.pilar.update({
 
 ## 3. Regras Implementadas (Templates Globais)
 
-### R-PIL-001: Criação de Template de Pilar com Nome Único
+### R-PIL-001: Criação de Template de Pilar com Nome Único (Case-Insensitive)
 
-**Descrição:** Sistema cria template global de pilar com validação de nome único.
+**Descrição:** Sistema cria template global de pilar com validação de nome único case-insensitive.
 
 **Implementação:**
 - **Endpoint:** `POST /pilares` (restrito a ADMINISTRADOR)
@@ -371,8 +371,13 @@ await prisma.pilar.update({
 
 **Validação:**
 ```typescript
-const existingPilar = await this.prisma.pilar.findUnique({
-  where: { nome: createPilarDto.nome },
+const existingPilar = await this.prisma.pilar.findFirst({
+  where: { 
+    nome: {
+      equals: createPilarDto.nome,
+      mode: 'insensitive'
+    }
+  },
 });
 
 if (existingPilar) {
@@ -380,8 +385,14 @@ if (existingPilar) {
 }
 ```
 
+**Constraint no Banco:**
+```sql
+-- Índice único case-insensitive
+CREATE UNIQUE INDEX "pilares_nome_key" ON "pilares"(LOWER("nome"));
+```
+
 **Validação de DTO:**
-- `nome`: string, required, 2-100 caracteres
+- `nome`: string, required, 2-100 caracteres, único (case-insensitive)
 - `descricao`: string, optional, 0-500 caracteres
 - `ordem`: number, optional, >= 1 (apenas referência visual)
 
@@ -394,6 +405,7 @@ if (existingPilar) {
 
 **📝 Mudança do Snapshot Pattern:**
 - ❌ Campo `modelo` removido do DTO (todos são templates)
+- ✅ Validação case-insensitive implementada (Jan/2026)
 
 ---
 
@@ -485,9 +497,9 @@ include: {
 
 ---
 
-### R-PIL-004: Atualização de Pilar com Validação de Nome Único
+### R-PIL-004: Atualização de Pilar com Validação de Nome Único (Case-Insensitive)
 
-**Descrição:** Sistema valida unicidade do nome ao atualizar, excluindo o próprio pilar.
+**Descrição:** Sistema valida unicidade do nome ao atualizar, excluindo o próprio pilar, usando validação case-insensitive.
 
 **Implementação:**
 - **Endpoint:** `PATCH /pilares/:id` (restrito a ADMINISTRADOR)
@@ -498,6 +510,19 @@ include: {
 ```typescript
 if (updatePilarDto.nome) {
   const existingPilar = await this.prisma.pilar.findFirst({
+    where: {
+      nome: {
+        equals: updatePilarDto.nome,
+        mode: 'insensitive'
+      },
+      id: { not: id },
+    },
+  });
+
+  if (existingPilar) {
+    throw new ConflictException('Já existe um template de pilar com este nome');
+  }
+}
     where: {
       nome: updatePilarDto.nome,
       id: { not: id },

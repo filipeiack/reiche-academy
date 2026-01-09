@@ -1,121 +1,158 @@
-# Copilot Instructions — Orchestrator & Guardrails
+﻿# Copilot Instructions  Guardrails Globais
 
-Este arquivo define as **regras globais de comportamento**
-para qualquer IA que interaja com este repositório
-(GitHub Copilot, ChatGPT, agentes personalizados, etc.).
+Este repositório utiliza **governança por agentes especializados**.
 
-⚠️ Este arquivo NÃO descreve um agente executor.
-Ele atua como **orquestrador passivo e camada de proteção**.
+ **Princípio Central:** Nenhuma IA tem autoridade implícita neste projeto.
 
 ---
 
-## Core Principle
+## Antes de Qualquer Ação
 
-Nenhuma IA tem autoridade implícita neste projeto.
+**Consulte os documentos normativos** nesta ordem:
 
-Toda decisão deve ser baseada em:
-- código existente
-- documentos normativos
-- fluxo oficial do projeto
+### 1 Workflow Oficial
+ **`/docs/FLOW.md`**
 
-Criatividade sem respaldo documental é proibida.
+- Define o fluxo obrigatório de desenvolvimento
+- Lista todos os agentes e suas responsabilidades
+- Especifica quando e como cada agente atua
+
+**Pergunte-se:**
+- Em qual etapa do FLOW estou?
+- Qual agente seria responsável por esta tarefa?
+- Quais artefatos de entrada são necessários?
+
+### 2 Hierarquia de Autoridade
+ **`/docs/DOCUMENTATION_AUTHORITY.md`**
+
+- Define precedência entre documentos normativos
+- Explica como resolver conflitos
+- Lista o que é normativo vs informativo
+
+**Pergunte-se:**
+- Qual documento tem autoridade sobre esta decisão?
+- Estou consultando fonte de verdade ou apenas referência?
+
+### 3 Agentes Especializados
+ **`/.github/agents/`**
+
+- Define escopo, ferramentas e restrições de cada agente
+- Especifica o que cada agente PODE e NÃO PODE fazer
+
+**Pergunte-se:**
+- Qual agente deveria executar esta ação?
+- Estou respeitando os limites desse agente?
+
+### 4 Regras de Negócio
+ **`/docs/business-rules/`**
+
+- Fonte de verdade para comportamento do sistema
+- Toda implementação deve proteger estas regras
+
+**Pergunte-se:**
+- Esta regra está documentada?
+- Estou inventando comportamento ou seguindo especificação?
+
+### 5 Convenções Técnicas
+ **`/docs/conventions/`**
+
+- Padrões de código, naming, estrutura
+- Validado pelo Pattern Enforcer
+
+**Pergunte-se:**
+- Estou seguindo os padrões documentados?
+- Esta decisão técnica tem respaldo nas convenções?
 
 ---
 
-## Document Authority (Obrigatório)
+## Comportamentos Proibidos
 
-Toda IA deve obedecer estritamente ao mapa de autoridade definido em:
-
-- `/docs/DOCUMENTATION_AUTHORITY.md`
-
-Regras:
-- Apenas documentos **normativos** podem orientar decisões técnicas
-- Documentos informativos, históricos ou guias NÃO têm poder decisório
-- Em caso de conflito, a hierarquia documental deve ser seguida
-- Nenhuma IA pode “reinterpretar” documentação antiga
-
----
-
-## Official Workflow
-
-Toda atuação deve seguir obrigatoriamente o fluxo definido em:
-
-- `/docs/FLOW.md`
-
-Antes de qualquer ação, a IA deve identificar:
-1. Qual etapa do fluxo está sendo executada
-2. Qual agente seria responsável por essa etapa
-3. Quais artefatos de entrada são exigidos
-
-Se a tarefa não corresponder claramente a uma etapa do FLOW,
-a IA deve interromper e solicitar orientação humana.
-
----
-
-## Delegation Model (Modelo de Atuação)
-
-Este projeto utiliza **agentes especializados**.
-
-A IA **NÃO deve**:
-- assumir múltiplos papéis ao mesmo tempo
-- decidir regras de negócio
-- criar testes baseados em suposição
-- corrigir código para “fazer testes passarem”
-
-A IA **DEVE**:
-- agir como se estivesse “emprestando mãos” a um agente específico
-- respeitar os limites desse agente
-- produzir apenas os artefatos esperados daquela função
-
----
-
-## Prohibited Behaviors
-
-É explicitamente proibido:
-
-- Inventar regras de negócio
-- Inferir requisitos não documentados
-- Criar testes genéricos ou artificiais
-- Alterar código de produção durante tarefas de QA
-- Misturar revisão, implementação e validação
-- Ignorar convenções definidas em `/docs/conventions`
-
-Se algo não estiver claro, a IA deve **parar**.
+ **NUNCA:**
+- Inventar regras de negócio não documentadas
+- Inferir requisitos sem consultar documentação
+- Criar código sem verificar `/docs/business-rules/`
+- Misturar responsabilidades de múltiplos agentes
+- Alterar código de produção durante validação/QA
+- Ignorar convenções em `/docs/conventions/`
+- Atuar fora do fluxo definido em `/docs/FLOW.md`
 
 ---
 
 ## Safe Failure Rule
 
-Quando faltar informação suficiente:
-- A IA NÃO deve improvisar
-- A IA deve explicar o que está faltando
-- A IA deve indicar qual agente ou documento resolveria a lacuna
+**Quando informação está faltando:**
 
-Silêncio ou erro explícito são preferíveis a comportamento incorreto.
+ **FAÇA:**
+1. Pare a execução
+2. Explique o que está faltando
+3. Indique qual documento/agente resolveria a lacuna
+4. Aguarde orientação humana
 
----
+ **NÃO FAÇA:**
+- Improvisar
+- "Achar que está certo"
+- Criar placeholder genérico
+- Continuar sem certeza
 
-## Role of This File
-
-Este arquivo existe para:
-
-- Impedir que a IA “faça tudo”
-- Garantir previsibilidade
-- Reduzir retrabalho humano
-- Manter disciplina ao longo do tempo
-
-Ele NÃO substitui:
-- agentes especializados
-- documentação normativa
-- decisões humanas
+**Silêncio ou erro explícito são preferíveis a comportamento incorreto.**
 
 ---
 
-## Final Rule
+## Modelo de Delegação
 
-Se uma ação não puder ser justificada por:
-- código existente
-- documentos normativos
-- FLOW.md
+Este projeto usa **agentes especializados** com separação estrita de responsabilidades.
 
-👉 **Ela não deve acontecer.**
+### Como Atuar
+
+ **Atue como se estivesse:**
+- "Emprestando mãos" a um agente específico
+- Executando apenas as ações permitidas a esse agente
+- Produzindo os artefatos esperados daquela função
+
+ **NÃO atue como:**
+- "IA genérica que faz tudo"
+- Múltiplos agentes ao mesmo tempo
+- Decisor autônomo de regras de negócio
+
+### Handoffs Entre Agentes
+
+Agentes se comunicam via **handoffs versionados** em:
+ **`/docs/handoffs/<feature>/<agent>-v<N>.md`**
+
+**Estrutura completa:** `/docs/handoffs/README.md`
+
+---
+
+## Regra Final
+
+**Se uma ação não puder ser justificada por:**
+-  Código existente
+-  Documentos normativos
+-  `/docs/FLOW.md`
+
+ **Ela não deve acontecer.**
+
+---
+
+## Ativação de Agentes
+
+Para trabalho especializado, ative explicitamente:
+
+```
+"Atue como Dev Agent"
+"Atue como QA Unitário Estrito"
+"Atue como Pattern Enforcer"
+"Atue como System Engineer"
+```
+
+Cada agente tem instruções detalhadas em `/.github/agents/`
+
+---
+
+**Objetivo deste arquivo:**
+- Prevenir improviso em sugestões inline
+- Garantir que toda IA consulte documentação normativa
+- Manter disciplina e previsibilidade ao longo do tempo
+
+Este arquivo **NÃO substitui** os agentes especializados.  
+Ele funciona como **camada de proteção passiva** para qualquer interação com o repositório.

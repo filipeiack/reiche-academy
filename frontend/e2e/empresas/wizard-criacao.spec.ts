@@ -303,17 +303,32 @@ test.describe('Wizard de Criação de Empresas', () => {
     await fillFormField(page, 'loginUrl', uniqueLoginUrl);
     
     await submitForm(page, 'Próximo');
-    await page.waitForTimeout(1000);
     
-    // Validar erro de loginUrl duplicado
-    const swal = page.locator('.swal2-popup');
-    if (await swal.count() > 0) {
-      await expect(swal.locator('.swal2-icon-error, .swal2-title:has-text("erro")')).toBeVisible();
+    // Aguardar resposta do backend (deve retornar erro 409 Conflict)
+    const errorResponse = await page.waitForResponse(
+      resp => resp.url().includes('/empresas') && resp.request().method() === 'POST',
+      { timeout: 5000 }
+    ).catch(() => null);
+    
+    // Validar que recebeu erro HTTP 409 (Conflict)
+    if (errorResponse) {
+      expect(errorResponse.status()).toBe(409);
     }
     
-    // OU validar que ficou na mesma página (não avançou para etapa 2)
+    // Aguardar um pouco para processar erro
+    await page.waitForTimeout(1500);
+    
+    // Validar que permaneceu na etapa 1 (não avançou para etapa 2)
+    await expect(page.locator('[data-testid="wizard-step-1"]')).toBeVisible();
+    
+    // E a etapa 2 NÃO deve estar visível (não está no modo edição)
+    await expect(page.locator('[data-testid="wizard-step-2"]')).not.toBeVisible();
+    
     const currentUrl = page.url();
     expect(currentUrl).toContain('/nova');
+    
+    // Cleanup da primeira empresa criada
+    await page.request.delete(`http://localhost:3000/api/empresas/${empresaId}`);
   });
 
   test('deve permitir criar empresa sem loginUrl (campo opcional)', async ({ page }) => {
@@ -329,15 +344,24 @@ test.describe('Wizard de Criação de Empresas', () => {
     
     await submitForm(page, 'Próximo');
     
-    // Aguardar processamento e transição para etapa 2
-    await page.waitForTimeout(3000);
-
-    // Validar que avançou para etapa 2 (via URL ou elemento característico)
-    const currentUrl = page.url();
-    const hasWizardStep2 = await page.locator('[data-testid="wizard-step-2"]').isVisible().catch(() => false);
-    const hasUsuariosSection = await page.locator('text=/usuários|associar/i').isVisible().catch(() => false);
+    // Aguardar resposta de criação bem-sucedida
+    const createResponse = await page.waitForResponse(
+      resp => resp.url().includes('/empresas') && resp.request().method() === 'POST' && resp.status() === 201,
+      { timeout: 5000 }
+    );
     
-    expect(hasWizardStep2 || hasUsuariosSection || !currentUrl.includes('/nova')).toBeTruthy();
+    const empresaData = await createResponse.json();
+    createdEmpresaId = empresaData.id;
+    
+    // Aguardar toast de sucesso
+    const successToast = page.locator('.swal2-toast:has-text("sucesso")');
+    await expect(successToast).toBeVisible({ timeout: 3000 });
+    
+    // Aguardar transição para etapa 2 (wizardStep = 2)
+    await expect(page.locator('[data-testid="wizard-step-2"]')).toBeVisible({ timeout: 5000 });
+    
+    // OBS: No modo edição (isEditMode=true), ambas as etapas ficam visíveis
+    // O importante é que a etapa 2 esteja visível
   });
 
   test('deve permitir cancelar criação no wizard', async ({ page }) => {

@@ -380,7 +380,7 @@ renderBarChart(): void {
                 type: 'box',
                 yMin: 0,
                 yMax: 6,
-                backgroundColor: 'rgba(195, 77, 56, 0.3)',
+                backgroundColor: 'rgba(195, 77, 56, 0.4)',
                 borderWidth: 0,
                 drawTime: 'beforeDatasetsDraw'
               },
@@ -389,7 +389,7 @@ renderBarChart(): void {
                 type: 'box',
                 yMin: 6,
                 yMax: 8,
-                backgroundColor: 'rgba(166, 124, 0, 0.3)',
+                backgroundColor: 'rgba(166, 124, 0, 0.4)',
                 borderWidth: 0,
                 drawTime: 'beforeDatasetsDraw'
               },
@@ -398,7 +398,7 @@ renderBarChart(): void {
                 type: 'box',
                 yMin: 8,
                 yMax: 10,
-                backgroundColor: 'rgba(92, 184, 112, 0.3)',
+                backgroundColor: 'rgba(92, 184, 112, 0.4)',
                 borderWidth: 0,
                 drawTime: 'beforeDatasetsDraw'
               }

@@ -121,7 +121,12 @@ export class PilaresFormComponent implements OnInit {
         this.router.navigate(['/pilares']);
       },
       error: (err) => {
-        const message = err?.error?.message || 'Erro ao criar pilar';
+        let message = 'Erro ao criar pilar';
+        if (err?.status === 409) {
+          message = err?.error?.message || 'Já existe um pilar com este nome';
+        } else if (err?.error?.message) {
+          message = err.error.message;
+        }
         this.showToast(message, 'error');
         this.submitting = false;
       }
@@ -142,7 +147,12 @@ export class PilaresFormComponent implements OnInit {
         this.router.navigate(['/pilares']);
       },
       error: (err) => {
-        const message = err?.error?.message || 'Erro ao atualizar pilar';
+        let message = 'Erro ao atualizar pilar';
+        if (err?.status === 409) {
+          message = err?.error?.message || 'Já existe um pilar com este nome';
+        } else if (err?.error?.message) {
+          message = err.error.message;
+        }
         this.showToast(message, 'error');
         this.submitting = false;
       }

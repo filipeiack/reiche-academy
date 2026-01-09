@@ -186,7 +186,8 @@ export class RotinaFormComponent implements OnInit, AfterViewInit {
   handleError(error: HttpErrorResponse): void {
 
     if (error.status === 409) {
-      this.showToast('Erro de validação. Verifique os dados.', 'error');
+      const message = error?.error?.message || 'Já existe uma rotina com este nome';
+      this.showToast(message, 'error');
     } else if (error.status === 404) {
       this.showToast('Rotina não encontrada', 'error');
     } else if (error.status === 400) {
