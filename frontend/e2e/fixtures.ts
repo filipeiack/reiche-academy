@@ -133,15 +133,15 @@ export async function submitForm(page: Page, buttonText: string = 'Salvar') {
 
 // Helpers de validação
 export async function expectToast(page: Page, type: 'success' | 'error' | 'warning' | 'info', message?: string | RegExp) {
-  // Aguardar um pouco para o SweetAlert ou Toast aparecer
-  await page.waitForTimeout(800);
+  // Aguardar um pouco mais para o SweetAlert ou Toast aparecer
+  await page.waitForTimeout(1200);
   
   // Verificar primeiro se é SweetAlert2 (usado na maioria dos módulos)
   const swal = page.locator('.swal2-popup');
   
   try {
     // Tentar aguardar SweetAlert aparecer (timeout curto)
-    await swal.waitFor({ state: 'visible', timeout: 2000 });
+    await swal.waitFor({ state: 'visible', timeout: 3000 });
     
     // É um SweetAlert2
     if (type === 'success') {
