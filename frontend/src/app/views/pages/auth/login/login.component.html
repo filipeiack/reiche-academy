@@ -3,17 +3,14 @@
     <div class="col-md-8 col-xl-6 mx-auto">
       <div class="logo-container">
         <!-- Logo Reiche Academy ou Logo da Empresa -->
-        <div class="logo-wrapper mb-2">
-          <img 
-            [src]="isDarkTheme ? logoUrlDark : logoUrlLight" 
-            [alt]="empresa?.nome || 'Reiche Academy'" 
-            class="img-fluid">
+        <div class="logo-wrapper mb-0">
+          <img [src]="logoUrl" [alt]="empresa?.nome || 'Reiche Academy'" class="img-fluid">
         </div>
 
         <div class="card auth-card">
           <div class="row">
           <div class="auth-form-left col-md-3 pe-md-0">
-            <!-- <img [src]="logoUrl" class="img-fluid"> -->
+            <img [src]="logoUrl" class="img-fluid">
           </div>
           <div class="auth-form-wrapper col-md-9 ps-md-0">
             <div class="px-4 py-5">

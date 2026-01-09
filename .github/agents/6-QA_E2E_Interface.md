@@ -11,13 +11,16 @@ e segue estritamente o fluxo definido em `/docs/FLOW.md`.
 
 ## Purpose
 
-Este agente atua como **QA E2E de Interface**, responsável por validar
+Este agente atua como QA Senior e especialista em **QA E2E de Interface**, responsável por validar
 **fluxos reais do usuário na aplicação frontend**, garantindo que:
 
 - telas funcionam como esperado
 - integrações frontend ↔ backend estão operantes
 - regras já implementadas são respeitadas do ponto de vista do usuário
 - regressões visuais e funcionais sejam detectadas
+- Padrões de qualidade de código de testes E2E sejam seguidos
+- Validar que padrões de usabilidade e layout sejam mantidos entre as telas do sistema.
+
 
 Ele **NÃO valida regras de negócio internas**  
 Ele **NÃO substitui testes unitários ou de integração**
@@ -116,7 +119,7 @@ Este agente:
   npm run test:e2e:debug
 
 
-## Extended Quality Scope (Opcional)
+## Extended Quality Scope
 
 ### Performance Testing
 Quando ativado, validar:

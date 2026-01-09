@@ -74,8 +74,7 @@ export async function logout(page: Page) {
 
 // Helpers de navegação
 export async function navigateTo(page: Page, route: string) {
-  const baseUrl = page.context().baseURL || 'http://localhost:4200';
-  await page.goto(baseUrl + route);
+  await page.goto(route);
   
   // Aguardar loader desaparecer (se existir)
   const loader = page.locator('.spinner-border, .loading-spinner').first();
@@ -351,19 +350,19 @@ export const test = base.extend<AuthFixtures>({
   
   // Página autenticada genérica (usa admin por padrão)
   authenticatedPage: async ({ page }, use) => {
-    await login(page, TEST_USERS.admin);
+    await login(page, TEST_USERS['admin']);
     await use(page);
   },
   
   // Página autenticada como ADMINISTRADOR
   adminPage: async ({ page }, use) => {
-    await login(page, TEST_USERS.admin);
+    await login(page, TEST_USERS['admin']);
     await use(page);
   },
   
   // Página autenticada como GESTOR
   gestorPage: async ({ page }, use) => {
-    await login(page, TEST_USERS.gestorEmpresaA);
+    await login(page, TEST_USERS['gestorEmpresaA']);
     await use(page);
   },
 });

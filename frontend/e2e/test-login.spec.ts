@@ -1,85 +1,78 @@
 import { test, expect } from '@playwright/test';
 
 /**
- * Teste básico de login para debug
+ * E2E Tests - Login
+ * 
+ * Testes de autenticação básica
+ * 
+ * Agente: QA_E2E_Interface
+ * Data: 2026-01-09
  */
-test.describe('Teste de Login', () => {
-  test('deve preencher formulário e tentar login', async ({ page }) => {
+test.describe('Login', () => {
+  test('deve fazer login com credenciais válidas', async ({ page }) => {
     await page.goto('http://localhost:4200/login');
     
     // Aguardar página carregar
     await page.waitForLoadState('networkidle');
     
-    // Screenshot inicial
-    await page.screenshot({ path: 'test-results/1-pagina-login.png' });
+    // Preencher credenciais
+    await page.fill('[formControlName="email"]', 'admin@reiche.com.br');
+    await page.fill('[formControlName="senha"]', 'Admin@123');
     
-    // Preencher email
-    const emailInput = page.locator('[formControlName="email"]');
-    await emailInput.waitFor({ state: 'visible', timeout: 5000 });
-    await emailInput.fill('admin@reiche.com.br');
-    
-    // Preencher senha
-    const senhaInput = page.locator('[formControlName="senha"]');
-    await senhaInput.waitFor({ state: 'visible', timeout: 5000 });
-    await senhaInput.fill('Admin@123');
-    
-    // Screenshot com formulário preenchido
-    await page.screenshot({ path: 'test-results/2-form-preenchido.png' });
-    
-    // Clicar no botão submit
+    // Submeter formulário
     const submitButton = page.locator('button[type="submit"]');
-    await submitButton.waitFor({ state: 'visible' });
-    
-    // Interceptar request de login
-    const loginPromise = page.waitForResponse(
-      response => response.url().includes('/api/auth/login') && response.status() === 200,
-      { timeout: 10000 }
-    );
-    
     await submitButton.click();
     
-    // Aguardar resposta do backend
-    const loginResponse = await loginPromise;
-    const responseData = await loginResponse.json();
+    // Aguardar redirecionamento (login bem-sucedido)
+    await page.waitForURL(/^(?!.*login).*$/, { timeout: 10000 });
     
-    // Screenshot após submit
-    await page.screenshot({ path: 'test-results/3-apos-submit.png' });
+    // Validar que token foi armazenado
+    const token = await page.evaluate(() => localStorage.getItem('access_token'));
+    expect(token).toBeTruthy();
+  });
+
+  test('deve rejeitar credenciais inválidas', async ({ page }) => {
+    await page.goto('http://localhost:4200/login');
+    await page.waitForLoadState('networkidle');
     
-    // Validar que resposta tem token
-    expect(responseData).toHaveProperty('accessToken');
+    // Preencher credenciais inválidas
+    await page.fill('[formControlName="email"]', 'invalido@test.com');
+    await page.fill('[formControlName="senha"]', 'SenhaErrada123');
     
-    console.log('✅ Login bem-sucedido! Token recebido.');
+    // Submeter
+    await page.click('button[type="submit"]');
     
-    // Aguardar um pouco para ver se redireciona
+    // Aguardar tentativa de login
     await page.waitForTimeout(2000);
     
-    // Screenshot final
-    await page.screenshot({ path: 'test-results/4-final.png' });
+    // Validar que continua na página de login (não redirecionou)
+    expect(page.url()).toContain('/login');
     
-    // Verificar URL atual (sem forçar específica)
-    console.log('URL após login:', page.url());
+    // E não tem token
+    const token = await page.evaluate(() => localStorage.getItem('access_token'));
+    expect(token).toBeFalsy();
+  });
+
+  test('deve validar campos obrigatórios', async ({ page }) => {
+    await page.goto('http://localhost:4200/login');
+    await page.waitForLoadState('networkidle');
     
-    // Verificar se saiu da página de login OU se tem erro visível
-    const currentUrl = page.url();
-    const hasError = await page.locator('.text-danger, .alert-danger, .toast.bg-danger').count();
+    // Tentar submeter sem preencher
+    const submitButton = page.locator('button[type="submit"]');
     
-    if (hasError > 0) {
-      const errorText = await page.locator('.text-danger, .alert-danger, .toast.bg-danger').first().textContent();
-      console.log('❌ Erro visível:', errorText);
-    }
+    // Validar que botão está desabilitado OU formulário está inválido
+    const isDisabled = await submitButton.isDisabled().catch(() => false);
     
-    // Deve ter saído da página de login OU estar em alguma rota autenticada
-    const isStillOnLogin = currentUrl.includes('/login') || currentUrl.includes('/auth/login');
-    
-    if (isStillOnLogin && hasError === 0) {
-      console.log('⚠️ Ainda na página de login mas sem erro visível');
-      console.log('Verificando localStorage...');
+    if (!isDisabled) {
+      // Se botão não está desabilitado, clicar e validar que não redireciona
+      await submitButton.click();
+      await page.waitForTimeout(1000);
       
-      const token = await page.evaluate(() => localStorage.getItem('access_token'));
-      console.log('Token no localStorage:', token ? 'Presente' : 'Ausente');
+      // Deve continuar na página de login
+      expect(page.url()).toContain('/login');
+    } else {
+      // Botão desabilitado = validação OK
+      expect(isDisabled).toBeTruthy();
     }
-    
-    // Teste deve passar se recebeu token (mesmo que não tenha redirecionado)
-    expect(responseData.accessToken).toBeTruthy();
   });
 });

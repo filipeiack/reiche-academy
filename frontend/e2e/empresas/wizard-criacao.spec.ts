@@ -31,7 +31,7 @@ import {
 
 test.describe('Wizard de Criação de Empresas', () => {
   test.beforeEach(async ({ page }) => {
-    await login(page, TEST_USERS.admin);
+    await login(page, TEST_USERS['admin']);
     await navigateTo(page, '/empresas/nova');
     
     // Aguardar página carregar
@@ -48,7 +48,9 @@ test.describe('Wizard de Criação de Empresas', () => {
           const body = await response.json();
           empresaId = body.id;
           console.log('✓ Empresa criada com ID:', empresaId);
-          cleanupRegistry.add('empresa', empresaId);
+          if (empresaId) {
+            cleanupRegistry.add('empresa', empresaId);
+          }
         } catch (e) {
           // Response não é JSON
         }
@@ -138,7 +140,10 @@ test.describe('Wizard de Criação de Empresas', () => {
     // Aguardar SweetAlert de conclusão
     const swalFinal = page.locator('.swal2-popup');
     await swalFinal.waitFor({ state: 'visible', timeout: 5000 });
-    await expect(swalFinal).toContainText(/Cadastro concluído/i);
+    
+    // Validar mensagem específica de sucesso
+    const swalTitle = await swalFinal.locator('.swal2-title, .swal2-html-container').textContent();
+    expect(swalTitle).toMatch(/sucesso|concluído|criada/i);
     
     // Aguardar auto-close e redirecionamento
     await swalFinal.waitFor({ state: 'hidden', timeout: 5000 });

@@ -5,16 +5,18 @@
     align-items: center;
     justify-content: center;
 
-  --login-bg-image: url('/assets/images/fundo-login1.png');
+  --logo-wrapper-filter: opacity(0.5) contrast(1.2);
+  --login-bg-image: url('/assets/images/fundo-login-light.png');
   --login-gradient-start: rgba(241, 241, 241, 0.9);
-  --login-gradient-end: rgba(233, 233, 233, 0.5);
+  --login-gradient-end: rgba(241, 241, 241, 0.4);
 }
 
 // Variáveis CSS para tema escuro
 [data-bs-theme="dark"] :host {
-  --login-bg-image: url('/assets/images/fundo-login2.png');
+  --logo-wrapper-filter: brightness(0.6) contrast(1.2);
+  --login-bg-image: url('/assets/images/fundo-login-dark.png');
   --login-gradient-start: rgba(0, 0, 0, 0.9);
-  --login-gradient-end: rgba(0, 0, 0, 0.5);
+  --login-gradient-end: rgba(0, 0, 0, 0.1);
 }
 
 .nobleui-logo {
@@ -30,15 +32,14 @@
   text-align: center;
   img {
     border-radius: 8px;
-    max-width: 300px;
-    height: auto;
-    filter: brightness(0.6);
+    max-height: 160px;
+    filter: var(--logo-wrapper-filter);
   }
 }
 
 .auth-card {
   background-position: right;
-  background-image: linear-gradient(to left, var(--login-gradient-start), var(--login-gradient-end)), var(--login-bg-image);
+  background-image: linear-gradient(to top, var(--login-gradient-start), var(--login-gradient-end)), var(--login-bg-image);
 }
 
 .auth-form-left {
@@ -49,7 +50,7 @@
   img {
     max-width: 150px;
     height: auto;
-    opacity: 0.05;
-    filter: grayscale(100%) brightness(1.2);
+    opacity: 0.2;
+    filter: grayscale(100%);
   }
 }
