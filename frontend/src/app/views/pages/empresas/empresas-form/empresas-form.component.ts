@@ -62,6 +62,7 @@ export class EmpresasFormComponent implements OnInit {
   empresaId: string | null = null;
   loading = false;
   uploadingLogo = false;
+  wizardStep: 1 | 2 = 1; // Controle do wizard: 1 = dados básicos, 2 = usuários/pilares
 
   currentEmpresa: Empresa | null = null;
   logoUrl: string | null = null;
@@ -190,27 +191,40 @@ export class EmpresasFormComponent implements OnInit {
           this.showToast('Empresa criada com sucesso!', 'success');
           this.loading = false;
 
-          // Associar usuários pendentes
-          if (this.usuariosPendentesAssociacao.length > 0 && novaEmpresa.id) {
-            this.associarUsuariosPendentes(novaEmpresa.id);
-          }
+          // Atualizar estado para modo edição
+          this.empresaId = novaEmpresa.id;
+          this.isEditMode = true;
+          this.currentEmpresa = novaEmpresa;
 
-          // Associar pilares pendentes
-          if (this.pilaresPendentesAssociacao.length > 0 && novaEmpresa.id) {
-            this.associarPilaresPendentes(novaEmpresa.id);
-          }
-
+          // Upload de logo se houver
           if (this.logoFile && novaEmpresa.id) {
             console.log('Iniciando upload do logo para empresa recém-criada');
             this.uploadLogo(this.logoFile, novaEmpresa.id);
-          } else {
-            console.log('Sem logo para upload, redirecionando');
-            setTimeout(() => this.router.navigate([this.getRedirectUrl()]), 1500);
           }
+
+          // Carregar dados para a etapa 2
+          if (!this.isPerfilCliente) {
+            this.loadUsuariosDisponiveis();
+            this.loadPilaresDisponiveis();
+          }
+          this.loadUsuariosAssociados(novaEmpresa.id);
+          this.loadPilaresAssociados(novaEmpresa.id);
+
+          // Avançar para etapa 2
+          this.wizardStep = 2;
         },
         error: (err) => { this.showToast(err?.error?.message || 'Erro ao criar empresa', 'error'); this.loading = false; }
       });
     }
+  }
+
+  voltarParaEtapa1(): void {
+    this.wizardStep = 1;
+  }
+
+  concluirCadastro(): void {
+    this.showToast('Cadastro concluído com sucesso!', 'success');
+    setTimeout(() => this.router.navigate([this.getRedirectUrl()]), 1500);
   }
 
   onCnpjInput(event: Event): void {
@@ -496,6 +510,7 @@ export class EmpresasFormComponent implements OnInit {
   }
 
   // Método auxiliar para associar usuários pendentes após criar empresa
+  // NÃO É MAIS USADO - Usuários agora são associados diretamente na etapa 2
   private associarUsuariosPendentes(empresaId: string): void {
     const promises = this.usuariosPendentesAssociacao.map(usuario => {
       return this.usersService.update(usuario.id, { empresaId } as any).toPromise();
@@ -700,6 +715,7 @@ export class EmpresasFormComponent implements OnInit {
   }
 
   // Método auxiliar para associar pilares pendentes após criar empresa
+  // NÃO É MAIS USADO - Pilares agora são associados diretamente na etapa 2
   private associarPilaresPendentes(empresaId: string): void {
     if (this.pilaresPendentesAssociacao.length === 0) {
       return;

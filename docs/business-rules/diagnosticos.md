@@ -2,9 +2,10 @@
 
 **Módulo:** Diagnósticos  
 **Backend:** `backend/src/modules/diagnosticos/`  
-**Frontend:** `frontend/src/app/views/pages/diagnostico-notas/`  
-**Última extração:** 02/01/2026  
-**Agente:** Extractor de Regras
+**Frontend:** `frontend/src/app/views/pages/diagnostico-notas/` e `frontend/src/app/views/pages/diagnostico-evolucao/`  
+**Última extração:** 08/01/2026  
+**Agente:** Extractor de Regras  
+**Versão:** 2.0 (Snapshot Pattern + Evolução Completa)
 
 ---
 
@@ -23,13 +24,20 @@ O módulo Diagnósticos é responsável por:
 
 **Entidades principais:**
 - NotaRotina (avaliação de rotinas com nota 1-10 e criticidade)
-- PilarEmpresa (vinculação empresa-pilar com responsável)
-- RotinaEmpresa (vinculação rotina-pilar por empresa)
+- PilarEmpresa (vinculação empresa-pilar com responsável + **Snapshot Pattern**)
+- RotinaEmpresa (vinculação rotina-pilar por empresa + **Snapshot Pattern**)
 - PilarEvolucao (snapshot de médias congeladas por data)
+
+**Integração com Snapshot Pattern:**
+- PilarEmpresa utiliza `pilarTemplateId` (nullable) para rastrear template original
+- RotinaEmpresa utiliza `rotinaTemplateId` (nullable) para rastrear template original
+- Diagnóstico funciona apenas com **instâncias snapshot** (não acessa templates diretamente)
+- Permite customização completa sem afetar outras empresas
 
 **Endpoints implementados:**
 - `GET /empresas/:empresaId/diagnostico/notas` — Buscar estrutura completa de diagnóstico (todos os perfis)
 - `PATCH /rotinas-empresa/:rotinaEmpresaId/nota` — Atualizar ou criar nota (ADMINISTRADOR, CONSULTOR, GESTOR, COLABORADOR)
+- `PATCH /empresas/:empresaId/pilares/:pilarEmpresaId/responsavel` — Definir responsável (ADMINISTRADOR, GESTOR)
 - `GET /empresas/:empresaId/evolucao/medias` — Buscar médias atuais dos pilares (todos os perfis)
 - `POST /empresas/:empresaId/evolucao/congelar` — Congelar médias atuais na base (ADMINISTRADOR, CONSULTOR, GESTOR)
 - `GET /empresas/:empresaId/evolucao/historico/:pilarEmpresaId` — Buscar histórico de evolução de um pilar (todos os perfis)
@@ -69,6 +77,9 @@ O módulo Diagnósticos é responsável por:
 - Retry automático em caso de erro (até 3 tentativas)
 - Indicadores visuais de salvamento e timestamp do último save
 - Suporte a perfis read-only (COLABORADOR e LEITURA)
+- **Definição de responsável** por pilar (usuário da empresa)
+- **Gestão de rotinas** do pilar (adicionar, remover, reordenar)
+- **Botão "Salvar Tudo"** para forçar salvamento manual de cache
 
 ---
 
@@ -138,12 +149,10 @@ where: {
 **Estrutura Retornada:**
 ```typescript
 PilarEmpresa[] {
-  id, ordem, responsavelId,
-  pilar: { id, nome, descricao },
+  id, ordem, responsavelId, nome, pilarTemplateId,
   responsavel: { id, nome, email, cargo } | null,
   rotinasEmpresa: RotinaEmpresa[] {
-    id, ordem,
-    rotina: { id, nome, descricao },
+    id, ordem, nome, rotinaTemplateId,
     notas: NotaRotina[] (apenas a mais recente)
   }
 }
@@ -557,6 +566,54 @@ POST /rotinas
 
 ---
 
+### UI-DIAG-010: Botão "Salvar Tudo" (Force Save All)
+
+**Descrição:** Botão manual para forçar salvamento de todas as alterações pendentes no cache local.
+
+**Implementação:**
+- Componente: `DiagnosticoNotasComponent`
+- Método: `forceSaveAll()`
+- Localização: Barra superior, próximo ao indicador de salvamento
+
+**Comportamento:**
+```typescript
+forceSaveAll(): void {
+  // 1. Verificar se há cache
+  if (this.notasCache.size === 0) {
+    toast('Não há alterações pendentes');
+    return;
+  }
+  
+  // 2. Coletar todos os itens válidos do cache
+  const itemsToSave = Array.from(notasCache)
+    .filter(item => item.nota !== null && item.criticidade !== null);
+  
+  // 3. Executar save para cada item
+  itemsToSave.forEach(item => this.executeSave(item));
+}
+```
+
+**Validações:**
+- Botão desabilitado se `savingCount > 0` (salvamento em andamento)
+- Botão desabilitado se `!hasUnsavedChanges()` (sem cache)
+- Apenas itens com nota E criticidade são salvos
+
+**Indicadores Visuais:**
+- Contador de salvamentos em andamento
+- Timestamp do último salvamento bem-sucedido
+- Toast informativo com número de alterações sendo salvas
+
+**Justificativa:**
+- Permite usuário ter controle manual sobre salvamento
+- Útil em situações de instabilidade de rede
+- Complementa auto-save (não substitui)
+
+**Perfis autorizados:** Todos (exceto read-only)
+
+**Arquivo:** [diagnostico-notas.component.ts:557-589](../../frontend/src/app/views/pages/diagnostico-notas/diagnostico-notas.component.ts#L557-L589)
+
+---
+
 ## 6. Validações
 
 ### 6.1. UpdateNotaRotinaDto
@@ -721,13 +778,23 @@ POST /rotinas
 
 ## 9. Sumário de Regras
 
+**Backend (Diagnóstico de Notas):**
+
 | ID | Descrição | Status |
 |----|-----------|--------|
 | **R-DIAG-001** | Buscar estrutura completa de diagnóstico | ✅ Implementado |
 | **R-DIAG-002** | Upsert de nota com auto-save | ✅ Implementado |
 | **RA-DIAG-001** | Auditoria completa de notas | ✅ Implementado |
 
-**Frontend (UI):**
+**Backend (Evolução de Pilares):**
+
+| ID | Descrição | Status |
+|----|-----------|--------|
+| **R-EVOL-001** | Calcular médias atuais dos pilares | ✅ Implementado |
+| **R-EVOL-002** | Congelar médias atuais | ✅ Implementado |
+| **R-EVOL-003** | Buscar histórico de evolução | ✅ Implementado |
+
+**Frontend (Interface de Diagnóstico):**
 
 | ID | Descrição | Status |
 |----|-----------|--------|
@@ -740,11 +807,29 @@ POST /rotinas
 | **UI-DIAG-007** | Definição de responsável por pilar | ✅ Implementado |
 | **UI-DIAG-008** | Criação de rotina customizada | ✅ Implementado |
 | **UI-DIAG-009** | Gestão de rotinas do pilar | ✅ Implementado |
+| **UI-DIAG-010** | Botão "Salvar Tudo" (force save all) | ✅ Implementado |
+
+**Frontend (Interface de Evolução):**
+
+| ID | Descrição | Status |
+|----|-----------|--------|
+| **UI-EVOL-001** | Tela de evolução com tabela de médias | ✅ Implementado |
+| **UI-EVOL-002** | Gráfico de barras agrupadas por data | ✅ Implementado |
+| **UI-EVOL-003** | Zonas coloridas de performance | ✅ Implementado |
+| **UI-EVOL-004** | Carregamento paralelo de histórico | ✅ Implementado |
+| **UI-EVOL-005** | Ordenação de tabela (SortableDirective) | ✅ Implementado |
+
+**Integrações Implementadas:**
+- ✅ Snapshot Pattern (pilares e rotinas)
+- ✅ Multi-tenant (isolamento por empresa)
+- ✅ Responsável por pilar (PilarEmpresa)
+- ✅ Auto-save com retry
+- ✅ Cache local de edições
+- ✅ Auditoria completa
 
 **Pendências:**
 - ❌ Paginação de diagnóstico
 - ⚠️ Histórico de notas (backend pronto, frontend ausente)
-- ❌ PilarEvolucao (snapshots temporais)
 - ❌ AgendaReuniao (CRUD completo)
 
 ---
@@ -1370,9 +1455,10 @@ if (rotina.pilarId !== pilarEmpresa.pilarId) {
 ---
 
 **Observação final:**  
-Este documento reflete a implementação completa do módulo Diagnósticos.  
+Este documento reflete a implementação completa do módulo Diagnósticos conforme código existente em 08/01/2026.  
 **Status:** Backend e frontend implementados e funcionais.  
-**Roadmap futuro:** Módulo de Evolução de Pilares (histórico e gráficos).
+**Novidades:** Snapshot Pattern, responsável por pilar, evolução com gráficos interativos, auto-save com retry.  
+**Próximos passos:** Histórico visual de notas, AgendaReuniao, paginação.
 
 ---
 
@@ -1576,11 +1662,24 @@ Array<{
 
 **Responsabilidades:**
 - Carregar médias atuais via `GET /evolucao/medias`
-- Exibir cards com informações dos pilares
+- Exibir tabela com informações dos pilares
 - Botão "Congelar Médias" que chama `POST /evolucao/congelar`
-- Selecionar pilar para ver histórico
-- Carregar histórico via `GET /evolucao/historico/:pilarEmpresaId`
-- Renderizar gráfico de linha com Chart.js ou similar
+- Carregar histórico de **todos os pilares** em paralelo
+- Renderizar gráfico de barras agrupadas com Chart.js + chartjs-plugin-annotation
+
+**Funcionalidades do Gráfico:**
+- Carregamento paralelo de histórico (`Promise.all`)
+- Combinação de múltiplos datasets (uma data = um dataset)
+- Paleta de cores em tons de cinza (10 cores)
+- Plugin customizado de data labels (exibe médias sobre barras)
+- Zonas de fundo coloridas (vermelho, amarelo, verde)
+- Responsivo e adapta ao tema (light/dark)
+
+**Dependências:**
+- Chart.js (registerables)
+- chartjs-plugin-annotation
+- SortableDirective (ordenação de tabela)
+- MediaBadgeComponent (exibição de badges)
 
 **Estados:**
 - Loading (carregando dados)
@@ -1594,53 +1693,92 @@ Array<{
 ```
 [Breadcrumb] Diagnósticos > Evolução
 
-[Empresa Selecionada] (se ADMIN, dropdown; senão, empresa do usuário)
+[Empresa Selecionada] (se ADMIN, contexto global; senão, empresa do usuário)
 
-[Cards de Pilares]
-┌─────────────────────┐  ┌─────────────────────┐
-│ Pilar: Gestão       │  │ Pilar: Vendas       │
-│ Média: 7.5          │  │ Média: 6.8          │
-│ Rotinas: 12/15      │  │ Rotinas: 8/10       │
-└─────────────────────┘  └─────────────────────┘
+[Tabela de Pilares com Médias]
+┌──────────────────────────────────────┐
+│ Pilar          │ Média Atual         │
+│────────────────┼─────────────────────│
+│ Gestão         │ [7.5] (badge verde) │
+│ Vendas         │ [6.8] (badge amar.) │
+│ Marketing      │ [5.2] (badge verm.) │
+└──────────────────────────────────────┘
 
 [Botão: Congelar Médias] (apenas ADMIN/CONSULTOR/GESTOR)
+  ↳ Tooltip: "Salva as médias atuais para comparação futura"
 
-[Seletor de Pilar para Gráfico]
-▼ Selecione um pilar
-
-[Gráfico de Evolução]
+[Gráfico de Barras Agrupadas por Data]
 ┌────────────────────────────────────────┐
-│  Evolução - Pilar Gestão               │
+│  Evolução dos Pilares ao Longo do Tempo│
 │                                        │
-│  10 ┤                            ●     │
-│   8 ┤              ●──●──●──●          │
-│   6 ┤        ●──●                      │
-│   4 ┤  ●──●                            │
-│   2 ┤                                  │
-│   0 └───────────────────────────────── │
-│     Jan  Fev  Mar  Abr  Mai  Jun       │
+│  10 ┤                                  │
+│   8 ┤  ██ ██ ██  (barras agrupadas)   │
+│   6 ┤  ██ ██ ██   por data            │
+│   4 ┤  ██ ██ ██                        │
+│   2 ┤  ██ ██ ██                        │
+│   0 └────────────────────────────────  │
+│    Gestão Vendas Marketing             │
+│                                        │
+│  Legenda: ▮ 01/01/2026 ▮ 15/01/2026   │
 └────────────────────────────────────────┘
 ```
 
+**Características do Gráfico:**
+- **Tipo:** Barras agrupadas (Chart.js type: 'bar')
+- **Eixo X:** Nomes dos pilares
+- **Eixo Y:** Média das notas (0-10)
+- **Agrupamento:** Cada data é um dataset separado
+- **Cores:** Tons de cinza incrementais (10 tons diferentes)
+- **Zonas de fundo:**
+  - Vermelho (0-6): Crítico
+  - Amarelo (6-8): Atenção
+  - Verde (8-10): Ideal
+- **Data labels:** Média exibida sobre cada barra
+- **Interatividade:** Click na legenda oculta/exibe dataset
+
 ### 7.4. Regras de Exibição
 
-**Cálculo de Médias:**
+**Tabela de Médias:**
 - Exibir apenas pilares que possuem pelo menos 1 nota
 - Média exibida com 1 casa decimal (ex: 7.5)
-- Indicador visual: Progresso das rotinas avaliadas (ex: "12/15")
+- Badge colorido:
+  - 0-6: Vermelho (crítico)
+  - 6-8: Amarelo (atenção)
+  - 8-10: Verde (ideal)
+- Suporte a ordenação por coluna (via SortableDirective)
 
 **Botão Congelar:**
 - Visível apenas para: ADMINISTRADOR, CONSULTOR, GESTOR
 - Desabilitado se não houver médias para congelar
 - Ao clicar: Confirmação via SweetAlert
 - Após congelar: Atualizar automaticamente os dados
+- Tooltip explicativo sobre a funcionalidade
 
-**Gráfico:**
-- Exibir apenas se pilar tiver histórico (registros em PilarEvolucao)
-- Eixo X: Datas dos congelamentos
-- Eixo Y: Média das notas (0-10)
-- Linha conectando os pontos
-- Tooltips mostrando data e média exata
+**Gráfico de Barras Agrupadas:**
+- **Tipo:** Barras verticais agrupadas (Chart.js)
+- **Eixo X:** Nomes dos pilares
+- **Eixo Y:** Média das notas (0-10, step 1)
+- **Datasets:** Cada data congelada é um dataset
+- **Cores:** Paleta de 10 tons de cinza (do escuro ao claro)
+- **Barras:**
+  - `barPercentage: 1.05`
+  - `categoryPercentage: 0.75`
+- **Data Labels:**
+  - Média exibida sobre cada barra
+  - 1 casa decimal
+  - Cor dinâmica baseada no tema (light/dark)
+- **Zonas de Fundo (annotation plugin):**
+  - Vermelho (0-6): rgba(195, 77, 56, 0.3)
+  - Amarelo (6-8): rgba(166, 124, 0, 0.3)
+  - Verde (8-10): rgba(92, 184, 112, 0.3)
+- **Interatividade:**
+  - Hover: Tooltip com data e média exata
+  - Click na legenda: Ocultar/exibir dataset
+  - Responsive e mantém aspecto
+- **Estado vazio:**
+  - Mensagem: "Nenhum histórico encontrado"
+  - Ícone ilustrativo
+  - Posição centralizada sobre área do gráfico
 
 ### 7.5. Controle de Acesso
 

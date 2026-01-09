@@ -1032,6 +1032,112 @@ const updated = await this.prisma.pilarEmpresa.update({
 
 ---
 
+### R-PILEMP-011: Criar PilarEmpresa (Snapshot Pattern com XOR)
+
+**Descrição:** Endpoint cria instância de pilar para empresa, copiando dados de template OU usando dados customizados (validação XOR).
+
+**Implementação:**
+- **Endpoint:** `POST /empresas/:empresaId/pilares` (ADMINISTRADOR, GESTOR)
+- **Módulo:** PilaresEmpresaService
+- **Método:** `createPilarEmpresa()`
+- **DTO:** CreatePilarEmpresaDto
+
+**Validação XOR (Exclusiva):**
+```typescript
+// DEVE fornecer pilarTemplateId OU nome (nunca ambos, nunca nenhum)
+if (dto.pilarTemplateId && dto.nome) {
+  throw new BadRequestException('Forneça pilarTemplateId OU nome, nunca ambos');
+}
+
+if (!dto.pilarTemplateId && !dto.nome) {
+  throw new BadRequestException('Forneça pilarTemplateId OU nome');
+}
+```
+
+**Fluxo 1: Cópia de Template**
+```typescript
+if (dto.pilarTemplateId) {
+  const template = await this.prisma.pilar.findUnique({
+    where: { id: dto.pilarTemplateId },
+  });
+
+  if (!template) {
+    throw new NotFoundException('Template de pilar não encontrado');
+  }
+
+  nome = template.nome; // Copiar nome do template
+}
+```
+
+**Fluxo 2: Pilar Customizado**
+```typescript
+else {
+  nome = dto.nome!; // Usar nome fornecido (validado pelo DTO)
+}
+```
+
+**Validação de Nome Único:**
+```typescript
+const existing = await this.prisma.pilarEmpresa.findFirst({
+  where: { empresaId, nome },
+});
+
+if (existing) {
+  throw new ConflictException('Já existe um pilar com este nome nesta empresa');
+}
+```
+
+**Cálculo de Ordem (Auto-increment):**
+```typescript
+const ultimoPilar = await this.prisma.pilarEmpresa.findFirst({
+  where: { empresaId },
+  orderBy: { ordem: 'desc' },
+  select: { ordem: true },
+});
+
+const proximaOrdem = ultimoPilar ? ultimoPilar.ordem + 1 : 1;
+```
+
+**Criação do Snapshot:**
+```typescript
+const pilarEmpresa = await this.prisma.pilarEmpresa.create({
+  data: {
+    pilarTemplateId: dto.pilarTemplateId ?? null,
+    nome,
+    empresaId,
+    ordem: proximaOrdem,
+    createdBy: user.id,
+  },
+  include: {
+    pilarTemplate: true,
+  },
+});
+```
+
+**Auditoria:**
+- Entidade: `pilares_empresa`
+- Ação: `CREATE`
+- Dados: pilarEmpresa completo + `isCustom: !dto.pilarTemplateId`
+
+**Retorno:**
+```typescript
+{
+  id: "uuid",
+  pilarTemplateId: "uuid-template" | null,
+  nome: "Marketing",
+  empresaId: "uuid-empresa",
+  ordem: 3,
+  pilarTemplate: { ... } | null,
+  ...
+}
+```
+
+**Perfis autorizados:** ADMINISTRADOR, GESTOR
+
+**Arquivo:** [pilares-empresa.service.ts](../../backend/src/modules/pilares-empresa/pilares-empresa.service.ts#L437-L521)
+
+---
+
 ### R-PILEMP-007: Listar Rotinas de Pilar da Empresa
 
 **Descrição:** Endpoint retorna rotinas vinculadas a um pilar específico de uma empresa, ordenadas por `RotinaEmpresa.ordem`.
@@ -1074,7 +1180,126 @@ include: {
 
 ---
 
-### R-PILEMP-008: Vincular Rotina a Pilar da Empresa
+### R-PILEMP-012: Criar RotinaEmpresa (Snapshot Pattern com XOR)
+
+**Descrição:** Endpoint cria instância de rotina para pilar de empresa, copiando dados de template OU usando dados customizados (validação XOR).
+
+**Implementação:**
+- **Endpoint:** `POST /empresas/:empresaId/pilares/:pilarEmpresaId/rotinas` (ADMINISTRADOR, GESTOR)
+- **Módulo:** PilaresEmpresaService
+- **Método:** `createRotinaEmpresa()`
+- **DTO:** CreateRotinaEmpresaDto
+
+**Validação XOR (Exclusiva):**
+```typescript
+// DEVE fornecer rotinaTemplateId OU nome (nunca ambos, nunca nenhum)
+if (dto.rotinaTemplateId && dto.nome) {
+  throw new BadRequestException('Forneça rotinaTemplateId OU nome, nunca ambos');
+}
+
+if (!dto.rotinaTemplateId && !dto.nome) {
+  throw new BadRequestException('Forneça rotinaTemplateId OU nome');
+}
+```
+
+**Validação de PilarEmpresa:**
+```typescript
+const pilarEmpresa = await this.prisma.pilarEmpresa.findFirst({
+  where: { id: pilarEmpresaId, empresaId },
+});
+
+if (!pilarEmpresa) {
+  throw new NotFoundException('Pilar não encontrado nesta empresa');
+}
+```
+
+**Fluxo 1: Cópia de Template**
+```typescript
+if (dto.rotinaTemplateId) {
+  const template = await this.prisma.rotina.findUnique({
+    where: { id: dto.rotinaTemplateId },
+  });
+
+  if (!template) {
+    throw new NotFoundException('Template de rotina não encontrado');
+  }
+
+  nome = template.nome; // Copiar nome do template
+}
+```
+
+**Fluxo 2: Rotina Customizada**
+```typescript
+else {
+  nome = dto.nome!; // Usar nome fornecido (validado pelo DTO)
+}
+```
+
+**Validação de Nome Único (por pilar):**
+```typescript
+const existing = await this.prisma.rotinaEmpresa.findFirst({
+  where: { pilarEmpresaId, nome },
+});
+
+if (existing) {
+  throw new ConflictException('Já existe uma rotina com este nome neste pilar');
+}
+```
+
+**Cálculo de Ordem (Auto-increment):**
+```typescript
+const ultimaRotina = await this.prisma.rotinaEmpresa.findFirst({
+  where: { pilarEmpresaId },
+  orderBy: { ordem: 'desc' },
+  select: { ordem: true },
+});
+
+const proximaOrdem = ultimaRotina ? ultimaRotina.ordem + 1 : 1;
+```
+
+**Criação do Snapshot:**
+```typescript
+const rotinaEmpresa = await this.prisma.rotinaEmpresa.create({
+  data: {
+    rotinaTemplateId: dto.rotinaTemplateId ?? null,
+    nome,
+    pilarEmpresaId,
+    ordem: proximaOrdem,
+    createdBy: user.id,
+  },
+  include: {
+    rotinaTemplate: true,
+    pilarEmpresa: { include: { empresa: true } },
+  },
+});
+```
+
+**Auditoria:**
+- Entidade: `rotinas_empresa`
+- Ação: `CREATE`
+- Dados: rotinaEmpresa completo + `isCustom: !dto.rotinaTemplateId`
+
+**Retorno:**
+```typescript
+{
+  id: "uuid",
+  rotinaTemplateId: "uuid-template" | null,
+  nome: "Reuniões Semanais",
+  pilarEmpresaId: "uuid-pilar",
+  ordem: 2,
+  rotinaTemplate: { ... } | null,
+  pilarEmpresa: { ... },
+  ...
+}
+```
+
+**Perfis autorizados:** ADMINISTRADOR, GESTOR
+
+**Arquivo:** [pilares-empresa.service.ts](../../backend/src/modules/pilares-empresa/pilares-empresa.service.ts#L632-L736)
+
+---
+
+### R-PILEMP-008: Vincular Rotina a Pilar da Empresa (DEPRECATED)
 
 **Descrição:** Endpoint permite vincular uma rotina a um pilar da empresa, criando `RotinaEmpresa`.
 
@@ -1656,9 +1881,18 @@ async findOne(id: string) {
 | ID | Descrição | Status |
 |----|-----------|--------|
 | **R-PILEMP-001** | Listagem de pilares por empresa | ✅ Implementado |
-| **R-PILEMP-002** | Reordenação per-company | ✅ Implementado |
+| **R-PILEMP-002** | Reordenação de pilares por empresa | ✅ Implementado |
 | **R-PILEMP-003** | Vinculação incremental de pilares | ✅ Implementado |
 | **RA-PILEMP-001** | Cascata lógica em desativação | ✅ Implementado |
+| **R-PILEMP-004** | Auto-associação de rotinas modelo | ✅ Implementado |
+| **R-PILEMP-005** | Edição de pilar da empresa | ✅ Implementado |
+| **R-PILEMP-006** | Deleção em cascata com audit | ✅ Implementado |
+| **R-PILEMP-007** | Listar rotinas do pilar | ✅ Implementado |
+| **R-PILEMP-008** | Vincular rotina (DEPRECATED) | ⚠️ Usar R-PILEMP-012 |
+| **R-PILEMP-009** | Deletar rotina da empresa | ✅ Implementado |
+| **R-PILEMP-010** | Reordenar rotinas do pilar | ✅ Implementado |
+| **R-PILEMP-011** | Criar PilarEmpresa com XOR | ✅ Implementado |
+| **R-PILEMP-012** | Criar RotinaEmpresa com XOR | ✅ Implementado |
 
 **Melhorias implementadas:**
 - ✅ Campo `modelo` com auto-associação
@@ -2285,16 +2519,27 @@ SET ordem = COALESCE(
 
 ---
 
-**Data de extração:** 21/12/2024  
-**Data de atualização:** 23/12/2024  
+**Data de extração:** 08/01/2026  
 **Agente:** Business Rules Extractor (Modo A - Reverse Engineering)  
-**Última revisão:** Reviewer de Regras (23/12/2024)  
-**Status:** ✅ Backend completo (3 módulos) | ✅ Documentação atualizada | ⏳ Frontend pendente
+**Versão:** 3.0 (Snapshot Pattern Completo + XOR Validation)  
+**Status:** ✅ Backend completo | ✅ Documentação sincronizada | ✅ Pronto para testes
 
 ---
 
 **Observação final:**  
-Este documento reflete o código IMPLEMENTADO nos módulos:
+Este documento reflete o código IMPLEMENTADO nos módulos Pilares e PilaresEmpresa.
+
+**Novidades versão 3.0:**
+- ✅ Regra R-PILEMP-011: Criação de PilarEmpresa com validação XOR (template OU customizado)
+- ✅ Regra R-PILEMP-012: Criação de RotinaEmpresa com validação XOR (template OU customizado)
+- ✅ Snapshot Pattern completamente documentado (campos nome, pilarTemplateId, rotinaTemplateId)
+- ✅ Auto-incremento de ordem documentado
+- ✅ Validação de nome único por empresa/pilar documentada
+- ✅ Auditoria com flag isCustom documentada
+
+**Total de regras documentadas:** 21 regras (8 templates + 13 instâncias)
+
+Este documento está **pronto para gerar testes unitários e E2E**.
 - **Pilares** (catálogo global)
 - **PilaresEmpresa** (multi-tenant per-company)
 - **Empresas** (auto-associação)

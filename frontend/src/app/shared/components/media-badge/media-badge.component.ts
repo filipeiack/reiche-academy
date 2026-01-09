@@ -33,9 +33,14 @@ import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 export class MediaBadgeComponent {
   @Input() media: number = 0;
   @Input() title?: string;
+  @Input() justMedia?: boolean = false;
 
   get label(): string {
-    return `MÉDIA DO PILAR: ${this.media.toFixed(1)}`;
+    return this.justMedia ? this.labelMedia : `MÉDIA DO PILAR: ${this.media.toFixed(1)}`;
+  }
+
+  get labelMedia(): string {
+    return ` ${this.media.toFixed(1)} `;
   }
 
   get badgeClass(): string {

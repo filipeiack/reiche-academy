@@ -27,6 +27,16 @@ export const MENU: MenuItem[] = [
     link: '/usuarios'
   },
   {
+    label: 'MENU.PILARES',
+    icon: 'layers',
+    link: '/pilares'
+  },
+  {
+    label: 'MENU.ROTINAS',
+    icon: 'repeat',
+    link: '/rotinas'
+  },
+    {
     label: 'MENU.EMPRESAS',
     icon: 'briefcase',
     link: '/empresas',
@@ -36,16 +46,6 @@ export const MENU: MenuItem[] = [
     //     link: '/empresas/nova'
     //   }
     // ]
-  },
-  {
-    label: 'MENU.PILARES',
-    icon: 'layers',
-    link: '/pilares'
-  },
-  {
-    label: 'MENU.ROTINAS',
-    icon: 'repeat',
-    link: '/rotinas'
   },
   {
     label: 'MENU.PAINEL_CONTROLE',

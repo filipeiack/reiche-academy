@@ -2,24 +2,31 @@
 
 **Módulo:** Empresas  
 **Backend:** `backend/src/modules/empresas/`  
-**Frontend:** Não implementado  
-**Última extração:** 21/12/2024  
-**Agente:** Extractor de Regras
+**Frontend:** `frontend/src/app/views/pages/empresas/`  
+**Última extração:** 22/12/2024  
+**Versão:** 2.0 — Frontend + Backend Completo  
+**Agente:** Extractor_Regras
 
 ---
 
 ## 1. Visão Geral
 
 O módulo Empresas é responsável por:
-- Gestão de cadastro de empresas (CRUD)
+- Gestão de cadastro de empresas (CRUD com wizard em 2 etapas)
 - Customização de login (loginUrl e logoUrl)
-- Vinculação de pilares por empresa
+- Vinculação de pilares e usuários por empresa
 - Isolamento multi-tenant (GESTOR só acessa própria empresa)
 - Auditoria de alterações em empresas
+- Upload e gestão de logotipos
+
+**Componentes principais:**
+- **empresas-form**: Formulário wizard 2 etapas (dados básicos + usuários/pilares)
+- **empresas-list**: Listagem com busca, ordenação, paginação e seleção múltipla
 
 **Entidades principais:**
 - Empresa (dados cadastrais e customização)
 - PilarEmpresa (relação entre empresa e pilares)
+- Usuario (vinculado à empresa)
 
 **Endpoints implementados:**
 - `POST /empresas` — Criar empresa (ADMINISTRADOR)
@@ -635,6 +642,499 @@ data: {
 
 ---
 
+## 4. Regras de Frontend (UX)
+
+### UI-EMP-001: Wizard de Cadastro em 2 Etapas
+
+**Descrição:** Formulário de empresa dividido em wizard com 2 etapas.
+
+**Implementação:**
+- **Etapa 1:** Dados básicos da empresa (nome, CNPJ, cidade, estado, logo opcional)
+- **Etapa 2:** Associação de usuários e pilares (após empresa criada)
+
+**Comportamento:**
+1. Usuário preenche etapa 1 e salva
+2. Empresa é criada no backend
+3. Sistema carrega dados para etapa 2 automaticamente
+4. Usuário associa usuários e pilares diretamente à empresa recém-criada
+5. Botão "Concluir" finaliza wizard
+
+**Componente:** [empresas-form.component.ts](../../frontend/src/app/views/pages/empresas/empresas-form/empresas-form.component.ts#L69)
+
+---
+
+### UI-EMP-002: Máscara de CNPJ no Formulário
+
+**Descrição:** Campo CNPJ aplica máscara automaticamente durante digitação.
+
+**Implementação:**
+- **Evento:** `(input)="onCnpjInput($event)"`
+- **Formato:** `00.000.000/0000-00`
+
+**Comportamento:**
+```typescript
+onCnpjInput(event: Event): void {
+  const digits = (input.value || '').replace(/\D/g, '').slice(0, 14);
+  // Formata incrementalmente: 00 → 00.000 → 00.000.000 → etc
+}
+```
+
+**Componente:** [empresas-form.component.ts](../../frontend/src/app/views/pages/empresas/empresas-form/empresas-form.component.ts#L233-L242)
+
+---
+
+### UI-EMP-003: Validação Frontend de CNPJ
+
+**Descrição:** Validação de formulário exige CNPJ obrigatório.
+
+**Implementação:**
+```typescript
+cnpj: ['', [Validators.required]]
+```
+
+**Mensagem de erro:** "cnpj é obrigatório"
+
+**Componente:** [empresas-form.component.ts](../../frontend/src/app/views/pages/empresas/empresas-form/empresas-form.component.ts#L56)
+
+---
+
+### UI-EMP-004: Validação Frontend de loginUrl
+
+**Descrição:** loginUrl deve ter mínimo 3 caracteres e não conter espaços.
+
+**Implementação:**
+```typescript
+loginUrl: ['', [Validators.minLength(3), Validators.pattern(/^\S+$/)]]
+```
+
+**Mensagem de erro:** "loginUrl deve ter no mínimo 3 caracteres"
+
+**Componente:** [empresas-form.component.ts](../../frontend/src/app/views/pages/empresas/empresas-form/empresas-form.component.ts#L57)
+
+---
+
+### UI-EMP-005: Preview de Logo Antes do Upload
+
+**Descrição:** Sistema mostra preview do logo antes de enviar ao backend.
+
+**Implementação:**
+- Usa FileReader para criar preview local
+- Preview é exibido enquanto logo não foi enviado
+- Após upload bem-sucedido, preview é substituído por logoUrl
+
+**Comportamento:**
+```typescript
+const reader = new FileReader();
+reader.onload = () => {
+  this.previewUrl = reader.result as string;
+};
+reader.readAsDataURL(file);
+```
+
+**Componente:** [empresas-form.component.ts](../../frontend/src/app/views/pages/empresas/empresas-form/empresas-form.component.ts#L272-L277)
+
+---
+
+### UI-EMP-006: Validação Frontend de Tipo de Logo
+
+**Descrição:** Sistema valida tipo de arquivo antes de processar.
+
+**Implementação:**
+- Aceita apenas: JPG, PNG, WebP
+- Se tipo inválido → Exibe toast de erro
+- Preview não é criado
+
+**Mensagem:** "Por favor, selecione uma imagem em formato JPG, PNG ou WebP"
+
+**Componente:** [empresas-form.component.ts](../../frontend/src/app/views/pages/empresas/empresas-form/empresas-form.component.ts#L266-L270)
+
+---
+
+### UI-EMP-007: Validação Frontend de Tamanho de Logo
+
+**Descrição:** Sistema valida tamanho antes de processar upload.
+
+**Implementação:**
+- Tamanho máximo: 5MB
+- Se exceder → Exibe toast de erro
+- Preview não é criado
+
+**Mensagem:** "A imagem não pode exceder 5MB"
+
+**Componente:** [empresas-form.component.ts](../../frontend/src/app/views/pages/empresas/empresas-form/empresas-form.component.ts#L272-L275)
+
+---
+
+### UI-EMP-008: Upload Imediato de Logo em Modo Edição
+
+**Descrição:** Em modo edição, logo é enviado imediatamente ao selecionar.
+
+**Implementação:**
+```typescript
+if (this.isEditMode && this.empresaId) {
+  this.uploadLogo(file);
+}
+```
+
+**Comportamento:**
+- Preview criado
+- Upload iniciado automaticamente
+- logoUrl atualizado após sucesso
+
+**Componente:** [empresas-form.component.ts](../../frontend/src/app/views/pages/empresas/empresas-form/empresas-form.component.ts#L280-L283)
+
+---
+
+### UI-EMP-009: Logo Armazenado Durante Criação
+
+**Descrição:** Em modo criação, logo é armazenado em memória até empresa ser criada.
+
+**Implementação:**
+```typescript
+this.logoFile = file;
+this.showToast('Logo será enviado quando você criar a empresa', 'info');
+```
+
+**Comportamento:**
+1. Logo selecionado → armazenado em `logoFile`
+2. Empresa criada → logo enviado automaticamente
+3. Upload executado após criação bem-sucedida
+
+**Componente:** [empresas-form.component.ts](../../frontend/src/app/views/pages/empresas/empresas-form/empresas-form.component.ts#L285-L287)
+
+---
+
+### UI-EMP-010: Cache Buster em URLs de Logo
+
+**Descrição:** URLs de logo incluem timestamp para forçar atualização de cache.
+
+**Implementação:**
+```typescript
+private withCacheBuster(url: string | null): string | null {
+  const fullUrl = url.startsWith('http') ? url : `${environment.backendUrl}${url}`;
+  const separator = fullUrl.includes('?') ? '&' : '?';
+  return `${fullUrl}${separator}cb=${Date.now()}`;
+}
+```
+
+**Objetivo:** Evitar cache do navegador ao atualizar logo
+
+**Componente:** [empresas-form.component.ts](../../frontend/src/app/views/pages/empresas/empresas-form/empresas-form.component.ts#L155-L161)
+
+---
+
+### UI-EMP-011: Confirmação de Remoção de Logo
+
+**Descrição:** Sistema exige confirmação antes de deletar logo.
+
+**Implementação:**
+```typescript
+Swal.fire({
+  title: '<strong>Remover Logo</strong>',
+  html: 'Tem certeza que deseja remover o logotipo?<br>Esta ação não pode ser desfeita.',
+  showCancelButton: true,
+  confirmButtonText: 'Remover',
+  cancelButtonText: 'Cancelar'
+})
+```
+
+**Componente:** [empresas-form.component.ts](../../frontend/src/app/views/pages/empresas/empresas-form/empresas-form.component.ts#L343-L355)
+
+---
+
+### UI-EMP-012: Autocomplete de Tipos de Negócio
+
+**Descrição:** Campo tipoNegocio carrega lista de valores existentes via endpoint.
+
+**Implementação:**
+- **Endpoint:** `GET /empresas/tipos-negocio/distinct`
+- **Componente:** ng-select com addTag habilitado
+
+**Comportamento:**
+1. Sistema carrega tipos existentes ao iniciar
+2. Usuário pode selecionar da lista
+3. Usuário pode digitar novo tipo (addTag)
+4. Se endpoint falhar → usuário pode digitar manualmente
+
+**Componente:** [empresas-form.component.ts](../../frontend/src/app/views/pages/empresas/empresas-form/empresas-form.component.ts#L116-L127)
+
+---
+
+### UI-EMP-013: Redirecionamento Condicional por Perfil
+
+**Descrição:** Após salvar, sistema redireciona baseado no perfil do usuário.
+
+**Implementação:**
+```typescript
+get isPerfilCliente(): boolean {
+  const perfilCodigo = typeof this.currentLoggedUser.perfil === 'object' 
+    ? this.currentLoggedUser.perfil.codigo 
+    : this.currentLoggedUser.perfil;
+  return ['GESTOR', 'COLABORADOR', 'LEITURA'].includes(perfilCodigo);
+}
+
+private getRedirectUrl(): string {
+  return this.isPerfilCliente ? '/dashboard' : '/empresas';
+}
+```
+
+**Comportamento:**
+- ADMINISTRADOR → `/empresas` (listagem)
+- GESTOR/COLABORADOR/LEITURA → `/dashboard`
+
+**Componente:** [empresas-form.component.ts](../../frontend/src/app/views/pages/empresas/empresas-form/empresas-form.component.ts#L76-L83)
+
+---
+
+### UI-EMP-014: Gestão de Usuários por Perfil
+
+**Descrição:** Perfis de cliente (GESTOR, COLABORADOR, LEITURA) não carregam lista de usuários disponíveis.
+
+**Implementação:**
+```typescript
+if (!this.isPerfilCliente) {
+  this.loadUsuariosDisponiveis();
+  this.loadPilaresDisponiveis();
+}
+```
+
+**Objetivo:** Reduzir carga de dados desnecessários para perfis que não gerenciam usuários globalmente
+
+**Componente:** [empresas-form.component.ts](../../frontend/src/app/views/pages/empresas/empresas-form/empresas-form.component.ts#L94-L97)
+
+---
+
+### UI-EMP-015: Associação Imediata de Usuários em Modo Edição
+
+**Descrição:** Em modo edição, associar usuário atualiza backend imediatamente.
+
+**Implementação:**
+```typescript
+if (this.empresaId) {
+  this.usersService.update(usuario.id, { empresaId: this.empresaId }).subscribe({
+    next: () => {
+      this.showToast(`Usuário ${usuario.nome} associado com sucesso!`, 'success');
+      this.usuariosAssociados.push(usuario);
+    }
+  });
+}
+```
+
+**Componente:** [empresas-form.component.ts](../../frontend/src/app/views/pages/empresas/empresas-form/empresas-form.component.ts#L418-L428)
+
+---
+
+### UI-EMP-016: Confirmação de Desassociação de Usuário
+
+**Descrição:** Sistema exige confirmação antes de desassociar usuário.
+
+**Implementação:**
+```typescript
+Swal.fire({
+  title: 'Desassociar Usuário',
+  html: `Deseja desassociar <strong>${usuario.nome}</strong> desta empresa?`,
+  showCancelButton: true,
+  confirmButtonText: 'Sim, desassociar',
+  cancelButtonText: 'Cancelar'
+})
+```
+
+**Componente:** [empresas-form.component.ts](../../frontend/src/app/views/pages/empresas/empresas-form/empresas-form.component.ts#L457-L463)
+
+---
+
+### UI-EMP-017: Criação de Usuário via ng-select addTag
+
+**Descrição:** Permite criar usuário diretamente do campo de seleção.
+
+**Implementação:**
+```typescript
+addUsuarioTag = (nome: string): Usuario | Promise<Usuario> => {
+  const nomeParts = nome.trim().split(/\s+/);
+  if (nomeParts.length < 2) {
+    this.showToast('Por favor, informe nome e sobrenome', 'error');
+    return Promise.reject('Nome e sobrenome são obrigatórios');
+  }
+  // ... criar usuário via API
+}
+```
+
+**Validação:** Exige nome E sobrenome (mínimo 2 palavras)
+
+**Componente:** [empresas-form.component.ts](../../frontend/src/app/views/pages/empresas/empresas-form/empresas-form.component.ts#L430-L453)
+
+---
+
+### UI-EMP-018: Modal de Criação de Usuário
+
+**Descrição:** Permite criar usuário via modal dedicado com formulário completo.
+
+**Implementação:**
+- Componente: `UsuarioModalComponent`
+- Evento: `(usuarioCriado)="onUsuarioCriado($event)"`
+
+**Comportamento:**
+1. Abrir modal → `abrirModalNovoUsuario()`
+2. Criar usuário → Modal emite evento
+3. Sistema adiciona à lista associados (modo edição) ou pendentes (modo criação)
+
+**Componente:** [empresas-form.component.ts](../../frontend/src/app/views/pages/empresas/empresas-form/empresas-form.component.ts#L493-L509)
+
+---
+
+### UI-EMP-019: Associação Imediata de Pilares em Modo Edição
+
+**Descrição:** Em modo edição, associar pilar chama endpoint imediatamente.
+
+**Implementação:**
+```typescript
+this.pilaresEmpresaService.vincularPilares(this.empresaId, [pilar.id]).subscribe({
+  next: (response) => {
+    if (response.vinculados > 0) {
+      this.showToast(`Pilar ${pilar.nome} associado com sucesso!`, 'success');
+      this.pilaresAssociados = response.pilares;
+    }
+  }
+});
+```
+
+**Componente:** [empresas-form.component.ts](../../frontend/src/app/views/pages/empresas/empresas-form/empresas-form.component.ts#L594-L602)
+
+---
+
+### UI-EMP-020: Criação de Pilar via ng-select addTag
+
+**Descrição:** Permite criar pilar template diretamente do campo de seleção.
+
+**Implementação:**
+```typescript
+addPilarTag = (nome: string): Pilar | Promise<Pilar> => {
+  const novoPilar: CreatePilarDto = { nome: nome };
+  return new Promise((resolve, reject) => {
+    this.pilaresService.create(novoPilar).subscribe({
+      next: (pilar) => {
+        this.showToast(`Pilar "${nome}" criado com sucesso!`, 'success');
+        resolve(pilar);
+      }
+    });
+  });
+};
+```
+
+**Componente:** [empresas-form.component.ts](../../frontend/src/app/views/pages/empresas/empresas-form/empresas-form.component.ts#L564-L578)
+
+---
+
+### UI-EMP-021: Busca com Filtro em Listagem
+
+**Descrição:** Listagem permite busca em tempo real por nome, CNPJ, cidade ou estado.
+
+**Implementação:**
+```typescript
+filterEmpresas(): void {
+  const query = this.searchQuery.toLowerCase();
+  this.filteredEmpresas = this.empresas.filter(e =>
+    e.nome?.toLowerCase().includes(query) ||
+    e.cnpj?.toLowerCase().includes(query) ||
+    e.cidade?.toLowerCase().includes(query) ||
+    e.estado?.toLowerCase().includes(query)
+  );
+}
+```
+
+**Componente:** [empresas-list.component.ts](../../frontend/src/app/views/pages/empresas/empresas-list/empresas-list.component.ts#L84-L95)
+
+---
+
+### UI-EMP-022: Ordenação por Coluna
+
+**Descrição:** Listagem permite ordenação clicando em headers de tabela.
+
+**Implementação:**
+- **Diretiva:** `SortableDirective`
+- **Evento:** `(sort)="onSort($event)"`
+
+**Comportamento:**
+1. Clique em header → ordena ascending
+2. Clique novamente → inverte para descending
+3. Ordenação persiste durante busca/filtro
+
+**Componente:** [empresas-list.component.ts](../../frontend/src/app/views/pages/empresas/empresas-list/empresas-list.component.ts#L97-L108)
+
+---
+
+### UI-EMP-023: Paginação de Resultados
+
+**Descrição:** Listagem exibe empresas em páginas de 10 itens.
+
+**Implementação:**
+```typescript
+pageSize = 10;
+get paginatedEmpresas(): Empresa[] {
+  const start = (this.currentPage - 1) * this.pageSize;
+  const end = start + this.pageSize;
+  return this.filteredEmpresas.slice(start, end);
+}
+```
+
+**Componente:** NgbPagination
+
+**Componente:** [empresas-list.component.ts](../../frontend/src/app/views/pages/empresas/empresas-list/empresas-list.component.ts#L126-L131)
+
+---
+
+### UI-EMP-024: Seleção Múltipla de Empresas
+
+**Descrição:** Listagem permite selecionar múltiplas empresas via checkboxes.
+
+**Implementação:**
+- **Estado:** `selectedIds: Set<string>`
+- **Header checkbox:** Seleciona/deseleciona todas da página atual
+
+**Comportamento:**
+```typescript
+toggleHeaderCheckbox(): void {
+  this.headerCheckboxChecked = !this.headerCheckboxChecked;
+  const currentPageIds = this.paginatedEmpresas.map(e => e.id);
+  if (this.headerCheckboxChecked) {
+    currentPageIds.forEach(id => this.selectedIds.add(id));
+  } else {
+    currentPageIds.forEach(id => this.selectedIds.delete(id));
+  }
+}
+```
+
+**Componente:** [empresas-list.component.ts](../../frontend/src/app/views/pages/empresas/empresas-list/empresas-list.component.ts#L147-L155)
+
+---
+
+### UI-EMP-025: Deleção em Lote
+
+**Descrição:** Permite deletar múltiplas empresas selecionadas.
+
+**Implementação:**
+```typescript
+deleteSelected(): void {
+  const count = this.selectedIds.size;
+  if (count === 0) return;
+  Swal.fire({
+    title: '<strong>Deletar Empresas Selecionadas</strong>',
+    html: `Tem certeza que deseja deletar <strong>${count} empresa(s)</strong>?`,
+    confirmButtonText: `Deletar ${count}`,
+  })
+}
+```
+
+**Comportamento:**
+1. Confirmação com contagem
+2. Delete sequencial para cada ID
+3. Atualiza listagem após completar
+4. Exibe resumo (sucessos e erros)
+
+**Componente:** [empresas-list.component.ts](../../frontend/src/app/views/pages/empresas/empresas-list/empresas-list.component.ts#L167-L178)
+
+---
+
 ## 4. Validações
 
 ### 4.1. CreateEmpresaDto
@@ -1027,6 +1527,12 @@ Estende `PartialType(CreateEmpresaDto)` + campo adicional:
 
 ## 7. Sumário de Regras
 
+**Regras de Backend:** 32  
+**Regras de Frontend (UX):** 25  
+**Total de Regras Documentadas:** 57
+
+### Backend
+
 | ID | Descrição | Status |
 |----|-----------|--------|
 | **R-EMP-001** | CNPJ único na criação | ✅ Implementado |
@@ -1062,31 +1568,77 @@ Estende `PartialType(CreateEmpresaDto)` + campo adicional:
 | **R-EMP-031** | Listar tipos de negócio distintos | ✅ Implementado |
 | **R-EMP-032** | Campo createdBy na criação | ✅ Implementado |
 
-**Ausências críticas:**
+### Frontend (UX)
+
+| ID | Descrição | Status |
+|----|-----------|--------|
+| **UI-EMP-001** | Wizard de cadastro em 2 etapas | ✅ Implementado |
+| **UI-EMP-002** | Máscara de CNPJ no formulário | ✅ Implementado |
+| **UI-EMP-003** | Validação frontend de CNPJ | ✅ Implementado |
+| **UI-EMP-004** | Validação frontend de loginUrl | ✅ Implementado |
+| **UI-EMP-005** | Preview de logo antes do upload | ✅ Implementado |
+| **UI-EMP-006** | Validação frontend de tipo de logo | ✅ Implementado |
+| **UI-EMP-007** | Validação frontend de tamanho de logo | ✅ Implementado |
+| **UI-EMP-008** | Upload imediato em modo edição | ✅ Implementado |
+| **UI-EMP-009** | Logo armazenado durante criação | ✅ Implementado |
+| **UI-EMP-010** | Cache buster em URLs de logo | ✅ Implementado |
+| **UI-EMP-011** | Confirmação de remoção de logo | ✅ Implementado |
+| **UI-EMP-012** | Autocomplete de tipos de negócio | ✅ Implementado |
+| **UI-EMP-013** | Redirecionamento condicional por perfil | ✅ Implementado |
+| **UI-EMP-014** | Gestão de usuários por perfil | ✅ Implementado |
+| **UI-EMP-015** | Associação imediata em modo edição | ✅ Implementado |
+| **UI-EMP-016** | Confirmação de desassociação | ✅ Implementado |
+| **UI-EMP-017** | Criação de usuário via addTag | ✅ Implementado |
+| **UI-EMP-018** | Modal de criação de usuário | ✅ Implementado |
+| **UI-EMP-019** | Associação imediata de pilares | ✅ Implementado |
+| **UI-EMP-020** | Criação de pilar via addTag | ✅ Implementado |
+| **UI-EMP-021** | Busca com filtro em listagem | ✅ Implementado |
+| **UI-EMP-022** | Ordenação por coluna | ✅ Implementado |
+| **UI-EMP-023** | Paginação de resultados | ✅ Implementado |
+| **UI-EMP-024** | Seleção múltipla de empresas | ✅ Implementado |
+| **UI-EMP-025** | Deleção em lote | ✅ Implementado |
+
+**Ausências críticas (Backend):**
 - ❌ Exclusão física de logos não utilizados
 - ❌ Validação de pilares existentes em vincularPilares
-- ❌ Paginação em listagem
+- ❌ Paginação em listagem backend
 - ❌ Reativação de empresa
 - ❌ Cache em busca por loginUrl (endpoint público frequente)
+
+**Ausências observadas (Frontend):**
+- ✅ Paginação implementada (pageSize 10)
+- ✅ Filtros implementados (nome, CNPJ, cidade, estado)
+- ❌ Edição inline de logo (apenas upload completo)
+- ❌ Drag-and-drop de logo
+- ❌ Crop de imagem antes de upload
 
 ---
 
 ## 8. Referências
 
-**Arquivos principais:**
-- [empresas.service.ts](../../backend/src/modules/empresas/empresas.service.ts)
-- [empresas.controller.ts](../../backend/src/modules/empresas/empresas.controller.ts)
-- [schema.prisma](../../backend/prisma/schema.prisma) (Empresa, PilarEmpresa)
+**Arquivos principais (Backend):**
+- [empresas.service.ts](../../backend/src/modules/empresas/empresas.service.ts) — 363 linhas
+- [empresas.controller.ts](../../backend/src/modules/empresas/empresas.controller.ts) — ~200 linhas
+- [schema.prisma](../../backend/prisma/schema.prisma) — Entidades Empresa, PilarEmpresa
+
+**Arquivos principais (Frontend):**
+- [empresas-form.component.ts](../../frontend/src/app/views/pages/empresas/empresas-form/empresas-form.component.ts) — 738 linhas
+- [empresas-list.component.ts](../../frontend/src/app/views/pages/empresas/empresas-list/empresas-list.component.ts) — 243 linhas
 
 **DTOs:**
 - [create-empresa.dto.ts](../../backend/src/modules/empresas/dto/create-empresa.dto.ts)
 - [update-empresa.dto.ts](../../backend/src/modules/empresas/dto/update-empresa.dto.ts)
 
 **Testes:**
-- [empresas.service.spec.ts](../../backend/src/modules/empresas/empresas.service.spec.ts) (43 testes unitários)
+- [empresas.service.spec.ts](../../backend/src/modules/empresas/empresas.service.spec.ts) — 43 testes unitários
 
 **Interfaces:**
-- [request-user.interface.ts](../../backend/src/common/interfaces/request-user.interface.ts) (RequestUser compartilhado)
+- [request-user.interface.ts](../../backend/src/common/interfaces/request-user.interface.ts) — RequestUser compartilhado
+
+**Componentes Relacionados:**
+- [usuario-modal.component](../../frontend/src/app/views/pages/usuarios/usuario-modal/) — Modal de criação de usuário
+- [user-avatar.component](../../frontend/src/app/shared/components/user-avatar/) — Avatar de usuário
+- [sortable.directive.ts](../../frontend/src/app/shared/directives/sortable.directive.ts) — Diretiva de ordenação
 
 ---
 
@@ -1094,3 +1646,18 @@ Estende `PartialType(CreateEmpresaDto)` + campo adicional:
 Este documento reflete APENAS o código IMPLEMENTADO.  
 Regras inferidas, comportamentos não documentados ou recursos futuros  
 foram marcados como ausências/ambiguidades.
+
+**Versão 2.0 — Snapshot Completo:**
+- ✅ Backend totalmente documentado (32 regras)
+- ✅ Frontend totalmente documentado (25 regras)
+- ✅ Wizard de 2 etapas com gestão de usuários e pilares
+- ✅ Upload de logo com preview e validações
+- ✅ Listagem com busca, ordenação, paginação e seleção múltipla
+- ✅ Isolamento multi-tenant e auditoria completa
+
+**Próximos passos recomendados:**
+1. Criar testes E2E para wizard completo
+2. Criar testes unitários para componentes frontend
+3. Documentar fluxo de auto-associação de pilares (R-EMP-004 citado mas não documentado em detalhes)
+4. Implementar validação de pilares existentes em vincularPilares
+5. Considerar cache para endpoint público de loginUrl

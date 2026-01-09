@@ -7,30 +7,69 @@
             {{ 'MENU.EMPRESAS' | translate }}
         </li>
         <li class="breadcrumb-item active" aria-current="page">
-            @if (isEditMode) {
+            @if (isEditMode && wizardStep === 1) {
             {{ 'COMPANIES.EDIT' | translate }}
-            } @else {
+            } @else if (!isEditMode && wizardStep === 1) {
             {{ 'COMPANIES.CREATE' | translate }}
+            } @else if (wizardStep === 2) {
+            Configuração de Usuários e Pilares
             }
         </li>
     </ol>
 </nav>
 
+<!-- Indicador de Etapas do Wizard (somente em modo criação) -->
+@if (!isEditMode || (isEditMode && wizardStep === 2)) {
+<div class="card mb-2">
+    <div class="card-body py-2">
+        <div class="d-flex justify-content-center align-items-center">
+            <div class="d-flex align-items-center">
+                <div class="d-flex align-items-center justify-content-center rounded-circle"
+                    [class.bg-primary]="wizardStep === 1" [class.bg-success]="wizardStep === 2"
+                    [class.text-white]="wizardStep === 1 || wizardStep === 2" style="width: 32px; height: 32px;">
+                    @if (wizardStep === 2) {
+                    <i class="feather icon-check"></i>
+                    } @else {
+                    <span>1</span>
+                    }
+                </div>
+                <span class="ms-2 me-3" [class.fw-bold]="wizardStep === 1">Dados Básicos</span>
+            </div>
+
+            <div class="border-top mx-3" style="width: 80px;"></div>
+
+            <div class="d-flex align-items-center">
+                <div class="d-flex align-items-center justify-content-center rounded-circle"
+                    [class.bg-primary]="wizardStep === 2" [class.bg-light]="wizardStep === 1"
+                    [class.text-white]="wizardStep === 2" [class.text-muted]="wizardStep === 1"
+                    style="width: 32px; height: 32px;">
+                    <span>2</span>
+                </div>
+                <span class="ms-2" [class.fw-bold]="wizardStep === 2" [class.text-muted]="wizardStep === 1">Usuários e
+                    Pilares</span>
+            </div>
+        </div>
+    </div>
+</div>
+}
+
 
 <div class="card-body">
-    @if (loading && isEditMode) {
+    @if (loading && isEditMode && wizardStep === 1) {
     <div class="text-center py-5">
         <div class="spinner-border text-primary" role="status">
             <span class="visually-hidden">{{ 'COMMON.LOADING' | translate }}</span>
         </div>
     </div>
     } @else {
-    <div class="row">
-        <div class="col-md-8">
-            <form [formGroup]="form" (ngSubmit)="onSubmit()">
-                <div class="card">
-                    <div class="card-body">
 
+    <!-- ETAPA 1: Dados Básicos + Logo -->
+    @if (isEditMode || wizardStep === 1) {
+    <form [formGroup]="form" (ngSubmit)="onSubmit()">
+        <div class="card">
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-8">
                         <div class="d-flex justify-content-end mb-0">
                             <div class="form-check form-switch">
                                 <input class="form-check-input" type="checkbox" id="ativo" formControlName="ativo">
@@ -80,10 +119,13 @@
                                 <div class="mb-3">
                                     <label class="form-label" for="estado">{{ 'COMPANIES.ESTADO' | translate }}
                                         <span class="text-danger">*</span></label>
-                                    <ng-select [items]="estadosList" [searchable]="true" [clearable]="false"
-                                        placeholder="{{ 'COMMON.SELECT' | translate }}" formControlName="estado"
-                                        [class.is-invalid]="isFieldInvalid('estado')">
-                                    </ng-select>
+                                    <select class="form-select" [class.is-invalid]="isFieldInvalid('estado')"
+                                        id="estado" formControlName="estado">
+                                        <option value="">Selecione</option>
+                                        @for (estado of estadosList; track estado) {
+                                        <option [value]="estado">{{ estado }}</option>
+                                        }
+                                    </select>
                                     @if (isFieldInvalid('estado')) {
                                     <div class="invalid-feedback d-block">{{ getFieldError('estado') }}</div>
                                     }
@@ -96,11 +138,13 @@
                                 <div class="mb-3">
                                     <label class="form-label" for="tipoNegocio">{{ 'COMPANIES.TIPO_NEGOCIO' |
                                         translate }}</label>
-                                    <ng-select [items]="tiposNegocioList" [addTag]="true" [searchable]="true"
-                                        [clearable]="true" placeholder="Digite para buscar ou criar novo..."
-                                        formControlName="tipoNegocio"
-                                        [class.is-invalid]="isFieldInvalid('tipoNegocio')">
-                                    </ng-select>
+                                    <input type="text" class="form-control" id="tipoNegocio"
+                                        formControlName="tipoNegocio" list="tiposNegocioList" />
+                                    <datalist id="tiposNegocioList">
+                                        @for (tipo of tiposNegocioList; track tipo) {
+                                        <option [value]="tipo">{{ tipo }}</option>
+                                        }
+                                    </datalist>
                                     @if (isFieldInvalid('tipoNegocio')) {
                                     <div class="invalid-feedback d-block">
                                         {{ getFieldError('tipoNegocio') }}
@@ -111,7 +155,8 @@
 
                             <div class="col-md-4">
                                 <div class="mb-3">
-                                    <label class="form-label" for="loginUrl">{{ 'COMPANIES.LOGIN_URL' | translate
+                                    <label class="form-label" for="loginUrl">{{ 'COMPANIES.LOGIN_URL' |
+                                        translate
                                         }}</label>
                                     <input type="text" class="form-control"
                                         [class.is-invalid]="isFieldInvalid('loginUrl')" id="loginUrl"
@@ -126,318 +171,257 @@
                             </div>
                         </div>
 
-                    </div>
-                </div>
-
-                <!-- Gestão de Usuários -->
-                <div class="card mt-3">
-                    <div class="card-header d-flex justify-content-between align-items-center">
-                        <h3 class="card-title mb-0">
-                            <i class="feather icon-users me-2"></i>
-                            Usuários Associados
-                        </h3>
-                        @if (!isPerfilCliente) {
-                        <button type="button" class="btn btn-sm btn-primary" (click)="abrirModalNovoUsuario()">
-                            <i class="feather icon-user-plus me-1"></i>
-                            Criar Novo Usuário
-                        </button>
-                        } @else {
-                        <span class="badge bg-info">
-                            <i class="feather icon-info me-1"></i>
-                            Somente Visualização
-                        </span>
-                        }
-                    </div>
-                    <div class="card-body">
-                        <!-- Buscar e adicionar usuários - Apenas para ADMINISTRADOR -->
-                        @if (!isPerfilCliente) {
-                        <div class="mb-4">
-                            <label class="form-label">
-                                Selecione ou adicione usuários à empresa
-                            </label>
-                            <ng-select [items]="usuariosDisponiveis" [addTag]="addUsuarioTag" bindLabel="nome"
-                                [searchable]="true" [clearable]="true" placeholder="Busque por nome ou email..."
-                                (change)="associarUsuario($event)">
-                                <ng-template ng-option-tmp let-item="item">
-                                    <div class="d-flex align-items-center">
-                                        <app-user-avatar [nome]="item.nome" [fotoUrl]="item.fotoUrl" [size]="'small'"
-                                            class="me-2"></app-user-avatar>
-                                        <div>
-                                            <div>{{ item.nome }}</div>
-                                            <small class="text-muted">{{ item.email }}</small>
-                                        </div>
-                                    </div>
-                                </ng-template>
-                            </ng-select>
-                            <small class="text-muted">
-                                Selecione um usuário existente ou crie um novo usuário escrevendo o nome completo dele.
-                            </small>
-                        </div>
-                        }
-
-                        <!-- Lista de usuários associados -->
-                        @if (isEditMode ? usuariosAssociados.length > 0 : usuariosPendentesAssociacao.length > 0) {
-                        <div class="table-responsive">
-                            <table class="table table-hover">
-                                <thead>
-                                    <tr>
-                                        <th>Usuário</th>
-                                        <th>Cargo</th>
-                                        <th>Telefone</th>
-                                        <th>Perfil</th>
-                                        <th class="text-end">Ações</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    @for (usuario of (isEditMode ? usuariosAssociados : usuariosPendentesAssociacao);
-                                    track usuario.id) {
-                                    <tr>
-                                        <td class="text-muted small">{{ usuario.nome }}</td>
-                                        <td class="text-muted small">{{ usuario.cargo }}</td>
-                                        <td class="text-muted small">{{ usuario.telefone }}</td>
-                                        <td>
-                                            @if (isPerfilObject(usuario.perfil)) {
-                                            <span class="badge bg-info small">{{ usuario.perfil.nome }}</span>
-                                            }
-                                        </td>
-                                        <td class="text-muted text-end small">
-                                            @if (!isPerfilCliente) {
-                                            <button type="button" class="btn btn-icon text-danger"
-                                                (click)="desassociarUsuario(usuario)" title="Desassociar usuário">
-                                                <i class="feather icon-trash-2"></i>
-                                            </button>
-                                            }
-                                        </td>
-                                    </tr>
-                                    }
-                                </tbody>
-                            </table>
-                        </div>
-                        } @else {
-                        <div class="alert alert-info mb-0">
-                            <i class="feather icon-info me-2"></i>
-                            @if (isEditMode) {
-                            Nenhum usuário associado a esta empresa ainda.
-                            } @else {
-                            Nenhum usuário adicionado ainda. Os usuários serão associados quando a empresa for criada.
-                            }
-                        </div>
-                        }
-                    </div>
-                </div>
-
-                <!-- Gestão de Pilares -->
-                <div class="card mt-3">
-                    <div class="card-header d-flex justify-content-between align-items-center">
-                        <h3 class="card-title mb-0">
-                            <i class="feather icon-layers me-2"></i>
-                            Pilares Associados
-                        </h3>
-                        @if (isPerfilCliente) {
-                        <span class="badge bg-info">
-                            <i class="feather icon-info me-1"></i>
-                            Somente Visualização
-                        </span>
-                        }
-                    </div>
-                    <div class="card-body">
-                        <!-- Buscar e adicionar pilares existentes - Apenas para ADMINISTRADOR/GESTOR -->
-                        @if (!isPerfilCliente) {
-                        <div class="mb-4">
-                            <ng-select [items]="pilaresDisponiveis" bindLabel="nome" [searchable]="true"
-                                [clearable]="true" [addTag]="addPilarTag"
-                                placeholder="Busque por nome de pilar ou digite para criar novo..."
-                                (change)="associarPilar($event)">
-                                <ng-template ng-option-tmp let-item="item">
-                                    <div class="d-flex align-items-center">
-                                        <i class="feather icon-layers me-2"></i>
-                                        <div>
-                                            <div>{{ item.nome }}</div>
-                                            @if (item.descricao) {
-                                            <small class="text-muted">{{ item.descricao }}</small>
-                                            }
-                                        </div>
-                                    </div>
-                                </ng-template>
-                            </ng-select>
-                            <small class="text-muted">
-                                @if (isEditMode) {
-                                Arraste os pilares para reordenar, adicione novos pilares ou remova os existentes.
-                                } @else {
-                                Os pilares serão associados após criar a empresa (pilares padrão são adicionados
-                                automaticamente)
+                        <div class="form-footer d-flex justify-content-end gap-2">
+                            <button type="button" (click)="handleCancel()" class="btn btn-outline-secondary">{{
+                                'BUTTONS.CANCEL'
+                                | translate
+                                }}</button>
+                            <button type="submit" class="btn btn-primary" [disabled]="loading || form.invalid">
+                                @if (loading) {
+                                <span class="spinner-border spinner-border-sm me-2" role="status"></span>
                                 }
-                            </small>
+                                @if (isEditMode) {
+                                {{ 'BUTTONS.UPDATE' | translate }}
+                                } @else {
+                                <i class="feather icon-arrow-right me-1"></i>
+                                Próximo: Usuários e Pilares
+                                }
+                            </button>
                         </div>
-                        }
+                    </div>
 
-                        <!-- Lista de pilares associados -->
-                        @if (isEditMode ? pilaresAssociados.length > 0 : pilaresPendentesAssociacao.length > 0) {
-                        <div cdkDropList (cdkDropListDropped)="onDropPilares($event)" class="pilares-list">
-                            @if (isEditMode) {
-                            @for (pilarEmpresa of pilaresAssociados; track pilarEmpresa.id; let idx = $index) {
-                            <div class="pilar-item card mb-2" cdkDrag>
-                                <div class="card-body p-2">
-                                    <div class="d-flex align-items-center gap-2">
-                                        <i class="feather icon-menu drag-handle" cdkDragHandle
-                                            ngbTooltip="Arrastar para reordenar"></i>
-                                        <span class="badge bg-secondary small">{{ pilarEmpresa.ordem }}</span>
-                                        <span class="flex-grow-1 small">{{ pilarEmpresa.nome }}</span>
-                                        <button type="button" class="btn btn-icon text-danger"
-                                            (click)="removePillarAssociation(pilarEmpresa)" title="Remover pilar">
-                                            <i class="feather icon-trash-2"></i>
-                                        </button>
-
+                    <!-- Logo Sidebar -->
+                    <div class="col-md-4">
+                        <div class="card mb-3">
+                            <div class="card-body text-center">
+                                <div class="mb-3 d-flex justify-content-center">
+                                    @if (previewUrl || logoUrl) {
+                                    <img [src]="previewUrl || logoUrl" alt="Logo da empresa" class="img-fluid rounded"
+                                        style="max-height: 140px">
+                                    } @else {
+                                    <div class="d-flex align-items-center justify-content-center bg-light rounded text-muted w-100"
+                                        style="height: 115px;">
+                                        <span>Logotipo 300 x 115</span>
                                     </div>
+                                    }
                                 </div>
-                            </div>
-                            }
-                            } @else {
-                            @for (pilar of pilaresPendentesAssociacao; track pilar.id; let idx = $index) {
 
-                            <div class="pilar-item card mb-2" cdkDrag>
-                                <div class="card-body p-2">
-                                    <div class="d-flex align-items-center gap-2">
-
-                                        <span class="badge bg-secondary small">{{ pilar.ordem }}</span>
-                                        <span class="flex-grow-1 small">{{ pilar.nome }}</span>
-                                        <button type="button" class="btn btn-icon text-danger"
-                                            (click)="desassociarPilarPendente(pilar)" title="Remover pilar">
-                                            <i class="feather icon-trash-2"></i>
-                                        </button>
-
-                                    </div>
+                                <div class="mb-2">
+                                    <input type="file" #logoInput hidden accept="image/jpeg,image/png,image/webp"
+                                        (change)="onLogoSelected($event)" />
+                                    <button type="button" id="btnUpLogo" class="btn btn-sm btn-primary w-100"
+                                        (click)="logoInput.click()" [disabled]="uploadingLogo">
+                                        @if (uploadingLogo) {
+                                        <span class="spinner-border spinner-border-sm me-2" role="status">
+                                            <span class="visually-hidden">{{ 'COMMON.UPLOADING' | translate
+                                                }}</span>
+                                        </span>
+                                        }
+                                        {{ 'BUTTONS.UPLOAD' | translate }}
+                                    </button>
                                 </div>
+
+                                @if (logoUrl || previewUrl) {
+                                <button type="button" class="btn btn-sm btn-danger w-100" (click)="removeLogo()"
+                                    [disabled]="uploadingLogo || !isEditMode">
+                                    {{ 'BUTTONS.REMOVE_IMAGE' | translate }}
+                                </button>
+                                }
+
+                                <p class="text-muted text-sm mt-3 mb-0">
+                                    Formatos aceitos: JPG, PNG, WebP (máx 5MB)
+                                </p>
                             </div>
-
-
-                            }
-                            }
                         </div>
-                        } @else {
-                        <div class="alert alert-info mb-0">
-                            <i class="feather icon-info me-2"></i>
-                            @if (isEditMode) {
-                            Nenhum pilar associado a esta empresa ainda.
-                            } @else {
-                            Nenhum pilar adicional selecionado. Pilares padrão (modelo) serão associados automaticamente
-                            ao criar a empresa.
-                            }
-                        </div>
-                        }
                     </div>
                 </div>
-
-
-                <div class="form-footer mt-4 d-flex justify-content-end gap-2">
-                    <button type="button" (click)="handleCancel()" class="btn btn-outline-secondary">{{ 'BUTTONS.CANCEL'
-                        | translate
-                        }}</button>
-                    <button type="submit" class="btn btn-primary" [disabled]="loading || form.invalid">
-                        @if (loading) {
-                        <span class="spinner-border spinner-border-sm me-2" role="status"></span>
-                        }
-                        @if (isEditMode) {
-                        {{ 'BUTTONS.UPDATE' | translate }}
-                        } @else {
-                        {{ 'BUTTONS.CREATE' | translate }}
-                        }
-                    </button>
-                </div>
-            </form>
+            </div>
         </div>
+    </form>
+    }
 
-        <!-- Logo Sidebar -->
-        <div class="col-md-4">
-            <div class="card mb-3">
-                <div class="card-body text-center">
-                    <div class="mb-3 d-flex justify-content-center">
-                        @if (previewUrl || logoUrl) {
-                        <img [src]="previewUrl || logoUrl" alt="Logo da empresa" class="img-fluid rounded" style="max-height: 140px">
-                        } @else {
-                        <div class="d-flex align-items-center justify-content-center bg-light rounded text-muted w-100" style="height: 115px;">
-                            <span>Logotipo 300 x 115</span>
+    <!-- ETAPA 2: Gestão de Usuários e Pilares -->
+    @if (wizardStep === 2 || isEditMode) {
+
+    <!-- Gestão de Usuários -->
+    <div class="card mt-1">
+        <div class="card-header d-flex justify-content-between align-items-center">
+            <h3 class="card-title mb-0">
+                <i class="feather icon-users me-2"></i>
+                Usuários Associados
+            </h3>
+            @if (!isPerfilCliente) {
+            <button type="button" class="btn btn-sm btn-primary" (click)="abrirModalNovoUsuario()">
+                <i class="feather icon-user-plus me-1"></i>
+                Criar Novo Usuário
+            </button>
+            } @else {
+            <span class="badge bg-info">
+                <i class="feather icon-info me-1"></i>
+                Somente Visualização
+            </span>
+            }
+        </div>
+        <div class="card-body">
+            <!-- Buscar e adicionar usuários - Apenas para ADMINISTRADOR -->
+            @if (!isPerfilCliente) {
+            <div class="mb-4">
+                <label class="form-label">
+                    Selecione ou adicione usuários à empresa
+                </label>
+                <ng-select [items]="usuariosDisponiveis" [addTag]="addUsuarioTag" bindLabel="nome" [searchable]="true"
+                    [clearable]="true" placeholder="Busque por nome ou email..." (change)="associarUsuario($event)">
+                    <ng-template ng-option-tmp let-item="item">
+                        <div class="d-flex align-items-center">
+                            <app-user-avatar [nome]="item.nome" [fotoUrl]="item.fotoUrl" [size]="'small'"
+                                class="me-2"></app-user-avatar>
+                            <div>
+                                <div>{{ item.nome }}</div>
+                                <small class="text-muted">{{ item.email }}</small>
+                            </div>
                         </div>
-                        }
-                    </div>
-
-                    <div class="mb-2">
-                        <input type="file" #logoInput hidden accept="image/jpeg,image/png,image/webp"
-                            (change)="onLogoSelected($event)" />
-                        <button type="button" id="btnUpLogo" class="btn btn-sm btn-primary w-100"
-                            (click)="logoInput.click()" [disabled]="uploadingLogo">
-                            @if (uploadingLogo) {
-                            <span class="spinner-border spinner-border-sm me-2" role="status">
-                                <span class="visually-hidden">Loading...</span>
-                            </span>
-                            }
-                            {{ 'BUTTONS.UPLOAD' | translate }}
-                        </button>
-                    </div>
-
-                    @if (logoUrl || previewUrl) {
-                    <button type="button" class="btn btn-sm btn-danger w-100" (click)="removeLogo()"
-                        [disabled]="uploadingLogo || !isEditMode">
-                        {{ 'BUTTONS.REMOVE_IMAGE' | translate }}
-                    </button>
-                    }
-
-                    <p class="text-muted text-sm mt-3 mb-0">
-                        Formatos aceitos: JPG, PNG, WebP (máx 5MB)
-                    </p>
-                </div>
+                    </ng-template>
+                </ng-select>
+                <small class="text-muted">
+                    Selecione um usuário existente ou crie um novo usuário escrevendo o nome completo dele.
+                </small>
             </div>
+            }
 
-            <div class="card">
-                <div class="card-header">
-                    <h3 class="card-title">{{ "COMMON.INSTRUCTIONS" | translate }}</h3>
-                </div>
-                <div class="card-body">
-                    <p class="text-muted mb-2">
-                        @if (isEditMode) {
-                        {{ 'COMPANIES.INFO.EDIT' | translate }}
-                        } @else {
-                        {{ 'COMPANIES.INFO.CREATE' | translate }}
+            <!-- Lista de usuários associados -->
+            @if (usuariosAssociados.length > 0) {
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th>Usuário</th>
+                            <th>Cargo</th>
+                            <th>Telefone</th>
+                            <th>Perfil</th>
+                            <th class="text-end">Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @for (usuario of usuariosAssociados; track usuario.id) {
+                        <tr>
+                            <td class="text-muted small">{{ usuario.nome }}</td>
+                            <td class="text-muted small">{{ usuario.cargo }}</td>
+                            <td class="text-muted small">{{ usuario.telefone }}</td>
+                            <td>
+                                @if (isPerfilObject(usuario.perfil)) {
+                                <span class="badge bg-info small">{{ usuario.perfil.nome }}</span>
+                                }
+                            </td>
+                            <td class="text-muted text-end small">
+                                @if (!isPerfilCliente) {
+                                <button type="button" class="btn btn-icon text-danger"
+                                    (click)="desassociarUsuario(usuario)" title="Desassociar usuário">
+                                    <i class="feather icon-trash-2"></i>
+                                </button>
+                                }
+                            </td>
+                        </tr>
                         }
-                    </p>
-
-                    <hr class="my-3">
-
-                    <h6 class="mb-2">{{ 'COMPANIES.INFO.WHAT_ARE' | translate }}</h6>
-                    <p class="small text-muted">
-                        {{ 'COMPANIES.INFO.DESCRIPTION' | translate }}
-                    </p>
-
-                    <h6 class="mb-2 mt-3">{{ 'COMPANIES.INFO.FIELDS_GUIDE' | translate }}</h6>
-                    <ul class="small text-muted mb-2">
-                        <li><strong>{{ 'COMPANIES.LOGIN_URL' | translate }}:</strong> {{ 'COMPANIES.INFO.LOGIN_URL_TIP'
-                            | translate }}</li>
-                        <li><strong>{{ 'COMPANIES.INFO.LOGO' | translate }}:</strong> {{ 'COMPANIES.INFO.LOGO_TIP' |
-                            translate }}</li>
-                        <li><strong>{{ 'COMPANIES.TIPO_NEGOCIO' | translate }}:</strong> {{
-                            'COMPANIES.INFO.BUSINESS_TYPE_TIP' | translate }}</li>
-                    </ul>
-
-                    <h6 class="mb-2 mt-3">{{ 'COMPANIES.INFO.USERS_MANAGEMENT' | translate }}</h6>
-                    <p class="small text-muted mb-2">
-                        {{ 'COMPANIES.INFO.USERS_DESC' | translate }}
-                    </p>
-                    <ul class="small text-muted mb-2">
-                        <li>{{ 'COMPANIES.INFO.USERS_TIP_1' | translate }}</li>
-                        <li>{{ 'COMPANIES.INFO.USERS_TIP_2' | translate }}</li>
-                        <li>{{ 'COMPANIES.INFO.USERS_TIP_3' | translate }}</li>
-                    </ul>
-
-                    <div class="alert alert-info p-2 mb-0">
-                        <small>
-                            <strong>{{ 'COMPANIES.INFO.MULTI_TENANT' | translate }}:</strong>
-                            {{ 'COMPANIES.INFO.MULTI_TENANT_DESC' | translate }}
-                        </small>
-                    </div>
-                </div>
+                    </tbody>
+                </table>
             </div>
+            } @else {
+            <div class="alert alert-info mb-0">
+                <i class="feather icon-info me-2"></i>
+                Nenhum usuário associado a esta empresa ainda.
+            </div>
+            }
         </div>
     </div>
+
+    <!-- Gestão de Pilares -->
+    <div class="card mt-1">
+        <div class="card-header d-flex justify-content-between align-items-center">
+            <h3 class="card-title mb-0">
+                <i class="feather icon-layers me-2"></i>
+                Pilares Associados
+            </h3>
+            @if (isPerfilCliente) {
+            <span class="badge bg-info">
+                <i class="feather icon-info me-1"></i>
+                Somente Visualização
+            </span>
+            }
+        </div>
+        <div class="card-body">
+            <!-- Buscar e adicionar pilares existentes - Apenas para ADMINISTRADOR/GESTOR -->
+            @if (!isPerfilCliente) {
+            <div class="mb-4">
+                <ng-select [items]="pilaresDisponiveis" bindLabel="nome" [searchable]="true" [clearable]="true"
+                    [addTag]="addPilarTag" placeholder="Busque por nome de pilar ou digite para criar novo..."
+                    (change)="associarPilar($event)">
+                    <ng-template ng-option-tmp let-item="item">
+                        <div class="d-flex align-items-center">
+                            <i class="feather icon-layers me-2"></i>
+                            <div>
+                                <div>{{ item.nome }}</div>
+                                @if (item.descricao) {
+                                <small class="text-muted">{{ item.descricao }}</small>
+                                }
+                            </div>
+                        </div>
+                    </ng-template>
+                </ng-select>
+                <small class="text-muted">
+                    Arraste os pilares para reordenar, adicione novos pilares ou remova os existentes.
+                </small>
+            </div>
+            }
+
+            <!-- Lista de pilares associados -->
+            @if (pilaresAssociados.length > 0) {
+            <div cdkDropList (cdkDropListDropped)="onDropPilares($event)" class="pilares-list">
+                @for (pilarEmpresa of pilaresAssociados; track pilarEmpresa.id; let idx = $index) {
+                <div class="pilar-item card mb-2" cdkDrag>
+                    <div class="card-body p-2">
+                        <div class="d-flex align-items-center gap-2">
+                            <i class="feather icon-menu drag-handle" cdkDragHandle
+                                ngbTooltip="Arrastar para reordenar"></i>
+                            <span class="badge bg-secondary small">{{ pilarEmpresa.ordem }}</span>
+                            <span class="flex-grow-1 small">{{ pilarEmpresa.nome }}</span>
+                            <button type="button" class="btn btn-icon text-danger"
+                                (click)="removePillarAssociation(pilarEmpresa)" title="Remover pilar">
+                                <i class="feather icon-trash-2"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                }
+            </div>
+            } @else {
+            <div class="alert alert-info mb-0">
+                <i class="feather icon-info me-2"></i>
+                Nenhum pilar associado a esta empresa ainda.
+            </div>
+            }
+        </div>
+    </div>
+
+    <!-- Botões de Ação da Etapa 2 (apenas se não estiver em modo edição puro) -->
+    @if (wizardStep === 2) {
+    <div class="card mt-3">
+        <div class="card-body">
+            <div class="d-flex justify-content-end gap-2">
+                <button type="button" (click)="concluirCadastro()" class="btn btn-success">
+                    <i class="feather icon-check me-1"></i>
+                    Concluir Cadastro
+                </button>
+            </div>
+            <small class="text-muted d-block mt-2">
+                <i class="feather icon-info me-1"></i>
+                Usuários e pilares são salvos automaticamente conforme você os adiciona.
+            </small>
+        </div>
+    </div>
+    }
+
+    }
+
     }
 </div>
 

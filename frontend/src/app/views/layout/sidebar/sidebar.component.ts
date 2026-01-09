@@ -15,13 +15,12 @@ import { FeatherIconDirective } from '../../../core/feather-icon/feather-icon.di
   selector: 'app-sidebar',
   standalone: true,
   imports: [
-    RouterLink, 
-    RouterLinkActive, 
-    NgScrollbar, 
-    NgClass, 
-    FeatherIconDirective,
-    TranslatePipe
-  ],
+    RouterLink,
+    RouterLinkActive,
+    NgScrollbar,
+    NgClass,
+    FeatherIconDirective
+],
   templateUrl: './sidebar.component.html',
   styleUrl: './sidebar.component.scss'
 })
