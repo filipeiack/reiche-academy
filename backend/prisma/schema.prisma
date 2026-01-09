@@ -168,7 +168,7 @@ model Empresa {
 
 model Pilar {
   id          String   @id @default(uuid())
-  nome        String   @unique
+  nome        String
   descricao   String?
   ordem       Int
   ativo       Boolean  @default(true)
@@ -182,7 +182,6 @@ model Pilar {
   rotinas     Rotina[]
   empresas    PilarEmpresa[]
   
-  @@unique([nome])
   @@map("pilares")
 }
 
@@ -204,7 +203,6 @@ model Rotina {
   // Relations
   rotinaEmpresas RotinaEmpresa[]
   
-  @@unique([nome])
   @@map("rotinas")
 }
 

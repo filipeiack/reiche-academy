@@ -60,8 +60,13 @@ describe('PilaresService', () => {
               findMany: jest.fn(),
               create: jest.fn(),
               update: jest.fn(),
+              delete: jest.fn(),
             },
             rotina: {
+              count: jest.fn(),
+              deleteMany: jest.fn(),
+            },
+            pilarEmpresa: {
               count: jest.fn(),
             },
           },
@@ -90,7 +95,7 @@ describe('PilaresService', () => {
 
   describe('Criação de pilares', () => {
     it('deve criar pilar com ordem especificada', async () => {
-      jest.spyOn(prisma.pilar, 'findUnique').mockResolvedValue(null);
+      jest.spyOn(prisma.pilar, 'findFirst').mockResolvedValue(null);
       jest.spyOn(prisma.pilar, 'create').mockResolvedValue(mockPilarPadrao as any);
 
       const result = await service.create(
@@ -103,7 +108,7 @@ describe('PilaresService', () => {
     });
 
     it('deve criar pilar sem especificar ordem (auto-incremento)', async () => {
-      jest.spyOn(prisma.pilar, 'findUnique').mockResolvedValue(null);
+      jest.spyOn(prisma.pilar, 'findFirst').mockResolvedValue(null);
       jest.spyOn(prisma.pilar, 'create').mockResolvedValue(mockPilarCustomizado as any);
 
       const result = await service.create(
@@ -121,7 +126,7 @@ describe('PilaresService', () => {
 
   describe('R-PIL-001: Unicidade de nome', () => {
     it('deve bloquear criação com nome duplicado', async () => {
-      jest.spyOn(prisma.pilar, 'findUnique').mockResolvedValue(mockPilarPadrao as any);
+      jest.spyOn(prisma.pilar, 'findFirst').mockResolvedValue(mockPilarPadrao as any);
 
       await expect(
         service.create(
@@ -133,8 +138,31 @@ describe('PilaresService', () => {
       expect(prisma.pilar.create).not.toHaveBeenCalled();
     });
 
+    it('deve bloquear criação com nome duplicado (case-insensitive)', async () => {
+      jest.spyOn(prisma.pilar, 'findFirst').mockResolvedValue(mockPilarPadrao as any);
+
+      await expect(
+        service.create(
+          { nome: 'ESTRATÉGIA' },  // Maiúsculo
+          mockAdminUser,
+        ),
+      ).rejects.toThrow(ConflictException);
+
+      expect(prisma.pilar.findFirst).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: {
+            nome: {
+              equals: 'ESTRATÉGIA',
+              mode: 'insensitive',
+            },
+          },
+        }),
+      );
+      expect(prisma.pilar.create).not.toHaveBeenCalled();
+    });
+
     it('deve permitir criação com nome único', async () => {
-      jest.spyOn(prisma.pilar, 'findUnique').mockResolvedValue(null);
+      jest.spyOn(prisma.pilar, 'findFirst').mockResolvedValue(null);
       jest.spyOn(prisma.pilar, 'create').mockResolvedValue(mockPilarPadrao as any);
 
       const result = await service.create(
@@ -152,7 +180,7 @@ describe('PilaresService', () => {
   // ============================================================
 
   describe('R-PIL-002: Listagem de ativos', () => {
-    it('deve retornar apenas pilares ativos', async () => {
+    it('deve retornar todos os pilares ordenados', async () => {
       const mockPilares = [mockPilarPadrao, mockPilarCustomizado];
       jest.spyOn(prisma.pilar, 'findMany').mockResolvedValue(mockPilares as any);
 
@@ -161,7 +189,7 @@ describe('PilaresService', () => {
       expect(result).toEqual(mockPilares);
       expect(prisma.pilar.findMany).toHaveBeenCalledWith(
         expect.objectContaining({
-          where: { ativo: true },
+          orderBy: { ordem: 'asc' },
         }),
       );
     });
@@ -176,14 +204,15 @@ describe('PilaresService', () => {
       expect(result[0]._count.empresas).toBe(3);
     });
 
-    it('não deve retornar pilares inativos', async () => {
-      jest.spyOn(prisma.pilar, 'findMany').mockResolvedValue([]);
+    it('deve retornar todos os pilares (incluindo inativos)', async () => {
+      jest.spyOn(prisma.pilar, 'findMany').mockResolvedValue([mockPilarPadrao, mockPilarCustomizado] as any);
 
-      await service.findAll();
+      const result = await service.findAll();
 
+      expect(result).toHaveLength(2);
       expect(prisma.pilar.findMany).toHaveBeenCalledWith(
         expect.objectContaining({
-          where: { ativo: true },
+          orderBy: { ordem: 'asc' },
         }),
       );
     });
@@ -194,7 +223,7 @@ describe('PilaresService', () => {
   // ============================================================
 
   describe('R-PIL-003: Busca por ID', () => {
-    it('deve retornar pilar com rotinas ativas', async () => {
+    it('deve retornar pilar com rotinas', async () => {
       const pilarComRotinas = {
         ...mockPilarPadrao,
         rotinas: [
@@ -210,10 +239,9 @@ describe('PilaresService', () => {
       expect(result.rotinas).toHaveLength(2);
       expect(prisma.pilar.findFirst).toHaveBeenCalledWith(
         expect.objectContaining({
-          where: expect.objectContaining({
+          where: {
             id: 'pilar-1',
-            ativo: true,
-          }),
+          },
         }),
       );
     });
@@ -280,6 +308,32 @@ describe('PilaresService', () => {
       ).rejects.toThrow(ConflictException);
     });
 
+    it('deve bloquear atualização com nome duplicado (case-insensitive)', async () => {
+      jest.spyOn(prisma.pilar, 'findFirst')
+        .mockResolvedValueOnce(mockPilarCustomizado as any) // findOne
+        .mockResolvedValueOnce(mockPilarPadrao as any); // nome já existe
+
+      await expect(
+        service.update(
+          'pilar-2',
+          { nome: 'estratégia' },  // Minúsculo
+          mockAdminUser,
+        ),
+      ).rejects.toThrow(ConflictException);
+
+      expect(prisma.pilar.findFirst).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: {
+            nome: {
+              equals: 'estratégia',
+              mode: 'insensitive',
+            },
+            id: { not: 'pilar-2' },
+          },
+        }),
+      );
+    });
+
     it('não deve validar nome se não fornecido', async () => {
       jest.spyOn(prisma.pilar, 'findFirst').mockResolvedValue(mockPilarPadrao as any);
       jest.spyOn(prisma.pilar, 'update').mockResolvedValue(mockPilarPadrao as any);
@@ -290,7 +344,8 @@ describe('PilaresService', () => {
         mockAdminUser,
       );
 
-      expect(prisma.pilar.findUnique).not.toHaveBeenCalled();
+      // Apenas chamada do findOne, não deve haver segunda chamada para validar nome
+      expect(prisma.pilar.findFirst).toHaveBeenCalledTimes(1);
     });
   });
 
@@ -302,6 +357,7 @@ describe('PilaresService', () => {
     it('deve desativar pilar sem rotinas ativas', async () => {
       jest.spyOn(prisma.pilar, 'findFirst').mockResolvedValue(mockPilarPadrao as any);
       jest.spyOn(prisma.rotina, 'count').mockResolvedValue(0);
+      jest.spyOn(prisma.pilarEmpresa, 'count').mockResolvedValue(1); // Tem empresas usando
       jest.spyOn(prisma.pilar, 'update').mockResolvedValue({ ...mockPilarPadrao, ativo: false } as any);
 
       const result = await service.remove('pilar-1', mockAdminUser);
@@ -330,6 +386,7 @@ describe('PilaresService', () => {
     it('deve permitir desativação se rotinas estiverem inativas', async () => {
       jest.spyOn(prisma.pilar, 'findFirst').mockResolvedValue(mockPilarCustomizado as any);
       jest.spyOn(prisma.rotina, 'count').mockResolvedValue(0);
+      jest.spyOn(prisma.pilarEmpresa, 'count').mockResolvedValue(1); // Tem empresas usando
       jest.spyOn(prisma.pilar, 'update').mockResolvedValue({ ...mockPilarCustomizado, ativo: false } as any);
 
       const result = await service.remove('pilar-2', mockAdminUser);
@@ -381,7 +438,7 @@ describe('PilaresService', () => {
 
   describe('RA-PIL-003: Auditoria completa', () => {
     it('deve auditar criação de pilar (CREATE)', async () => {
-      jest.spyOn(prisma.pilar, 'findUnique').mockResolvedValue(null);
+      jest.spyOn(prisma.pilar, 'findFirst').mockResolvedValue(null);
       jest.spyOn(prisma.pilar, 'create').mockResolvedValue(mockPilarPadrao as any);
 
       await service.create(
@@ -404,7 +461,6 @@ describe('PilaresService', () => {
 
     it('deve auditar atualização de pilar (UPDATE)', async () => {
       jest.spyOn(prisma.pilar, 'findFirst').mockResolvedValue(mockPilarPadrao as any);
-      jest.spyOn(prisma.pilar, 'findUnique').mockResolvedValue(null);
       jest.spyOn(prisma.pilar, 'update').mockResolvedValue(mockPilarPadrao as any);
 
       await service.update(
@@ -441,7 +497,7 @@ describe('PilaresService', () => {
 
   describe('Edge Cases', () => {
     it('deve permitir criar pilar com ordem undefined (customizado)', async () => {
-      jest.spyOn(prisma.pilar, 'findUnique').mockResolvedValue(null);
+      jest.spyOn(prisma.pilar, 'findFirst').mockResolvedValue(null);
       jest.spyOn(prisma.pilar, 'create').mockResolvedValue({ ...mockPilarCustomizado, ordem: null } as any);
 
       const result = await service.create(
@@ -453,7 +509,7 @@ describe('PilaresService', () => {
     });
 
     it('deve permitir ordem >= 1', async () => {
-      jest.spyOn(prisma.pilar, 'findUnique').mockResolvedValue(null);
+      jest.spyOn(prisma.pilar, 'findFirst').mockResolvedValue(null);
       jest.spyOn(prisma.pilar, 'create').mockResolvedValue({ ...mockPilarPadrao, ordem: 5 } as any);
 
       const result = await service.create(
@@ -465,7 +521,7 @@ describe('PilaresService', () => {
     });
 
     it('deve preservar auditoria (createdBy, updatedBy)', async () => {
-      jest.spyOn(prisma.pilar, 'findUnique').mockResolvedValue(null);
+      jest.spyOn(prisma.pilar, 'findFirst').mockResolvedValue(null);
       jest.spyOn(prisma.pilar, 'create').mockResolvedValue(mockPilarPadrao as any);
 
       await service.create(

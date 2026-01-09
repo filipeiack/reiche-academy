@@ -12,8 +12,13 @@ export class PilaresService {
   constructor(private prisma: PrismaService, private audit: AuditService) {}
 
   async create(createPilarDto: CreatePilarDto, requestUser: RequestUser) {
-    const existingPilar = await this.prisma.pilar.findUnique({
-      where: { nome: createPilarDto.nome },
+    const existingPilar = await this.prisma.pilar.findFirst({
+      where: { 
+        nome: {
+          equals: createPilarDto.nome,
+          mode: 'insensitive'
+        }
+      },
     });
 
     if (existingPilar) {
@@ -107,7 +112,10 @@ export class PilaresService {
     if (updatePilarDto.nome) {
       const existingPilar = await this.prisma.pilar.findFirst({
         where: {
-          nome: updatePilarDto.nome,
+          nome: {
+            equals: updatePilarDto.nome,
+            mode: 'insensitive'
+          },
           id: { not: id },
         },
       });
@@ -141,6 +149,20 @@ export class PilaresService {
 
   async remove(id: string, requestUser: RequestUser) {
     const before = await this.findOne(id);
+
+    // RA-PIL-001: Verificar se há rotinas ativas vinculadas
+    const rotinasAtivasCount = await this.prisma.rotina.count({
+      where: {
+        pilarId: id,
+        ativo: true,
+      },
+    });
+
+    if (rotinasAtivasCount > 0) {
+      throw new ConflictException(
+        'Não é possível desativar um pilar que possui rotinas ativas',
+      );
+    }
 
     // Verifica se há empresas usando o pilar
     const empresasCount = await this.prisma.pilarEmpresa.count({

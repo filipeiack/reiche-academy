@@ -18,6 +18,20 @@ export class RotinasService {
       throw new NotFoundException('Pilar não encontrado');
     }
 
+    // Verifica se já existe rotina com este nome
+    const existingRotina = await this.prisma.rotina.findFirst({
+      where: { 
+        nome: {
+          equals: createRotinaDto.nome,
+          mode: 'insensitive'
+        }
+      },
+    });
+
+    if (existingRotina) {
+      throw new ConflictException('Já existe uma rotina com este nome');
+    }
+
     // Se ordem não fornecida, auto-incrementar
     let ordem = createRotinaDto.ordem;
     if (ordem === undefined || ordem === null) {
@@ -101,6 +115,23 @@ export class RotinasService {
       }
     }
 
+    // Verifica se o nome está sendo alterado e se já existe
+    if (updateRotinaDto.nome) {
+      const existingRotina = await this.prisma.rotina.findFirst({
+        where: {
+          nome: {
+            equals: updateRotinaDto.nome,
+            mode: 'insensitive'
+          },
+          id: { not: id },
+        },
+      });
+
+      if (existingRotina) {
+        throw new ConflictException('Já existe uma rotina com este nome');
+      }
+    }
+
     const after = await this.prisma.rotina.update({
       where: { id },
       data: {
@@ -136,28 +167,34 @@ export class RotinasService {
     });
 
     if (empresasCount > 0) {
-      // Se houver empresas usando, apenas desativa (soft delete)
-      const after = await this.prisma.rotina.update({
-        where: { id },
-        data: {
-          ativo: false,
-          updatedBy: userId,
+      // Buscar detalhes das empresas afetadas
+      const rotinaEmpresasEmUso = await this.prisma.rotinaEmpresa.findMany({
+        where: { rotinaTemplateId: id },
+        include: {
+          pilarEmpresa: {
+            include: {
+              empresa: {
+                select: {
+                  id: true,
+                  nome: true,
+                },
+              },
+            },
+          },
         },
       });
 
-      const user = await this.prisma.usuario.findUnique({ where: { id: userId } });
-      await this.audit.log({
-        usuarioId: userId,
-        usuarioNome: user?.nome ?? '',
-        usuarioEmail: user?.email ?? '',
-        entidade: 'rotinas',
-        entidadeId: id,
-        acao: 'DELETE',
-        dadosAntes: before,
-        dadosDepois: after,
-      });
+      const empresasAfetadas = rotinaEmpresasEmUso.map((re) => ({
+        id: re.pilarEmpresa.empresa.id,
+        nome: re.pilarEmpresa.empresa.nome,
+      }));
 
-      return after;
+      // Bloqueio rígido com 409 Conflict + lista de empresas
+      throw new ConflictException({
+        message: 'Não é possível desativar esta rotina pois está em uso por empresas',
+        empresasAfetadas,
+        totalEmpresas: empresasAfetadas.length,
+      });
     }
 
     // Se não houver empresas, excluir permanentemente

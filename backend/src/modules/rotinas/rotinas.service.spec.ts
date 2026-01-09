@@ -7,7 +7,7 @@ import { AuditService } from '../audit/audit.service';
 /**
  * QA UNITÁRIO ESTRITO - Módulo Rotinas
  * Data: 2024-12-25
- * Validação conforme handoffs:
+ * Valid validação conforme handoffs:
  * - PATTERN-REPORT-rotinas-revalidation.md
  * - REVIEWER-REPORT-rotinas-business-rules.md
  * 
@@ -66,13 +66,16 @@ describe('RotinasService', () => {
               findUnique: jest.fn(),
             },
             rotina: {
+              findFirst: jest.fn(),
               create: jest.fn(),
               findMany: jest.fn(),
               findUnique: jest.fn(),
               update: jest.fn(),
+              delete: jest.fn(),
             },
             rotinaEmpresa: {
               findMany: jest.fn(),
+              count: jest.fn(),
             },
             usuario: {
               findUnique: jest.fn(),
@@ -111,6 +114,7 @@ describe('RotinasService', () => {
     };
 
     it('deve criar rotina com pilar válido', async () => {
+      jest.spyOn(prisma.rotina, 'findFirst').mockResolvedValue(null);
       jest.spyOn(prisma.pilar, 'findUnique').mockResolvedValue(mockPilar as any);
       jest.spyOn(prisma.rotina, 'create').mockResolvedValue(mockRotina as any);
       jest.spyOn(prisma.usuario, 'findUnique').mockResolvedValue(mockUser as any);
@@ -146,6 +150,7 @@ describe('RotinasService', () => {
     });
 
     it('deve lançar NotFoundException se pilar não existir', async () => {
+      jest.spyOn(prisma.rotina, 'findFirst').mockResolvedValue(null);
       jest.spyOn(prisma.pilar, 'findUnique').mockResolvedValue(null);
 
       await expect(service.create(createDto, { id: 'user-123' })).rejects.toThrow(
@@ -155,6 +160,46 @@ describe('RotinasService', () => {
         'Pilar não encontrado',
       );
       expect(prisma.rotina.create).not.toHaveBeenCalled();
+    });
+
+    it('deve bloquear criação com nome duplicado (case-insensitive)', async () => {
+      const rotinaExistente = { ...mockRotina, nome: 'planejamento anual' };
+      jest.spyOn(prisma.pilar, 'findUnique').mockResolvedValue(mockPilar as any);
+      jest.spyOn(prisma.rotina, 'findFirst').mockResolvedValue(rotinaExistente as any);
+
+      await expect(
+        service.create(
+          { ...createDto, nome: 'PLANEJAMENTO ANUAL' },
+          { id: 'user-123' },
+        ),
+      ).rejects.toThrow(ConflictException);
+
+      expect(prisma.rotina.findFirst).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: {
+            nome: {
+              equals: 'PLANEJAMENTO ANUAL',
+              mode: 'insensitive',
+            },
+          },
+        }),
+      );
+      expect(prisma.rotina.create).not.toHaveBeenCalled();
+    });
+
+    it('deve permitir criação com nome único', async () => {
+      jest.spyOn(prisma.rotina, 'findFirst').mockResolvedValue(null);
+      jest.spyOn(prisma.pilar, 'findUnique').mockResolvedValue(mockPilar as any);
+      jest.spyOn(prisma.rotina, 'create').mockResolvedValue(mockRotina as any);
+      jest.spyOn(prisma.usuario, 'findUnique').mockResolvedValue(mockUser as any);
+
+      const result = await service.create(
+        { ...createDto, nome: 'Rotina Totalmente Única' },
+        { id: 'user-123' },
+      );
+
+      expect(result).toBeDefined();
+      expect(prisma.rotina.create).toHaveBeenCalled();
     });
   });
 
@@ -277,6 +322,7 @@ describe('RotinasService', () => {
       const updatedRotina = { ...mockRotina, ...updateDto };
 
       jest.spyOn(prisma.rotina, 'findUnique').mockResolvedValue(mockRotina as any);
+      jest.spyOn(prisma.rotina, 'findFirst').mockResolvedValue(null);
       jest.spyOn(prisma.rotina, 'update').mockResolvedValue(updatedRotina as any);
       jest.spyOn(prisma.usuario, 'findUnique').mockResolvedValue(mockUser as any);
 
@@ -308,6 +354,7 @@ describe('RotinasService', () => {
       const novoPilar = { ...mockPilar, id: 'pilar-novo' };
 
       jest.spyOn(prisma.rotina, 'findUnique').mockResolvedValue(mockRotina as any);
+      jest.spyOn(prisma.rotina, 'findFirst').mockResolvedValue(null);
       jest.spyOn(prisma.pilar, 'findUnique').mockResolvedValue(novoPilar as any);
       jest.spyOn(prisma.rotina, 'update').mockResolvedValue({ ...mockRotina, pilarId: 'pilar-novo' } as any);
       jest.spyOn(prisma.usuario, 'findUnique').mockResolvedValue(mockUser as any);
@@ -323,6 +370,7 @@ describe('RotinasService', () => {
       const updateDtoComPilar = { ...updateDto, pilarId: 'pilar-invalido' };
 
       jest.spyOn(prisma.rotina, 'findUnique').mockResolvedValue(mockRotina as any);
+      jest.spyOn(prisma.rotina, 'findFirst').mockResolvedValue(null);
       jest.spyOn(prisma.pilar, 'findUnique').mockResolvedValue(null);
 
       await expect(
@@ -332,6 +380,69 @@ describe('RotinasService', () => {
         service.update('rotina-123', updateDtoComPilar, 'user-123'),
       ).rejects.toThrow('Pilar não encontrado');
     });
+
+    it('deve bloquear atualização com nome duplicado (case-insensitive)', async () => {
+      const rotinaExistente = {
+        ...mockRotina,
+        id: 'rotina-outra',
+        nome: 'rotina duplicada',
+      };
+
+      jest.spyOn(prisma.rotina, 'findUnique').mockResolvedValue(mockRotina as any);
+      jest.spyOn(prisma.rotina, 'findFirst').mockResolvedValue(rotinaExistente as any);
+
+      await expect(
+        service.update(
+          'rotina-123',
+          { nome: 'ROTINA DUPLICADA' },
+          'user-123',
+        ),
+      ).rejects.toThrow(ConflictException);
+
+      expect(prisma.rotina.findFirst).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: {
+            nome: {
+              equals: 'ROTINA DUPLICADA',
+              mode: 'insensitive',
+            },
+            id: { not: 'rotina-123' },
+          },
+        }),
+      );
+      expect(prisma.rotina.update).not.toHaveBeenCalled();
+    });
+
+    it('deve permitir atualização mantendo o mesmo nome', async () => {
+      jest.spyOn(prisma.rotina, 'findUnique').mockResolvedValue(mockRotina as any);
+      jest.spyOn(prisma.rotina, 'findFirst').mockResolvedValue(null);
+      jest.spyOn(prisma.rotina, 'update').mockResolvedValue(mockRotina as any);
+      jest.spyOn(prisma.usuario, 'findUnique').mockResolvedValue(mockUser as any);
+
+      const result = await service.update(
+        'rotina-123',
+        { nome: 'Planejamento Anual', descricao: 'Descrição nova' },
+        'user-123',
+      );
+
+      expect(result).toBeDefined();
+      expect(prisma.rotina.update).toHaveBeenCalled();
+    });
+
+    it('não deve validar nome se não fornecido', async () => {
+      jest.spyOn(prisma.rotina, 'findUnique').mockResolvedValue(mockRotina as any);
+      jest.spyOn(prisma.rotina, 'update').mockResolvedValue(mockRotina as any);
+      jest.spyOn(prisma.usuario, 'findUnique').mockResolvedValue(mockUser as any);
+
+      await service.update(
+        'rotina-123',
+        { descricao: 'Nova descrição' },
+        'user-123',
+      );
+
+      // Apenas chamada do findOne, não deve haver chamada para validar nome
+      expect(prisma.rotina.findFirst).not.toHaveBeenCalled();
+    });
   });
 
   // ============================================================
@@ -340,46 +451,28 @@ describe('RotinasService', () => {
   // ============================================================
 
   describe('remove() - R-ROT-BE-002', () => {
-    it('deve desativar rotina sem dependências', async () => {
-      const desativada = { ...mockRotina, ativo: false };
-
+    it('deve excluir rotina permanentemente sem dependências', async () => {
       jest.spyOn(prisma.rotina, 'findUnique').mockResolvedValue(mockRotina as any);
-      jest.spyOn(prisma.rotinaEmpresa, 'findMany').mockResolvedValue([]);
-      jest.spyOn(prisma.rotina, 'update').mockResolvedValue(desativada as any);
+      jest.spyOn(prisma.rotinaEmpresa, 'count').mockResolvedValue(0);
+      jest.spyOn(prisma.rotina, 'delete').mockResolvedValue(mockRotina as any);
       jest.spyOn(prisma.usuario, 'findUnique').mockResolvedValue(mockUser as any);
 
       const result = await service.remove('rotina-123', 'user-123');
 
-      expect(prisma.rotinaEmpresa.findMany).toHaveBeenCalledWith({
+      expect(prisma.rotinaEmpresa.count).toHaveBeenCalledWith({
         where: { rotinaTemplateId: 'rotina-123' },
-        include: {
-          pilarEmpresa: {
-            include: {
-              empresa: {
-                select: {
-                  id: true,
-                  nome: true,
-                },
-              },
-            },
-          },
-        },
       });
-      expect(prisma.rotina.update).toHaveBeenCalledWith({
+      expect(prisma.rotinaEmpresa.findMany).not.toHaveBeenCalled();
+      expect(prisma.rotina.delete).toHaveBeenCalledWith({
         where: { id: 'rotina-123' },
-        data: {
-          ativo: false,
-          updatedBy: 'user-123',
-        },
       });
       expect(audit.log).toHaveBeenCalledWith(
         expect.objectContaining({
           acao: 'DELETE',
           dadosAntes: mockRotina,
-          dadosDepois: desativada,
         }),
       );
-      expect(result.ativo).toBe(false);
+      expect(result).toEqual(mockRotina);
     });
 
     it('deve lançar ConflictException 409 se rotina em uso', async () => {
@@ -396,6 +489,7 @@ describe('RotinasService', () => {
       ];
 
       jest.spyOn(prisma.rotina, 'findUnique').mockResolvedValue(mockRotina as any);
+      jest.spyOn(prisma.rotinaEmpresa, 'count').mockResolvedValue(1);
       jest.spyOn(prisma.rotinaEmpresa, 'findMany').mockResolvedValue(rotinaEmUso as any);
 
       await expect(service.remove('rotina-123', 'user-123')).rejects.toThrow(
@@ -423,6 +517,7 @@ describe('RotinasService', () => {
       ];
 
       jest.spyOn(prisma.rotina, 'findUnique').mockResolvedValue(mockRotina as any);
+      jest.spyOn(prisma.rotinaEmpresa, 'count').mockResolvedValue(2);
       jest.spyOn(prisma.rotinaEmpresa, 'findMany').mockResolvedValue(rotinaEmUso as any);
 
       try {
