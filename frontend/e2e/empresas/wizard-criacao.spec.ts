@@ -7,7 +7,8 @@ import {
   submitForm, 
   expectToast, 
   expectErrorMessage,
-  TEST_USERS 
+  TEST_USERS,
+  CleanupRegistry
 } from '../fixtures';
 
 /**
@@ -23,7 +24,9 @@ import {
  * 5. Preencher etapa 2 (usuários e pilares) - OPCIONAL
  * 6. Concluir wizard
  * 
- * Agente: E2E_Agent
+ * ✅ Cleanup automático: Empresas criadas são removidas após cada teste
+ * 
+ * Agente: QA_E2E_Interface
  */
 
 test.describe('Wizard de Criação de Empresas', () => {
@@ -35,18 +38,27 @@ test.describe('Wizard de Criação de Empresas', () => {
     await page.waitForTimeout(1000);
   });
 
-  test('UI-EMP-001: deve criar empresa com sucesso através do wizard de 2 etapas', async ({ page }) => {
-    // Capturar erros do console e respostas HTTP
-    page.on('console', msg => {
-      if (msg.type() === 'error') {
-        console.log('❌ ERRO no console:', msg.text());
+  test('UI-EMP-001: deve criar empresa com sucesso através do wizard de 2 etapas', async ({ page, cleanupRegistry }) => {
+    // Capturar ID da empresa criada via response
+    let empresaId: string | null = null;
+    
+    page.on('response', async response => {
+      if (response.url().includes('/api/empresas') && response.status() === 201) {
+        try {
+          const body = await response.json();
+          empresaId = body.id;
+          console.log('✓ Empresa criada com ID:', empresaId);
+          cleanupRegistry.add('empresa', empresaId);
+        } catch (e) {
+          // Response não é JSON
+        }
       }
     });
     
-    page.on('response', response => {
-      if (response.status() === 409) {
-        console.log('❌ 409 Conflict:', response.url());
-        response.json().then(body => console.log('   Corpo:', body)).catch(() => {});
+    // Capturar erros do console
+    page.on('console', msg => {
+      if (msg.type() === 'error') {
+        console.log('❌ ERRO no console:', msg.text());
       }
     });
     

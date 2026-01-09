@@ -10,7 +10,8 @@ import {
   getTableRowCount,
   openModal,
   closeModal,
-  TEST_USERS 
+  TEST_USERS,
+  CleanupRegistry
 } from '../fixtures';
 
 /**
@@ -24,7 +25,9 @@ import {
  * - Validações multi-tenant (GESTOR só vê própria empresa)
  * - Validações de RBAC (perfis e permissões)
  * 
- * Agente: E2E_Agent
+ * ✅ Cleanup automático: Recursos criados são removidos após cada teste
+ * 
+ * Agente: QA_E2E_Interface
  */
 
 test.describe('CRUD de Usuários', () => {
@@ -35,7 +38,7 @@ test.describe('CRUD de Usuários', () => {
       await navigateTo(page, '/usuarios');
     });
 
-    test('deve criar novo usuário GESTOR com sucesso', async ({ page }) => {
+    test('deve criar novo usuário GESTOR com sucesso', async ({ page, cleanupRegistry }) => {
       // Navegar para formulário de criação
       await page.click('[data-testid="novo-usuario-button"]');
       
@@ -67,6 +70,14 @@ test.describe('CRUD de Usuários', () => {
       await expect(swal).toBeVisible({ timeout: 5000 });
       await expect(swal.locator('.swal2-title')).toContainText('sucesso');
       
+      // Extrair ID do usuário criado da URL ou response
+      await page.waitForTimeout(1000);
+      const currentUrl = page.url();
+      const userIdMatch = currentUrl.match(/usuarios\/([a-f0-9-]+)/);
+      if (userIdMatch) {
+        cleanupRegistry.add('usuario', userIdMatch[1]);
+      }
+      
       // Aguardar SweetAlert desaparecer (auto-close)
       await page.waitForTimeout(4000);
       
@@ -83,7 +94,7 @@ test.describe('CRUD de Usuários', () => {
       await expect(page.locator('table tbody tr').first()).toBeVisible({ timeout: 5000 });
     });
 
-    test('deve validar email único (não permitir duplicação)', async ({ page }) => {
+    test('deve validar email único (não permitir duplicação)', async ({ page, cleanupRegistry }) => {
       // Criar primeiro usuário
       await page.click('[data-testid="novo-usuario-button"]');
       

@@ -211,14 +211,144 @@ export async function closeModal(page: Page) {
   }
 }
 
-// Fixture customizado com login automático
+// Helper para capturar ID de recurso criado via interceptação HTTP
+export async function captureCreatedResourceId(
+  page: Page, 
+  resourceType: 'usuario' | 'empresa' | 'pilar' | 'rotina',
+  cleanupRegistry: CleanupRegistry
+): Promise<void> {
+  const endpoints: Record<typeof resourceType, RegExp> = {
+    usuario: /\/api\/users$/,
+    empresa: /\/api\/empresas$/,
+    pilar: /\/api\/pilares$/,
+    rotina: /\/api\/rotinas$/,
+  };
+
+  page.on('response', async response => {
+    if (endpoints[resourceType].test(response.url()) && response.status() === 201) {
+      try {
+        const body = await response.json();
+        if (body.id) {
+          console.log(`[Capture] ✅ ${resourceType} criado com ID: ${body.id}`);
+          cleanupRegistry.add(resourceType, body.id);
+        }
+      } catch (e) {
+        // Response não é JSON ou não tem ID
+      }
+    }
+  });
+}
+
+// Cleanup automático de recursos criados em testes
+type CleanupResource = {
+  type: 'usuario' | 'empresa' | 'pilar' | 'rotina';
+  id: string;
+};
+
+export type CleanupRegistry = {
+  add: (type: CleanupResource['type'], id: string) => void;
+  addMultiple: (type: CleanupResource['type'], ids: string[]) => void;
+};
+
+async function cleanupResourceWithToken(page: Page, resource: CleanupResource, token: string | null): Promise<void> {
+  try {
+    const baseUrl = 'http://localhost:3000/api';
+    
+    if (!token) {
+      console.warn(`[Cleanup] ⚠️ Sem token de auth - pulando cleanup de ${resource.type}:${resource.id}`);
+      console.warn(`[Cleanup]    Recurso pode precisar de limpeza manual via SQL`);
+      return;
+    }
+
+    const endpoints: Record<CleanupResource['type'], string> = {
+      usuario: `${baseUrl}/users/${resource.id}`,
+      empresa: `${baseUrl}/empresas/${resource.id}`,
+      pilar: `${baseUrl}/pilares/${resource.id}`,
+      rotina: `${baseUrl}/rotinas/${resource.id}`,
+    };
+
+    const response = await page.request.delete(endpoints[resource.type], {
+      headers: {
+        'Authorization': `Bearer ${token}`,
+      },
+    });
+
+    if (response.ok()) {
+      console.log(`[Cleanup] ✅ ${resource.type}:${resource.id} removido com sucesso`);
+    } else if (response.status() === 404) {
+      console.log(`[Cleanup] ⚠️ ${resource.type}:${resource.id} já não existe (404)`);
+    } else if (response.status() === 401) {
+      console.warn(`[Cleanup] ❌ Token expirado ou inválido - ${resource.type}:${resource.id}`);
+    } else {
+      console.warn(`[Cleanup] ❌ Falha ao remover ${resource.type}:${resource.id} - Status ${response.status()}`);
+      const body = await response.text().catch(() => '');
+      if (body) console.warn(`[Cleanup]    Response: ${body.substring(0, 100)}`);
+    }
+  } catch (error) {
+    console.error(`[Cleanup] ❌ Erro ao limpar ${resource.type}:${resource.id}:`, error);
+  }
+}
+
+// Fixture customizado com login automático e cleanup
 type AuthFixtures = {
   authenticatedPage: Page;
   adminPage: Page;
   gestorPage: Page;
+  cleanupRegistry: CleanupRegistry;
 };
 
 export const test = base.extend<AuthFixtures>({
+  // Registro de cleanup automático
+  cleanupRegistry: async ({ page }, use) => {
+    const resources: CleanupResource[] = [];
+    
+    // Capturar token no início (enquanto página está ativa)
+    let authToken: string | null = null;
+    
+    const registry: CleanupRegistry = {
+      add: (type, id) => {
+        resources.push({ type, id });
+        console.log(`[Cleanup] Registrado para limpeza: ${type}:${id}`);
+        
+        // Capturar token imediatamente quando recurso é registrado
+        if (!authToken) {
+          page.evaluate(() => {
+            return localStorage.getItem('access_token') || 
+                   sessionStorage.getItem('access_token');
+          }).then(token => {
+            if (token) authToken = token;
+          }).catch(() => {});
+        }
+      },
+      addMultiple: (type, ids) => {
+        ids.forEach(id => registry.add(type, id));
+      },
+    };
+    
+    // Fornece registry para o teste
+    await use(registry);
+    
+    // Cleanup automático após teste (ordem reversa = LIFO)
+    if (resources.length === 0) {
+      console.log('[Cleanup] Nenhum recurso para limpar');
+      return;
+    }
+    
+    console.log(`[Cleanup] Iniciando limpeza de ${resources.length} recurso(s)...`);
+    
+    // Garantir que temos token
+    if (!authToken) {
+      authToken = await page.evaluate(() => {
+        return localStorage.getItem('access_token') || 
+               sessionStorage.getItem('access_token');
+      }).catch(() => null);
+    }
+    
+    for (const resource of resources.reverse()) {
+      await cleanupResourceWithToken(page, resource, authToken);
+    }
+  },
+  
   // Página autenticada genérica (usa admin por padrão)
   authenticatedPage: async ({ page }, use) => {
     await login(page, TEST_USERS.admin);
