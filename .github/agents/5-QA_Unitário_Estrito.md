@@ -170,9 +170,23 @@ Se a regra documentada **não estiver implementada no código**:
 ---
 ## Test Execution & Correction Workflow
 
+### Execução de Testes
+
+**BACKEND (NestJS + Jest):**
+- ❌ **NÃO usar** a ferramenta `runTests` para testes do backend
+- ✅ **SEMPRE executar** via terminal com `run_in_terminal`:
+  ```powershell
+  cd backend; npm test
+  ```
+- **Razão:** Configuração do Jest usa `rootDir: src` relativo ao diretório `backend/`.
+  A ferramenta `runTests` executa da raiz do workspace e mistura testes E2E do frontend.
+
+**FRONTEND (Vitest/Jest):**
+- ✅ Pode usar `runTests` ou terminal conforme conveniente
+
 ### Ciclo Iterativo:
 1. **Criar testes** baseados em regras documentadas
-2. **Executar testes** usando `runTests`
+2. **Executar testes** usando terminal (backend) ou `runTests` (frontend)
 3. **Analisar falhas**:
    - ❌ **Falha esperada** (regra não implementada) → Reportar divergência
    - ⚠️ **Erro de execução** (mock, import, assertion) → Corrigir teste
