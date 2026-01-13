@@ -1,11 +1,11 @@
-# Regras de Negócio — Diagnósticos
+# Regras de Negócio — Diagnósticos (NotaRotina)
 
 **Módulo:** Diagnósticos  
 **Backend:** `backend/src/modules/diagnosticos/`  
-**Frontend:** `frontend/src/app/views/pages/diagnostico-notas/` e `frontend/src/app/views/pages/diagnostico-evolucao/`  
+**Frontend:** `frontend/src/app/views/pages/diagnostico-notas/`  
 **Última extração:** 08/01/2026  
+**Última atualização:** 13/01/2026 (organização documental)  
 **Agente:** Extractor de Regras  
-**Versão:** 2.0 (Snapshot Pattern + Evolução Completa)
 
 ---
 
@@ -17,30 +17,23 @@ O módulo Diagnósticos é responsável por:
 - **Validação multi-tenant** estrita (ADMINISTRADOR acessa tudo, outros apenas sua empresa)
 - **Auditoria completa** de criação e atualização de notas
 - **Interface de diagnóstico** com auto-save, cache local e cálculo de progresso
-- **Gestão de rotinas customizadas** por empresa
-- **Definição de responsáveis** por pilar em cada empresa
-- **Evolução de pilares** — Cálculo e congelamento de médias históricas
-- **Histórico de evolução** — Visualização gráfica da evolução das médias por pilar
 
-**Entidades principais:**
+**Entidade principal:**
 - NotaRotina (avaliação de rotinas com nota 1-10 e criticidade)
-- PilarEmpresa (vinculação empresa-pilar com responsável + **Snapshot Pattern**)
-- RotinaEmpresa (vinculação rotina-pilar por empresa + **Snapshot Pattern**)
-- PilarEvolucao (snapshot de médias congeladas por data)
+
+**Entidades relacionadas (documentadas separadamente):**
+- **PilarEmpresa** → Ver [pilares-empresa.md](./pilares-empresa.md)
+- **RotinaEmpresa** → Ver [rotinas-empresa.md](./rotinas-empresa.md)
+- **PilarEvolucao** → Ver [pilar-evolucao.md](./pilar-evolucao.md)
 
 **Integração com Snapshot Pattern:**
-- PilarEmpresa utiliza `pilarTemplateId` (nullable) para rastrear template original
-- RotinaEmpresa utiliza `rotinaTemplateId` (nullable) para rastrear template original
-- Diagnóstico funciona apenas com **instâncias snapshot** (não acessa templates diretamente)
-- Permite customização completa sem afetar outras empresas
+- Diagnóstico funciona com **instâncias snapshot** de pilares e rotinas
+- Cada empresa tem sua própria estrutura customizável
+- Notas são vinculadas a RotinaEmpresa (não a Rotina template)
 
 **Endpoints implementados:**
 - `GET /empresas/:empresaId/diagnostico/notas` — Buscar estrutura completa de diagnóstico (todos os perfis)
 - `PATCH /rotinas-empresa/:rotinaEmpresaId/nota` — Atualizar ou criar nota (ADMINISTRADOR, CONSULTOR, GESTOR, COLABORADOR)
-- `PATCH /empresas/:empresaId/pilares/:pilarEmpresaId/responsavel` — Definir responsável (ADMINISTRADOR, GESTOR)
-- `GET /empresas/:empresaId/evolucao/medias` — Buscar médias atuais dos pilares (todos os perfis)
-- `POST /empresas/:empresaId/evolucao/congelar` — Congelar médias atuais na base (ADMINISTRADOR, CONSULTOR, GESTOR)
-- `GET /empresas/:empresaId/evolucao/historico/:pilarEmpresaId` — Buscar histórico de evolução de um pilar (todos os perfis)
 
 **Status do módulo:** ✅ **IMPLEMENTADO** (backend + frontend completos)
 
@@ -745,40 +738,9 @@ forceSaveAll(): void {
 
 ---
 
-### 8.3. PilarEvolucao Não Implementado
-
-**Status:** ❌ NÃO IMPLEMENTADO
-
-**Descrição:**
-- Entidade `PilarEvolucao` existe no schema
-- Permite snapshots temporais da média de notas
-- Nenhum endpoint ou lógica implementada
-- Frontend calcula média em tempo real (não persiste)
-
-**TODO:**
-- Implementar job agendado para criar snapshots mensais
-- Endpoint para visualizar evolução histórica
-
----
-
-### 8.4. AgendaReuniao Não Implementado
-
-**Status:** ❌ NÃO IMPLEMENTADO
-
-**Descrição:**
-- Entidade `AgendaReuniao` existe no schema
-- DTO criado mas sem endpoints
-- Funcionalidade planejada mas não desenvolvida
-
-**TODO:**
-- CRUD completo de AgendaReuniao
-- Integração com diagnóstico (reuniões relacionadas a pilares?)
-
----
-
 ## 9. Sumário de Regras
 
-**Backend (Diagnóstico de Notas):**
+**Backend:**
 
 | ID | Descrição | Status |
 |----|-----------|--------|
@@ -786,15 +748,7 @@ forceSaveAll(): void {
 | **R-DIAG-002** | Upsert de nota com auto-save | ✅ Implementado |
 | **RA-DIAG-001** | Auditoria completa de notas | ✅ Implementado |
 
-**Backend (Evolução de Pilares):**
-
-| ID | Descrição | Status |
-|----|-----------|--------|
-| **R-EVOL-001** | Calcular médias atuais dos pilares | ✅ Implementado |
-| **R-EVOL-002** | Congelar médias atuais | ✅ Implementado |
-| **R-EVOL-003** | Buscar histórico de evolução | ✅ Implementado |
-
-**Frontend (Interface de Diagnóstico):**
+**Frontend:**
 
 | ID | Descrição | Status |
 |----|-----------|--------|
@@ -803,34 +757,26 @@ forceSaveAll(): void {
 | **UI-DIAG-003** | Cálculo de média de notas | ✅ Implementado |
 | **UI-DIAG-004** | Cache local e priorização de valores | ✅ Implementado |
 | **UI-DIAG-005** | Perfis read-only | ✅ Implementado |
-| **UI-DIAG-006** | Gestão de pilares da empresa | ✅ Implementado |
-| **UI-DIAG-007** | Definição de responsável por pilar | ✅ Implementado |
-| **UI-DIAG-008** | Criação de rotina customizada | ✅ Implementado |
-| **UI-DIAG-009** | Gestão de rotinas do pilar | ✅ Implementado |
+| **UI-DIAG-006** | Gestão de pilares da empresa | ✅ Implementado (ver [pilares-empresa.md](./pilares-empresa.md)) |
+| **UI-DIAG-007** | Definição de responsável por pilar | ✅ Implementado (ver [pilares-empresa.md](./pilares-empresa.md)) |
+| **UI-DIAG-008** | Criação de rotina customizada | ✅ Implementado (ver [rotinas-empresa.md](./rotinas-empresa.md)) |
+| **UI-DIAG-009** | Gestão de rotinas do pilar | ✅ Implementado (ver [rotinas-empresa.md](./rotinas-empresa.md)) |
 | **UI-DIAG-010** | Botão "Salvar Tudo" (force save all) | ✅ Implementado |
-
-**Frontend (Interface de Evolução):**
-
-| ID | Descrição | Status |
-|----|-----------|--------|
-| **UI-EVOL-001** | Tela de evolução com tabela de médias | ✅ Implementado |
-| **UI-EVOL-002** | Gráfico de barras agrupadas por data | ✅ Implementado |
-| **UI-EVOL-003** | Zonas coloridas de performance | ✅ Implementado |
-| **UI-EVOL-004** | Carregamento paralelo de histórico | ✅ Implementado |
-| **UI-EVOL-005** | Ordenação de tabela (SortableDirective) | ✅ Implementado |
 
 **Integrações Implementadas:**
 - ✅ Snapshot Pattern (pilares e rotinas)
 - ✅ Multi-tenant (isolamento por empresa)
-- ✅ Responsável por pilar (PilarEmpresa)
 - ✅ Auto-save com retry
 - ✅ Cache local de edições
 - ✅ Auditoria completa
 
+**Funcionalidades em Outros Módulos:**
+- Evolução de Pilares → Ver [pilar-evolucao.md](./pilar-evolucao.md)
+- Gestão de PilarEmpresa → Ver [pilares-empresa.md](./pilares-empresa.md)
+- Gestão de RotinaEmpresa → Ver [rotinas-empresa.md](./rotinas-empresa.md)
+
 **Pendências:**
-- ❌ Paginação de diagnóstico
 - ⚠️ Histórico de notas (backend pronto, frontend ausente)
-- ❌ AgendaReuniao (CRUD completo)
 
 ---
 
@@ -850,7 +796,12 @@ forceSaveAll(): void {
 - [diagnostico-notas.service.ts](../../frontend/src/app/core/services/diagnostico-notas.service.ts)
 
 **Schema:**
-- [schema.prisma](../../backend/prisma/schema.prisma) (NotaRotina, PilarEvolucao)
+- [schema.prisma](../../backend/prisma/schema.prisma) (NotaRotina)
+
+**Documentos Relacionados:**
+- [pilares-empresa.md](./pilares-empresa.md) — Gestão de pilares por empresa
+- [rotinas-empresa.md](./rotinas-empresa.md) — Gestão de rotinas por empresa
+- [pilar-evolucao.md](./pilar-evolucao.md) — Evolução temporal de pilares
 
 **Dependências:**
 - AuditService (auditoria de operações)
@@ -862,12 +813,10 @@ forceSaveAll(): void {
 
 ---
 
-**Data de extração:** 02/01/2026  
-**Agente:** Extractor de Regras (Modo A - Reverse Engineering)  
-**Status:** ✅ **Backend e Frontend Completamente Implementados**
-
-**Observação final:**  
-Este módulo transforma o catálogo de pilares e rotinas em um diagnóstico empresarial funcional, com auto-save, validações em tempo real, cálculos de progresso e múltiplas modalidades de gestão (pilares, rotinas, responsáveis). A implementação está completa e pronta para uso.
+**Data de extração:** 08/01/2026  
+**Última atualização:** 13/01/2026 (organização documental)  
+**Agente:** Extractor de Regras  
+**Status:** ✅ Documentação organizada - foco em NotaRotina
 
 ### 4.2. CreateRotinaEmpresaDto
 
@@ -1455,14 +1404,32 @@ if (rotina.pilarId !== pilarEmpresa.pilarId) {
 ---
 
 **Observação final:**  
-Este documento reflete a implementação completa do módulo Diagnósticos conforme código existente em 08/01/2026.  
+Este documento reflete a implementação do módulo Diagnósticos (NotaRotina) conforme código existente.  
 **Status:** Backend e frontend implementados e funcionais.  
-**Novidades:** Snapshot Pattern, responsável por pilar, evolução com gráficos interativos, auto-save com retry.  
-**Próximos passos:** Histórico visual de notas, AgendaReuniao, paginação.
+**Novidades:** Snapshot Pattern, auto-save com retry, cache local de valores.  
 
 ---
 
-## 5. PilarEvolucao — Histórico de Médias
+## 5. Módulos Relacionados
+
+### PilarEmpresa
+Gestão de pilares por empresa (instâncias snapshot).  
+Ver documentação completa em: [pilares-empresa.md](./pilares-empresa.md)
+
+### RotinaEmpresa  
+Gestão de rotinas por empresa (instâncias snapshot).  
+Ver documentação completa em: [rotinas-empresa.md](./rotinas-empresa.md)
+
+### PilarEvolucao
+Evolução temporal de pilares (snapshots de médias históricas).  
+Ver documentação completa em: [pilar-evolucao.md](./pilar-evolucao.md)
+
+---
+
+**Data de extração:** 08/01/2026  
+**Última atualização:** 13/01/2026  
+**Agente:** Extractor de Regras  
+**Status:** ✅ Documentação organizada e sem duplicações
 
 ### 5.1. Entidade PilarEvolucao
 
