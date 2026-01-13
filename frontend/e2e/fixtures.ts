@@ -48,6 +48,12 @@ export const TEST_USERS: Record<string, TestUser> = {
     perfil: 'GESTOR',
     empresaId: 'empresa-a-id',
   },
+  'gestor-a': { // Alias para compatibilidade
+    email: 'gestor@empresa-a.com',
+    senha: 'Admin@123',
+    perfil: 'GESTOR',
+    empresaId: 'empresa-a-id',
+  },
   gestorEmpresaB: {
     email: 'gestor@empresa-b.com',
     senha: 'Admin@123',
@@ -55,6 +61,12 @@ export const TEST_USERS: Record<string, TestUser> = {
     empresaId: 'empresa-b-id',
   },
   colaborador: {
+    email: 'colab@empresa-a.com',
+    senha: 'Admin@123',
+    perfil: 'COLABORADOR',
+    empresaId: 'empresa-a-id',
+  },
+  'colab-a': { // Alias para compatibilidade
     email: 'colab@empresa-a.com',
     senha: 'Admin@123',
     perfil: 'COLABORADOR',
@@ -126,6 +138,43 @@ export async function navigateTo(page: Page, route: string) {
   if (await loader.count() > 0) {
     await loader.waitFor({ state: 'hidden', timeout: 10000 });
   }
+}
+
+/**
+ * Seleciona uma empresa na navbar (apenas para perfil ADMINISTRADOR)
+ * @param page - Página do Playwright
+ * @param empresaNome - Nome da empresa a selecionar (ex: 'Empresa A')
+ */
+export async function selectEmpresa(page: Page, empresaNome: string) {
+  // Aguardar navbar carregar completamente
+  await page.waitForLoadState('networkidle');
+  await page.waitForTimeout(1500);
+  
+  // Localizar o ng-select de empresa na navbar
+  const empresaSelect = page.locator('[data-testid="empresa-select"]').first();
+  
+  // Verificar se existe (apenas ADMIN tem este seletor)
+  const selectCount = await empresaSelect.count();
+  if (selectCount === 0) {
+    throw new Error('Seletor de empresa não encontrado. Apenas ADMINISTRADOR pode selecionar empresa.');
+  }
+  
+  // Aguardar elemento estar visível
+  await empresaSelect.waitFor({ state: 'visible', timeout: 10000 });
+  
+  // Abrir dropdown
+  await empresaSelect.click();
+  await page.waitForTimeout(800);
+  
+  // Selecionar empresa pelo nome (buscar texto exato ou parcial)
+  const option = page.locator(`.ng-option`).filter({ hasText: empresaNome }).first();
+  await option.waitFor({ state: 'visible', timeout: 8000 });
+  await option.click();
+  
+  // Aguardar seleção ser aplicada
+  await page.waitForTimeout(1500);
+  
+  console.log(`[INFO] Empresa "${empresaNome}" selecionada com sucesso`);
 }
 
 // Helpers de formulários
