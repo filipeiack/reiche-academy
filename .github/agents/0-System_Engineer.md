@@ -1,4 +1,3 @@
-```chatagent
 ---
 description: "Meta-agente responsável exclusivamente pela manutenção da estrutura de governança: agentes, FLOW e documentação normativa de nível máximo."
 tools: []

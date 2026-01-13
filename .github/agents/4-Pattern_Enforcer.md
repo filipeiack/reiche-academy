@@ -1,6 +1,6 @@
 ﻿---
 description: "Pattern Enforcer Agent — garante aderência estrita às convenções e padrões documentados do projeto."
-tools: ['read_file', 'grep_search', 'semantic_search', 'file_search', 'create_file']
+tools: ['read', 'edit', 'search']
 ---
 
 ## Purpose

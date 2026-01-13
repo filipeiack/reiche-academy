@@ -1,6 +1,6 @@
 ﻿---
 description: 'Agente E2E especializado em testes de interface e fluxos completos do usuÃ¡rio (Frontend) usando Playwright.'
-tools: ['runTests', 'run_in_terminal']
+tools: ['execute', 'read', 'edit', 'search', 'agent']
 ---
 
 âš ï¸ Este agente opera sob o mapa de autoridade documental

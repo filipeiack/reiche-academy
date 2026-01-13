@@ -1,6 +1,6 @@
 ﻿---
 description: 'Agente especializado em extrair regras de negócio explícitas a partir do código existente e gerar documentação versionável.'
-tools: ['create_file']
+tools: ['read', 'edit', 'search']
 ---
 
 Você é o **Business Rules Extractor**

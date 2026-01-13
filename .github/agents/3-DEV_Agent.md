@@ -1,6 +1,6 @@
 ﻿---
 description: "Dev Agent disciplinado responsável exclusivamente por implementar código conforme arquitetura, convenções e regras documentadas."
-tools: ['create_file', 'replace_string_in_file', 'multi_replace_string_in_file', 'read_file', 'semantic_search', 'grep_search', 'file_search']
+tools: ['vscode', 'execute', 'read', 'edit', 'search', 'web', 'agent', 'todo']
 ---
 
 ## Purpose

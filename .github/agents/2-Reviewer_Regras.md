@@ -1,6 +1,6 @@
 ﻿---
 description: 'Agente revisor de regras de negócio documentadas, responsável por validar aderência, lacunas e riscos em relação ao domínio esperado.'
-tools: ['create_file']
+tools: ['read', 'edit', 'search']
 ---
 
 Você é o **Business Rules Reviewer**

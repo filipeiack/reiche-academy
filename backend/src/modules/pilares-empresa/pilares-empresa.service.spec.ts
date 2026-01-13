@@ -525,11 +525,11 @@ describe('PilaresEmpresaService - Validação Completa', () => {
         nome: 'Pilar Vazio',
         empresaId,
         pilarTemplateId: 'template-uuid',
+        rotinasEmpresa: [], // ← Incluindo array vazio
         _count: { rotinasEmpresa: 0 },
       };
 
       jest.spyOn(prisma.pilarEmpresa, 'findFirst').mockResolvedValue(pilarMock as any);
-      jest.spyOn(prisma.rotinaEmpresa, 'findMany').mockResolvedValue([]); // Sem rotinas
       jest.spyOn(prisma.pilarEmpresa, 'delete').mockResolvedValue(pilarMock as any);
       jest.spyOn(prisma.usuario, 'findUnique').mockResolvedValue(mockGestorEmpresaA as any);
       jest.spyOn(audit, 'log').mockResolvedValue(undefined);
@@ -551,39 +551,54 @@ describe('PilaresEmpresaService - Validação Completa', () => {
       }));
     });
 
-    it('R-PILEMP-006: deve bloquear delete se pilar possui rotinas ativas', async () => {
+    it('R-PILEMP-006: deve permitir deletar pilar COM rotinas (hard delete em cascata)', async () => {
+      const rotinasMock = [
+        { id: 'rot-1', nome: 'Rotina 1', notas: [] },
+        { id: 'rot-2', nome: 'Rotina 2', notas: [] },
+        { id: 'rot-3', nome: 'Rotina 3', notas: [] },
+      ];
+
       const pilarComRotinas = {
         id: pilarEmpresaId,
         nome: 'Pilar com Rotinas',
         empresaId,
+        rotinasEmpresa: rotinasMock,
         _count: { rotinasEmpresa: 3 },
       };
 
       jest.spyOn(prisma.pilarEmpresa, 'findFirst').mockResolvedValue(pilarComRotinas as any);
+      jest.spyOn(prisma.pilarEmpresa, 'delete').mockResolvedValue(pilarComRotinas as any);
+      jest.spyOn(prisma.usuario, 'findUnique').mockResolvedValue(mockGestorEmpresaA as any);
+      jest.spyOn(audit, 'log').mockResolvedValue(undefined);
 
-      await expect(
-        service.deletePilarEmpresa(empresaId, pilarEmpresaId, mockGestorEmpresaA),
-      ).rejects.toThrow(ConflictException);
-      
-      expect(prisma.pilarEmpresa.delete).not.toHaveBeenCalled();
+      const result = await service.deletePilarEmpresa(empresaId, pilarEmpresaId, mockGestorEmpresaA);
+
+      // Deve executar hard delete mesmo com rotinas
+      expect(prisma.pilarEmpresa.delete).toHaveBeenCalledWith({
+        where: { id: pilarEmpresaId },
+      });
+
+      // Deve auditar pilar + 3 rotinas
+      expect(audit.log).toHaveBeenCalledTimes(4);
+      expect(result).toEqual({ message: 'Pilar removido com sucesso (removido em cascata: 3 rotina(s))' });
     });
 
     it('Cascade Audit: deve logar todas rotinas deletadas em cascata', async () => {
+      const rotinasMock = [
+        { id: 'rot-1', nome: 'Rotina 1', notas: [] },
+        { id: 'rot-2', nome: 'Rotina 2', notas: [] },
+        { id: 'rot-3', nome: 'Rotina 3', notas: [] },
+      ];
+
       const pilarMock = {
         id: pilarEmpresaId,
         nome: 'Pilar com Rotinas',
         empresaId,
-        _count: { rotinasEmpresa: 0 }, // Passou validação
+        rotinasEmpresa: rotinasMock, // ← Incluindo rotinas
+        _count: { rotinasEmpresa: 0 }, // Passou validação (mock controlado)
       };
 
-      const rotinasMock = [
-        { id: 'rot-1', nome: 'Rotina 1' },
-        { id: 'rot-2', nome: 'Rotina 2' },
-        { id: 'rot-3', nome: 'Rotina 3' },
-      ];
-
       jest.spyOn(prisma.pilarEmpresa, 'findFirst').mockResolvedValue(pilarMock as any);
-      jest.spyOn(prisma.rotinaEmpresa, 'findMany').mockResolvedValue(rotinasMock as any);
       jest.spyOn(prisma.pilarEmpresa, 'delete').mockResolvedValue(pilarMock as any);
       jest.spyOn(prisma.usuario, 'findUnique').mockResolvedValue(mockGestorEmpresaA as any);
       jest.spyOn(audit, 'log').mockResolvedValue(undefined);
@@ -811,6 +826,309 @@ describe('PilaresEmpresaService - Validação Completa', () => {
       await expect(
         service.deleteRotinaEmpresa(empresaId, 'invalid-rotina', mockGestorEmpresaA),
       ).rejects.toThrow(NotFoundException);
+    });
+  });
+
+  // ============================================================
+  // R-PILEMP-006: Definir Responsável por Pilar
+  // ============================================================
+
+  describe('R-PILEMP-006: Definir Responsável por Pilar', () => {
+    const empresaId = 'empresa-a';
+    const pilarEmpresaId = 'pilar-1';
+    const usuarioId = 'usuario-1';
+
+    beforeEach(() => {
+      jest.spyOn(prisma.pilarEmpresa, 'findUnique').mockResolvedValue({
+        id: pilarEmpresaId,
+        empresaId,
+        nome: 'Estratégia',
+        ordem: 1,
+        ativo: true,
+        responsavelId: null,
+      } as any);
+    });
+
+    it('deve definir responsável quando usuário pertence à mesma empresa', async () => {
+      const mockUsuario = {
+        id: usuarioId,
+        nome: 'João Silva',
+        email: 'joao@empresa.com',
+        empresaId,
+        ativo: true,
+      };
+
+      jest.spyOn(prisma.usuario, 'findUnique').mockResolvedValue(mockUsuario as any);
+      jest.spyOn(prisma.pilarEmpresa, 'update').mockResolvedValue({
+        id: pilarEmpresaId,
+        empresaId,
+        responsavelId: usuarioId,
+      } as any);
+
+      const result = await service.definirResponsavel(
+        empresaId,
+        pilarEmpresaId,
+        usuarioId,
+        mockGestorEmpresaA,
+      );
+
+      expect(prisma.pilarEmpresa.update).toHaveBeenCalledWith({
+        where: { id: pilarEmpresaId },
+        data: {
+          responsavelId: usuarioId,
+          updatedBy: mockGestorEmpresaA.id,
+        },
+        include: expect.any(Object),
+      });
+
+      expect(result.responsavelId).toBe(usuarioId);
+    });
+
+    it('deve permitir remover responsável (responsavelId = null)', async () => {
+      jest.spyOn(prisma.pilarEmpresa, 'update').mockResolvedValue({
+        id: pilarEmpresaId,
+        empresaId,
+        responsavelId: null,
+      } as any);
+
+      const result = await service.definirResponsavel(
+        empresaId,
+        pilarEmpresaId,
+        null,
+        mockGestorEmpresaA,
+      );
+
+      expect(prisma.pilarEmpresa.update).toHaveBeenCalledWith({
+        where: { id: pilarEmpresaId },
+        data: {
+          responsavelId: null,
+          updatedBy: mockGestorEmpresaA.id,
+        },
+        include: expect.any(Object),
+      });
+
+      expect(result.responsavelId).toBeNull();
+    });
+
+    it('deve lançar erro quando responsável não pertence à mesma empresa', async () => {
+      const mockUsuarioOutraEmpresa = {
+        id: usuarioId,
+        nome: 'João Silva',
+        email: 'joao@outra.com',
+        empresaId: 'empresa-2', // Empresa diferente
+        ativo: true,
+      };
+
+      jest.spyOn(prisma.usuario, 'findUnique').mockResolvedValue(
+        mockUsuarioOutraEmpresa as any,
+      );
+
+      await expect(
+        service.definirResponsavel(
+          empresaId,
+          pilarEmpresaId,
+          usuarioId,
+          mockGestorEmpresaA,
+        ),
+      ).rejects.toThrow(ForbiddenException);
+
+      await expect(
+        service.definirResponsavel(
+          empresaId,
+          pilarEmpresaId,
+          usuarioId,
+          mockGestorEmpresaA,
+        ),
+      ).rejects.toThrow('O responsável deve pertencer à mesma empresa do pilar');
+    });
+
+    it('deve lançar erro quando responsável não existe', async () => {
+      jest.spyOn(prisma.usuario, 'findUnique').mockResolvedValue(null);
+
+      await expect(
+        service.definirResponsavel(
+          empresaId,
+          pilarEmpresaId,
+          'usuario-inexistente',
+          mockGestorEmpresaA,
+        ),
+      ).rejects.toThrow(NotFoundException);
+
+      await expect(
+        service.definirResponsavel(
+          empresaId,
+          pilarEmpresaId,
+          'usuario-inexistente',
+          mockGestorEmpresaA,
+        ),
+      ).rejects.toThrow('Usuário responsável não encontrado');
+    });
+
+    it('deve validar acesso multi-tenant ao pilar', async () => {
+      jest.spyOn(prisma.pilarEmpresa, 'findUnique').mockResolvedValue({
+        id: pilarEmpresaId,
+        empresaId: 'empresa-2', // Empresa diferente
+        nome: 'Estratégia',
+        ordem: 1,
+        ativo: true,
+      } as any);
+
+      await expect(
+        service.definirResponsavel(
+          'empresa-2',
+          pilarEmpresaId,
+          usuarioId,
+          mockGestorEmpresaA,
+        ),
+      ).rejects.toThrow(ForbiddenException);
+
+      await expect(
+        service.definirResponsavel(
+          'empresa-2',
+          pilarEmpresaId,
+          usuarioId,
+          mockGestorEmpresaA,
+        ),
+      ).rejects.toThrow('Você não pode acessar dados de outra empresa');
+    });
+
+    it('deve lançar erro quando pilar não existe', async () => {
+      jest.spyOn(prisma.pilarEmpresa, 'findUnique').mockResolvedValue(null);
+
+      await expect(
+        service.definirResponsavel(
+          empresaId,
+          'pilar-inexistente',
+          usuarioId,
+          mockGestorEmpresaA,
+        ),
+      ).rejects.toThrow(NotFoundException);
+
+      await expect(
+        service.definirResponsavel(
+          empresaId,
+          'pilar-inexistente',
+          usuarioId,
+          mockGestorEmpresaA,
+        ),
+      ).rejects.toThrow('Vínculo pilar-empresa não encontrado');
+    });
+
+    it('deve lançar erro quando pilar não pertence à empresa especificada', async () => {
+      jest.spyOn(prisma.pilarEmpresa, 'findUnique').mockResolvedValue({
+        id: pilarEmpresaId,
+        empresaId: 'empresa-2', // Empresa diferente da URL
+        nome: 'Estratégia',
+        ordem: 1,
+        ativo: true,
+      } as any);
+
+      // ADMINISTRADOR pode acessar, mas validação de pertencimento ainda falha
+      await expect(
+        service.definirResponsavel(
+          empresaId, // empresa-a
+          pilarEmpresaId, // mas pilar pertence a empresa-2
+          usuarioId,
+          mockAdminUser,
+        ),
+      ).rejects.toThrow(ForbiddenException);
+
+      await expect(
+        service.definirResponsavel(
+          empresaId,
+          pilarEmpresaId,
+          usuarioId,
+          mockAdminUser,
+        ),
+      ).rejects.toThrow('Este pilar não pertence à empresa especificada');
+    });
+
+    it('deve auditar atualização de responsável', async () => {
+      const mockUsuario = {
+        id: usuarioId,
+        nome: 'João Silva',
+        email: 'joao@empresa.com',
+        empresaId,
+        ativo: true,
+      };
+
+      const mockPilarAntes = {
+        id: pilarEmpresaId,
+        empresaId,
+        responsavelId: 'usuario-antigo',
+      };
+
+      const mockPilarDepois = {
+        id: pilarEmpresaId,
+        empresaId,
+        responsavelId: usuarioId,
+      };
+
+      jest.spyOn(prisma.usuario, 'findUnique')
+        .mockResolvedValueOnce(mockUsuario as any) // Validação do responsável
+        .mockResolvedValueOnce(mockGestorEmpresaA as any); // Busca do usuário para auditoria
+      jest.spyOn(prisma.pilarEmpresa, 'findUnique').mockResolvedValue(
+        mockPilarAntes as any,
+      );
+      jest.spyOn(prisma.pilarEmpresa, 'update').mockResolvedValue(mockPilarDepois as any);
+
+      await service.definirResponsavel(
+        empresaId,
+        pilarEmpresaId,
+        usuarioId,
+        mockGestorEmpresaA,
+      );
+
+      expect(audit.log).toHaveBeenCalledWith(
+        expect.objectContaining({
+          usuarioId: mockGestorEmpresaA.id,
+          entidade: 'pilares_empresa',
+          entidadeId: pilarEmpresaId,
+          acao: 'UPDATE',
+          dadosAntes: expect.objectContaining({
+            responsavelId: 'usuario-antigo',
+          }),
+          dadosDepois: expect.objectContaining({
+            responsavelId: usuarioId,
+          }),
+        }),
+      );
+    });
+
+    it('deve permitir ADMINISTRADOR definir responsável em qualquer empresa', async () => {
+      const empresaOutra = 'empresa-99';
+      const mockUsuario = {
+        id: usuarioId,
+        nome: 'João Silva',
+        email: 'joao@empresa.com',
+        empresaId: empresaOutra,
+        ativo: true,
+      };
+
+      jest.spyOn(prisma.pilarEmpresa, 'findUnique').mockResolvedValue({
+        id: pilarEmpresaId,
+        empresaId: empresaOutra,
+        nome: 'Estratégia',
+        ordem: 1,
+        ativo: true,
+      } as any);
+      jest.spyOn(prisma.usuario, 'findUnique')
+        .mockResolvedValueOnce(mockUsuario as any)
+        .mockResolvedValueOnce(mockAdminUser as any);
+      jest.spyOn(prisma.pilarEmpresa, 'update').mockResolvedValue({
+        id: pilarEmpresaId,
+        empresaId: empresaOutra,
+        responsavelId: usuarioId,
+      } as any);
+
+      await service.definirResponsavel(
+        empresaOutra,
+        pilarEmpresaId,
+        usuarioId,
+        mockAdminUser,
+      );
+
+      expect(prisma.pilarEmpresa.update).toHaveBeenCalled();
     });
   });
 

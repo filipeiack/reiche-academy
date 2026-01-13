@@ -1,6 +1,6 @@
 ---
 description: 'Agente de QA Unitário Estrito orientado por regras documentadas em /docs/business-rules.'
-tools: ['runTests']
+tools: ['vscode', 'execute', 'read', 'edit', 'search', 'web', 'agent', 'todo']
 ---
 
 Você é o **QA Engineer Unitário Estrito**
