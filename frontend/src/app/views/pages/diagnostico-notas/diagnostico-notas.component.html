@@ -33,7 +33,7 @@
                 Salvar Tudo
             </button>
 
-            @if (selectedEmpresaId) {
+            @if (selectedEmpresaId && !isReadOnlyPerfil) {
             <div class="ms-2">
                 <div ngbDropdown class="mb-2">
                     <a class="no-dropdown-toggle-icon" ngbDropdownToggle id="dropdownMenuButton">
@@ -94,7 +94,7 @@
                     }
 
                     <div ngbDropdown class="w-30px">
-                    @if (pilarExpandido[i]) {
+                    @if (pilarExpandido[i] && !isReadOnlyPerfil) {
                     <div ngbDropdown class="mb-2">
                         <a class="no-dropdown-toggle-icon btn btn-link" ngbDropdownToggle id="dropdownMenuButton">
                             <i class="feather icon-more-horizontal"></i>
