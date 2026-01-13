@@ -3,7 +3,7 @@ import { CommonModule } from '@angular/common';
 import { NgbModal, NgbModalModule } from '@ng-bootstrap/ng-bootstrap';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import Swal from 'sweetalert2';
-import { PilaresEmpresaService, CreateRotinaEmpresaDto } from '../../../../core/services/pilares-empresa.service';
+import { RotinasEmpresaService, CreateRotinaEmpresaDto } from '../../../../core/services/rotinas-empresa.service';
 import { PilarEmpresa } from '../../../../core/services/diagnostico-notas.service';
 
 @Component({
@@ -73,7 +73,7 @@ import { PilarEmpresa } from '../../../../core/services/diagnostico-notas.servic
 })
 export class NovaRotinaModalComponent {
   private modalService = inject(NgbModal);
-  private pilaresEmpresaService = inject(PilaresEmpresaService);
+  private rotinasEmpresaService = inject(RotinasEmpresaService);
   private fb = inject(FormBuilder);
   
   @ViewChild('modalContent') modalContent!: TemplateRef<any>;
@@ -113,7 +113,7 @@ export class NovaRotinaModalComponent {
     };
 
     this.saving = true;
-    this.pilaresEmpresaService.criarRotinaEmpresa(this.empresaId, this.pilarEmpresa.id, dto).subscribe({
+    this.rotinasEmpresaService.criarRotinaEmpresa(this.empresaId, this.pilarEmpresa.id, dto).subscribe({
       next: (rotina) => {
         this.showToast(`Rotina "${rotina.nome}" criada com sucesso!`, 'success');
         this.rotinaCriada.emit();

@@ -68,8 +68,10 @@
                 <td *ngIf="canReorder" class="text-center">
                   <i class="feather icon-list me-2"></i>
                 </td>
-                <td>{{ rotina.pilar?.nome || '—' }}</td>
-                <td style="max-width: 600px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
+                <td style="max-width: 300px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
+                  {{ rotina.pilar?.nome || '—' }}
+                </td>
+                <td style="max-width: 500px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
                   <span class="badge bg-secondary small" [ngbTooltip]="'ROTINAS.FIELDS.ORDER' | translate">{{ rotina.ordem }}</span>
                   <span [ngbTooltip]="rotina.nome"> {{ rotina.nome }} </span>
                 </td>

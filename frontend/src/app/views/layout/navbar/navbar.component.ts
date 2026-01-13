@@ -10,6 +10,7 @@ import { AuthService } from '../../../core/services/auth.service';
 import { EmpresasService, Empresa } from '../../../core/services/empresas.service';
 import { EmpresaContextService } from '../../../core/services/empresa-context.service';
 import { TranslatePipe } from '../../../core/pipes/translate.pipe';
+import { CnpjPipe } from '../../../core/pipes/cnpj.pipe';
 import { UserAvatarComponent } from '../../../shared/components/user-avatar/user-avatar.component';
 import { Usuario } from '../../../core/models/auth.model';
 
@@ -23,6 +24,7 @@ import { Usuario } from '../../../core/models/auth.model';
     FormsModule,
     NgSelectModule,
     TranslatePipe,
+    CnpjPipe,
     UserAvatarComponent
   ],
   templateUrl: './navbar.component.html',
@@ -101,6 +103,13 @@ export class NavbarComponent implements OnInit {
     this.empresaContextService.selectedEmpresaId$.subscribe(empresaId => {
       this.selectedEmpresaId = empresaId;
     });
+
+    // Subscribe to empresa changes (criação/atualização)
+    this.empresasService.empresaChanged$.subscribe(() => {
+      if (this.isAdmin) {
+        this.loadEmpresas();
+      }
+    });
   }
 
   showActiveTheme(theme: string) {
@@ -171,10 +180,17 @@ export class NavbarComponent implements OnInit {
   }
 
   /**
-   * Quando admin seleciona uma empresa
+   * Quando admin seleciona uma empresa ou limpa seleção
    */
   onEmpresaChange(event: any): void {
     const empresaId = typeof event === 'string' ? event : event?.id || this.selectedEmpresaId;
+    
+    // Se empresaId for null/undefined, limpar contexto
+    if (!empresaId) {
+      this.empresaContextService.clearSelectedEmpresa();
+      return;
+    }
+    
     this.empresaContextService.setSelectedEmpresa(empresaId);
   }
 

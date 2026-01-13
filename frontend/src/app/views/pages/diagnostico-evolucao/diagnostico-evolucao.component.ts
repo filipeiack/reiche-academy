@@ -58,18 +58,17 @@ export class DiagnosticoEvolucaoComponent implements OnInit, OnDestroy {
   sortColumn: string = '';
   sortDirection: 'asc' | 'desc' = 'asc';
 
-  // Paleta de tons de cinza para o gráfico de barras
+  // Paleta de tons de cinza para o gráfico de barras (do claro ao escuro)
   private readonly GRAY_COLORS = [
-    'rgb(44, 62, 80)',    // Cinza muito escuro
-    'rgb(52, 73, 94)',    // Cinza escuro
-    'rgb(69, 90, 100)',   // Cinza médio-escuro
-    'rgb(96, 125, 139)',  // Cinza médio
-    'rgb(120, 144, 156)', // Cinza médio-claro
-    'rgb(149, 165, 166)', // Cinza claro
-    'rgb(176, 190, 197)', // Cinza muito claro
-    'rgb(189, 195, 199)', // Cinza clarinho
-    'rgb(204, 209, 209)', // Cinza bem claro
-    'rgb(220, 221, 225)'  // Cinza quase branco
+    'rgb(204, 204, 204)', // Cinza claro
+    'rgb(189, 189, 189)', // Cinza claro-médio
+    'rgb(170, 170, 170)', // Cinza médio-claro
+    'rgb(150, 150, 150)', // Cinza médio
+    'rgb(130, 130, 130)', // Cinza médio-escuro
+    'rgb(110, 110, 110)', // Cinza escuro-médio
+    'rgb(90, 90, 90)',    // Cinza escuro
+    'rgb(70, 70, 70)',    // Cinza muito escuro
+    'rgb(50, 50, 50)'     // Cinza quase preto
   ];
 
   ngOnInit(): void {
@@ -380,7 +379,7 @@ renderBarChart(): void {
                 type: 'box',
                 yMin: 0,
                 yMax: 6,
-                backgroundColor: 'rgba(195, 77, 56, 0.4)',
+                backgroundColor: 'rgba(195, 77, 56, 0.5)',
                 borderWidth: 0,
                 drawTime: 'beforeDatasetsDraw'
               },
@@ -389,7 +388,7 @@ renderBarChart(): void {
                 type: 'box',
                 yMin: 6,
                 yMax: 8,
-                backgroundColor: 'rgba(166, 124, 0, 0.4)',
+                backgroundColor: 'rgba(166, 124, 0, 0.5)',
                 borderWidth: 0,
                 drawTime: 'beforeDatasetsDraw'
               },
@@ -398,7 +397,7 @@ renderBarChart(): void {
                 type: 'box',
                 yMin: 8,
                 yMax: 10,
-                backgroundColor: 'rgba(92, 184, 112, 0.4)',
+                backgroundColor: 'rgba(92, 184, 112, 0.5)',
                 borderWidth: 0,
                 drawTime: 'beforeDatasetsDraw'
               }

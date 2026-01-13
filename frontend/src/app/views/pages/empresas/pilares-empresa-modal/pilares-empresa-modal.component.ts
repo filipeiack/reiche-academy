@@ -26,7 +26,7 @@ import { PilaresEmpresaFormComponent } from '../pilares-empresa-form/pilares-emp
       <div class="modal-footer">
         <button type="button" class="btn btn-secondary" (click)="modal.close()">Fechar</button>
         @if (this.formComponent.temAlteracoes) {
-        <button type="button" class="btn btn-success" (click)="this.formComponent.salvarOrdem()">
+        <button type="button" class="btn btn-success" (click)="salvarEFechar()">
           <i class="feather icon-save me-1"></i>
           Salvar Ordem
         </button>
@@ -63,5 +63,10 @@ export class PilaresEmpresaModalComponent {
 
   handlePilaresChanged(): void {
     this.pilaresModificados.emit();
+  }
+
+  salvarEFechar(): void {
+    this.formComponent.salvarOrdem();
+    this.modalRef?.close();
   }
 }

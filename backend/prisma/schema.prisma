@@ -168,7 +168,7 @@ model Empresa {
 
 model Pilar {
   id          String   @id @default(uuid())
-  nome        String
+  nome        String   @db.VarChar(60)
   descricao   String?
   ordem       Int
   ativo       Boolean  @default(true)
@@ -217,7 +217,7 @@ model PilarEmpresa {
   pilarTemplate   Pilar? @relation(fields: [pilarTemplateId], references: [id], onDelete: SetNull)
   
   // Snapshot data (copied from template OR custom)
-  nome        String
+  nome        String   @db.VarChar(60)
   
   ordem       Int
   ativo       Boolean  @default(true)

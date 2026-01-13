@@ -5,6 +5,7 @@ import { RouterLink } from '@angular/router';
 import { NgbPaginationModule, NgbAlertModule, NgbOffcanvas, NgbOffcanvasModule } from '@ng-bootstrap/ng-bootstrap';
 import Swal from 'sweetalert2';
 import { TranslatePipe } from '../../../../core/pipes/translate.pipe';
+import { CnpjPipe } from '../../../../core/pipes/cnpj.pipe';
 import { EmpresasService, Empresa } from '../../../../core/services/empresas.service';
 import { SortableDirective, SortEvent } from '../../../../shared/directives/sortable.directive';
 import { environment } from '../../../../../environments/environment';
@@ -17,6 +18,7 @@ import { environment } from '../../../../../environments/environment';
     FormsModule,
     RouterLink,
     TranslatePipe,
+    CnpjPipe,
     NgbPaginationModule,
     NgbAlertModule,
     SortableDirective,

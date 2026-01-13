@@ -1,9 +1,13 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { Observable } from 'rxjs';
+import { Observable, Subject } from 'rxjs';
+import { tap } from 'rxjs/operators';
 import { environment } from '../../../environments/environment';
 
-export type EstadoBrasil = 'AC' | 'AL' | 'AP' | 'AM' | 'BA' | 'CE' | 'DF' | 'ES' | 'GO' | 'MA' | 'MT' | 'MS' | 'MG' | 'PA' | 'PB' | 'PR' | 'PE' | 'PI' | 'RJ' | 'RN' | 'RS' | 'RO' | 'RR' | 'SC' | 'SP' | 'SE' | 'TO';
+export type EstadoBrasil = 
+  'AC' | 'AL' | 'AP' | 'AM' | 'BA' | 'CE' | 'DF' | 'ES' | 'GO' | 'MA' | 
+  'MT' | 'MS' | 'MG' | 'PA' | 'PB' | 'PR' | 'PE' | 'PI' | 'RJ' | 'RN' | 
+  'RS' | 'RO' | 'RR' | 'SC' | 'SP' | 'SE' | 'TO';
 
 export interface EmpresaCounts {
   usuarios: number;
@@ -50,6 +54,10 @@ export class EmpresasService {
   private http = inject(HttpClient);
   private readonly API_URL = `${environment.apiUrl}/empresas`;
 
+  // Subject para notificar quando uma empresa é criada ou atualizada
+  private empresaChangedSubject = new Subject<Empresa>();
+  empresaChanged$ = this.empresaChangedSubject.asObservable();
+
   getAll(): Observable<Empresa[]> {
     return this.http.get<Empresa[]>(this.API_URL);
   }
@@ -59,11 +67,15 @@ export class EmpresasService {
   }
 
   create(data: CreateEmpresaRequest): Observable<Empresa> {
-    return this.http.post<Empresa>(this.API_URL, data);
+    return this.http.post<Empresa>(this.API_URL, data).pipe(
+      tap(empresa => this.empresaChangedSubject.next(empresa))
+    );
   }
 
   update(id: string, data: UpdateEmpresaRequest): Observable<Empresa> {
-    return this.http.patch<Empresa>(`${this.API_URL}/${id}`, data);
+    return this.http.patch<Empresa>(`${this.API_URL}/${id}`, data).pipe(
+      tap(empresa => this.empresaChangedSubject.next(empresa))
+    );
   }
 
   delete(id: string): Observable<any> {

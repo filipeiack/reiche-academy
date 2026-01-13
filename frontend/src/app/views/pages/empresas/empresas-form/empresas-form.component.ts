@@ -160,10 +160,13 @@ export class EmpresasFormComponent implements OnInit {
     this.loading = true;
     const v = this.form.value;
 
+    // Sanitizar CNPJ (remover formatação)
+    const cnpjSanitizado = (v.cnpj || '').replace(/\D/g, '');
+
     if (this.isEditMode && this.empresaId) {
       const updateData: UpdateEmpresaRequest = {
         nome: v.nome || '',
-        cnpj: v.cnpj || '',
+        cnpj: cnpjSanitizado,
         tipoNegocio: v.tipoNegocio || undefined,
         loginUrl: v.loginUrl || undefined,
         cidade: v.cidade || '',
@@ -177,7 +180,7 @@ export class EmpresasFormComponent implements OnInit {
     } else {
       const createData: CreateEmpresaRequest = {
         nome: v.nome || '',
-        cnpj: v.cnpj || '',
+        cnpj: cnpjSanitizado,
         tipoNegocio: v.tipoNegocio || undefined,
         loginUrl: v.loginUrl || undefined,
         cidade: v.cidade || '',

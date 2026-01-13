@@ -5,6 +5,7 @@ import { UpdateEmpresaDto } from './dto/update-empresa.dto';
 import { AuditService } from '../audit/audit.service';
 import { RequestUser } from '../../common/interfaces/request-user.interface';
 import { PilaresEmpresaService } from '../pilares-empresa/pilares-empresa.service';
+import { RotinasEmpresaService } from '../pilares-empresa/rotinas-empresa.service';
 
 @Injectable()
 export class EmpresasService {
@@ -12,6 +13,7 @@ export class EmpresasService {
     private prisma: PrismaService, 
     private audit: AuditService,
     private pilaresEmpresaService: PilaresEmpresaService,
+    private rotinasEmpresaService: RotinasEmpresaService,
   ) {}
 
   /**
@@ -85,7 +87,7 @@ export class EmpresasService {
 
         // Para cada rotina template do pilar, criar snapshot (RotinaEmpresa)
         for (const rotinaTemplate of pilarTemplate.rotinas) {
-          await this.pilaresEmpresaService.createRotinaEmpresa(
+          await this.rotinasEmpresaService.createRotinaEmpresa(
             created.id,
             pilarEmpresa.id,
             { rotinaTemplateId: rotinaTemplate.id },

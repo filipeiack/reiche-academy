@@ -117,10 +117,16 @@
                             <!-- Senha -->
                             <div class="mb-3">
                             @if (!isEditMode) {
-                                <label class="form-label" for="senha">{{ "AUTH.PASSWORD" | translate }}
-                                    <span class="text-danger">*</span></label>
+                                <label class="form-label" for="senha">
+                                    {{ "AUTH.PASSWORD" | translate }}
+                                    <span class="text-danger">*</span>
+                                </label>
                                 <input type="password" class="form-control" [class.is-invalid]="isFieldInvalid('senha')"
-                                    id="senha" formControlName="senha" placeholder="Mínimo 6 caracteres" />
+                                    id="senha" formControlName="senha" placeholder="Ex: Senha123@" />
+                                <small class="text-muted d-block mt-1">
+                                    <i class="feather icon-info"></i>
+                                    Mín. 8 caracteres com maiúscula, minúscula, número e especial (&#64;$!%*?&)
+                                </small>
                                 @if (isFieldInvalid('senha')) {
                                 <div class="invalid-feedback d-block">
                                     {{ getFieldError("senha") }}
@@ -129,15 +135,18 @@
                             
                             } @else {
                             <!-- Senha (modo edição - opcional) -->
-                                <label class="form-label" for="senhaEdit">{{ "AUTH.PASSWORD" | translate }}
-                                    <span class="text-muted">({{ "COMMON.OPTIONAL" | translate }})</span></label>
+                                <label class="form-label" for="senhaEdit">
+                                    {{ "AUTH.PASSWORD" | translate }}
+                                    <span class="text-muted">({{ "COMMON.OPTIONAL" | translate }})</span>
+                                </label>
                                 <div class="input-group">
                                     <input [type]="showPassword ? 'text' : 'password'" class="form-control"
                                         [class.is-invalid]="isFieldInvalid('senha')" id="senhaEdit" formControlName="senha"
                                         placeholder="Deixe em branco para manter a senha atual" />
                                 </div>
                                 <small class="form-text text-muted d-block mt-1">
-                                    Deixe em branco para manter a senha atual. Mínimo 6 caracteres.
+                                    <i class="feather icon-info"></i>
+                                    Deixe em branco para manter a senha atual. Se preencher: mín. 8 caracteres com maiúscula, minúscula, número e especial (&#64;$!%*?&)
                                 </small>
                                 @if (isFieldInvalid('senha')) {
                                 <div class="invalid-feedback d-block">
@@ -277,35 +286,64 @@
                     <h3 class="card-title">{{ "COMMON.INSTRUCTIONS" | translate }}</h3>
                 </div>
                 <div class="card-body">
-                    <p class="text-muted mb-2">
+                    <p class="text-muted mb-3">
                         @if (isEditMode) {
-                        {{ 'USERS.INFO.EDIT' | translate }}
+                        Atualize as informações do usuário conforme necessário. Campos obrigatórios estão marcados com *.
                         } @else {
-                        {{ 'USERS.INFO.CREATE' | translate }}
+                        Preencha as informações para criar um novo usuário no sistema. Campos obrigatórios estão marcados com *.
                         }
                     </p>
 
                     <hr class="my-3">
                     
-                    <h6 class="mb-2">{{ 'USERS.INFO.PROFILES_TITLE' | translate }}</h6>
-                    <ul class="small text-muted mb-2">
-                        <li><strong>{{ 'USERS.INFO.ADMIN' | translate }}:</strong> {{ 'USERS.INFO.ADMIN_DESC' | translate }}</li>
-                        <li><strong>{{ 'USERS.INFO.MANAGER' | translate }}:</strong> {{ 'USERS.INFO.MANAGER_DESC' | translate }}</li>
-                        <li><strong>{{ 'USERS.INFO.COLLABORATOR' | translate }}:</strong> {{ 'USERS.INFO.COLLABORATOR_DESC' | translate }}</li>
-                        <li><strong>{{ 'USERS.INFO.READONLY' | translate }}:</strong> {{ 'USERS.INFO.READONLY_DESC' | translate }}</li>
+                    <h6 class="mb-2">
+                        <i class="feather icon-shield me-1"></i>
+                        Perfis de Acesso
+                    </h6>
+                    <ul class="small text-muted mb-3">
+                        <li><strong>Administrador:</strong> Acesso completo ao sistema, gerencia todas as empresas e usuários</li>
+                        <li><strong>Consultor:</strong> Pode visualizar e editar dados de diagnósticos em múltiplas empresas</li>
+                        <li><strong>Gestor:</strong> Gerencia dados completos da sua empresa, incluindo usuários e pilares</li>
+                        <li><strong>Colaborador:</strong> Pode visualizar e editar informações básicas da empresa</li>
+                        <li><strong>Leitura:</strong> Apenas visualização, sem permissão de edição</li>
                     </ul>
                     
-                    <h6 class="mb-2 mt-3">{{ 'USERS.INFO.FIELDS_GUIDE' | translate }}</h6>
-                    <ul class="small text-muted mb-2">
-                        <li><strong>{{ 'USERS.INFO.AVATAR' | translate }}:</strong> {{ 'USERS.INFO.AVATAR_TIP' | translate }}</li>
-                        <li><strong>{{ 'USERS.INFO.PASSWORD' | translate }}:</strong> {{ 'USERS.INFO.PASSWORD_TIP' | translate }}</li>
-                        <li><strong>{{ 'USERS.INFO.COMPANY' | translate }}:</strong> {{ 'USERS.INFO.COMPANY_TIP' | translate }}</li>
+                    <h6 class="mb-2 mt-3">
+                        <i class="feather icon-key me-1"></i>
+                        Requisitos de Senha
+                    </h6>
+                    <div class="alert alert-info p-2 mb-3">
+                        <small>
+                            <strong>A senha deve conter no mínimo:</strong>
+                            <ul class="mb-1 mt-2">
+                                <li>8 caracteres</li>
+                                <li>1 letra maiúscula (A-Z)</li>
+                                <li>1 letra minúscula (a-z)</li>
+                                <li>1 número (0-9)</li>
+                                <li>1 caractere especial (&#64;$!%*?&)</li>
+                            </ul>
+                            <strong>Exemplos válidos:</strong> <code>Segura$99</code>
+                        </small>
+                    </div>
+                    
+                    <h6 class="mb-2 mt-3">
+                        <i class="feather icon-info me-1"></i>
+                        Dicas Importantes
+                    </h6>
+                    <ul class="small text-muted mb-3">
+                        <li><strong>Avatar:</strong> Clique em "Upload" para adicionar uma foto do perfil (JPG, PNG ou WebP até 5MB)</li>
+                        @if (isEditMode) {
+                        <li><strong>Alterar Senha:</strong> Deixe o campo em branco para manter a senha atual</li>
+                        }
+                        <li><strong>Empresa:</strong> Administradores não são vinculados a empresas específicas e podem acessar todas</li>
+                        <li><strong>Telefone:</strong> Formato automático aplicado durante digitação</li>
                     </ul>
                     
                     <div class="alert alert-warning p-2 mb-0">
                         <small>
-                            <strong>{{ 'USERS.INFO.SECURITY' | translate }}:</strong>
-                            {{ 'USERS.INFO.SECURITY_DESC' | translate }}
+                            <i class="feather icon-alert-triangle me-1"></i>
+                            <strong>Segurança:</strong>
+                            Senhas são criptografadas e nunca são exibidas no sistema. Use senhas fortes e únicas para cada usuário.
                         </small>
                     </div>
                 </div>

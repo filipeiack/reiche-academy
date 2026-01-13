@@ -16,7 +16,10 @@
   --#{$prefix}box-shadow-sm: #{$box-shadow-sm};
   --#{$prefix}box-shadow-lg: #{$box-shadow-lg};
 
-
+  // Sobrescrever cores sutis do Bootstrap com as cores do sistema
+  --#{$prefix}danger-bg-subtle: #{mix($danger, $white, 30%)};
+  --#{$prefix}warning-bg-subtle: #{mix($warning, $white, 30%)};
+  --#{$prefix}success-bg-subtle: #{mix($success, $white, 30%)};
 
   --#{$prefix}sidebar-box-shadow-color: #{$sidebar-box-shadow-color};
   --#{$prefix}sidebar-color: #{$sidebar-color};
@@ -38,7 +41,10 @@
   --#{$prefix}box-shadow-sm: #{$box-shadow-sm-dark};
   --#{$prefix}box-shadow-lg: #{$box-shadow-lg-dark};
 
-
+  // Sobrescrever cores sutis do Bootstrap com as cores do sistema (modo escuro)
+  --#{$prefix}danger-bg-subtle: #{mix($danger, $black, 40%)};
+  --#{$prefix}warning-bg-subtle: #{mix($warning, $black, 40%)};
+  --#{$prefix}success-bg-subtle: #{mix($success, $black, 40%)};
 
   --#{$prefix}sidebar-box-shadow-color: #{$sidebar-box-shadow-color-dark};
   --#{$prefix}sidebar-color: #{$sidebar-color-dark};

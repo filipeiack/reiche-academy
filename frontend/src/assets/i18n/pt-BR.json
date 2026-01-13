@@ -190,7 +190,7 @@
     "EDIT": "Editar Pilar",
     "DETAILS": "Detalhes do Pilar",
     "PILAR": "Pilar",
-    "SEARCH_PLACEHOLDER": "Buscar por nome...",
+    "SEARCH_PLACEHOLDER": "Buscar por nome do pilar...",
     "NO_PILARES_FOUND": "Nenhum pilar encontrado",
     "ROTINAS_LINKED": "rotinas vinculadas",
     "EMPRESAS_USING": "empresas usando",
@@ -199,8 +199,8 @@
     "DEACTIVATE_TOOLTIP": "Desativar pilar",
     "REACTIVATE_TOOLTIP": "Reativar pilar",
     "FIELDS": {
-      "NAME": "Nome",
-      "DESCRIPTION": "Descrição",
+      "NAME": "Pilar",
+      "DESCRIPTION": "Explicação do Pilar",
       "ORDER": "Ordem",
       "TYPE": "Tipo",
       "CONFIGURATION": "Configuração",
@@ -278,7 +278,7 @@
     "DEACTIVATE_TOOLTIP": "Desativar rotina",
     "REACTIVATE_TOOLTIP": "Reativar rotina",
     "FIELDS": {
-      "NAME": "Nome",
+      "NAME": "Rotina",
       "DESCRIPTION": "Descrição",
       "ORDER": "Ordem",
       "PILAR": "Pilar",

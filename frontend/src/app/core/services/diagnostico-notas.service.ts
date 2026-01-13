@@ -1,7 +1,8 @@
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { environment } from '../../../environments/environment';
+import { RotinasEmpresaService, RotinaEmpresa as RotinaEmpresaBase } from './rotinas-empresa.service';
 
 export interface NotaRotina {
   id: string;
@@ -20,16 +21,9 @@ export interface Rotina {
   descricao?: string;
 }
 
-export interface RotinaEmpresa {
-  id: string;
-  pilarEmpresaId: string;
-  rotinaTemplateId?: string | null;
-  nome: string;
-  ordem: number;
-  observacao?: string;
-  ativo: boolean;
-  rotinaTemplate?: Rotina;
+export interface RotinaEmpresa extends RotinaEmpresaBase {
   notas: NotaRotina[];
+  rotinaTemplate?: Rotina;
 }
 
 export interface Pilar {
@@ -68,10 +62,6 @@ export interface VincularRotinaDto {
   ordem?: number;
 }
 
-export interface ReordenarRotinasDto {
-  ordens: Array<{ id: string; ordem: number }>;
-}
-
 export interface MediaPilar {
   pilarEmpresaId: string;
   pilarId: string;
@@ -102,8 +92,8 @@ export interface HistoricoEvolucao {
 })
 export class DiagnosticoNotasService {
   private apiUrl = environment.apiUrl;
-
-  constructor(private http: HttpClient) {}
+  private http = inject(HttpClient);
+  private rotinasEmpresaService = inject(RotinasEmpresaService);
 
   /**
    * Buscar estrutura completa de diagnóstico de uma empresa
@@ -128,11 +118,10 @@ export class DiagnosticoNotasService {
 
   /**
    * Listar rotinas vinculadas a um pilar da empresa
+   * @deprecated Use RotinasEmpresaService.listarRotinas() diretamente
    */
   listarRotinas(empresaId: string, pilarEmpresaId: string): Observable<RotinaEmpresa[]> {
-    return this.http.get<RotinaEmpresa[]>(
-      `${this.apiUrl}/empresas/${empresaId}/pilares/${pilarEmpresaId}/rotinas`
-    );
+    return this.rotinasEmpresaService.listarRotinas(empresaId, pilarEmpresaId) as Observable<RotinaEmpresa[]>;
   }
 
   /**
@@ -151,25 +140,22 @@ export class DiagnosticoNotasService {
 
   /**
    * Remover uma rotina de um pilar da empresa
+   * @deprecated Use RotinasEmpresaService.removerRotina() diretamente
    */
-  removerRotina(empresaId: string, rotinaEmpresaId: string): Observable<{ message: string }> {
-    return this.http.delete<{ message: string }>(
-      `${this.apiUrl}/empresas/${empresaId}/pilares/rotinas/${rotinaEmpresaId}`
-    );
+  removerRotina(empresaId: string, pilarEmpresaId: string, rotinaEmpresaId: string): Observable<{ message: string }> {
+    return this.rotinasEmpresaService.removerRotina(empresaId, pilarEmpresaId, rotinaEmpresaId) as Observable<{ message: string }>;
   }
 
   /**
    * Reordenar rotinas de um pilar da empresa
+   * @deprecated Use RotinasEmpresaService.reordenarRotinas() diretamente
    */
   reordenarRotinas(
     empresaId: string,
     pilarEmpresaId: string,
-    dto: ReordenarRotinasDto
-  ): Observable<{ message: string }> {
-    return this.http.patch<{ message: string }>(
-      `${this.apiUrl}/empresas/${empresaId}/pilares/${pilarEmpresaId}/rotinas/reordenar`,
-      dto
-    );
+    ordens: Array<{ id: string; ordem: number }>
+  ): Observable<RotinaEmpresa[]> {
+    return this.rotinasEmpresaService.reordenarRotinas(empresaId, pilarEmpresaId, ordens) as Observable<RotinaEmpresa[]>;
   }
 
   /**

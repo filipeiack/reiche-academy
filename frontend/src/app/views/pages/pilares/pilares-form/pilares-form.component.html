@@ -42,7 +42,9 @@
                                 {{ 'PILARES.FIELDS.NAME' | translate }} <span class="text-danger">*</span>
                             </label>
                             <input type="text" class="form-control" id="nome" formControlName="nome"
-                                [class.is-invalid]="isFieldInvalid('nome')" placeholder="{{ 'PILARES.PLACEHOLDERS.NAME' | translate }}">
+                                [class.is-invalid]="isFieldInvalid('nome')" placeholder="{{ 'PILARES.PLACEHOLDERS.NAME' | translate }}"
+                                maxlength="60">
+                            <small class="text-muted">Máximo 60 caracteres</small>
                             @if (isFieldInvalid('nome')) {
                             <div class="invalid-feedback">
                                 {{ getFieldError('nome') }}
@@ -122,7 +124,7 @@
             </form>
         </div>
 
-        <div class="col-md-4">
+        <!-- <div class="col-md-4">
             <div class="card">
                 <div class="card-header">
                     <h3 class="card-title">{{ "COMMON.INSTRUCTIONS" | translate }}</h3>
@@ -147,7 +149,7 @@
                     </ul>
                 </div>
             </div>
-        </div>
+        </div> -->
     </div>
     }
 </div>

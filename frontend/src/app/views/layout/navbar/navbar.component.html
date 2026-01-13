@@ -10,15 +10,15 @@
     <div class="empresa-selector-wrapper">
       @if (isAdmin) {
       <!-- Admin: combo para selecionar empresa -->
-      <ng-select data-testid="empresa-select" id="empresaNavbarSelect" [items]="empresas" bindLabel="nome" bindValue="id"
-        [(ngModel)]="selectedEmpresaId" (change)="onEmpresaChange($event)" placeholder="Selecione uma empresa..."
-        [clearable]="false" class="empresa-navbar-select">
+      <ng-select data-testid="empresa-select" id="empresaNavbarSelect" [items]="empresas" bindLabel="nome"
+        bindValue="id" [(ngModel)]="selectedEmpresaId" (change)="onEmpresaChange($event)"
+        placeholder="Selecione uma empresa..." [clearable]="true" class="empresa-navbar-select">
         <ng-template ng-option-tmp let-item="item">
           <div>
             <strong>{{ item.nome }}</strong>
             @if (item.cnpj) {
             <br />
-            <small class="text-muted">{{ item.cnpj }}</small>
+            <small class="text-muted">{{ item.cnpj | cnpj }}</small>
             }
           </div>
         </ng-template>

@@ -11,7 +11,7 @@
 <div class="mb-2">
     <ng-select [items]="pilaresDisponiveis" bindLabel="nome" [searchable]="true" [clearable]="true"
         [addTag]="addPilarTag" placeholder="Busque por nome de pilar ou digite para criar novo..."
-        (change)="associarPilar($event)">
+        (change)="onPilarSelected($event)">
         <ng-template ng-option-tmp let-item="item">
             <div class="d-flex align-items-center">
                 <i class="feather icon-layers me-2"></i>
@@ -26,7 +26,7 @@
     </ng-select>
     <small class="text-muted">
         <i class="feather icon-info me-1"></i>
-        Arraste os pilares para reordenar, adicione novos pilares ou remova os existentes.
+        Arraste os pilares para reordenar. Nome do pilar: 2 a 60 caracteres.
     </small>
 </div>
 }

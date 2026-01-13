@@ -221,7 +221,7 @@ export class RotinasPilarModalComponent implements OnInit {
       await this.diagnosticoService.reordenarRotinas(
         this.empresaId,
         this.pilarEmpresaId,
-        { ordens }
+        ordens
       ).toPromise();
       
       this.showToast('Ordem das rotinas atualizada com sucesso.', 'success');
@@ -254,6 +254,7 @@ export class RotinasPilarModalComponent implements OnInit {
     try {
       await this.diagnosticoService.removerRotina(
         this.empresaId,
+        this.pilarEmpresaId,
         rotinaEmpresa.id
       ).toPromise();
 

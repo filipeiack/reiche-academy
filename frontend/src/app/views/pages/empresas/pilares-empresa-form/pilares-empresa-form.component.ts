@@ -3,8 +3,8 @@ import { CommonModule } from '@angular/common';
 import { CdkDragDrop, DragDropModule, moveItemInArray } from '@angular/cdk/drag-drop';
 import { NgSelectModule } from '@ng-select/ng-select';
 import Swal from 'sweetalert2';
-import { PilaresService, Pilar, CreatePilarDto } from '../../../../core/services/pilares.service';
-import { PilaresEmpresaService, PilarEmpresa } from '../../../../core/services/pilares-empresa.service';
+import { PilaresService, Pilar } from '../../../../core/services/pilares.service';
+import { PilaresEmpresaService, PilarEmpresa, CreatePilarEmpresaDto } from '../../../../core/services/pilares-empresa.service';
 
 @Component({
   selector: 'app-pilares-empresa-form',
@@ -35,16 +35,34 @@ export class PilaresEmpresaFormComponent implements OnInit {
     }
   }
 
-  addPilarTag = (nome: string): Pilar | Promise<Pilar> => {
-    const novoPilar: CreatePilarDto = {
+  addPilarTag = (nome: string): PilarEmpresa | Promise<PilarEmpresa> => {
+    if (!this.empresaId) {
+      this.showToast('ID da empresa não informado', 'error');
+      return Promise.reject('ID da empresa não informado');
+    }
+
+    // Validar limite de 60 caracteres
+    if (nome.length > 60) {
+      this.showToast('O nome do pilar deve ter no máximo 60 caracteres', 'error');
+      return Promise.reject('Nome muito longo');
+    }
+
+    if (nome.length < 2) {
+      this.showToast('O nome do pilar deve ter no mínimo 2 caracteres', 'error');
+      return Promise.reject('Nome muito curto');
+    }
+
+    const novoPilar: CreatePilarEmpresaDto = {
       nome: nome
     };
 
     return new Promise((resolve, reject) => {
-      this.pilaresService.create(novoPilar).subscribe({
-        next: (pilar) => {
+      this.pilaresEmpresaService.criarPilarCustomizado(this.empresaId, novoPilar).subscribe({
+        next: (pilarEmpresa) => {
           this.showToast(`Pilar "${nome}" criado com sucesso!`, 'success');
-          resolve(pilar);
+          this.pilaresAssociados.push(pilarEmpresa);
+          this.pilaresChanged.emit();
+          resolve(pilarEmpresa);
         },
         error: (err) => {
           this.showToast(err?.error?.message || 'Erro ao criar pilar', 'error');
@@ -100,6 +118,22 @@ export class PilaresEmpresaFormComponent implements OnInit {
         this.showToast(err?.error?.message || 'Erro ao associar pilar', 'error');
       }
     });
+  }
+
+  /**
+   * Método chamado quando um item é selecionado no ng-select
+   * Verifica se é um Pilar (template) ou PilarEmpresa (criado via addTag)
+   */
+  onPilarSelected(item: Pilar | PilarEmpresa | null): void {
+    if (!item) return;
+    
+    // Se tem pilarTemplateId, é um PilarEmpresa criado via addTag, não precisa vincular
+    if ('pilarTemplateId' in item) {
+      return;
+    }
+    
+    // É um Pilar template, precisa vincular
+    this.associarPilar(item as Pilar);
   }
 
   removePillarAssociation(pilarEmpresa: PilarEmpresa): void {
