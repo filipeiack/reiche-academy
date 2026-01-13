@@ -35,6 +35,11 @@ export interface CreatePilarEmpresaDto {
   nome?: string; // Nome customizado (se não usar template)
 }
 
+export interface UpdatePilarEmpresaDto {
+  nome?: string;
+  responsavelId?: string;
+}
+
 @Injectable({ providedIn: 'root' })
 export class PilaresEmpresaService {
   private http = inject(HttpClient);
@@ -99,6 +104,16 @@ export class PilaresEmpresaService {
     return this.http.patch<PilarEmpresa>(
       `${this.API_URL}/${empresaId}/pilares/${pilarEmpresaId}/responsavel`, 
       { responsavelId }
+    );
+  }
+
+  /**
+   * Atualizar pilar da empresa (nome e/ou responsável)
+   */
+  updatePilarEmpresa(empresaId: string, pilarEmpresaId: string, dto: UpdatePilarEmpresaDto): Observable<PilarEmpresa> {
+    return this.http.patch<PilarEmpresa>(
+      `${this.API_URL}/${empresaId}/pilares/${pilarEmpresaId}`,
+      dto
     );
   }
 }

@@ -17,21 +17,36 @@
 @if (!loading && !error && selectedEmpresaId && medias.length > 0) {
 <!-- Tabela de Pilares com Médias -->
 <div class="card mb-2">
-    <div class="card-body">
-        <div class="table-responsive" style="max-width: 80%; margin: 0 auto;">
-            <table class="table table-striped">
+    <div class="card-body py-2">
+        <div class="table-responsive" style="max-width: 90%; margin: 0 auto;">
+            <table class="table table-striped table-sm mb-0">
                 <thead>
                     <tr>
-                        <th>{{ 'PILARES.PILAR' | translate }}</th>
-                        <th sortable="mediaAtual" (sort)="onSort($event)" class="text-center">{{ 'EVOLUCAO.MEDIA_ATUAL' | translate }}</th>
+                        <th class="py-2 w-100">{{ 'PILARES.PILAR' | translate }}</th>
+                        <th sortable="mediaAtual" [direction]="sortColumn === 'mediaAtual' ? sortDirection : ''" (sort)="onSort($event)" class="text-center py-2">{{ 'EVOLUCAO.MEDIA_ATUAL'
+                            | translate }}</th>
+                        <th class="text-center py-2">Última Atualização</th>
                     </tr>
                 </thead>
                 <tbody>
                     @for (media of getSortedMedias(); track media.pilarEmpresaId) {
                     <tr>
-                        <td>{{ media.pilarNome }}</td>
-                        <td class="text-center">
+                        <td class="py-2">
+                            <i class="feather icon-layers me-1"></i>
+                            {{ media.pilarNome.toUpperCase() }}
+                        </td>
+                        <td class="text-center py-2">
                             <app-media-badge [media]="media.mediaAtual" [justMedia]="true"></app-media-badge>
+                        </td>
+                        <td class="text-center py-2">
+                            <small class="text-muted">
+                                @if (media.ultimaAtualizacao) {
+                                    <i class="feather icon-clock me-1"></i>
+                                    {{ formatarData(media.ultimaAtualizacao) }}
+                                } @else {
+                                    <span class="text-muted">-</span>
+                                }
+                            </small>
                         </td>
                     </tr>
                     }

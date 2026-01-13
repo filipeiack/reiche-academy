@@ -69,6 +69,7 @@ export interface MediaPilar {
   mediaAtual: number;
   totalRotinasAvaliadas: number;
   totalRotinas: number;
+  ultimaAtualizacao?: string | null;
 }
 
 export interface CongelarMediasResponse {

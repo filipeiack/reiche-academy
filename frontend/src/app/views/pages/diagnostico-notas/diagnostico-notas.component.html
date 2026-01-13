@@ -67,9 +67,10 @@
                 <div class="d-flex align-items-center gap-2">
                     <button class="btn btn-link p-0 d-flex align-items-center" type="button" (click)="togglePilar(i)">
                         <i [ngClass]="pilarExpandido[i] ? 'feather icon-chevron-up' : 'feather icon-chevron-down'"></i>
-                        <span class="fw-bold text-muted">{{ ('PILARES.PILAR' | translate).toUpperCase() }} {{
-                            pilar.nome.toUpperCase()
-                            }}</span>
+                        <span class="fw-bold text-muted">
+                            {{ ('PILARES.PILAR' | translate).toUpperCase() }}
+                            {{ pilar.nome.toUpperCase() }}
+                        </span>
                     </button>
                 </div>
 
@@ -94,31 +95,31 @@
                     }
 
                     <div ngbDropdown class="w-30px">
-                    @if (pilarExpandido[i] && !isReadOnlyPerfil) {
-                    <div ngbDropdown class="mb-2">
-                        <a class="no-dropdown-toggle-icon btn btn-link" ngbDropdownToggle id="dropdownMenuButton">
-                            <i class="feather icon-more-horizontal"></i>
-                        </a>
-                        <div ngbDropdownMenu aria-labelledby="dropdownMenuButton">
-                            <a ngbDropdownItem class="d-flex align-items-center gap-1"
-                                (click)="abrirModalResponsavel(pilar); $event.preventDefault()">
-                                <i class="feather icon-user icon-sm"></i>
-                                <span class="">Definir Responsável</span>
+                        @if (pilarExpandido[i] && !isReadOnlyPerfil) {
+                        <div ngbDropdown class="mb-2">
+                            <a class="no-dropdown-toggle-icon btn btn-link" ngbDropdownToggle id="dropdownMenuButton">
+                                <i class="feather icon-more-horizontal"></i>
                             </a>
-                            <a ngbDropdownItem class="d-flex align-items-center gap-1"
-                                (click)="abrirModalNovaRotina(pilar); $event.preventDefault()">
-                                <i class="feather icon-plus-circle icon-sm"></i>
-                                <span class="">Adicionar Rotina</span>
-                            </a>
-                            <a ngbDropdownItem class="d-flex align-items-center gap-1"
-                                (click)="abrirModalEditarRotinas(pilar); $event.preventDefault()">
-                                <i class="feather icon-edit icon-sm"></i>
-                                <span class="">Gerenciar Rotinas</span>
-                            </a>
+                            <div ngbDropdownMenu aria-labelledby="dropdownMenuButton">
+                                <a ngbDropdownItem class="d-flex align-items-center gap-1"
+                                    (click)="abrirModalResponsavel(pilar); $event.preventDefault()">
+                                    <i class="feather icon-user icon-sm"></i>
+                                    <span class="">Definir Responsável</span>
+                                </a>
+                                <a ngbDropdownItem class="d-flex align-items-center gap-1"
+                                    (click)="abrirModalNovaRotina(pilar); $event.preventDefault()">
+                                    <i class="feather icon-plus-circle icon-sm"></i>
+                                    <span class="">Adicionar Rotina</span>
+                                </a>
+                                <a ngbDropdownItem class="d-flex align-items-center gap-1"
+                                    (click)="abrirModalEditarRotinas(pilar); $event.preventDefault()">
+                                    <i class="feather icon-edit icon-sm"></i>
+                                    <span class="">Gerenciar Rotinas</span>
+                                </a>
 
+                            </div>
                         </div>
-                    </div>
-                    }
+                        }
                     </div>
                 </div>
             </div>

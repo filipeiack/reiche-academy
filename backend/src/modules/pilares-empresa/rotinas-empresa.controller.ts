@@ -14,6 +14,7 @@ import { ApiTags, ApiOperation, ApiBearerAuth, ApiResponse } from '@nestjs/swagg
 import { RotinasEmpresaService } from './rotinas-empresa.service';
 import { ReordenarRotinasDto } from './dto/reordenar-rotinas.dto';
 import { CreateRotinaEmpresaDto } from '../rotinas/dto/create-rotina-empresa.dto';
+import { UpdateRotinaEmpresaDto } from '../rotinas/dto/update-rotina-empresa.dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../auth/guards/roles.guard';
 import { Roles } from '../auth/decorators/roles.decorator';
@@ -67,6 +68,23 @@ export class RotinasEmpresaController {
     @Request() req: ExpressRequest & { user: any },
   ) {
     return this.rotinasEmpresaService.deleteRotinaEmpresa(empresaId, rotinaEmpresaId, req.user);
+  }
+
+  @Patch(':rotinaEmpresaId')
+  @Roles('ADMINISTRADOR', 'GESTOR')
+  @ApiOperation({ summary: 'Atualizar nome da rotina da empresa' })
+  @ApiResponse({ status: 200, description: 'Rotina atualizada com sucesso' })
+  @ApiResponse({ status: 403, description: 'Acesso negado (multi-tenant)' })
+  @ApiResponse({ status: 404, description: 'Rotina não encontrada' })
+  @ApiResponse({ status: 409, description: 'Nome duplicado para este pilar' })
+  update(
+    @Param('empresaId') empresaId: string,
+    @Param('pilarEmpresaId') pilarEmpresaId: string,
+    @Param('rotinaEmpresaId') rotinaEmpresaId: string,
+    @Body() dto: UpdateRotinaEmpresaDto,
+    @Request() req: ExpressRequest & { user: any },
+  ) {
+    return this.rotinasEmpresaService.updateRotinaEmpresa(empresaId, rotinaEmpresaId, dto, req.user);
   }
 
   @Patch('reordenar')

@@ -228,6 +228,15 @@ export class DiagnosticosService {
         const soma = notasValidas.reduce((acc, nota) => acc + nota, 0);
         const mediaAtual = soma / notasValidas.length;
 
+        // Encontrar a data de atualização mais recente entre todas as notas do pilar
+        const datasAtualizacao = pilar.rotinasEmpresa
+          .map((re) => re.notas[0]?.updatedAt)
+          .filter((data) => data !== null && data !== undefined);
+        
+        const ultimaAtualizacao = datasAtualizacao.length > 0
+          ? new Date(Math.max(...datasAtualizacao.map(d => new Date(d).getTime())))
+          : null;
+
         return {
           pilarEmpresaId: pilar.id,
           pilarTemplateId: pilar.pilarTemplateId,
@@ -235,6 +244,7 @@ export class DiagnosticosService {
           mediaAtual: Number(mediaAtual.toFixed(2)),
           totalRotinasAvaliadas: notasValidas.length,
           totalRotinas: pilar.rotinasEmpresa.length,
+          ultimaAtualizacao,
         };
       })
       .filter((media) => media !== null);

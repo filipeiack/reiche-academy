@@ -55,8 +55,8 @@ export class DiagnosticoEvolucaoComponent implements OnInit, OnDestroy {
   canCongelar = false; // ADMINISTRADOR, CONSULTOR, GESTOR
 
   // Ordenação
-  sortColumn: string = '';
-  sortDirection: 'asc' | 'desc' = 'asc';
+  sortColumn: string = 'mediaAtual';
+  sortDirection: 'asc' | 'desc' = 'desc';
 
   // Paleta de tons de cinza para o gráfico de barras (do claro ao escuro)
   private readonly GRAY_COLORS = [
@@ -260,7 +260,7 @@ renderBarChart(): void {
     });
 
     // Labels são os nomes dos pilares
-    const labels = this.historico.map(pilar => pilar.pilarNome);
+    const labels = this.historico.map(pilar => pilar.pilarNome.toUpperCase());
 
     // Criar dataset para cada data
     const datasets = sortedDates.map((date, index) => {
@@ -338,7 +338,7 @@ renderBarChart(): void {
           x: {
             title: {
               display: true,
-              text: 'Pilar'
+              text: 'PILARES'
             }
           }
         },
@@ -453,6 +453,22 @@ renderBarChart(): void {
     });
     
     return sorted;
+  }
+
+  /**
+   * Formata data para exibição (dd/MM/yyyy HH:mm)
+   */
+  formatarData(data: string | null | undefined): string {
+    if (!data) return '-';
+    
+    const date = new Date(data);
+    const dia = date.getDate().toString().padStart(2, '0');
+    const mes = (date.getMonth() + 1).toString().padStart(2, '0');
+    const ano = date.getFullYear();
+    const hora = date.getHours().toString().padStart(2, '0');
+    const minuto = date.getMinutes().toString().padStart(2, '0');
+    
+    return `${dia}/${mes}/${ano} ${hora}:${minuto}`;
   }
 
   private showToast(title: string, icon: 'success' | 'error' | 'info' | 'warning', timer: number = 3000): void {

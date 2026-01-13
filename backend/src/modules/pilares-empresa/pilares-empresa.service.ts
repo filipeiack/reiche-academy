@@ -195,6 +195,87 @@ export class PilaresEmpresaService {
   }
 
   /**
+   * Atualizar nome do pilar da empresa
+   */
+  async updatePilarEmpresa(
+    empresaId: string,
+    pilarEmpresaId: string,
+    dto: UpdatePilarEmpresaDto,
+    user: RequestUser,
+  ) {
+    this.validateTenantAccess(empresaId, user);
+
+    // Buscar PilarEmpresa para validar existência e pertencimento à empresa
+    const pilarEmpresa = await this.prisma.pilarEmpresa.findUnique({
+      where: { id: pilarEmpresaId },
+    });
+
+    if (!pilarEmpresa) {
+      throw new NotFoundException('Vínculo pilar-empresa não encontrado');
+    }
+
+    // Validar que o PilarEmpresa pertence à empresa correta
+    if (pilarEmpresa.empresaId !== empresaId) {
+      throw new ForbiddenException(
+        'Este pilar não pertence à empresa especificada',
+      );
+    }
+
+    // Se nome fornecido, validar unicidade por empresa
+    if (dto.nome) {
+      const nomeExistente = await this.prisma.pilarEmpresa.findFirst({
+        where: {
+          empresaId,
+          nome: dto.nome,
+          ativo: true,
+          id: { not: pilarEmpresaId }, // Excluir o próprio registro
+        },
+      });
+
+      if (nomeExistente) {
+        throw new ConflictException(
+          `Já existe um pilar com o nome "${dto.nome}" nesta empresa`,
+        );
+      }
+    }
+
+    // Atualizar pilar
+    const updated = await this.prisma.pilarEmpresa.update({
+      where: { id: pilarEmpresaId },
+      data: {
+        nome: dto.nome,
+        responsavelId: dto.responsavelId,
+        updatedBy: user.id,
+      },
+      include: {
+        pilarTemplate: true,
+        responsavel: true,
+      },
+    });
+
+    // Auditoria
+    const userRecord = await this.prisma.usuario.findUnique({ where: { id: user.id } });
+    await this.audit.log({
+      usuarioId: user.id,
+      usuarioNome: userRecord?.nome ?? '',
+      usuarioEmail: userRecord?.email ?? '',
+      entidade: 'pilares_empresa',
+      entidadeId: pilarEmpresaId,
+      acao: 'UPDATE',
+      dadosAntes: { 
+        nome: pilarEmpresa.nome,
+        responsavelId: pilarEmpresa.responsavelId 
+      },
+      dadosDepois: { 
+        nome: dto.nome ?? pilarEmpresa.nome,
+        responsavelId: dto.responsavelId ?? pilarEmpresa.responsavelId
+      },
+    });
+
+    return updated;
+  }
+
+  /**
    * Vincular múltiplos pilares templates a uma empresa
    * Adição incremental: ignora pilares já vinculados
    * Snapshot Pattern: Cria pilares E suas rotinas automaticamente

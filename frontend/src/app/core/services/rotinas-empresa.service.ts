@@ -22,6 +22,11 @@ export interface CreateRotinaEmpresaDto {
   nome?: string; // Nome customizado (se não usar template)
 }
 
+export interface UpdateRotinaEmpresaDto {
+  nome?: string;
+  observacao?: string;
+}
+
 export interface ReordenarRotinasDto {
   ordens: Array<{
     id: string;
@@ -64,6 +69,16 @@ export class RotinasEmpresaService {
       message: string;
       rotinaEmpresa: RotinaEmpresa;
     }>(`${this.API_URL}/${empresaId}/pilares/${pilarEmpresaId}/rotinas/${rotinaEmpresaId}`);
+  }
+
+  /**
+   * Atualizar rotina da empresa (nome e/ou observação)
+   */
+  updateRotinaEmpresa(empresaId: string, pilarEmpresaId: string, rotinaEmpresaId: string, dto: UpdateRotinaEmpresaDto): Observable<RotinaEmpresa> {
+    return this.http.patch<RotinaEmpresa>(
+      `${this.API_URL}/${empresaId}/pilares/${pilarEmpresaId}/rotinas/${rotinaEmpresaId}`,
+      dto
+    );
   }
 
   /**

@@ -16,6 +16,7 @@ import { ReordenarPilaresDto } from './dto/reordenar-pilares.dto';
 import { VincularPilaresDto } from './dto/vincular-pilares.dto';
 import { DefinirResponsavelDto } from './dto/definir-responsavel.dto';
 import { CreatePilarEmpresaDto } from './dto/create-pilar-empresa.dto';
+import { UpdatePilarEmpresaDto } from './dto/update-pilar-empresa.dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../auth/guards/roles.guard';
 import { Roles } from '../auth/decorators/roles.decorator';
@@ -112,6 +113,27 @@ export class PilaresEmpresaController {
       empresaId, 
       pilarEmpresaId, 
       dto.responsavelId ?? null, 
+      req.user
+    );
+  }
+
+  @Patch(':pilarEmpresaId')
+  @Roles('ADMINISTRADOR', 'GESTOR')
+  @ApiOperation({ summary: 'Atualizar nome do pilar da empresa' })
+  @ApiResponse({ status: 200, description: 'Pilar atualizado com sucesso' })
+  @ApiResponse({ status: 403, description: 'Acesso negado (multi-tenant)' })
+  @ApiResponse({ status: 404, description: 'Pilar não encontrado' })
+  @ApiResponse({ status: 409, description: 'Nome duplicado para esta empresa' })
+  updatePilarEmpresa(
+    @Param('empresaId') empresaId: string,
+    @Param('pilarEmpresaId') pilarEmpresaId: string,
+    @Body() dto: UpdatePilarEmpresaDto,
+    @Request() req: ExpressRequest & { user: any },
+  ) {
+    return this.pilaresEmpresaService.updatePilarEmpresa(
+      empresaId, 
+      pilarEmpresaId, 
+      dto, 
       req.user
     );
   }

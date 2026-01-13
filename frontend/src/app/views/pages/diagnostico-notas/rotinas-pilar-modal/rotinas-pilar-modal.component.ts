@@ -7,6 +7,7 @@ import { FormsModule } from '@angular/forms';
 import Swal from 'sweetalert2';
 import { DiagnosticoNotasService, RotinaEmpresa, PilarEmpresa } from '../../../../core/services/diagnostico-notas.service';
 import { RotinasService, Rotina } from '../../../../core/services/rotinas.service';
+import { RotinasEmpresaService } from '../../../../core/services/rotinas-empresa.service';
 import { HttpErrorResponse } from '@angular/common/http';
 import { NovaRotinaModalComponent } from '../nova-rotina-modal/nova-rotina-modal.component';
 import { TranslatePipe } from "../../../../core/pipes/translate.pipe";
@@ -67,7 +68,30 @@ import { TranslatePipe } from "../../../../core/pipes/translate.pipe";
                 <div class="d-flex align-items-center gap-2">
                   <i class="feather icon-menu drag-handle" cdkDragHandle ngbTooltip="Arrastar para reordenar"></i>
                   <span class="badge bg-secondary small">{{ rotinaEmpresa.ordem }}</span>
-                  <span class="flex-grow-1 small">{{ rotinaEmpresa.nome }}</span>
+                  
+                  @if (editandoRotinaId === rotinaEmpresa.id) {
+                    <input 
+                      type="text" 
+                      class="form-control form-control-sm flex-grow-1" 
+                      [(ngModel)]="nomeEditando"
+                      (keydown.enter)="salvarNomeRotina(rotinaEmpresa)"
+                      (keydown.escape)="cancelarEdicaoNome()"
+                      [maxlength]="200"
+                      autofocus
+                    />
+                    <button type="button" class="btn btn-sm btn-success" (click)="salvarNomeRotina(rotinaEmpresa)" title="Salvar">
+                      <i class="feather icon-check"></i>
+                    </button>
+                    <button type="button" class="btn btn-sm btn-secondary" (click)="cancelarEdicaoNome()" title="Cancelar">
+                      <i class="feather icon-x"></i>
+                    </button>
+                  } @else {
+                    <span class="flex-grow-1 small">{{ rotinaEmpresa.nome.toUpperCase() }}</span>
+                    <button type="button" class="btn btn-icon text-primary" (click)="iniciarEdicaoNome(rotinaEmpresa)" title="Editar nome">
+                      <i class="feather icon-edit-2"></i>
+                    </button>
+                  }
+                  
                   <button type="button" class="btn btn-icon text-danger"
                         (click)="confirmarRemocao(rotinaEmpresa)" title="Remover rotina">
                         <i class="feather icon-trash-2"></i>
@@ -145,6 +169,7 @@ export class RotinasPilarModalComponent implements OnInit {
   private modalService = inject(NgbModal);
   private diagnosticoService = inject(DiagnosticoNotasService);
   private rotinasService = inject(RotinasService);
+  private rotinasEmpresaService = inject(RotinasEmpresaService);
 
   @ViewChild('modalContent') modalContent!: TemplateRef<any>;
   @ViewChild(NovaRotinaModalComponent) novaRotinaModal!: NovaRotinaModalComponent;
@@ -160,6 +185,8 @@ export class RotinasPilarModalComponent implements OnInit {
   rotinasDisponiveis: Rotina[] = [];
   novaRotinaId: string | null = null;
   temAlteracoes = false;
+  editandoRotinaId: string | null = null;
+  nomeEditando: string = '';
 
   ngOnInit(): void {
     // Carregamento inicial será feito no open()
@@ -296,6 +323,67 @@ export class RotinasPilarModalComponent implements OnInit {
   async onRotinaCriada(): Promise<void> {
     await this.carregarDados();
     this.rotinasModificadas.emit();
+  }
+
+  /**
+   * Inicia edição do nome da rotina
+   */
+  iniciarEdicaoNome(rotinaEmpresa: RotinaEmpresa): void {
+    this.editandoRotinaId = rotinaEmpresa.id;
+    this.nomeEditando = rotinaEmpresa.nome;
+  }
+
+  /**
+   * Cancela edição do nome
+   */
+  cancelarEdicaoNome(): void {
+    this.editandoRotinaId = null;
+    this.nomeEditando = '';
+  }
+
+  /**
+   * Salva o novo nome da rotina
+   */
+  async salvarNomeRotina(rotinaEmpresa: RotinaEmpresa): Promise<void> {
+    const nomeNovo = this.nomeEditando.trim();
+
+    // Validações
+    if (nomeNovo.length < 2) {
+      this.showToast('O nome da rotina deve ter no mínimo 2 caracteres', 'error');
+      return;
+    }
+
+    if (nomeNovo.length > 200) {
+      this.showToast('O nome da rotina deve ter no máximo 200 caracteres', 'error');
+      return;
+    }
+
+    if (nomeNovo === rotinaEmpresa.nome) {
+      this.cancelarEdicaoNome();
+      return;
+    }
+
+    try {
+      const rotinaAtualizada = await this.rotinasEmpresaService.updateRotinaEmpresa(
+        this.empresaId,
+        this.pilarEmpresaId,
+        rotinaEmpresa.id,
+        { nome: nomeNovo }
+      ).toPromise();
+
+      this.showToast(`Nome da rotina atualizado para "${nomeNovo}"`, 'success');
+      
+      // Atualizar na lista local
+      const index = this.rotinasEmpresa.findIndex(r => r.id === rotinaEmpresa.id);
+      if (index !== -1 && rotinaAtualizada) {
+        this.rotinasEmpresa[index] = rotinaAtualizada as RotinaEmpresa;
+      }
+      
+      this.cancelarEdicaoNome();
+      this.rotinasModificadas.emit();
+    } catch (error: any) {
+      this.showToast(error?.error?.message || 'Erro ao atualizar nome da rotina', 'error');
+    }
   }
 
   private showToast(title: string, icon: 'success' | 'error' | 'info' | 'warning', timer: number = 3000): void {

@@ -42,7 +42,30 @@
             <div class="d-flex align-items-center gap-2">
                 <i class="feather icon-menu drag-handle" cdkDragHandle ngbTooltip="Arrastar para reordenar"></i>
                 <span class="badge bg-secondary small">{{ pilarEmpresa.ordem }}</span>
-                <span class="flex-grow-1 small">{{ pilarEmpresa.nome }}</span>
+                
+                @if (editandoPilarId === pilarEmpresa.id) {
+                    <input 
+                        type="text" 
+                        class="form-control form-control-sm flex-grow-1" 
+                        [(ngModel)]="nomeEditando"
+                        (keydown.enter)="salvarNomePilar(pilarEmpresa)"
+                        (keydown.escape)="cancelarEdicaoNome()"
+                        [maxlength]="60"
+                        autofocus
+                    />
+                    <button type="button" class="btn btn-sm btn-success" (click)="salvarNomePilar(pilarEmpresa)" title="Salvar">
+                        <i class="feather icon-check"></i>
+                    </button>
+                    <button type="button" class="btn btn-sm btn-secondary" (click)="cancelarEdicaoNome()" title="Cancelar">
+                        <i class="feather icon-x"></i>
+                    </button>
+                } @else {
+                    <span class="flex-grow-1 small">{{ pilarEmpresa.nome.toUpperCase() }}</span>
+                    <button type="button" class="btn btn-icon text-primary" (click)="iniciarEdicaoNome(pilarEmpresa)" title="Editar nome">
+                        <i class="feather icon-edit-2"></i>
+                    </button>
+                }
+                
                 <button type="button" class="btn btn-icon text-danger" (click)="removePillarAssociation(pilarEmpresa)"
                     title="Remover pilar">
                     <i class="feather icon-trash-2"></i>

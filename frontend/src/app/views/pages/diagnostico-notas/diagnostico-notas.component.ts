@@ -63,6 +63,7 @@ export class DiagnosticoNotasComponent implements OnInit, OnDestroy {
   error = '';
   
   private empresaContextSubscription?: Subscription;
+  private savedScrollPosition: number = 0;
 
   get isReadOnlyPerfil(): boolean {
     const user = this.authService.getCurrentUser();
@@ -74,6 +75,53 @@ export class DiagnosticoNotasComponent implements OnInit, OnDestroy {
   
   // Controle de accordion manual
   pilarExpandido: { [key: number]: boolean } = {};
+
+  /**
+   * Retorna a chave do sessionStorage para o estado de expansão
+   */
+  private getSessionStorageKey(): string {
+    return `diagnostico_pilares_expandidos_${this.selectedEmpresaId}`;
+  }
+
+  /**
+   * Salva o estado de expansão no sessionStorage
+   */
+  private saveExpandedState(): void {
+    if (!this.selectedEmpresaId) return;
+    try {
+      sessionStorage.setItem(this.getSessionStorageKey(), JSON.stringify(this.pilarExpandido));
+    } catch (error) {
+      console.warn('Erro ao salvar estado de expansão:', error);
+    }
+  }
+
+  /**
+   * Restaura o estado de expansão do sessionStorage
+   */
+  private restoreExpandedState(): void {
+    if (!this.selectedEmpresaId) return;
+    try {
+      const savedState = sessionStorage.getItem(this.getSessionStorageKey());
+      if (savedState) {
+        this.pilarExpandido = JSON.parse(savedState);
+      }
+    } catch (error) {
+      console.warn('Erro ao restaurar estado de expansão:', error);
+      this.pilarExpandido = {};
+    }
+  }
+
+  /**
+   * Limpa o estado de expansão do sessionStorage
+   */
+  private clearExpandedState(): void {
+    if (!this.selectedEmpresaId) return;
+    try {
+      sessionStorage.removeItem(this.getSessionStorageKey());
+    } catch (error) {
+      console.warn('Erro ao limpar estado de expansão:', error);
+    }
+  }
 
   // Auto-save
   private autoSaveSubject = new Subject<AutoSaveQueueItem>();
@@ -99,6 +147,11 @@ export class DiagnosticoNotasComponent implements OnInit, OnDestroy {
     // Subscrever às mudanças no contexto de empresa
     this.empresaContextSubscription = this.empresaContextService.selectedEmpresaId$.subscribe(empresaId => {
       if (this.isAdmin && empresaId !== this.selectedEmpresaId) {
+        // Limpar estado de expansão da empresa anterior
+        if (this.selectedEmpresaId) {
+          this.clearExpandedState();
+        }
+        
         this.selectedEmpresaId = empresaId;
         if (empresaId) {
           this.loadDiagnostico();
@@ -141,8 +194,13 @@ export class DiagnosticoNotasComponent implements OnInit, OnDestroy {
     }
   }
 
-  private loadDiagnostico(): void {
+  private loadDiagnostico(preserveScroll: boolean = false): void {
     if (!this.selectedEmpresaId) return;
+
+    // Salvar posição de scroll se solicitado
+    if (preserveScroll) {
+      this.savedScrollPosition = window.pageYOffset || document.documentElement.scrollTop;
+    }
 
     this.loading = true;
     this.error = '';
@@ -154,12 +212,31 @@ export class DiagnosticoNotasComponent implements OnInit, OnDestroy {
     this.diagnosticoService.getDiagnosticoByEmpresa(this.selectedEmpresaId).subscribe({
       next: (data) => {
         this.pilares = data;
-        // Inicializar todos como encolhidos
-        this.pilarExpandido = {};
-        data.forEach((_, index) => {
-          this.pilarExpandido[index] = false;
-        });
+        
+        // Restaurar estado de expansão salvo ou inicializar todos como encolhidos
+        const savedState = this.pilarExpandido;
+        this.restoreExpandedState();
+        
+        // Se não há estado salvo, inicializar todos como fechados
+        if (Object.keys(this.pilarExpandido).length === 0) {
+          this.pilarExpandido = {};
+          data.forEach((_, index) => {
+            this.pilarExpandido[index] = false;
+          });
+        }
+        
         this.loading = false;
+        
+        // Restaurar posição de scroll se foi salva
+        if (preserveScroll && this.savedScrollPosition > 0) {
+          setTimeout(() => {
+            window.scrollTo({
+              top: this.savedScrollPosition,
+              behavior: 'auto'
+            });
+            this.savedScrollPosition = 0;
+          }, 50);
+        }
       },
       error: (err: any) => {
         this.error = err?.error?.message || 'Erro ao carregar diagnóstico';
@@ -173,6 +250,7 @@ export class DiagnosticoNotasComponent implements OnInit, OnDestroy {
    */
   togglePilar(index: number): void {
     this.pilarExpandido[index] = !this.pilarExpandido[index];
+    this.saveExpandedState();
   }
 
   /**
@@ -190,7 +268,7 @@ export class DiagnosticoNotasComponent implements OnInit, OnDestroy {
   onPilaresModificados(): void {
     // Recarregar diagnóstico para refletir mudanças nos pilares
     if (this.selectedEmpresaId) {
-      this.loadDiagnostico();
+      this.loadDiagnostico(true);
     }
   }
 
@@ -209,7 +287,7 @@ export class DiagnosticoNotasComponent implements OnInit, OnDestroy {
   onResponsavelAtualizado(): void {
     // Recarregar diagnóstico para refletir mudanças no responsável
     if (this.selectedEmpresaId) {
-      this.loadDiagnostico();
+      this.loadDiagnostico(true);
     }
   }
 
@@ -242,7 +320,7 @@ export class DiagnosticoNotasComponent implements OnInit, OnDestroy {
   onRotinaCriada(): void {
     // Recarregar diagnóstico para refletir nova rotina
     if (this.selectedEmpresaId) {
-      this.loadDiagnostico();
+      this.loadDiagnostico(true);
     }
   }
 
@@ -252,7 +330,7 @@ export class DiagnosticoNotasComponent implements OnInit, OnDestroy {
   onRotinasModificadas(): void {
     // Recarregar diagnóstico para refletir mudanças
     if (this.selectedEmpresaId) {
-      this.loadDiagnostico();
+      this.loadDiagnostico(true);
     }
   }
 

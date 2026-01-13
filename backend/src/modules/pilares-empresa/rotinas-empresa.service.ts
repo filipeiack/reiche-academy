@@ -3,6 +3,7 @@ import { PrismaService } from '../../common/prisma/prisma.service';
 import { RequestUser } from '../../common/interfaces/request-user.interface';
 import { AuditService } from '../audit/audit.service';
 import { CreateRotinaEmpresaDto } from '../rotinas/dto/create-rotina-empresa.dto';
+import { UpdateRotinaEmpresaDto } from '../rotinas/dto/update-rotina-empresa.dto';
 
 @Injectable()
 export class RotinasEmpresaService {
@@ -216,6 +217,84 @@ export class RotinasEmpresaService {
     });
 
     return rotinaEmpresa;
+  }
+
+  /**
+   * Atualizar RotinaEmpresa (nome e/ou observação)
+   */
+  async updateRotinaEmpresa(
+    empresaId: string,
+    rotinaEmpresaId: string,
+    dto: UpdateRotinaEmpresaDto,
+    user: RequestUser,
+  ) {
+    this.validateTenantAccess(empresaId, user);
+
+    // Buscar rotina para validação
+    const rotinaEmpresa = await this.prisma.rotinaEmpresa.findFirst({
+      where: {
+        id: rotinaEmpresaId,
+        pilarEmpresa: { empresaId },
+      },
+      include: {
+        pilarEmpresa: { select: { empresaId: true, nome: true } },
+      },
+    });
+
+    if (!rotinaEmpresa) {
+      throw new NotFoundException('Rotina não encontrada nesta empresa');
+    }
+
+    // Se nome fornecido, validar unicidade por pilarEmpresa
+    if (dto.nome) {
+      const nomeExistente = await this.prisma.rotinaEmpresa.findFirst({
+        where: {
+          pilarEmpresaId: rotinaEmpresa.pilarEmpresaId,
+          nome: dto.nome,
+          id: { not: rotinaEmpresaId }, // Excluir o próprio registro
+        },
+      });
+
+      if (nomeExistente) {
+        throw new ConflictException(
+          `Já existe uma rotina com o nome "${dto.nome}" neste pilar`,
+        );
+      }
+    }
+
+    // Atualizar rotina
+    const updated = await this.prisma.rotinaEmpresa.update({
+      where: { id: rotinaEmpresaId },
+      data: {
+        nome: dto.nome,
+        observacao: dto.observacao,
+        updatedBy: user.id,
+      },
+      include: {
+        rotinaTemplate: true,
+      },
+    });
+
+    // Auditoria
+    const userRecord = await this.prisma.usuario.findUnique({ where: { id: user.id } });
+    await this.audit.log({
+      usuarioId: user.id,
+      usuarioNome: userRecord?.nome ?? '',
+      usuarioEmail: userRecord?.email ?? '',
+      entidade: 'rotinas_empresa',
+      entidadeId: rotinaEmpresaId,
+      acao: 'UPDATE',
+      dadosAntes: {
+        nome: rotinaEmpresa.nome,
+        observacao: rotinaEmpresa.observacao,
+      },
+      dadosDepois: {
+        nome: dto.nome ?? rotinaEmpresa.nome,
+        observacao: dto.observacao ?? rotinaEmpresa.observacao,
+      },
+    });
+
+    return updated;
   }
 
   /**

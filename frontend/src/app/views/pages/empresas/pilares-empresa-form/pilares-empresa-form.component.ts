@@ -1,7 +1,9 @@
 import { Component, Input, Output, EventEmitter, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { FormsModule } from '@angular/forms';
 import { CdkDragDrop, DragDropModule, moveItemInArray } from '@angular/cdk/drag-drop';
 import { NgSelectModule } from '@ng-select/ng-select';
+import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import Swal from 'sweetalert2';
 import { PilaresService, Pilar } from '../../../../core/services/pilares.service';
 import { PilaresEmpresaService, PilarEmpresa, CreatePilarEmpresaDto } from '../../../../core/services/pilares-empresa.service';
@@ -9,7 +11,7 @@ import { PilaresEmpresaService, PilarEmpresa, CreatePilarEmpresaDto } from '../.
 @Component({
   selector: 'app-pilares-empresa-form',
   standalone: true,
-  imports: [CommonModule, NgSelectModule, DragDropModule],
+  imports: [CommonModule, FormsModule, NgSelectModule, DragDropModule, NgbTooltip],
   templateUrl: './pilares-empresa-form.component.html',
   styleUrl: './pilares-empresa-form.component.scss'
 })
@@ -25,6 +27,8 @@ export class PilaresEmpresaFormComponent implements OnInit {
   pilaresAssociados: PilarEmpresa[] = [];
   loading = false;
   temAlteracoes = false;
+  editandoPilarId: string | null = null;
+  nomeEditando: string = '';
 
   ngOnInit(): void {
     if (!this.isPerfilCliente) {
@@ -196,6 +200,66 @@ export class PilaresEmpresaFormComponent implements OnInit {
     } catch (error) {
       this.showToast('Erro ao salvar a ordem das pilares. Tente novamente', 'error');
     }
+  }
+
+  /**
+   * Inicia edição do nome do pilar
+   */
+  iniciarEdicaoNome(pilarEmpresa: PilarEmpresa): void {
+    this.editandoPilarId = pilarEmpresa.id;
+    this.nomeEditando = pilarEmpresa.nome;
+  }
+
+  /**
+   * Cancela edição do nome
+   */
+  cancelarEdicaoNome(): void {
+    this.editandoPilarId = null;
+    this.nomeEditando = '';
+  }
+
+  /**
+   * Salva o novo nome do pilar
+   */
+  salvarNomePilar(pilarEmpresa: PilarEmpresa): void {
+    if (!this.empresaId) {
+      this.showToast('ID da empresa não informado', 'error');
+      return;
+    }
+
+    const nomeNovo = this.nomeEditando.trim();
+
+    // Validações
+    if (nomeNovo.length < 2) {
+      this.showToast('O nome do pilar deve ter no mínimo 2 caracteres', 'error');
+      return;
+    }
+
+    if (nomeNovo.length > 60) {
+      this.showToast('O nome do pilar deve ter no máximo 60 caracteres', 'error');
+      return;
+    }
+
+    if (nomeNovo === pilarEmpresa.nome) {
+      this.cancelarEdicaoNome();
+      return;
+    }
+
+    this.pilaresEmpresaService.updatePilarEmpresa(this.empresaId, pilarEmpresa.id, { nome: nomeNovo }).subscribe({
+      next: (pilarAtualizado) => {
+        this.showToast(`Nome do pilar atualizado para "${nomeNovo}"`, 'success');
+        // Atualizar na lista local
+        const index = this.pilaresAssociados.findIndex(p => p.id === pilarEmpresa.id);
+        if (index !== -1) {
+          this.pilaresAssociados[index] = pilarAtualizado;
+        }
+        this.cancelarEdicaoNome();
+        this.pilaresChanged.emit();
+      },
+      error: (err) => {
+        this.showToast(err?.error?.message || 'Erro ao atualizar nome do pilar', 'error');
+      }
+    });
   }
 
   private showToast(title: string, icon: 'success' | 'error' | 'info' | 'warning', timer: number = 3000): void {
