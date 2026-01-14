@@ -11,8 +11,6 @@ import { RequestUser } from '../../common/interfaces/request-user.interface';
 import {
   getQuarter,
   getYear,
-  endOfQuarter,
-  isSameDay,
   differenceInDays,
   format,
 } from 'date-fns';
@@ -39,20 +37,12 @@ export class PeriodosAvaliacaoService {
       );
     }
 
-    // 2. Calcular trimestre e ano
+    // 2. Calcular trimestre e ano baseado na data de referência
     const dataRef = new Date(dto.dataReferencia);
     const trimestre = getQuarter(dataRef);
     const ano = getYear(dataRef);
 
-    // 3. Validar se é último dia do trimestre
-    const ultimoDiaTrimestre = endOfQuarter(dataRef);
-    if (!isSameDay(dataRef, ultimoDiaTrimestre)) {
-      throw new BadRequestException(
-        'A data de referência deve ser o último dia do trimestre',
-      );
-    }
-
-    // 4. Validar se já existe período aberto
+    // 3. Validar se já existe período aberto
     const periodoAberto = await this.prisma.periodoAvaliacao.findFirst({
       where: { empresaId, aberto: true },
     });
@@ -63,7 +53,7 @@ export class PeriodosAvaliacaoService {
       );
     }
 
-    // 5. Validar intervalo de 90 dias
+    // 4. Validar intervalo de 90 dias
     const ultimoPeriodo = await this.prisma.periodoAvaliacao.findFirst({
       where: { empresaId },
       orderBy: { dataReferencia: 'desc' },
@@ -81,7 +71,7 @@ export class PeriodosAvaliacaoService {
       }
     }
 
-    // 6. Criar período
+    // 5. Criar período
     const periodo = await this.prisma.periodoAvaliacao.create({
       data: {
         empresaId,
@@ -93,7 +83,7 @@ export class PeriodosAvaliacaoService {
       },
     });
 
-    // 7. Auditar
+    // 6. Auditar
     await this.auditService.log({
       usuarioId: user.id,
       usuarioNome: user.nome,

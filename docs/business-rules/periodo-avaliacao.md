@@ -3,8 +3,8 @@
 **Módulo:** Períodos de Avaliação  
 **Backend:** `backend/src/modules/periodos-avaliacao/`  
 **Frontend:** `frontend/src/app/views/pages/diagnostico-notas/` e `diagnostico-evolucao/`  
-**Última atualização:** 2026-01-13  
-**Agente:** System Engineer  
+**Última atualização:** 2026-01-14  
+**Agente:** Dev Agent (implementação) + Business Rules Extractor (documentação)  
 
 ---
 
@@ -12,7 +12,8 @@
 
 O módulo Períodos de Avaliação é responsável por:
 - **Gerenciar ciclos trimestrais** de avaliação empresarial
-- **Validar intervalo mínimo** de 90 dias entre períodos
+- **Calcular trimestre automaticamente** baseado na data de referência escolhida
+- **Validar intervalo mínimo** de 90 dias entre datas de referência
 - **Criar snapshots históricos** de médias de pilares ao congelar período
 - **Rastrear abertura e fechamento** de períodos com auditoria completa
 - **Permitir filtro por ano** no histórico de evolução
@@ -36,7 +37,7 @@ O módulo Períodos de Avaliação é responsável por:
 - `GET /empresas/:id/periodos-avaliacao/atual` — Buscar período aberto
 - `GET /empresas/:id/periodos-avaliacao` — Listar histórico
 
-**Status do módulo:** 🚧 **EM IMPLEMENTAÇÃO** (ADR aprovado, aguardando Dev Agent)
+**Status do módulo:** ✅ **IMPLEMENTADO** (v1.1.0 - Data de referência flexível)
 
 ---
 
@@ -64,11 +65,11 @@ O módulo Períodos de Avaliação é responsável por:
 
 **Funcionalidades:**
 - Badge exibindo período ativo (Q1/2026, Q2/2026, etc)
-- Modal de criação de período (date picker)
-- Validação de data de referência (último dia do trimestre)
+- Modal de criação de período (date picker - aceita qualquer data)
+- Cálculo automático de trimestre pelo backend
 - Confirmação antes de congelar (SweetAlert2)
-- Filtro de ano no histórico de evolução
-- Gráfico com até 4 barras por ano (1 por trimestre)
+- Filtro de ano no histórico de evolução (opcional, mostra todos se vazio)
+- Gráfico exibindo mês/ano da dataReferencia real (ex: 01/2026, 05/2026)
 
 ---
 
@@ -84,7 +85,7 @@ O módulo Períodos de Avaliação é responsável por:
 | empresaId | String | FK para Empresa |
 | trimestre | Int | 1, 2, 3 ou 4 |
 | ano | Int | Ano do período (ex: 2026) |
-| dataReferencia | DateTime | Último dia do trimestre (ex: 2026-03-31) |
+| dataReferencia | DateTime | Data de referência do período (qualquer data, trimestre calculado automaticamente) |
 | aberto | Boolean | true = em avaliação, false = congelado |
 | dataInicio | DateTime | Quando admin iniciou o período |
 | dataCongelamento | DateTime? | Quando admin congelou (null se ainda aberto) |
@@ -132,7 +133,7 @@ O módulo Períodos de Avaliação é responsável por:
 
 ### R-PEVOL-001: Criar Novo Período de Avaliação
 
-**Descrição:** Admin cria novo período trimestral fornecendo data de referência (último dia do trimestre).
+**Descrição:** Admin cria novo período trimestral fornecendo data de referência (qualquer data).
 
 **Implementação:**
 - **Endpoint:** `POST /empresas/:id/periodos-avaliacao` (ADMINISTRADOR, CONSULTOR, GESTOR)
@@ -154,12 +155,11 @@ if (user.perfil?.codigo !== 'ADMINISTRADOR' && user.empresaId !== empresaId) {
 dataReferencia: string;
 ```
 
-3. **Deve Ser Último Dia do Trimestre:**
+3. **Cálculo Automático de Trimestre:**
 ```typescript
-const ultimoDiaTrimestre = endOfQuarter(dataRef);
-if (!isSameDay(dataRef, ultimoDiaTrimestre)) {
-  throw new BadRequestException('A data de referência deve ser o último dia do trimestre');
-}
+const dataRef = new Date(dto.dataReferencia);
+const trimestre = getQuarter(dataRef); // jan-mar=1, abr-jun=2, jul-set=3, out-dez=4
+const ano = getYear(dataRef);
 ```
 
 4. **Período Único Aberto:**
@@ -183,15 +183,20 @@ if (ultimoPeriodo) {
   const diffDays = differenceInDays(dataRef, ultimoPeriodo.dataReferencia);
   if (diffDays < 90) {
     throw new BadRequestException(
-      `Intervalo mínimo de 90 dias não respeitado. Faltam ${90 - diffDays} dias.`
+      `Intervalo mínimo de 90 dias não respeitado. Último período: ${format(
+        ultimoPeriodo.dataReferencia,
+        'dd/MM/yyyy',
+      )}. Faltam ${90 - diffDays} dias.`
     );
   }
 }
 ```
 
+**Observação:** Intervalo calculado entre as `dataReferencia` escolhidas (não trimestres fixos).
+
 **Lógica de Criação:**
 ```typescript
-const trimestre = getQuarter(dataRef); // 1-4
+const trimestre = getQuarter(dataRef); // 1-4 (calculado automaticamente)
 const ano = getYear(dataRef);
 
 const periodo = await prisma.periodoAvaliacao.create({
@@ -542,9 +547,9 @@ async loadPeriodoAtual() {
 ```
 
 **Modal de Criação:**
-- Date picker para selecionar `dataReferencia`
-- Sugestões de datas: 31/03, 30/06, 30/09, 31/12 do ano atual
-- Validação frontend: data deve ser último dia do trimestre
+- Date picker para selecionar `dataReferencia` (aceita qualquer data)
+- Data sugerida: data atual
+- Trimestre calculado automaticamente pelo backend baseado na data escolhida
 - Confirmação com SweetAlert2 antes de criar
 
 ---
@@ -656,8 +661,8 @@ private async loadAllHistorico(): Promise<void> {
 **Validações implementadas:**
 - Data obrigatória
 - Formato ISO 8601
-- Backend valida se é último dia do trimestre
-- Backend valida intervalo de 90 dias
+- Backend calcula trimestre automaticamente usando `getQuarter(dataRef)`
+- Backend valida intervalo de 90 dias entre datas de referência
 
 **Arquivo:** `backend/src/modules/periodos-avaliacao/dto/create-periodo-avaliacao.dto.ts`
 
@@ -743,33 +748,34 @@ const rotinasComNota = pilar.rotinasEmpresa.filter(
 
 | ID | Descrição | Status |
 |----|-----------|--------|
-| R-PEVOL-001 | Criar novo período trimestral | 🚧 A implementar |
-| R-PEVOL-002 | Congelar médias (criar snapshots) | 🚧 A implementar |
-| R-PEVOL-003 | Buscar período aberto | 🚧 A implementar |
-| R-PEVOL-004 | Listar histórico de períodos | 🚧 A implementar |
-| RA-PEVOL-001 | Auditoria completa de períodos | 🚧 A implementar |
+| R-PEVOL-001 | Criar novo período trimestral | ✅ Implementado |
+| R-PEVOL-002 | Congelar médias (criar snapshots) | ✅ Implementado |
+| R-PEVOL-003 | Buscar período aberto | ✅ Implementado |
+| R-PEVOL-004 | Listar histórico de períodos | ✅ Implementado |
+| RA-PEVOL-001 | Auditoria completa de períodos | ✅ Implementado |
 
 **Frontend:**
 
 | ID | Descrição | Status |
 |----|-----------|--------|
-| UI-PEVOL-001 | Badge de período ativo | 🚧 A implementar |
-| UI-PEVOL-002 | Botão "Congelar Médias" | 🚧 A implementar |
-| UI-PEVOL-003 | Filtro de ano no histórico | 🚧 A implementar |
+| UI-PEVOL-001 | Badge de período ativo | ✅ Implementado |
+| UI-PEVOL-002 | Botão "Congelar Médias" | ✅ Implementado |
+| UI-PEVOL-003 | Filtro de ano no histórico | ✅ Implementado |
+| UI-PEVOL-004 | Gráfico com mês/ano da dataReferencia | ✅ Implementado |
 
 **Validações:**
 
 | ID | Descrição | Status |
 |----|-----------|--------|
-| V-PEVOL-001 | Data de referência obrigatória | 🚧 A implementar |
-| V-PEVOL-002 | Último dia do trimestre | 🚧 A implementar |
-| V-PEVOL-003 | Intervalo mínimo 90 dias | 🚧 A implementar |
-| V-PEVOL-004 | Período único aberto | 🚧 A implementar |
-| V-PEVOL-005 | Multi-tenant em todos os endpoints | 🚧 A implementar |
+| V-PEVOL-001 | Data de referência obrigatória | ✅ Implementado |
+| V-PEVOL-002 | Cálculo automático de trimestre | ✅ Implementado |
+| V-PEVOL-003 | Intervalo mínimo 90 dias | ✅ Implementado |
+| V-PEVOL-004 | Período único aberto | ✅ Implementado |
+| V-PEVOL-005 | Multi-tenant em todos os endpoints | ✅ Implementado |
 
 ---
 
-**Versão:** 1.0  
-**Última Atualização:** 2026-01-13  
-**Agente:** System Engineer  
-**Status:** 🚧 Aguardando Dev Agent para implementação
+**Versão:** 1.1.0  
+**Última Atualização:** 2026-01-14  
+**Agente:** Dev Agent (implementação) + Business Rules Extractor (documentação)  
+**Status:** ✅ Implementado com flexibilização de data de referência

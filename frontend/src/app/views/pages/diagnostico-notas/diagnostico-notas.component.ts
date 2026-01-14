@@ -715,17 +715,11 @@ export class DiagnosticoNotasComponent implements OnInit, OnDestroy {
    * Abre modal para iniciar novo período de avaliação
    */
   abrirModalIniciarPeriodo(): void {
-    // Calcular último dia do trimestre atual como sugestão
+    // Sugerir data atual como referência
     const hoje = new Date();
-    const trimestre = Math.floor((hoje.getMonth() / 3)) + 1;
-    const anoAtual = hoje.getFullYear();
-    
-    // Último mês do trimestre (0-indexed)
-    const ultimoMesTrimestre = (trimestre * 3) - 1;
-    const ultimoDia = new Date(anoAtual, ultimoMesTrimestre + 1, 0);
     
     // Formatar como YYYY-MM-DD para input type="date"
-    this.dataReferenciaPeriodo = ultimoDia.toISOString().split('T')[0];
+    this.dataReferenciaPeriodo = hoje.toISOString().split('T')[0];
     this.showIniciarPeriodoModal = true;
   }
 
@@ -746,23 +740,15 @@ export class DiagnosticoNotasComponent implements OnInit, OnDestroy {
       return;
     }
 
-    // Validar se é último dia do trimestre
-    const dataRef = new Date(this.dataReferenciaPeriodo + 'T00:00:00');
-    const trimestre = Math.floor(dataRef.getMonth() / 3) + 1;
-    const ultimoMesTrimestre = (trimestre * 3) - 1;
-    const ultimoDiaEsperado = new Date(dataRef.getFullYear(), ultimoMesTrimestre + 1, 0);
-
-    if (dataRef.getDate() !== ultimoDiaEsperado.getDate() || 
-        dataRef.getMonth() !== ultimoDiaEsperado.getMonth()) {
-      this.showToast('A data deve ser o último dia de um trimestre (31/mar, 30/jun, 30/set ou 31/dez)', 'error', 4000);
-      return;
-    }
-
+    // Backend calculará trimestre e ano baseado na dataReferencia
     this.periodosService.iniciar(this.selectedEmpresaId, this.dataReferenciaPeriodo).subscribe({
       next: (periodo) => {
         this.periodoAtual = periodo;
         this.fecharModalIniciarPeriodo();
-        this.showToast(`Período Q${periodo.trimestre}/${periodo.ano} iniciado com sucesso!`, 'success');
+        const dataRef = new Date(periodo.dataReferencia);
+        const mes = (dataRef.getMonth() + 1).toString().padStart(2, '0');
+        const ano = dataRef.getFullYear();
+        this.showToast(`Período ${mes}/${ano} iniciado com sucesso!`, 'success');
       },
       error: (err) => {
         const mensagem = err?.error?.message || 'Erro ao iniciar período de avaliação';
@@ -776,6 +762,9 @@ export class DiagnosticoNotasComponent implements OnInit, OnDestroy {
    */
   getPeriodoAtualTexto(): string {
     if (!this.periodoAtual) return '';
-    return `Avaliação Q${this.periodoAtual.trimestre}/${this.periodoAtual.ano} em andamento`;
+    const dataRef = new Date(this.periodoAtual.dataReferencia);
+    const mes = (dataRef.getMonth() + 1).toString().padStart(2, '0');
+    const ano = dataRef.getFullYear();
+    return `Avaliação ${mes}/${ano} em andamento`;
   }
 }

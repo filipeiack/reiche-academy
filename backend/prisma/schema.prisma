@@ -249,7 +249,7 @@ model PeriodoAvaliacao {
   // Período que está sendo avaliado
   trimestre      Int // 1, 2, 3, 4
   ano            Int // 2026
-  dataReferencia DateTime // Ex: 2026-03-31 (último dia do trimestre)
+  dataReferencia DateTime // Data de referência do período (qualquer data, trimestre calculado automaticamente)
 
   // Controle do ciclo
   aberto           Boolean   @default(true) // true = em avaliação, false = congelado

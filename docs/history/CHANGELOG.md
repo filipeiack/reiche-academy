@@ -2,7 +2,24 @@
 
 Registro de todas as mudanças e atualizações do projeto.
 
-## 🎯 [14/01/2025] - Período de Avaliação Trimestral
+## 🎯 [1.1.0] - 2026-01-14
+
+### Changed
+- **Período de Avaliação - Flexibilização da Data de Referência**
+  - Removida restrição de último dia do trimestre
+  - `dataReferencia` agora aceita **qualquer data**
+  - Trimestre calculado automaticamente: jan-mar=Q1, abr-jun=Q2, jul-set=Q3, out-dez=Q4
+  - Intervalo mínimo de 90 dias calculado entre datas de referência escolhidas
+  - Gráfico exibe mês/ano da `dataReferencia` real (ex: 01/2026, 05/2026)
+
+### Removed
+- Backend: validação `endOfQuarter()` e `isSameDay()`
+- Frontend: validação de último dia do trimestre no modal
+- Importações desnecessárias do date-fns: `endOfQuarter`, `isSameDay`
+
+---
+
+## 🎯 [1.0.0] - 2026-01-14 - Período de Avaliação Trimestral
 
 ### ✅ Added
 
@@ -10,7 +27,7 @@ Registro de todas as mudanças e atualizações do projeto.
 - ✅ **Nova Entidade**: `PeriodoAvaliacao`
   - Controla períodos trimestrais de avaliação (Q1, Q2, Q3, Q4)
   - Validação automática: intervalo mínimo de 90 dias entre períodos
-  - Validação de data de referência (deve ser último dia do trimestre)
+  - Cálculo automático de trimestre baseado na data de referência
   - Restrição: apenas 1 período ativo por empresa
   - Unique constraint: `[empresaId, trimestre, ano]`
 
@@ -33,14 +50,14 @@ Registro de todas as mudanças e atualizações do projeto.
 
 - ✅ **DiagnosticoNotasComponent**:
   - Badge indicador de período ativo: "Avaliação Q{trimestre}/{ano} em andamento"
-  - Modal para iniciar nova avaliação com date picker
-  - Validação frontend: data deve ser último dia do trimestre
+  - Modal para iniciar nova avaliação com date picker (aceita qualquer data)
+  - Trimestre calculado automaticamente pelo backend
   - Menu dropdown com ação "Iniciar Avaliação Trimestral"
 
 - ✅ **DiagnosticoEvolucaoComponent**:
   - Botão "Congelar Médias Q{N}/{ano}" (habilitado apenas se período ativo)
-  - Filtro por ano (dropdown com últimos 5 anos)
-  - Chart reformulado: 4 barras por pilar (Q1, Q2, Q3, Q4)
+  - Filtro por ano (dropdown com clearable, mostra todos se vazio)
+  - Chart reformulado: exibe mês/ano da dataReferencia real de cada período
   - Integração com endpoint de histórico de períodos
 
 ### 🔄 Changed

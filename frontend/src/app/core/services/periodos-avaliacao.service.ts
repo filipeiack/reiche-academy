@@ -27,7 +27,7 @@ export class PeriodosAvaliacaoService {
   /**
    * Inicia um novo período de avaliação trimestral
    * @param empresaId ID da empresa
-   * @param dataReferencia Data de referência (último dia do trimestre)
+   * @param dataReferencia Data de referência do período (qualquer data)
    */
   iniciar(empresaId: string, dataReferencia: string): Observable<PeriodoAvaliacao> {
     const request: IniciarPeriodoRequest = { dataReferencia };

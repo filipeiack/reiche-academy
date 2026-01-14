@@ -3,7 +3,8 @@ import { ApiProperty } from '@nestjs/swagger';
 
 export class CreatePeriodoAvaliacaoDto {
   @ApiProperty({
-    description: 'Data de referência (último dia do trimestre)',
+    description: 'Data de referência do período (trimestre calculado automaticamente)',
+
     example: '2026-03-31',
   })
   @IsDateString()

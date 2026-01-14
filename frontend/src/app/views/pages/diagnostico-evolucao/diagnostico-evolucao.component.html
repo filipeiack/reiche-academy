@@ -17,7 +17,7 @@
             ngbTooltip="Congelar médias do período de avaliação atual e criar snapshots de todos os pilares"
             (click)="congelarMedias()" [disabled]="!periodoAtual || medias.length === 0">
             <i class="feather icon-archive"></i>
-            Congelar Médias Q{{ periodoAtual?.trimestre }}/{{ periodoAtual?.ano }}
+            Congelar Médias {{ getPeriodoMesAno() }}
         </button>
         }
     </div>

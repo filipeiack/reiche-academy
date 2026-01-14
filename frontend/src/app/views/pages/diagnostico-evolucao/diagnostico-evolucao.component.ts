@@ -176,7 +176,7 @@ export class DiagnosticoEvolucaoComponent implements OnInit, OnDestroy {
 
     Swal.fire({
       title: 'Congelar Médias do Período',
-      text: `Deseja congelar as médias de ${this.medias.length} pilar(es) e encerrar o período Q${this.periodoAtual.trimestre}/${this.periodoAtual.ano}?`,
+      text: `Deseja congelar as médias de ${this.medias.length} pilar(es) e encerrar o período ${this.getPeriodoMesAno()}?`,
       showCancelButton: true,
       confirmButtonText: 'Sim, congelar',
       cancelButtonText: 'Cancelar',
@@ -186,8 +186,11 @@ export class DiagnosticoEvolucaoComponent implements OnInit, OnDestroy {
         this.loading = true;
         this.periodosService.congelar(this.periodoAtual.id).subscribe({
           next: (periodo) => {
+            const dataRef = new Date(periodo.dataReferencia);
+            const mes = (dataRef.getMonth() + 1).toString().padStart(2, '0');
+            const ano = dataRef.getFullYear();
             this.showToast(
-              `Período Q${periodo.trimestre}/${periodo.ano} congelado com sucesso! ${periodo.snapshots?.length || 0} snapshots criados.`,
+              `Período ${mes}/${ano} congelado com sucesso! ${periodo.snapshots?.length || 0} snapshots criados.`,
               'success',
               4000
             );
@@ -569,5 +572,16 @@ renderBarChart(): void {
    */
   onAnoChange(): void {
     this.loadAllHistorico();
+  }
+
+  /**
+   * Retorna texto formatado do período atual (mês/ano) para exibição no botão
+   */
+  getPeriodoMesAno(): string {
+    if (!this.periodoAtual) return '';
+    const dataRef = new Date(this.periodoAtual.dataReferencia);
+    const mes = (dataRef.getMonth() + 1).toString().padStart(2, '0');
+    const ano = dataRef.getFullYear();
+    return `${mes}/${ano}`;
   }
 }
