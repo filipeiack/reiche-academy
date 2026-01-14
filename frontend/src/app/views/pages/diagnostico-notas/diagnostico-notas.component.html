@@ -13,6 +13,14 @@
 
         @if (selectedEmpresaId) {
         <div id="savingBar" class="d-flex align-items-center gap-3">
+            <!-- Badge indicador de período de avaliação ativo -->
+            @if (periodoAtual) {
+            <div class="badge bg-info text-white d-flex align-items-center gap-1 px-3 py-2">
+                <i class="feather icon-calendar icon-sm"></i>
+                <span>{{ getPeriodoAtualTexto() }}</span>
+            </div>
+            }
+
             @if (savingCount > 0) {
             <div class="saving-indicator">
                 <div class="spinner-border spinner-border-sm" role="status">
@@ -44,6 +52,12 @@
                             (click)="abrirModalPilares(); $event.preventDefault()">
                             <i class="feather icon-edit icon-sm"></i>
                             <span class="">Gerenciar Pilares</span>
+                        </a>
+                        <a ngbDropdownItem class="d-flex align-items-center gap-1"
+                            (click)="abrirModalIniciarPeriodo(); $event.preventDefault()"
+                            [class.disabled]="periodoAtual !== null">
+                            <i class="feather icon-play-circle icon-sm"></i>
+                            <span class="">Iniciar Avaliação Trimestral</span>
                         </a>
                     </div>
                 </div>
@@ -255,3 +269,57 @@
 <!-- Modal para gerenciar rotinas do pilar -->
 <app-rotinas-pilar-modal (rotinasModificadas)="onRotinasModificadas()">
 </app-rotinas-pilar-modal>
+
+<!-- Modal para iniciar período de avaliação -->
+@if (showIniciarPeriodoModal) {
+<div class="modal fade show d-block" tabindex="-1" role="dialog" style="background: rgba(0,0,0,0.5);">
+    <div class="modal-dialog modal-dialog-centered" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="feather icon-calendar me-2"></i>
+                    Iniciar Nova Avaliação Trimestral
+                </h5>
+                <button type="button" class="btn-close" (click)="fecharModalIniciarPeriodo()"></button>
+            </div>
+            <div class="modal-body">
+                <p class="text-muted mb-3">
+                    Selecione a data de referência para o novo período de avaliação.
+                    <strong>Deve ser o último dia de um trimestre</strong> (31/mar, 30/jun, 30/set ou 31/dez).
+                </p>
+                
+                <div class="mb-3">
+                    <label for="dataReferencia" class="form-label">Data de Referência *</label>
+                    <input 
+                        type="date" 
+                        class="form-control" 
+                        id="dataReferencia" 
+                        [(ngModel)]="dataReferenciaPeriodo"
+                        required>
+                    <div class="form-text">
+                        O sistema criará snapshots das médias ao final deste período.
+                    </div>
+                </div>
+
+                <div class="alert alert-info mb-0">
+                    <i class="feather icon-info me-2"></i>
+                    <small>
+                        Após iniciar, você terá no mínimo <strong>90 dias</strong> para coletar as notas
+                        antes de poder congelar as médias no próximo trimestre.
+                    </small>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" (click)="fecharModalIniciarPeriodo()">
+                    Cancelar
+                </button>
+                <button type="button" class="btn btn-primary" (click)="confirmarIniciarPeriodo()"
+                    [disabled]="!dataReferenciaPeriodo">
+                    <i class="feather icon-check me-2"></i>
+                    Iniciar Período
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+}

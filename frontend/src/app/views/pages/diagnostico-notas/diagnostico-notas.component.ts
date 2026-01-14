@@ -11,6 +11,8 @@ import { EmpresasService, Empresa } from '../../../core/services/empresas.servic
 import { AuthService } from '../../../core/services/auth.service';
 import { EmpresaContextService } from '../../../core/services/empresa-context.service';
 import { EmpresaBasic } from '@app/core/models/auth.model';
+import { PeriodosAvaliacaoService } from '../../../core/services/periodos-avaliacao.service';
+import { PeriodoAvaliacao } from '../../../core/models/periodo-avaliacao.model';
 import { NgbDropdownModule } from '@ng-bootstrap/ng-bootstrap';
 import { PilaresEmpresaModalComponent } from '../empresas/pilares-empresa-modal/pilares-empresa-modal.component';
 import { ResponsavelPilarModalComponent } from './responsavel-pilar-modal/responsavel-pilar-modal.component';
@@ -49,6 +51,7 @@ export class DiagnosticoNotasComponent implements OnInit, OnDestroy {
   private empresasService = inject(EmpresasService);
   private authService = inject(AuthService);
   private empresaContextService = inject(EmpresaContextService);
+  private periodosService = inject(PeriodosAvaliacaoService);
 
   @ViewChild(PilaresEmpresaModalComponent) pilaresModal!: PilaresEmpresaModalComponent;
   @ViewChild(ResponsavelPilarModalComponent) responsavelModal!: ResponsavelPilarModalComponent;
@@ -61,6 +64,9 @@ export class DiagnosticoNotasComponent implements OnInit, OnDestroy {
   isAdmin = false;
   loading = false;
   error = '';
+  periodoAtual: PeriodoAvaliacao | null = null;
+  showIniciarPeriodoModal = false;
+  dataReferenciaPeriodo: string = '';
   
   private empresaContextSubscription?: Subscription;
   private savedScrollPosition: number = 0;
@@ -226,6 +232,9 @@ export class DiagnosticoNotasComponent implements OnInit, OnDestroy {
         }
         
         this.loading = false;
+        
+        // Carregar período atual após carregar pilares
+        this.loadPeriodoAtual();
         
         // Restaurar posição de scroll se foi salva
         if (preserveScroll && this.savedScrollPosition > 0) {
@@ -679,5 +688,94 @@ export class DiagnosticoNotasComponent implements OnInit, OnDestroy {
       title,
       icon
     });
+  }
+
+  // ====================================================
+  // Métodos de Período de Avaliação
+  // ====================================================
+
+  /**
+   * Carrega o período de avaliação atual (aberto) da empresa
+   */
+  private loadPeriodoAtual(): void {
+    if (!this.selectedEmpresaId) return;
+
+    this.periodosService.getAtual(this.selectedEmpresaId).subscribe({
+      next: (periodo) => {
+        this.periodoAtual = periodo;
+      },
+      error: (err) => {
+        console.error('Erro ao carregar período atual:', err);
+        this.periodoAtual = null;
+      }
+    });
+  }
+
+  /**
+   * Abre modal para iniciar novo período de avaliação
+   */
+  abrirModalIniciarPeriodo(): void {
+    // Calcular último dia do trimestre atual como sugestão
+    const hoje = new Date();
+    const trimestre = Math.floor((hoje.getMonth() / 3)) + 1;
+    const anoAtual = hoje.getFullYear();
+    
+    // Último mês do trimestre (0-indexed)
+    const ultimoMesTrimestre = (trimestre * 3) - 1;
+    const ultimoDia = new Date(anoAtual, ultimoMesTrimestre + 1, 0);
+    
+    // Formatar como YYYY-MM-DD para input type="date"
+    this.dataReferenciaPeriodo = ultimoDia.toISOString().split('T')[0];
+    this.showIniciarPeriodoModal = true;
+  }
+
+  /**
+   * Fecha modal de iniciar período
+   */
+  fecharModalIniciarPeriodo(): void {
+    this.showIniciarPeriodoModal = false;
+    this.dataReferenciaPeriodo = '';
+  }
+
+  /**
+   * Confirma criação do novo período de avaliação
+   */
+  confirmarIniciarPeriodo(): void {
+    if (!this.selectedEmpresaId || !this.dataReferenciaPeriodo) {
+      this.showToast('Data de referência é obrigatória', 'error');
+      return;
+    }
+
+    // Validar se é último dia do trimestre
+    const dataRef = new Date(this.dataReferenciaPeriodo + 'T00:00:00');
+    const trimestre = Math.floor(dataRef.getMonth() / 3) + 1;
+    const ultimoMesTrimestre = (trimestre * 3) - 1;
+    const ultimoDiaEsperado = new Date(dataRef.getFullYear(), ultimoMesTrimestre + 1, 0);
+
+    if (dataRef.getDate() !== ultimoDiaEsperado.getDate() || 
+        dataRef.getMonth() !== ultimoDiaEsperado.getMonth()) {
+      this.showToast('A data deve ser o último dia de um trimestre (31/mar, 30/jun, 30/set ou 31/dez)', 'error', 4000);
+      return;
+    }
+
+    this.periodosService.iniciar(this.selectedEmpresaId, this.dataReferenciaPeriodo).subscribe({
+      next: (periodo) => {
+        this.periodoAtual = periodo;
+        this.fecharModalIniciarPeriodo();
+        this.showToast(`Período Q${periodo.trimestre}/${periodo.ano} iniciado com sucesso!`, 'success');
+      },
+      error: (err) => {
+        const mensagem = err?.error?.message || 'Erro ao iniciar período de avaliação';
+        this.showToast(mensagem, 'error', 5000);
+      }
+    });
+  }
+
+  /**
+   * Retorna texto formatado do período atual para exibição no badge
+   */
+  getPeriodoAtualTexto(): string {
+    if (!this.periodoAtual) return '';
+    return `Avaliação Q${this.periodoAtual.trimestre}/${this.periodoAtual.ano} em andamento`;
   }
 }
