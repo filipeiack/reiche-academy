@@ -18,6 +18,20 @@ export const MENU: MenuItem[] = [
   //   link: '/calendario'
   // },
   {
+    label: 'MENU.PAINEL_CONTROLE',
+    isTitle: true
+  },
+  {
+    label: 'MENU.NOTAS',
+    icon: 'clipboard',
+    link: '/diagnostico-notas'
+  },
+  {
+    label: 'MENU.EVOLUCAO',
+    icon: 'trending-up',
+    link: '/diagnostico-evolucao'
+  },
+{
     label: 'MENU.CADASTROS',
     isTitle: true
   },
@@ -47,21 +61,6 @@ export const MENU: MenuItem[] = [
     //   }
     // ]
   },
-  {
-    label: 'MENU.PAINEL_CONTROLE',
-    isTitle: true
-  },
-  {
-    label: 'MENU.NOTAS',
-    icon: 'clipboard',
-    link: '/diagnostico-notas'
-  },
-  {
-    label: 'MENU.EVOLUCAO',
-    icon: 'trending-up',
-    link: '/diagnostico-evolucao'
-  },
-
   
   // {
   //   label: 'MENU.DOCS',

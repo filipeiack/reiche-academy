@@ -15,6 +15,11 @@ export interface PeriodoComSnapshots extends PeriodoAvaliacao {
   snapshots: PilarSnapshot[];
 }
 
+export interface CongelarPeriodoResponse {
+  periodo: PeriodoAvaliacao;
+  snapshots: PilarSnapshot[];
+}
+
 export interface PilarSnapshot {
   id: string;
   pilarEmpresaId: string;

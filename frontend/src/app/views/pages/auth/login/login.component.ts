@@ -45,8 +45,8 @@ export class LoginComponent implements OnInit {
   });
 
   ngOnInit(): void {
-    // Get the return URL from the route parameters, or default to '/dashboard'
-    this.returnUrl = this.route.snapshot.queryParams['returnUrl'] || '/dashboard';
+    // Get the return URL from the route parameters, or default to '/diagnostico-notas'
+    this.returnUrl = this.route.snapshot.queryParams['returnUrl'] || '/diagnostico-notas';
 
     // Carregar email salvo se "lembrar-me" estava ativo
     this.loadRememberedEmail();

@@ -1,16 +1,24 @@
 # 🏢 Guia VPS Único - Staging + Produção
 
-Este guia explica como rodar **staging e produção no mesmo VPS** (Hostinger VPS KVM 2).
+Este guia explica como rodar **staging e produção no mesmo VPS** (Ubuntu com Docker).
 
-## 📊 Recursos do VPS KVM 2 (Hostinger)
+## 📋 Dados de Acesso ao VPS
+
+```
+🌐 IP:       76.13.66.10
+👤 Usuário:  root
+🔑 Senha:    Reiche@c@d3m1
+🐧 SO:       Ubuntu
+🐳 Docker:   Instalado
+```
+
+## 📊 Recursos do VPS
 
 ```
 CPU:  2 cores
-RAM:  4GB
+RAM:  8GB
 SSD:  100GB
 Banda: Ilimitada
-
-Custo: ~R$ 30-40/mês
 ```
 
 **Status**: ✅ Suficiente para ambos ambientes!
@@ -66,35 +74,34 @@ Custo: ~R$ 30-40/mês
 
 ## 📦 Componentes Criados
 
-1. **[docker-compose.vps.yml](docker-compose.vps.yml)** - Orquestração completa (staging + prod)
-2. **[nginx/nginx.vps.conf](nginx/nginx.vps.conf)** - Roteamento por subdomínio
-3. **[scripts/init-databases.sh](scripts/init-databases.sh)** - Cria 2 databases automaticamente
-4. **[.env.vps](.env.vps)** - Variáveis de ambiente para o VPS
+1. **[docker-compose.vps.yml](../../docker-compose.vps.yml)** - Orquestração completa (staging + prod)
+2. **[nginx/nginx.vps.conf](../../nginx/nginx.vps.conf)** - Roteamento por subdomínio
+3. **[scripts/init-databases.sh](../../scripts/init-databases.sh)** - Cria 2 databases automaticamente
+4. **[.env.vps](../../.env.vps)** - Variáveis de ambiente para o VPS
 
 ---
 
 ## 🚀 Deploy Passo a Passo
 
-### **1. Configurar DNS (na Hostinger)**
+### **1. Configurar DNS**
 
-Criar 2 registros A:
+No painel do seu registrador de domínios, criar 2 registros A:
 
 ```
-app.reicheacademy.com.br      → IP_DO_SEU_VPS
-staging.reicheacademy.com.br  → IP_DO_SEU_VPS
+app.reicheacademy.com.br      → 76.13.66.10
+staging.reicheacademy.com.br  → 76.13.66.10
 ```
 
-**Como encontrar IP do VPS:**
-- Painel Hostinger → VPS → Detalhes → IP Address
+⏱️ **Nota**: Propagação de DNS pode levar até 48h.
 
 ### **2. Conectar ao VPS via SSH**
 
 ```bash
-# SSH fornecido pela Hostinger
-ssh root@SEU_IP_VPS
+# Conectar ao VPS
+ssh root@76.13.66.10
 
-# Ou se tiver usuário customizado
-ssh seu_usuario@SEU_IP_VPS
+# Quando solicitado, fornecer a senha:
+# Reiche@c@d3m1
 ```
 
 ### **3. Preparar Servidor**

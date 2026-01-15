@@ -144,13 +144,23 @@ export class PeriodosAvaliacaoService {
 
     // 4. Transação atômica
     return this.prisma.$transaction(async (tx: any) => {
-      // Criar snapshots de todos os pilares ativos
+      // Criar ou atualizar snapshots de todos os pilares ativos
       const snapshots = await Promise.all(
         periodo.empresa.pilares.map((pilar: any) => {
           const media = this.calcularMediaPilar(pilar);
 
-          return tx.pilarEvolucao.create({
-            data: {
+          return tx.pilarEvolucao.upsert({
+            where: {
+              pilarEmpresaId_periodoAvaliacaoId: {
+                pilarEmpresaId: pilar.id,
+                periodoAvaliacaoId: periodo.id,
+              },
+            },
+            update: {
+              mediaNotas: media,
+              updatedBy: user.id,
+            },
+            create: {
               pilarEmpresaId: pilar.id,
               periodoAvaliacaoId: periodo.id,
               mediaNotas: media,
@@ -167,6 +177,19 @@ export class PeriodosAvaliacaoService {
           aberto: false,
           dataCongelamento: new Date(),
           updatedBy: user.id,
+        },
+        select: {
+          id: true,
+          empresaId: true,
+          trimestre: true,
+          ano: true,
+          dataReferencia: true,
+          aberto: true,
+          dataCongelamento: true,
+          createdAt: true,
+          updatedAt: true,
+          createdBy: true,
+          updatedBy: true,
         },
       });
 

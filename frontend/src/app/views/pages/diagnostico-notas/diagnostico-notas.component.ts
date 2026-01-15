@@ -171,6 +171,8 @@ export class DiagnosticoNotasComponent implements OnInit, OnDestroy {
   ngOnDestroy(): void {
     this.autoSaveSubscription?.unsubscribe();
     this.empresaContextSubscription?.unsubscribe();
+    // Limpar estado de expansão ao sair da tela
+    this.clearExpandedState();
   }
 
   private checkUserPerfil(): void {

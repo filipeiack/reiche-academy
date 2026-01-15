@@ -93,8 +93,10 @@
             Cada pilar exibe suas médias congeladas por período (mês/ano do trimestre)
         </p>
 
-        <div>
-            <canvas id="evolucaoBarChart"></canvas>
+        <div style="overflow-x: auto; overflow-y: hidden;">
+            <div id="chartContainer" style="min-width: 100%; position: relative;">
+                <canvas id="evolucaoBarChart"></canvas>
+            </div>
         </div>
 
         @if (historico.length === 0) {

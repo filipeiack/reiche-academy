@@ -13,14 +13,7 @@
 
         @if (selectedEmpresaId) {
         <div id="savingBar" class="d-flex align-items-center gap-3">
-            <!-- Badge indicador de período de avaliação ativo -->
-            @if (periodoAtual) {
-            <div class="badge bg-info text-white d-flex align-items-center gap-1 px-3 py-2">
-                <i class="feather icon-calendar icon-sm"></i>
-                <span>{{ getPeriodoAtualTexto() }}</span>
-            </div>
-            }
-
+            
             @if (savingCount > 0) {
             <div class="saving-indicator">
                 <div class="spinner-border spinner-border-sm" role="status">
@@ -32,6 +25,14 @@
             <div class="last-save-info">
                 <i class="feather icon-check-circle text-success icon-sm"></i>
                 <span class="text-muted small">Salvo por último às: {{ getLastSaveTimeFormatted() }}</span>
+            </div>
+            }
+
+            <!-- Badge indicador de período de avaliação ativo -->
+            @if (periodoAtual) {
+            <div class="badge bg-light text-dark small d-flex align-items-center gap-1 px-3 py-2">
+                <i class="feather icon-calendar icon-sm"></i>
+                <span>{{ getPeriodoAtualTexto() }}</span>
             </div>
             }
 
@@ -286,7 +287,6 @@
             <div class="modal-body">
                 <p class="text-muted mb-3">
                     Selecione a data de referência para o novo período de avaliação.
-                    O sistema identificará automaticamente o trimestre com base na data escolhida.
                 </p>
 
                 <div class="mb-3">

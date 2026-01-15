@@ -15,12 +15,14 @@ services:
     environment:
       POSTGRES_USER: ${POSTGRES_USER}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      TZ: America/Sao_Paulo
       # Criará ambos databases automaticamente (via init script)
     ports:
       - "127.0.0.1:5432:5432"  # Apenas localhost
     volumes:
       - postgres_data:/var/lib/postgresql/data
       - ./scripts/init-databases.sh:/docker-entrypoint-initdb.d/init-databases.sh
+      - ./scripts/init-timezone.sql:/docker-entrypoint-initdb.d/01-timezone.sql
       - ./backups:/backups
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER}"]
@@ -85,6 +87,7 @@ services:
       CORS_ORIGIN: ${CORS_ORIGIN_PROD}
       THROTTLE_TTL: 60
       THROTTLE_LIMIT: 100
+      TZ: America/Sao_Paulo
     expose:
       - "3000"
     depends_on:
@@ -137,6 +140,7 @@ services:
       CORS_ORIGIN: ${CORS_ORIGIN_STAGING}
       THROTTLE_TTL: 60
       THROTTLE_LIMIT: 100
+      TZ: America/Sao_Paulo
     expose:
       - "3000"
     depends_on:
@@ -176,6 +180,8 @@ services:
       target: production
     container_name: reiche-frontend-prod
     restart: always
+    environment:
+      TZ: America/Sao_Paulo
     expose:
       - "80"
     depends_on:
@@ -204,6 +210,8 @@ services:
       target: production
     container_name: reiche-frontend-staging
     restart: always
+    environment:
+      TZ: America/Sao_Paulo
     expose:
       - "80"
     depends_on:

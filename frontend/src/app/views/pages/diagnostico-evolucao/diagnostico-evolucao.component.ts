@@ -185,12 +185,12 @@ export class DiagnosticoEvolucaoComponent implements OnInit, OnDestroy {
       if (result.isConfirmed && this.periodoAtual) {
         this.loading = true;
         this.periodosService.congelar(this.periodoAtual.id).subscribe({
-          next: (periodo) => {
-            const dataRef = new Date(periodo.dataReferencia);
+          next: (response) => {
+            const dataRef = new Date(response.periodo.dataReferencia);
             const mes = (dataRef.getMonth() + 1).toString().padStart(2, '0');
             const ano = dataRef.getFullYear();
             this.showToast(
-              `Período ${mes}/${ano} congelado com sucesso! ${periodo.snapshots?.length || 0} snapshots criados.`,
+              `Período ${mes}/${ano} congelado com sucesso! ${response.snapshots?.length || 0} snapshots criados.`,
               'success',
               4000
             );
@@ -282,6 +282,16 @@ renderBarChart(): void {
 
     // Labels são os nomes dos pilares
     const labels = this.historico.map(pilar => pilar.pilarNome.toUpperCase());
+
+    // Configurar largura dinâmica do canvas
+    const larguraMinimaPorPilar = 105; // pixels mínimos por pilar
+    const larguraNecessaria = this.historico.length * larguraMinimaPorPilar;
+    const container = document.getElementById('chartContainer');
+    if (container && this.historico.length > 10) {
+      container.style.width = `${larguraNecessaria}px`;
+    } else if (container) {
+      container.style.width = '100%';
+    }
 
     // Criar dataset para cada período (mês/ano da dataReferencia real)
     // Coletar todos os períodos únicos
@@ -384,7 +394,7 @@ renderBarChart(): void {
             },
             title: {
               display: true,
-              text: 'Média das Notas'
+              text: 'MÉDIAS'
             }
           },
           x: {

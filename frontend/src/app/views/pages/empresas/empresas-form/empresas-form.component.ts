@@ -102,7 +102,7 @@ export class EmpresasFormComponent implements OnInit {
 
   private getRedirectUrl(): string {
     // Perfis de cliente vão para o dashboard
-    return this.isPerfilCliente ? '/dashboard' : '/empresas';
+    return this.isPerfilCliente ? '/diagnostico-notas' : '/empresas';
   }
 
   handleCancel(): void {

@@ -2,7 +2,7 @@ import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { environment } from '../../../environments/environment';
-import { PeriodoAvaliacao, PeriodoComSnapshots } from '../models/periodo-avaliacao.model';
+import { PeriodoAvaliacao, PeriodoComSnapshots, CongelarPeriodoResponse } from '../models/periodo-avaliacao.model';
 
 export interface IniciarPeriodoRequest {
   dataReferencia: string; // ISO 8601 date string
@@ -41,8 +41,8 @@ export class PeriodosAvaliacaoService {
    * Congela o período atual, criando snapshots de todos os pilares ativos
    * @param periodoId ID do período a ser congelado
    */
-  congelar(periodoId: string): Observable<PeriodoComSnapshots> {
-    return this.http.post<PeriodoComSnapshots>(
+  congelar(periodoId: string): Observable<CongelarPeriodoResponse> {
+    return this.http.post<CongelarPeriodoResponse>(
       `${this.baseUrl}/periodos-avaliacao/${periodoId}/congelar`,
       {}
     );

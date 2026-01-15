@@ -26,7 +26,7 @@ Este documento explica qual arquivo usar em cada situação.
 **Arquivos:**
 - `docker-compose.yml`
 - `.env`
-- `DOCKER_GUIDE.md`
+- `docs/guides/DOCKER_GUIDE.md`
 
 **Como usar:**
 ```powershell
@@ -45,7 +45,7 @@ docker-compose up -d
 **Arquivos:**
 - `docker-compose.vps.yml`
 - `.env.vps`
-- `VPS_SETUP_GUIDE.md`
+- `docs/guides/VPS_SETUP_GUIDE.md`
 
 **Como usar:**
 ```bash
@@ -179,9 +179,9 @@ Os arquivos já estão prontos! Mas por enquanto, **ignore-os**.
 R: Sim! Ou pode deixar lá - não atrapalham e servem como referência futura.
 
 **P: Qual guia seguir?**  
-R: Use o **VPS_SETUP_GUIDE.md** para configurar seu VPS Hostinger.
+R: Use o **docs/guides/VPS_SETUP_GUIDE.md** para configurar seu VPS Hostinger.
 
-**P: E o DOCKER_GUIDE.md?**  
+**P: E o docs/guides/DOCKER_GUIDE.md?**  
 R: Esse é para desenvolvimento local na sua máquina. Útil!
 
 **P: E o DEPLOYMENT_GUIDE.md?**  
@@ -193,8 +193,8 @@ R: Criado para cenário de 2 servidores. Você não precisa agora.
 
 | Documento | Para Que Serve | Você Precisa? |
 |-----------|----------------|---------------|
-| `DOCKER_GUIDE.md` | Desenvolvimento local | ✅ SIM |
-| `VPS_SETUP_GUIDE.md` | Deploy no VPS único | ✅ SIM |
+| `docs/guides/DOCKER_GUIDE.md` | Desenvolvimento local | ✅ SIM |
+| `docs/guides/VPS_SETUP_GUIDE.md` | Deploy no VPS único | ✅ SIM |
 | `DEPLOYMENT_GUIDE.md` | Deploy em 2 servidores | ❌ NÃO (por enquanto) |
 | Este arquivo (`FILE_STRUCTURE.md`) | Entender estrutura | ✅ SIM |
 
@@ -205,9 +205,10 @@ R: Criado para cenário de 2 servidores. Você não precisa agora.
 1. ✅ Ignore ou delete arquivos de "2 servidores"
 2. ✅ Use `docker-compose.yml` na sua máquina
 3. ✅ Use `docker-compose.vps.yml` no VPS
-4. ✅ Siga o **VPS_SETUP_GUIDE.md** para deploy
+4. ✅ Siga o **docs/guides/VPS_SETUP_GUIDE.md** para deploy
 
 ---
 
 **Última atualização:** Janeiro 2026  
-**Para dúvidas:** Consulte VPS_SETUP_GUIDE.md
+**Para dúvidas:** Consulte docs/guides/VPS_SETUP_GUIDE.md
+

@@ -123,7 +123,7 @@ export class UsuariosFormComponent implements OnInit {
 
   private getRedirectUrl(): string {
     // Perfis de cliente vão para o dashboard
-    return this.isPerfilCliente ? '/dashboard' : '/usuarios';
+    return this.isPerfilCliente ? '/diagnostico-notas' : '/usuarios';
   }
 
   handleCancel(): void {

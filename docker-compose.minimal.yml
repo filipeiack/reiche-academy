@@ -1,11 +1,16 @@
-# Docker Compose - Apenas Serviços (PostgreSQL + Redis)
-# Usar quando quiser rodar backend/frontend localmente no Windows
+version: '3.8'
+
+# ============================================================================
+# Docker Compose - APENAS POSTGRES + REDIS
+# Para desenvolvimento no Windows (simples e funcional)
+# ============================================================================
+# Uso: docker-compose -f docker-compose.minimal.yml up -d
 
 services:
-  # PostgreSQL Database
+  # ====== PostgreSQL (Banco de Dados) ======
   postgres:
     image: postgres:16-alpine
-    container_name: reiche-academy-postgres
+    container_name: reiche-postgres-dev
     restart: unless-stopped
     environment:
       POSTGRES_USER: reiche
@@ -25,10 +30,10 @@ services:
     networks:
       - reiche-network
 
-  # Redis Cache
+  # ====== Redis (Cache) ======
   redis:
     image: redis:7-alpine
-    container_name: reiche-academy-redis
+    container_name: reiche-redis-dev
     restart: unless-stopped
     ports:
       - "6379:6379"
@@ -42,12 +47,14 @@ services:
     networks:
       - reiche-network
 
+# ====== Volumes ======
 volumes:
   postgres_data:
     driver: local
   redis_data:
     driver: local
 
+# ====== Networks ======
 networks:
   reiche-network:
     driver: bridge

@@ -6,6 +6,7 @@ import { FormsModule } from '@angular/forms';
 import Swal from 'sweetalert2';
 import { UsersService, CreateUsuarioDto } from '../../../../core/services/users.service';
 import { PilaresEmpresaService } from '../../../../core/services/pilares-empresa.service';
+import { PerfisService } from '../../../../core/services/perfis.service';
 import { Usuario } from '../../../../core/models/auth.model';
 import { PilarEmpresa } from '../../../../core/services/diagnostico-notas.service';
 
@@ -82,6 +83,7 @@ export class ResponsavelPilarModalComponent implements OnInit {
   private modalService = inject(NgbModal);
   private usersService = inject(UsersService);
   private pilaresEmpresaService = inject(PilaresEmpresaService);
+  private perfisService = inject(PerfisService);
   
   @ViewChild('modalContent') modalContent!: TemplateRef<any>;
   @Input() pilarEmpresa?: PilarEmpresa;
@@ -89,15 +91,35 @@ export class ResponsavelPilarModalComponent implements OnInit {
   @Output() responsavelAtualizado = new EventEmitter<void>();
 
   private modalRef: any;
+  private perfilColaboradorId: string | null = null;
   usuarios: Usuario[] = [];
   responsavelIdSelecionado: string | null = null;
   loading = false;
   saving = false;
 
   ngOnInit(): void {
+    this.carregarPerfilColaborador();
     if (this.empresaId) {
       this.loadUsuariosDaEmpresa();
     }
+  }
+
+  private carregarPerfilColaborador(): void {
+    this.perfisService.findAll().subscribe({
+      next: (perfis) => {
+        const perfilColab = perfis.find(p => p.codigo === 'COLABORADOR');
+        if (perfilColab) {
+          this.perfilColaboradorId = perfilColab.id;
+        } else {
+          console.error('Perfil COLABORADOR não encontrado');
+          this.showToast('Perfil COLABORADOR não configurado no sistema', 'error');
+        }
+      },
+      error: (err) => {
+        console.error('Erro ao carregar perfis:', err);
+        this.showToast('Erro ao carregar perfis do sistema', 'error');
+      }
+    });
   }
 
   open(pilarEmpresa: PilarEmpresa): void {
@@ -137,6 +159,11 @@ export class ResponsavelPilarModalComponent implements OnInit {
   }
 
   addUsuarioTag = (nome: string): Usuario | Promise<Usuario> => {
+    if (!this.perfilColaboradorId) {
+      this.showToast('Perfil COLABORADOR não foi carregado. Tente novamente.', 'error');
+      return Promise.reject('Perfil COLABORADOR não disponível');
+    }
+
     const nomeParts = nome.trim().split(/\s+/);
     if (nomeParts.length < 2) {
       this.showToast('Por favor, informe nome e sobrenome', 'error');
@@ -146,7 +173,7 @@ export class ResponsavelPilarModalComponent implements OnInit {
     const novoUsuario: CreateUsuarioDto = {
       nome: nome,
       empresaId: this.empresaId!,
-      perfilId: '336f17cb-f9d3-4401-bebf-2187888edd51' // COLABORADOR
+      perfilId: this.perfilColaboradorId
     };
 
     return new Promise((resolve, reject) => {
