@@ -26,9 +26,10 @@ ADRs documentam decisões arquiteturais importantes, incluindo:
 
 ## 📝 Template
 
-Veja o template oficial em: `/.github/agents/7-Tech_Writer.md`
+Veja o template oficial em: `/.github/agents/0-System_Engineer.md` (Modo Documentação)
 
 ---
 
-**Gerenciado por:** Tech Writer Agent
-**Última atualização:** 2025-12-22
+**Gerenciado por:** System Engineer (Modo Documentação)  
+**Última atualização:** 2026-01-15  
+**Changelog:** ADR-004 — Consolidação de responsabilidades no System Engineer

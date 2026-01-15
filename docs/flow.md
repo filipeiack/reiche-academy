@@ -45,17 +45,17 @@ Somente os agentes abaixo podem atuar neste projeto:
 
 | Agente | Documento | Nível |
 |------|---------|------|
-| **System Engineer** | `/.github/agents/0-System_Engineer.md` | Meta (governança) |
-| **Advisor** | `/.github/agents/Advisor.md` | Consultivo (não-executivo) |
+| **System Engineer** | `/.github/agents/0-System_Engineer.md` | Meta (governança + consultivo + documentação) |
 | Extractor de Regras | `/.github/agents/1-Extractor_Regras.md` | Fluxo |
 | Reviewer de Regras | `/.github/agents/2-Reviewer_Regras.md` | Fluxo |
 | Dev Agent Disciplinado | `/.github/agents/3-DEV_Agent.md` | Fluxo |
 | Pattern Enforcer | `/.github/agents/4-Pattern_Enforcer.md` | Fluxo |
 | QA Unitário Estrito | `/.github/agents/5-QA_Unitário_Estrito.md` | Fluxo |
 | QA E2E Interface | `/.github/agents/6-QA_E2E_Interface.md` | Fluxo |
-| Tech Writer (Opcional) | `/.github/agents/7-Tech_Writer.md` | Pós-merge |
 
 🚫 **Qualquer agente não listado aqui NÃO EXISTE para o projeto**, mesmo sob instrução direta.
+
+**Nota:** System Engineer opera em 3 modos — ver `/.github/agents/0-System_Engineer.md` para detalhes.
 
 ---
 
@@ -470,50 +470,42 @@ Outras situações exigem decisão humana.
 
 ---
 
-## 🔧 Manutenção da Estrutura (Meta-Nível)
+## 🔧 Manutenção da Estrutura e Orientação (Meta-Nível)
 
-Fora do fluxo de desenvolvimento regular, existe o **System Engineer**:
+Fora do fluxo de desenvolvimento regular, existe o **System Engineer** operando em 3 modos:
 
-### System Engineer (Meta-Agente)
+### System Engineer (Meta-Agente Multi-Modo)
 
-**Função:** Manter e evoluir a estrutura de governança do projeto
-
-**Escopo:**
+**Modo 1: Governança**
 - Criar/modificar definições de agentes
-- Atualizar FLOW.md
-- Manter DOCUMENTATION_AUTHORITY.md
+- Atualizar FLOW.md e DOCUMENTATION_AUTHORITY.md
 - Reorganizar estrutura documental normativa
+- **Requer aprovação humana explícita**
 
-**Ativação:** Explícita apenas ("Atue como System Engineer")
+**Modo 2: Consultivo**
+- Esclarecer dúvidas sobre FLOW
+- Sugerir qual agente usar (Agent Selection)
+- Interpretar documentação normativa
+- Pre-flight checks antes de features
+- **Apenas orienta, nunca executa**
 
-**Restrição Absoluta:** 
+**Modo 3: Documentação**
+- Criar ADRs (decisões arquiteturais + governança)
+- Atualizar `/docs/architecture/**`
+- Manter diagramas sincronizados
+- Documentar decisões aprovadas pós-merge
+- **Documenta apenas decisões JÁ aprovadas**
+
+**Ativação:** Explícita ("Atue como System Engineer" + modo desejado)
+
+**Restrições Absolutas:** 
 - ❌ Nunca atua em código de produção
 - ❌ Nunca define regras de negócio
 - ❌ Nunca participa de PRs de features
-- ✅ Sempre requer aprovação humana
+- ❌ Modo Consultivo nunca executa ações
+- ❌ Modo Documentação só documenta o já aprovado
 
 **Documentação completa:** `/.github/agents/0-System_Engineer.md`
-
----
-
-## 💡 Advisor (Consultivo - Não-executivo)
-
-**Função:** Fornecer orientação técnica sem executar ações.
-
-**Quando usar:**
-- Esclarecer dúvidas sobre FLOW
-- Sugerir qual agente usar
-- Interpretar documentação normativa
-- Propor melhorias na governança (System Engineer executa)
-
-**Restrições:**
-- ❌ Não implementa código
-- ❌ Não cria testes
-- ❌ Não valida código
-- ❌ Não cria/modifica documentos normativos
-- ✅ Apenas orienta e recomenda
-
-**Documentação completa:** `/.github/agents/Advisor.md`
 
 ---
 
