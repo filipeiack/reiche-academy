@@ -89,6 +89,21 @@ export const routes: Routes = [
       }
     ]
   },
+  {
+    path: 'cockpits',
+    component: BaseComponent,
+    canActivate: [authGuard],
+    children: [
+      {
+        path: '',
+        loadComponent: () => import('./views/pages/cockpit-pilares/lista-cockpits/lista-cockpits.component').then(m => m.ListaCockpitsComponent)
+      },
+      {
+        path: ':id/dashboard',
+        loadComponent: () => import('./views/pages/cockpit-pilares/cockpit-dashboard/cockpit-dashboard.component').then(m => m.CockpitDashboardComponent)
+      }
+    ]
+  },
   // Rota wildcard para login customizado - DEVE SER A ÚLTIMA!
   // Captura qualquer URL não reconhecida e trata como loginUrl
   {

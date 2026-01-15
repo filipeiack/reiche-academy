@@ -1,0 +1,74 @@
+.indicador-card {
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  padding: 1.25rem;
+  background-color: #fff;
+  transition: box-shadow 0.2s;
+
+  &:hover {
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  }
+}
+
+.indicador-header {
+  h6 {
+    color: #2c3e50;
+    font-size: 1.1rem;
+
+    small {
+      font-size: 0.85rem;
+      font-weight: normal;
+    }
+  }
+}
+
+.propriedade-box {
+  padding: 0.75rem;
+  background-color: #f8f9fa;
+  border-radius: 6px;
+  border: 1px solid #e9ecef;
+
+  .form-label {
+    margin-bottom: 0.25rem;
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+
+  .fw-bold {
+    font-size: 0.95rem;
+    color: #495057;
+  }
+}
+
+table {
+  td, th {
+    vertical-align: middle;
+  }
+
+  input.form-control-sm {
+    border: 1px solid #dee2e6;
+    transition: border-color 0.15s, box-shadow 0.15s;
+
+    &:focus {
+      border-color: #86b7fe;
+      box-shadow: 0 0 0 0.2rem rgba(13, 110, 253, 0.25);
+    }
+
+    &:hover:not(:focus) {
+      border-color: #adb5bd;
+    }
+  }
+
+  .badge {
+    font-size: 0.85rem;
+    font-weight: 600;
+    padding: 0.35rem 0.6rem;
+  }
+}
+
+.spinner-border-sm {
+  width: 1rem;
+  height: 1rem;
+  border-width: 0.15rem;
+}

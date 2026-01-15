@@ -1,0 +1,105 @@
+<div class="container-fluid">
+  <div class="row">
+    <div class="col-12">
+      <!-- Breadcrumb -->
+      <nav aria-label="breadcrumb" class="mb-4">
+        <ol class="breadcrumb">
+          <li class="breadcrumb-item">
+            <a href="javascript:void(0)" (click)="voltarParaDiagnostico()">Diagnóstico</a>
+          </li>
+          <li class="breadcrumb-item active" aria-current="page">Cockpits</li>
+        </ol>
+      </nav>
+
+      <!-- Header -->
+      <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2>
+          <i class="bi bi-speedometer2 me-2"></i>
+          Cockpits de Pilares
+        </h2>
+        <button class="btn btn-secondary" (click)="voltarParaDiagnostico()">
+          <i class="bi bi-arrow-left me-1"></i>
+          Voltar para Diagnóstico
+        </button>
+      </div>
+
+      <!-- Loading -->
+      @if (loading) {
+        <div class="text-center py-5">
+          <div class="spinner-border text-primary" role="status">
+            <span class="visually-hidden">Carregando...</span>
+          </div>
+          <p class="mt-3 text-muted">Carregando cockpits...</p>
+        </div>
+      }
+
+      <!-- Error -->
+      @if (error && !loading) {
+        <div class="alert alert-danger" role="alert">
+          <i class="bi bi-exclamation-triangle me-2"></i>
+          {{ error }}
+        </div>
+      }
+
+      <!-- Cockpits Grid -->
+      @if (!loading && !error) {
+        @if (cockpits.length === 0) {
+          <div class="alert alert-info" role="alert">
+            <i class="bi bi-info-circle me-2"></i>
+            Nenhum cockpit criado ainda. Vá para o diagnóstico e crie um cockpit para começar.
+          </div>
+        } @else {
+          <div class="row g-4">
+            @for (cockpit of cockpits; track cockpit.id) {
+              <div class="col-12 col-md-6 col-lg-4">
+                <div class="card h-100 shadow-sm hover-shadow">
+                  <div class="card-body">
+                    <h5 class="card-title">
+                      <i class="bi bi-graph-up me-2 text-primary"></i>
+                      {{ cockpit.pilarEmpresa?.nome || 'Cockpit' }}
+                    </h5>
+
+                    @if (cockpit.missao) {
+                      <p class="card-text text-muted small mb-3">
+                        <strong>Missão:</strong> {{ cockpit.missao }}
+                      </p>
+                    }
+
+                    <div class="row g-2 mb-3">
+                      <div class="col-6">
+                        <div class="small">
+                          <i class="bi bi-bar-chart me-1 text-success"></i>
+                          <strong>{{ cockpit._count?.indicadores || 0 }}</strong>
+                          <span class="text-muted ms-1">Indicadores</span>
+                        </div>
+                      </div>
+                      <div class="col-6">
+                        <div class="small">
+                          <i class="bi bi-list-check me-1 text-info"></i>
+                          <strong>{{ cockpit._count?.processosPrioritarios || 0 }}</strong>
+                          <span class="text-muted ms-1">Processos</span>
+                        </div>
+                      </div>
+                    </div>
+
+                    <button
+                      class="btn btn-primary w-100"
+                      (click)="abrirDashboard(cockpit)"
+                    >
+                      <i class="bi bi-box-arrow-in-right me-1"></i>
+                      Abrir Dashboard
+                    </button>
+                  </div>
+
+                  <div class="card-footer bg-light text-muted small">
+                    Atualizado em {{ cockpit.updatedAt | date: 'dd/MM/yyyy HH:mm' }}
+                  </div>
+                </div>
+              </div>
+            }
+          </div>
+        }
+      }
+    </div>
+  </div>
+</div>

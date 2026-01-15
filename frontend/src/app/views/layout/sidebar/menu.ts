@@ -31,6 +31,11 @@ export const MENU: MenuItem[] = [
     icon: 'trending-up',
     link: '/diagnostico-evolucao'
   },
+  {
+    label: 'MENU.COCKPITS',
+    icon: 'activity',
+    link: '/cockpits'
+  },
 {
     label: 'MENU.CADASTROS',
     isTitle: true
