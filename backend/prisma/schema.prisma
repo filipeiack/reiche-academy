@@ -22,6 +22,30 @@ enum StatusAcao {
   CANCELADA
 }
 
+enum TipoMedidaIndicador {
+  REAL
+  QUANTIDADE
+  TEMPO
+  PERCENTUAL
+}
+
+enum StatusMedicaoIndicador {
+  NAO_MEDIDO
+  MEDIDO_NAO_CONFIAVEL
+  MEDIDO_CONFIAVEL
+}
+
+enum DirecaoIndicador {
+  MAIOR
+  MENOR
+}
+
+enum StatusProcesso {
+  PENDENTE
+  EM_ANDAMENTO
+  CONCLUIDO
+}
+
 enum EstadoBrasil {
   AC
   AL
@@ -97,6 +121,11 @@ model Usuario {
   passwordResets     PasswordReset[]
   loginHistory       LoginHistory[]
   pilaresResponsavel PilarEmpresa[]  @relation("ResponsavelPilarEmpresa")
+  
+  // Cockpit relations
+  indicadoresResponsavel IndicadorCockpit[] @relation("ResponsavelMedicaoIndicador")
+  cargosCockpit          CargoCockpit[]     @relation("CargoCockpit")
+  acoesCockpit           AcaoCockpit[]      @relation("ResponsavelAcaoCockpit")
 
   @@map("usuarios")
 }
@@ -235,6 +264,7 @@ model PilarEmpresa {
   // Relations
   rotinasEmpresa RotinaEmpresa[]
   evolucao       PilarEvolucao[]
+  cockpit        CockpitPilar?
 
   @@unique([empresaId, nome])
   @@map("pilares_empresa")
@@ -293,7 +323,8 @@ model RotinaEmpresa {
   updatedBy String?
 
   // Relations
-  notas NotaRotina[]
+  notas                NotaRotina[]
+  processosPrioritarios ProcessoPrioritario[]
 
   @@unique([pilarEmpresaId, nome])
   @@index([pilarEmpresaId])
@@ -380,3 +411,199 @@ model AuditLog {
   @@index([usuarioId])
   @@map("audit_logs")
 }
+
+// ===== COCKPIT DE PILARES =====
+
+model CockpitPilar {
+  id String @id @default(uuid())
+
+  pilarEmpresaId String       @unique
+  pilarEmpresa   PilarEmpresa @relation(fields: [pilarEmpresaId], references: [id], onDelete: Cascade)
+
+  entradas String?
+  saidas   String?
+  missao   String?
+
+  ativo Boolean @default(true)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  createdBy String?
+  updatedBy String?
+
+  // Relations
+  indicadores          IndicadorCockpit[]
+  processosPrioritarios ProcessoPrioritario[]
+  cargos               CargoCockpit[]
+  acoes                AcaoCockpit[]
+
+  @@map("cockpits_pilares")
+}
+
+model IndicadorCockpit {
+  id String @id @default(uuid())
+
+  cockpitPilarId String
+  cockpitPilar   CockpitPilar @relation(fields: [cockpitPilarId], references: [id], onDelete: Cascade)
+
+  nome      String
+  descricao String?
+
+  tipoMedida    TipoMedidaIndicador
+  statusMedicao StatusMedicaoIndicador
+  melhor        DirecaoIndicador
+
+  responsavelMedicaoId String?
+  responsavelMedicao   Usuario? @relation("ResponsavelMedicaoIndicador", fields: [responsavelMedicaoId], references: [id], onDelete: SetNull)
+
+  ordem Int
+  ativo Boolean @default(true)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  createdBy String?
+  updatedBy String?
+
+  // Relations
+  mesesIndicador IndicadorMensal[]
+  acoes          AcaoCockpit[]
+
+  @@unique([cockpitPilarId, nome])
+  @@index([cockpitPilarId])
+  @@index([responsavelMedicaoId])
+  @@map("indicadores_cockpit")
+}
+
+model IndicadorMensal {
+  id String @id @default(uuid())
+
+  indicadorCockpitId String
+  indicadorCockpit   IndicadorCockpit @relation(fields: [indicadorCockpitId], references: [id], onDelete: Cascade)
+
+  mes Int? // 1-12 (null para resumo anual)
+  ano Int
+
+  meta       Float?
+  realizado  Float?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  createdBy String?
+  updatedBy String?
+
+  @@unique([indicadorCockpitId, ano, mes])
+  @@index([indicadorCockpitId])
+  @@map("indicadores_mensais")
+}
+
+model ProcessoPrioritario {
+  id String @id @default(uuid())
+
+  cockpitPilarId String
+  cockpitPilar   CockpitPilar @relation(fields: [cockpitPilarId], references: [id], onDelete: Cascade)
+
+  rotinaEmpresaId String
+  rotinaEmpresa   RotinaEmpresa @relation(fields: [rotinaEmpresaId], references: [id], onDelete: Cascade)
+
+  statusMapeamento  StatusProcesso @default(PENDENTE)
+  statusTreinamento StatusProcesso @default(PENDENTE)
+
+  ordem Int
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  createdBy String?
+  updatedBy String?
+
+  @@unique([cockpitPilarId, rotinaEmpresaId])
+  @@index([cockpitPilarId])
+  @@index([rotinaEmpresaId])
+  @@map("processos_prioritarios")
+}
+
+model CargoCockpit {
+  id String @id @default(uuid())
+
+  cockpitPilarId String
+  cockpitPilar   CockpitPilar @relation(fields: [cockpitPilarId], references: [id], onDelete: Cascade)
+
+  cargo String
+
+  usuarioId String?
+  usuario   Usuario? @relation("CargoCockpit", fields: [usuarioId], references: [id], onDelete: SetNull)
+
+  ordem Int
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  createdBy String?
+  updatedBy String?
+
+  // Relations
+  funcoes FuncaoCargo[]
+
+  @@index([cockpitPilarId])
+  @@index([usuarioId])
+  @@map("cargos_cockpit")
+}
+
+model FuncaoCargo {
+  id String @id @default(uuid())
+
+  cargoCockpitId String
+  cargoCockpit   CargoCockpit @relation(fields: [cargoCockpitId], references: [id], onDelete: Cascade)
+
+  descricao     String
+  nivelCritico  Criticidade
+
+  autoAvaliacao      Float?
+  avaliacaoLideranca Float?
+
+  ordem Int
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  createdBy String?
+  updatedBy String?
+
+  @@index([cargoCockpitId])
+  @@map("funcoes_cargo")
+}
+
+model AcaoCockpit {
+  id String @id @default(uuid())
+
+  cockpitPilarId String
+  cockpitPilar   CockpitPilar @relation(fields: [cockpitPilarId], references: [id], onDelete: Cascade)
+
+  indicadorCockpitId String?
+  indicadorCockpit   IndicadorCockpit? @relation(fields: [indicadorCockpitId], references: [id], onDelete: SetNull)
+
+  analiseMes String?
+
+  // 5 Porquês
+  causa1 String?
+  causa2 String?
+  causa3 String?
+  causa4 String?
+  causa5 String?
+
+  acaoProposta String
+
+  responsavelId String?
+  responsavel   Usuario? @relation("ResponsavelAcaoCockpit", fields: [responsavelId], references: [id], onDelete: SetNull)
+
+  status StatusAcao @default(PENDENTE)
+  prazo  DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  createdBy String?
+  updatedBy String?
+
+  @@index([cockpitPilarId])
+  @@index([indicadorCockpitId])
+  @@index([responsavelId])
+  @@map("acoes_cockpit")
+}
+
