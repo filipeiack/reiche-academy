@@ -2,9 +2,9 @@ import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { IsNotEmpty, IsUUID, IsNumber, Min, Max, IsEnum, IsOptional } from 'class-validator';
 
 enum Criticidade {
-  ALTO = 'ALTO',
-  MEDIO = 'MEDIO',
-  BAIXO = 'BAIXO',
+  ALTA = 'ALTA',
+  MÉDIA = 'MÉDIA',
+  BAIXA = 'BAIXA',
 }
 
 export class CreateNotaRotinaDto {
@@ -20,8 +20,8 @@ export class CreateNotaRotinaDto {
   @Max(10, { message: 'A nota máxima é 10' })
   nota: number;
 
-  @ApiProperty({ example: 'MEDIO', enum: Criticidade })
-  @IsEnum(Criticidade, { message: 'Criticidade deve ser ALTO, MEDIO ou BAIXO' })
+  @ApiProperty({ example: 'MÉDIA', enum: Criticidade })
+  @IsEnum(Criticidade, { message: 'Criticidade deve ser ALTA, MÉDIA ou BAIXA' })
   @IsNotEmpty({ message: 'A criticidade é obrigatória' })
   criticidade: Criticidade;
 }

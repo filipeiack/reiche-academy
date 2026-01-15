@@ -53,6 +53,6 @@ export class ListaCockpitsComponent implements OnInit {
   }
 
   voltarParaDiagnostico(): void {
-    this.router.navigate(['/diagnostico']);
+    this.router.navigate(['/diagnostico-notas']);
   }
 }

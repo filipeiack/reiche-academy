@@ -1,4 +1,4 @@
-import { Component, Input, OnInit, OnDestroy, inject } from '@angular/core';
+import { Component, Input, OnInit, OnChanges, SimpleChanges, OnDestroy, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Subject } from 'rxjs';
@@ -19,7 +19,7 @@ import {
   templateUrl: './matriz-indicadores.component.html',
   styleUrl: './matriz-indicadores.component.scss',
 })
-export class MatrizIndicadoresComponent implements OnInit, OnDestroy {
+export class MatrizIndicadoresComponent implements OnInit, OnChanges, OnDestroy {
   @Input() cockpitId!: string;
 
   private cockpitService = inject(CockpitPilaresService);
@@ -40,6 +40,13 @@ export class MatrizIndicadoresComponent implements OnInit, OnDestroy {
   ngOnInit(): void {
     this.setupAutoSave();
     this.loadIndicadores();
+  }
+
+  ngOnChanges(changes: SimpleChanges): void {
+    // Recarregar quando cockpitId mudar
+    if (changes['cockpitId'] && !changes['cockpitId'].firstChange) {
+      this.loadIndicadores();
+    }
   }
 
   ngOnDestroy(): void {

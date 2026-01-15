@@ -43,7 +43,8 @@ interface AutoSaveQueueItem {
     ResponsavelPilarModalComponent,
     NovaRotinaModalComponent,
     RotinasPilarModalComponent,
-    MediaBadgeComponent
+    MediaBadgeComponent,
+    CriarCockpitModalComponent
 ],
   templateUrl: './diagnostico-notas.component.html',
   styleUrl: './diagnostico-notas.component.scss'
@@ -145,9 +146,9 @@ export class DiagnosticoNotasComponent implements OnInit, OnDestroy {
 
   // Opções de criticidade
   criticidadeOptions = [
-    { value: 'BAIXO', label: 'BAIXO' },
-    { value: 'MEDIO', label: 'MEDIO' },
-    { value: 'ALTO', label: 'ALTO' },
+    { value: 'BAIXA', label: 'BAIXA' },
+    { value: 'MÉDIA', label: 'MÉDIA' },
+    { value: 'ALTA', label: 'ALTA' },
   ];
 
   ngOnInit(): void {
@@ -418,7 +419,7 @@ export class DiagnosticoNotasComponent implements OnInit, OnDestroy {
 
     const dto: UpdateNotaRotinaDto = {
       nota: notaNum,
-      criticidade: criticidadeFinal as 'ALTO' | 'MEDIO' | 'BAIXO',
+      criticidade: criticidadeFinal as 'ALTA' | 'MÉDIA' | 'BAIXA',
     };
 
     console.log('➕ Adicionando à fila de auto-save:', dto);
@@ -534,11 +535,11 @@ export class DiagnosticoNotasComponent implements OnInit, OnDestroy {
    */
   getCriticidadeClass(criticidade: string | null): string {
     switch (criticidade) {
-      case 'ALTO':
+      case 'ALTA':
         return 'bg-danger';
-      case 'MEDIO':
+      case 'MÉDIA':
         return 'bg-warning';
-      case 'BAIXO':
+      case 'BAIXA':
         return 'bg-success';
       default:
         return '';
@@ -664,7 +665,7 @@ export class DiagnosticoNotasComponent implements OnInit, OnDestroy {
           rotinaEmpresaId,
           data: {
             nota: value.nota,
-            criticidade: value.criticidade as 'ALTO' | 'MEDIO' | 'BAIXO'
+            criticidade: value.criticidade as 'ALTA' | 'MÉDIA' | 'BAIXA'
           },
           retryCount: 0
         });
@@ -779,7 +780,7 @@ export class DiagnosticoNotasComponent implements OnInit, OnDestroy {
    */
   async navegarParaCockpit(pilar: PilarEmpresa): Promise<void> {
     // Verificar se cockpit já existe
-    if (pilar.cockpit) {
+    if (pilar.cockpit?.id) {
       // Se existe, redirecionar para dashboard
       this.router.navigate(['/cockpits', pilar.cockpit.id, 'dashboard']);
     } else {

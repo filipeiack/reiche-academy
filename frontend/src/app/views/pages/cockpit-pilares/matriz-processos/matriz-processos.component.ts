@@ -1,4 +1,4 @@
-import { Component, Input, OnInit, OnDestroy, inject } from '@angular/core';
+import { Component, Input, OnInit, OnChanges, SimpleChanges, OnDestroy, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Subject, Subscription } from 'rxjs';
@@ -17,7 +17,7 @@ import {
   templateUrl: './matriz-processos.component.html',
   styleUrl: './matriz-processos.component.scss',
 })
-export class MatrizProcessosComponent implements OnInit, OnDestroy {
+export class MatrizProcessosComponent implements OnInit, OnChanges, OnDestroy {
   @Input() cockpitId!: string;
   @Input() processos: ProcessoPrioritario[] = [];
 
@@ -38,6 +38,11 @@ export class MatrizProcessosComponent implements OnInit, OnDestroy {
 
   ngOnInit(): void {
     this.setupAutoSave();
+  }
+
+  ngOnChanges(changes: SimpleChanges): void {
+    // Componente recebe processos via Input, não precisa recarregar
+    // A atualização é automática via data binding
   }
 
   ngOnDestroy(): void {

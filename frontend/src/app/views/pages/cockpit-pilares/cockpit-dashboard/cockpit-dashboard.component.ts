@@ -2,7 +2,7 @@ import { Component, OnInit, OnDestroy, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, Router } from '@angular/router';
 import { FormsModule } from '@angular/forms';
-import { Subject } from 'rxjs';
+import { Subject, Subscription } from 'rxjs';
 import { debounceTime, distinctUntilChanged } from 'rxjs/operators';
 import { CockpitPilaresService } from '@core/services/cockpit-pilares.service';
 import { CockpitPilar } from '@core/interfaces/cockpit-pilares.interface';
@@ -42,12 +42,16 @@ export class CockpitDashboardComponent implements OnInit, OnDestroy {
 
   // Auto-save Subject
   private autoSaveSubject = new Subject<void>();
+  private routeParamsSubscription?: Subscription;
 
   ngOnInit(): void {
-    const cockpitId = this.route.snapshot.paramMap.get('id');
-    if (cockpitId) {
-      this.loadCockpit(cockpitId);
-    }
+    // Subscrever aos parâmetros da rota para detectar mudanças
+    this.routeParamsSubscription = this.route.paramMap.subscribe(params => {
+      const cockpitId = params.get('id');
+      if (cockpitId) {
+        this.loadCockpit(cockpitId);
+      }
+    });
 
     // Configurar auto-save após 1000ms de inatividade
     this.setupAutoSave();
@@ -55,6 +59,7 @@ export class CockpitDashboardComponent implements OnInit, OnDestroy {
 
   ngOnDestroy(): void {
     this.autoSaveSubject.complete();
+    this.routeParamsSubscription?.unsubscribe();
   }
 
   private setupAutoSave(): void {

@@ -10,9 +10,9 @@ datasource db {
 // ===== ENUMS =====
 
 enum Criticidade {
-  ALTO
-  MEDIO
-  BAIXO
+  ALTA
+  MEDIA
+  BAIXA
 }
 
 enum StatusAcao {

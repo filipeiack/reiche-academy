@@ -96,7 +96,7 @@ export interface ProcessoPrioritario {
 
 // DTOs
 export interface CreateCockpitPilarDto {
-  pilarEmpresaId?: string; // Opcional pois vem da URL
+  pilarEmpresaId: string; // Obrigatório no backend
   entradas?: string;
   saidas?: string;
   missao?: string;

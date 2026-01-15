@@ -711,11 +711,11 @@ async function main() {
       // Definir criticidade baseada na nota
       let criticidade: Criticidade;
       if (notaFinal >= 7) {
-        criticidade = 'BAIXO';
+        criticidade = 'BAIXA';
       } else if (notaFinal >= 4) {
-        criticidade = 'MEDIO';
+        criticidade = 'MÉDIA';
       } else {
-        criticidade = 'ALTO';
+        criticidade = 'ALTA';
       }
 
       await prisma.notaRotina.create({

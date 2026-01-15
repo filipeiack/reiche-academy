@@ -1,4 +1,4 @@
-import { Component, Input, OnInit, inject } from '@angular/core';
+import { Component, Input, OnInit, OnChanges, SimpleChanges, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { BaseChartDirective } from 'ng2-charts';
@@ -16,7 +16,7 @@ import {
   templateUrl: './grafico-indicadores.component.html',
   styleUrl: './grafico-indicadores.component.scss',
 })
-export class GraficoIndicadoresComponent implements OnInit {
+export class GraficoIndicadoresComponent implements OnInit, OnChanges {
   @Input() cockpitId!: string;
   @Input() indicadores: IndicadorCockpit[] = [];
 
@@ -95,6 +95,21 @@ export class GraficoIndicadoresComponent implements OnInit {
     if (this.indicadores.length > 0) {
       this.selectedIndicadorId = this.indicadores[0].id;
       this.loadGrafico();
+    }
+  }
+
+  ngOnChanges(changes: SimpleChanges): void {
+    // Recarregar quando cockpitId ou indicadores mudarem
+    if (changes['cockpitId'] && !changes['cockpitId'].firstChange) {
+      if (this.indicadores.length > 0) {
+        this.selectedIndicadorId = this.indicadores[0].id;
+        this.loadGrafico();
+      }
+    } else if (changes['indicadores'] && !changes['indicadores'].firstChange) {
+      if (this.indicadores.length > 0 && !this.selectedIndicadorId) {
+        this.selectedIndicadorId = this.indicadores[0].id;
+        this.loadGrafico();
+      }
     }
   }
 

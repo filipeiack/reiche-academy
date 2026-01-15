@@ -59,7 +59,7 @@
                         <a ngbDropdownItem class="d-flex align-items-center gap-1"
                             (click)="abrirModalPilares(); $event.preventDefault()">
                             <i class="feather icon-edit icon-sm"></i>
-                            <span class="">Gerenciar Pilares</span>
+                            <span class="">Editar Pilares</span>
                         </a>
                     </div>
                 </div>
@@ -130,7 +130,7 @@
                                 <a ngbDropdownItem class="d-flex align-items-center gap-1"
                                     (click)="abrirModalEditarRotinas(pilar); $event.preventDefault()">
                                     <i class="feather icon-edit icon-sm"></i>
-                                    <span class="">Gerenciar Rotinas</span>
+                                    <span class="">Editar Rotinas</span>
                                 </a>
 
                                 <div class="dropdown-divider"></div>
@@ -269,7 +269,7 @@
 </div>
 }
 
-<!-- Modal para gerenciar pilares -->
+<!-- Modal para editar pilares -->
 <app-pilares-empresa-modal [empresaId]="selectedEmpresaId || ''" [isPerfilCliente]="isReadOnlyPerfil"
     (pilaresModificados)="onPilaresModificados()">
 </app-pilares-empresa-modal>
@@ -282,7 +282,7 @@
 <app-nova-rotina-modal [empresaId]="selectedEmpresaId || ''" (rotinaCriada)="onRotinaCriada()">
 </app-nova-rotina-modal>
 
-<!-- Modal para gerenciar rotinas do pilar -->
+<!-- Modal para editar rotinas do pilar -->
 <app-rotinas-pilar-modal (rotinasModificadas)="onRotinasModificadas()">
 </app-rotinas-pilar-modal>
 
