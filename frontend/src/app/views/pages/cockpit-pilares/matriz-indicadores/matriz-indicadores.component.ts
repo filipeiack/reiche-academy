@@ -9,6 +9,7 @@ import {
   IndicadorCockpit,
   IndicadorMensal,
   DirecaoIndicador,
+  StatusMedicaoIndicador,
 } from '@core/interfaces/cockpit-pilares.interface';
 
 @Component({
