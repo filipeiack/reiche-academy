@@ -8,7 +8,433 @@
 
 ---
 
-## 1. Matriz de Indicadores (Aba Principal)
+## 1. Fluxo de Navegação
+
+### 1.1. Ponto de Entrada: Diagnóstico de Pilares
+
+**Contexto:**
+- Usuário está na página de **Diagnóstico Notas** (`/diagnostico-notas`)
+- Cada pilar exibido possui um **dropdown de ações** (três pontos verticais ⋮)
+
+**Novo botão no dropdown:**
+
+```html
+<!-- diagnostico-notas.component.html -->
+<!-- Dentro do ngbDropdown de cada pilar -->
+
+<div ngbDropdown class="d-inline-block">
+  <button class="btn btn-sm btn-icon" ngbDropdownToggle>
+    <i class="feather icon-more-vertical"></i>
+  </button>
+  
+  <div ngbDropdownMenu>
+    <!-- Opções existentes -->
+    <a ngbDropdownItem (click)="editarPilar(pilar)">
+      <i class="feather icon-edit"></i> Editar Pilar
+    </a>
+    
+    <div class="dropdown-divider"></div>
+    
+    <!-- NOVO: Botão Cockpit -->
+    <a ngbDropdownItem (click)="navegarParaCockpit(pilar); $event.preventDefault()">
+      @if (pilar.cockpit) {
+        <i class="feather icon-target text-success"></i>
+        <span>Abrir Cockpit</span>
+      } @else {
+        <i class="feather icon-plus-circle text-primary"></i>
+        <span>Criar Cockpit</span>
+      }
+    </a>
+    
+    <!-- Opções existentes -->
+    <div class="dropdown-divider"></div>
+    <a ngbDropdownItem (click)="excluirPilar(pilar)">
+      <i class="feather icon-trash-2 text-danger"></i> Excluir
+    </a>
+  </div>
+</div>
+```
+
+**Lógica de verificação:**
+```typescript
+// diagnostico-notas.component.ts
+
+async navegarParaCockpit(pilar: PilarEmpresa): Promise<void> {
+  // 1. Verificar se cockpit já existe
+  if (pilar.cockpit) {
+    // 1a. Se existe, redirecionar para dashboard
+    this.router.navigate(['/cockpits', pilar.cockpit.id, 'dashboard']);
+  } else {
+    // 1b. Se não existe, abrir modal de criação
+    const result = await this.modalService.open(CriarCockpitModalComponent, {
+      size: 'lg',
+      backdrop: 'static',
+      centered: true
+    }).result;
+    
+    if (result) {
+      // Após criar, redirecionar para dashboard
+      this.router.navigate(['/cockpits', result.id, 'dashboard']);
+    }
+  }
+}
+```
+
+**Comportamento esperado:**
+- ✅ Se cockpit já existe: botão "Abrir Cockpit" (ícone target verde)
+- ✅ Se cockpit não existe: botão "Criar Cockpit" (ícone plus azul)
+- ✅ Ao criar, redireciona automaticamente para dashboard do cockpit
+
+---
+
+### 1.2. Modal: Criar Cockpit (Entrada rápida)
+
+```
+┌───────────────────────────────────────────────────────────┐
+│ Criar Cockpit para: COMERCIAL - CANAL INDIRETO           │
+├───────────────────────────────────────────────────────────┤
+│                                                           │
+│ 📝 Defina o contexto estratégico do cockpit              │
+│                                                           │
+│ ENTRADAS (opcional):                                      │
+│ ┌─────────────────────────────────────────────────────┐  │
+│ │ Ex: Pedidos de clientes, solicitações de propostas │  │
+│ └─────────────────────────────────────────────────────┘  │
+│                                                           │
+│ SAÍDAS (opcional):                                        │
+│ ┌─────────────────────────────────────────────────────┐  │
+│ │ Ex: Propostas enviadas, contratos fechados         │  │
+│ └─────────────────────────────────────────────────────┘  │
+│                                                           │
+│ MISSÃO DO PILAR (opcional):                               │
+│ ┌─────────────────────────────────────────────────────┐  │
+│ │ Ex: Maximizar faturamento via canal indireto       │  │
+│ └─────────────────────────────────────────────────────┘  │
+│                                                           │
+│ ℹ️ Todos os campos são opcionais. Você pode preencher    │
+│    depois na aba "Contexto" do dashboard.                 │
+│                                                           │
+│ ℹ️ Ao criar, as rotinas ativas deste pilar serão         │
+│    vinculadas automaticamente como processos prioritários.│
+│                                                           │
+│                          [Cancelar]  [Criar e Ir para    │
+│                                        Dashboard]         │
+└───────────────────────────────────────────────────────────┘
+```
+
+**Validações:**
+- Todos os campos são opcionais
+- Limite de caracteres: entradas/saídas (500), missão (1000)
+
+**Após criação:**
+1. Backend cria `CockpitPilar`
+2. Backend busca rotinas ativas do pilar
+3. Backend cria `ProcessoPrioritario` para cada rotina (auto-vinculação)
+4. Frontend redireciona para `/cockpits/:cockpitId/dashboard`
+5. Toast de sucesso: "Cockpit criado com sucesso! 5 rotinas vinculadas."
+
+---
+
+### 1.3. Dashboard do Cockpit (Estrutura em Abas)
+
+**URL:** `/cockpits/:cockpitId/dashboard`
+
+**Layout geral:**
+
+```
+┌──────────────────────────────────────────────────────────────────┐
+│ ← Voltar para Diagnóstico          COCKPIT: COMERCIAL - CANAL   │
+│                                            INDIRETO              │
+├──────────────────────────────────────────────────────────────────┤
+│                                                                  │
+│ ┌──────────────────────────────────────────────────────────────┐│
+│ │ [Contexto] [Indicadores] [Gráficos] [Processos Prioritários]││
+│ └──────────────────────────────────────────────────────────────┘│
+│                                                                  │
+│ <!-- Conteúdo da aba selecionada -->                            │
+│                                                                  │
+└──────────────────────────────────────────────────────────────────┘
+```
+
+**Navegação:**
+- **Breadcrumb:** Home > Diagnóstico > Cockpit: [Nome do Pilar]
+- **Botão voltar:** Redireciona para `/diagnostico-notas`
+- **Abas persistentes:** Mantêm estado ao trocar
+
+---
+
+### 1.4. Aba 1: Contexto
+
+**Objetivo:** Editar campos estratégicos do cockpit
+
+```
+┌──────────────────────────────────────────────────────────────────┐
+│ 📝 CONTEXTO ESTRATÉGICO                                          │
+├──────────────────────────────────────────────────────────────────┤
+│                                                                  │
+│ ENTRADAS:                                                        │
+│ ┌──────────────────────────────────────────────────────────────┐│
+│ │ Pedidos de clientes                                          ││
+│ │ Solicitações de propostas comerciais                         ││
+│ │ Leads qualificados do marketing                              ││
+│ └──────────────────────────────────────────────────────────────┘│
+│                                                 [Auto-saving...] │
+│                                                                  │
+│ SAÍDAS:                                                          │
+│ ┌──────────────────────────────────────────────────────────────┐│
+│ │ Propostas comerciais enviadas                                ││
+│ │ Contratos assinados                                          ││
+│ │ Relatórios de performance                                    ││
+│ └──────────────────────────────────────────────────────────────┘│
+│                                                 [Auto-saving...] │
+│                                                                  │
+│ MISSÃO DO PILAR:                                                 │
+│ ┌──────────────────────────────────────────────────────────────┐│
+│ │ Maximizar o faturamento via canal indireto, mantendo alta   ││
+│ │ qualidade no atendimento e reduzindo inadimplência.          ││
+│ └──────────────────────────────────────────────────────────────┘│
+│                                                 [Auto-saving...] │
+│                                                                  │
+│                                         ✓ Salvo às: 14:32:15    │
+└──────────────────────────────────────────────────────────────────┘
+```
+
+**Comportamento:**
+- Campos de texto multilinha (textarea)
+- Auto-save após 1000ms sem digitação
+- Feedback visual durante salvamento
+- RBAC: apenas ADMINISTRADOR e GESTOR podem editar
+
+---
+
+### 1.5. Aba 2: Indicadores
+
+**Objetivo:** Gestão da matriz de indicadores (veja seção completa abaixo)
+
+**Componentes:**
+- Botão "+ Novo Indicador"
+- Lista de indicadores (cards expansíveis)
+- Cada indicador:
+  - Cabeçalho (nome, descrição, ações)
+  - Card de propriedades (tipo, status, responsável, melhor)
+  - Tabela mensal (jan-dez + anual)
+
+**Ações principais:**
+- Criar indicador (modal)
+- Editar propriedades (modal)
+- Editar meta/realizado (inline com auto-save)
+- Excluir indicador (soft delete)
+
+**Navegação interna:**
+- Rolagem vertical para múltiplos indicadores
+- Cada indicador é independente
+- Seletor de ano (dropdown) para trocar ano dos dados
+
+---
+
+### 1.6. Aba 3: Gráficos
+
+**Objetivo:** Visualização temporal de meta (linha) vs realizado (barra)
+
+```
+┌──────────────────────────────────────────────────────────────────┐
+│ 📈 GRÁFICOS DE EVOLUÇÃO                                          │
+├──────────────────────────────────────────────────────────────────┤
+│                                                                  │
+│ Selecione o indicador: [Faturamento Total Mensal     ▼]         │
+│ Ano: [2026 ▼]                                                    │
+│                                                                  │
+│ ┌──────────────────────────────────────────────────────────────┐│
+│ │                                                              ││
+│ │  R$                                                          ││
+│ │  3M ●                                                        ││
+│ │     │         ●                                              ││
+│ │     │    ●         ●                                         ││
+│ │  2M ├────────────────────────────────────────────────────── ││
+│ │     │○        ○         ○                                    ││
+│ │     │   ○                                                    ││
+│ │  1M ○                                                        ││
+│ │     │                                                        ││
+│ │   0 └────────────────────────────────────────────────────── ││
+│ │     Jan Feb Mar Abr Mai Jun Jul Ago Set Out Nov Dez         ││
+│ │                                                              ││
+│ │     ● Meta       ○ Realizado                                ││
+│ └──────────────────────────────────────────────────────────────┘│
+│                                                                  │
+│ RESUMO DO ANO:                                                   │
+│ • Meta Anual: R$ 26.820.000                                      │
+│ • Realizado: R$ 1.500.000 (apenas Jan)                           │
+│ • % Atingido: 5,6%                                               │
+│ • Status: 🔴 Abaixo da meta                                      │
+│                                                                  │
+└──────────────────────────────────────────────────────────────────┘
+```
+
+**Componentes:**
+- Dropdown de seleção de indicador
+- Dropdown de seleção de ano
+- Gráfico de linha (Chart.js ou ng2-charts)
+- Card de resumo com totais e status
+
+**Comportamento:**
+- Ao trocar indicador ou ano: recarrega dados do backend
+- Endpoint: `GET /cockpits/:cockpitId/graficos/dados?ano=2026`
+- Query otimizada (include com where aninhado)
+
+---
+
+### 1.7. Aba 4: Processos Prioritários
+
+**Objetivo:** Gestão de status de rotinas vinculadas ao cockpit
+
+```
+┌──────────────────────────────────────────────────────────────────┐
+│ 🎯 PROCESSOS PRIORITÁRIOS                                        │
+├──────────────────────────────────────────────────────────────────┤
+│                                                                  │
+│ ℹ️ Rotinas vinculadas automaticamente ao criar este cockpit.    │
+│    Gerencie o status de mapeamento e treinamento.               │
+│                                                                  │
+│ ┌──────────────────────────────────────────────────────────────┐│
+│ │ #│ ROTINA             │CRÍTICO│NOTA│MAP.      │TREIN.       ││
+│ ├──┼────────────────────┼───────┼────┼──────────┼─────────────┤│
+│ │1 │Prospecção de      │  8.4  │ 7.2│[Pendente▼│[Pendente  ▼││
+│ │  │leads              │       │    │          │]            ││
+│ │2 │Apresentação de    │  9.1  │ 8.5│[Em And.▼ │[Concluído ▼││
+│ │  │proposta           │       │    │          │]            ││
+│ │3 │Negociação         │  7.8  │ 6.9│[Concluído│[Em And.   ▼││
+│ │  │comercial          │       │    │▼]        │]            ││
+│ │4 │Fechamento de      │  9.3  │ 9.0│[Concluído│[Concluído ▼││
+│ │  │contrato           │       │    │▼]        │]            ││
+│ │5 │Pós-venda          │  6.5  │ 5.8│[Pendente▼│[Pendente  ▼││
+│ │  │                   │       │    │          │]            ││
+│ └──┴────────────────────┴───────┴────┴──────────┴─────────────┘│
+│                                                                  │
+│                                         ✓ Salvo às: 14:35:22    │
+└──────────────────────────────────────────────────────────────────┘
+```
+
+**Campos:**
+- **# (Ordem)**: Numérico sequencial
+- **ROTINA**: Nome da rotina (READ-ONLY, vem de RotinaEmpresa)
+- **CRÍTICO**: Nível crítico calculado (READ-ONLY, vem de RotinaEmpresa)
+- **NOTA**: Nota atual do diagnóstico (READ-ONLY, vem de NotaRotina)
+- **MAP. (Status Mapeamento)**: Dropdown editável (PENDENTE, EM_ANDAMENTO, CONCLUIDO)
+- **TREIN. (Status Treinamento)**: Dropdown editável (PENDENTE, EM_ANDAMENTO, CONCLUIDO)
+
+**⚠️ IMPORTANTE:**
+- **Nome, Criticidade, Nota**: Campos READ-ONLY (não são snapshot)
+- Valores vêm via JOIN no backend:
+  ```typescript
+  await prisma.processoPrioritario.findMany({
+    where: { cockpitPilarId },
+    include: {
+      rotinaEmpresa: {
+        include: {
+          notas: { 
+            orderBy: { createdAt: 'desc' }, 
+            take: 1 
+          }
+        }
+      }
+    },
+    orderBy: { ordem: 'asc' }
+  });
+  ```
+
+**Auto-save:**
+- Ao trocar status (MAP ou TREIN), dispara auto-save após 1000ms
+- Endpoint: `PATCH /processos-prioritarios/:processoId`
+- Body: `{ "statusMapeamento": "CONCLUIDO", "statusTreinamento": "EM_ANDAMENTO" }`
+
+**RBAC:**
+- Edição: ADMINISTRADOR, GESTOR
+- Visualização: todos os perfis
+
+---
+
+### 1.8. Fluxo de Navegação Completo (Resumo)
+
+```
+┌─────────────────────┐
+│ Diagnóstico de      │
+│ Pilares             │
+│ (/diagnostico-notas)      │
+└──────────┬──────────┘
+           │
+           │ Clica "Criar Cockpit" ou "Abrir Cockpit"
+           ▼
+┌─────────────────────┐
+│ Modal: Criar        │ (se não existir)
+│ Cockpit             │
+└──────────┬──────────┘
+           │
+           │ Após criação
+           ▼
+┌─────────────────────────────────────────────────────────────┐
+│ Dashboard do Cockpit (/cockpits/:id/dashboard)              │
+├─────────────────────────────────────────────────────────────┤
+│                                                             │
+│ [Contexto] [Indicadores] [Gráficos] [Processos]            │
+│                                                             │
+│  ┌─────────────┐  ┌──────────────┐  ┌──────────────┐       │
+│  │ Edita       │  │ Cria/Edita   │  │ Visualiza    │       │
+│  │ entradas/   │  │ indicadores  │  │ evolução     │       │
+│  │ saídas/     │  │ + valores    │  │ temporal     │       │
+│  │ missão      │  │ mensais      │  │ (meta vs     │       │
+│  │             │  │              │  │ realizado)   │       │
+│  └─────────────┘  └──────────────┘  └──────────────┘       │
+│                                                             │
+│                    ┌──────────────┐                         │
+│                    │ Gerencia     │                         │
+│                    │ status de    │                         │
+│                    │ mapeamento/  │                         │
+│                    │ treinamento  │                         │
+│                    └──────────────┘                         │
+│                                                             │
+│  ← Voltar para Diagnóstico                                 │
+└─────────────────────────────────────────────────────────────┘
+```
+
+**Atalhos de navegação:**
+- **Breadcrumb:** Home > Diagnóstico > Cockpit: [Nome do Pilar]
+- **Botão "Voltar":** Retorna para `/diagnostico-notas`
+- **Menu lateral:** Item "Cockpits" lista todos os cockpits da empresa
+
+---
+
+### 1.9. Lista de Cockpits (Opcional - Rota Independente)
+
+**URL:** `/cockpits`
+
+**Layout:**
+
+```
+┌──────────────────────────────────────────────────────────────────┐
+│ 🎯 MEUS COCKPITS                                                 │
+├──────────────────────────────────────────────────────────────────┤
+│                                                                  │
+│ ┌──────────────────┐  ┌──────────────────┐  ┌─────────────────┐│
+│ │ 🎯 COMERCIAL     │  │ 🎯 FINANCEIRO    │  │ 🎯 OPERAÇÕES    ││
+│ │ CANAL INDIRETO   │  │                  │  │                 ││
+│ │                  │  │ 3 Indicadores    │  │ 7 Indicadores   ││
+│ │ 5 Indicadores    │  │ 8 Processos      │  │ 12 Processos    ││
+│ │ 5 Processos      │  │                  │  │                 ││
+│ │                  │  │ [Abrir Dashboard]│  │ [Abrir]         ││
+│ │ [Abrir Dashboard]│  └──────────────────┘  └─────────────────┘│
+│ └──────────────────┘                                            │
+│                                                                  │
+└──────────────────────────────────────────────────────────────────┘
+```
+
+**Comportamento:**
+- Cards clicáveis
+- Mostra resumo (total de indicadores, total de processos)
+- Clique redireciona para `/cockpits/:id/dashboard`
+
+---
+
+## 2. Matriz de Indicadores (Aba Principal)
 
 ### Layout Completo
 

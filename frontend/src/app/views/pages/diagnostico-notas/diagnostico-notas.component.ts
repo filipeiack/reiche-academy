@@ -1,7 +1,8 @@
 import { Component, OnInit, OnDestroy, ViewChild, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { NgbAlertModule, NgbProgressbar } from '@ng-bootstrap/ng-bootstrap';
+import { Router } from '@angular/router';
+import { NgbAlertModule, NgbProgressbar, NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { NgSelectModule } from '@ng-select/ng-select';
 import Swal from 'sweetalert2';
 import { Subject, Subscription, debounceTime, distinctUntilChanged } from 'rxjs';
@@ -19,6 +20,7 @@ import { ResponsavelPilarModalComponent } from './responsavel-pilar-modal/respon
 import { NovaRotinaModalComponent } from './nova-rotina-modal/nova-rotina-modal.component';
 import { RotinasPilarModalComponent } from './rotinas-pilar-modal/rotinas-pilar-modal.component';
 import { MediaBadgeComponent } from '../../../shared/components/media-badge/media-badge.component';
+import { CriarCockpitModalComponent } from '../cockpit-pilares/criar-cockpit-modal/criar-cockpit-modal.component';
 
 interface AutoSaveQueueItem {
   rotinaEmpresaId: string;
@@ -52,6 +54,8 @@ export class DiagnosticoNotasComponent implements OnInit, OnDestroy {
   private authService = inject(AuthService);
   private empresaContextService = inject(EmpresaContextService);
   private periodosService = inject(PeriodosAvaliacaoService);
+  private router = inject(Router);
+  private modalService = inject(NgbModal);
 
   @ViewChild(PilaresEmpresaModalComponent) pilaresModal!: PilaresEmpresaModalComponent;
   @ViewChild(ResponsavelPilarModalComponent) responsavelModal!: ResponsavelPilarModalComponent;
@@ -768,5 +772,37 @@ export class DiagnosticoNotasComponent implements OnInit, OnDestroy {
     const mes = (dataRef.getMonth() + 1).toString().padStart(2, '0');
     const ano = dataRef.getFullYear();
     return `Avaliação ${mes}/${ano} em andamento`;
+  }
+
+  /**
+   * Navegar para cockpit do pilar (criar se não existir)
+   */
+  async navegarParaCockpit(pilar: PilarEmpresa): Promise<void> {
+    // Verificar se cockpit já existe
+    if (pilar.cockpit) {
+      // Se existe, redirecionar para dashboard
+      this.router.navigate(['/cockpits', pilar.cockpit.id, 'dashboard']);
+    } else {
+      // Se não existe, abrir modal de criação
+      const modalRef = this.modalService.open(CriarCockpitModalComponent, {
+        size: 'lg',
+        backdrop: 'static',
+        centered: true,
+      });
+
+      modalRef.componentInstance.pilar = pilar;
+
+      try {
+        const result = await modalRef.result;
+        if (result) {
+          // Após criar, redirecionar para dashboard
+          this.showToast('Cockpit criado com sucesso!', 'success');
+          this.router.navigate(['/cockpits', result.id, 'dashboard']);
+        }
+      } catch (error) {
+        // Modal foi fechado/cancelado
+        console.log('Modal de criar cockpit cancelado');
+      }
+    }
   }
 }

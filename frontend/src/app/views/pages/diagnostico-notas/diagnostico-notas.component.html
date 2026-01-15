@@ -133,6 +133,20 @@
                                     <span class="">Gerenciar Rotinas</span>
                                 </a>
 
+                                <div class="dropdown-divider"></div>
+
+                                <!-- Botão Cockpit -->
+                                <a ngbDropdownItem class="d-flex align-items-center gap-1"
+                                    (click)="navegarParaCockpit(pilar); $event.preventDefault()">
+                                    @if (pilar.cockpit) {
+                                        <i class="feather icon-target icon-sm text-success"></i>
+                                        <span class="">Abrir Cockpit</span>
+                                    } @else {
+                                        <i class="feather icon-plus-circle icon-sm text-primary"></i>
+                                        <span class="">Criar Cockpit</span>
+                                    }
+                                </a>
+
                             </div>
                         </div>
                         }

@@ -186,4 +186,26 @@ export class MatrizIndicadoresComponent implements OnInit, OnDestroy {
     const meses = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'];
     return meses[mes - 1] || '';
   }
+
+  novoIndicador(): void {
+    // TODO: Implementar modal de criação de indicador
+    console.log('Criar novo indicador');
+    alert('Funcionalidade "Criar Indicador" será implementada em breve.');
+  }
+
+  editarIndicador(indicador: IndicadorCockpit): void {
+    // TODO: Implementar modal de edição de indicador
+    console.log('Editar indicador:', indicador);
+    alert('Funcionalidade "Editar Indicador" será implementada em breve.');
+  }
+
+  excluirIndicador(indicador: IndicadorCockpit): void {
+    if (!confirm(`Tem certeza que deseja excluir o indicador "${indicador.nome}"?`)) {
+      return;
+    }
+
+    // TODO: Implementar soft delete no backend
+    console.log('Excluir indicador:', indicador);
+    alert('Funcionalidade "Excluir Indicador" será implementada em breve.');
+  }
 }

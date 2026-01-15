@@ -1,0 +1,95 @@
+<div class="modal-header">
+  <h5 class="modal-title">
+    Criar Cockpit para: {{ pilar?.nome || 'Pilar' }}
+  </h5>
+  <button
+    type="button"
+    class="btn-close"
+    (click)="cancelar()"
+    aria-label="Close"
+  ></button>
+</div>
+
+<div class="modal-body">
+  @if (error) {
+    <div class="alert alert-danger" role="alert">
+      <i class="bi bi-exclamation-triangle me-2"></i>
+      {{ error }}
+    </div>
+  }
+
+  <p class="text-muted mb-4">
+    <i class="bi bi-pencil me-2"></i>
+    Defina o contexto estratégico do cockpit
+  </p>
+
+  <div class="mb-3">
+    <label class="form-label">ENTRADAS (opcional):</label>
+    <textarea
+      class="form-control"
+      [(ngModel)]="entradas"
+      rows="3"
+      maxlength="500"
+      placeholder="Ex: Pedidos de clientes, solicitações de propostas"
+    ></textarea>
+    <small class="form-text text-muted">{{ entradas.length }}/500</small>
+  </div>
+
+  <div class="mb-3">
+    <label class="form-label">SAÍDAS (opcional):</label>
+    <textarea
+      class="form-control"
+      [(ngModel)]="saidas"
+      rows="3"
+      maxlength="500"
+      placeholder="Ex: Propostas enviadas, contratos fechados"
+    ></textarea>
+    <small class="form-text text-muted">{{ saidas.length }}/500</small>
+  </div>
+
+  <div class="mb-3">
+    <label class="form-label">MISSÃO DO PILAR (opcional):</label>
+    <textarea
+      class="form-control"
+      [(ngModel)]="missao"
+      rows="3"
+      maxlength="1000"
+      placeholder="Ex: Maximizar faturamento via canal indireto"
+    ></textarea>
+    <small class="form-text text-muted">{{ missao.length }}/1000</small>
+  </div>
+
+  <div class="alert alert-info">
+    <i class="bi bi-info-circle me-2"></i>
+    Todos os campos são opcionais. Você pode preencher depois na aba "Contexto" do dashboard.
+  </div>
+
+  <div class="alert alert-info">
+    <i class="bi bi-info-circle me-2"></i>
+    Ao criar, as rotinas ativas deste pilar serão vinculadas automaticamente como processos prioritários.
+  </div>
+</div>
+
+<div class="modal-footer">
+  <button
+    type="button"
+    class="btn btn-secondary"
+    (click)="cancelar()"
+    [disabled]="loading"
+  >
+    Cancelar
+  </button>
+  <button
+    type="button"
+    class="btn btn-primary"
+    (click)="criarCockpit()"
+    [disabled]="loading"
+  >
+    @if (loading) {
+      <span class="spinner-border spinner-border-sm me-1"></span>
+      Criando...
+    } @else {
+      Criar e Ir para Dashboard
+    }
+  </button>
+</div>

@@ -50,6 +50,7 @@ export interface PilarEmpresa {
   pilarTemplate?: Pilar;
   responsavel?: ResponsavelPilar;
   rotinasEmpresa: RotinaEmpresa[];
+  cockpit?: { id: string; pilarEmpresaId: string } | null;
 }
 
 export interface UpdateNotaRotinaDto {

@@ -99,51 +99,58 @@
           @if (activeTab === 'contexto') {
             <div class="card">
               <div class="card-body">
-                <h5 class="card-title mb-4">Contexto do Pilar</h5>
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                  <h5 class="card-title mb-0">
+                    <i class="bi bi-info-circle me-2"></i>
+                    Contexto Estratégico
+                  </h5>
+
+                  <!-- Feedback de salvamento -->
+                  @if (savingContexto) {
+                    <div class="text-warning small">
+                      <span class="spinner-border spinner-border-sm me-1"></span>
+                      Auto-saving...
+                    </div>
+                  } @else if (lastSaveTime) {
+                    <div class="text-success small">
+                      <i class="bi bi-check-circle me-1"></i>
+                      Salvo em {{ lastSaveTime | date: 'HH:mm:ss' }}
+                    </div>
+                  }
+                </div>
 
                 <div class="mb-3">
-                  <label class="form-label">Entradas</label>
+                  <label class="form-label">ENTRADAS:</label>
                   <textarea
                     class="form-control"
                     [(ngModel)]="entradas"
+                    (ngModelChange)="onContextoChange()"
                     rows="3"
-                    placeholder="Ex: Pedidos de clientes, leads gerados, demandas de parceiros"
+                    placeholder="Ex: Pedidos de clientes, solicitações de propostas comerciais, leads qualificados do marketing"
                   ></textarea>
                 </div>
 
                 <div class="mb-3">
-                  <label class="form-label">Saídas</label>
+                  <label class="form-label">SAÍDAS:</label>
                   <textarea
                     class="form-control"
                     [(ngModel)]="saidas"
+                    (ngModelChange)="onContextoChange()"
                     rows="3"
-                    placeholder="Ex: Propostas comerciais, contratos assinados, relatórios de vendas"
+                    placeholder="Ex: Propostas comerciais enviadas, contratos assinados, relatórios de performance"
                   ></textarea>
                 </div>
 
                 <div class="mb-3">
-                  <label class="form-label">Missão</label>
+                  <label class="form-label">MISSÃO DO PILAR:</label>
                   <textarea
                     class="form-control"
                     [(ngModel)]="missao"
+                    (ngModelChange)="onContextoChange()"
                     rows="3"
-                    placeholder="Ex: Garantir crescimento sustentável via canal indireto"
+                    placeholder="Ex: Maximizar o faturamento via canal indireto, mantendo alta qualidade no atendimento e reduzindo inadimplência"
                   ></textarea>
                 </div>
-
-                <button
-                  class="btn btn-primary"
-                  (click)="saveContexto()"
-                  [disabled]="savingContexto"
-                >
-                  @if (savingContexto) {
-                    <span class="spinner-border spinner-border-sm me-1"></span>
-                    Salvando...
-                  } @else {
-                    <i class="bi bi-save me-1"></i>
-                    Salvar Contexto
-                  }
-                </button>
               </div>
             </div>
           }
