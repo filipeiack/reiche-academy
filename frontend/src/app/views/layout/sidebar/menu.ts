@@ -33,7 +33,7 @@ export const MENU: MenuItem[] = [
   },
   {
     label: 'MENU.COCKPITS',
-    icon: 'activity',
+    icon: 'bi bi-speedometer2',
     link: '/cockpits'
   },
 {

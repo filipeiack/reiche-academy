@@ -69,7 +69,7 @@ test.describe('Diagnóstico - Preenchimento Criticidade e Notas por ADMINISTRADO
     
     // Selecionar "ALTO" (ou primeira opção)
     const criticidadeOptions = page.locator('.ng-option');
-    const altoOption = criticidadeOptions.filter({ hasText: 'ALTO' }).first();
+    const altoOption = criticidadeOptions.filter({ hasText: 'ALTA' }).first();
     const optionCount = await altoOption.count();
     
     if (optionCount > 0) {
@@ -139,7 +139,7 @@ test.describe('Diagnóstico - Preenchimento Criticidade e Notas por GESTOR', () 
     await page.waitForTimeout(300);
     
     const criticidadeOptions = page.locator('.ng-option');
-    const medioOption = criticidadeOptions.filter({ hasText: 'MEDIO' }).first();
+    const medioOption = criticidadeOptions.filter({ hasText: 'MEDIA' }).first();
     const optionCount = await medioOption.count();
     
     if (optionCount > 0) {
@@ -244,7 +244,7 @@ test.describe('Diagnóstico - Preenchimento Criticidade e Notas por COLABORADOR'
     await page.waitForTimeout(300);
     
     const criticidadeOptions = page.locator('.ng-option');
-    const baixoOption = criticidadeOptions.filter({ hasText: 'BAIXO' }).first();
+    const baixoOption = criticidadeOptions.filter({ hasText: 'BAIXA' }).first();
     const optionCount = await baixoOption.count();
     
     if (optionCount > 0) {

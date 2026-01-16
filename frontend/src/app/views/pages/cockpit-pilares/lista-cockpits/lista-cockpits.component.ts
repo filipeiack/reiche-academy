@@ -28,7 +28,7 @@ export class ListaCockpitsComponent implements OnInit {
   private loadCockpits(): void {
     const empresaId = this.empresaContext.getEmpresaId();
     if (!empresaId) {
-      this.error = 'Empresa não identificada';
+      this.error = 'Escolha uma empresa para trabalhar';
       return;
     }
 

@@ -713,7 +713,7 @@ async function main() {
       if (notaFinal >= 7) {
         criticidade = 'BAIXA';
       } else if (notaFinal >= 4) {
-        criticidade = 'MÉDIA';
+        criticidade = 'MEDIA';
       } else {
         criticidade = 'ALTA';
       }

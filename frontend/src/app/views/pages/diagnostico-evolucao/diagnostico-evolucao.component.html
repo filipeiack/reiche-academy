@@ -120,29 +120,30 @@
 
 <!-- Error -->
 @else if (error && !loading) {
-<ngb-alert type="danger" [dismissible]="false">
-    <i class="feather icon-alert-circle"></i>
+<div class="alert alert-danger" role="alert">
+    <i data-feather="alert-triangle" class="me-2"></i>
     {{ error }}
-</ngb-alert>
+</div>
 }
 
 <!-- Estado vazio -->
 @else if (!loading && !error && medias.length === 0 && selectedEmpresaId) {
-<div class="empty-state">
-    <i class="feather icon-folder"></i>
-    <p>{{ 'EVOLUCAO.NO_MEDIAS' | translate }}</p>
+<div class="alert alert-danger" role="alert">
+    <i data-feather="alert-triangle" class="me-2"></i>
+    <span>{{ 'EVOLUCAO.NO_MEDIAS' | translate }}</span>
 </div>
 }
 
 @else if (!loading && !error && !selectedEmpresaId && !isAdmin) {
-<div class="empty-state">
-    <i class="feather icon-alert-circle"></i>
-    <p>{{ 'EVOLUCAO.NO_EMPRESA_ASSOCIATED' | translate }}</p>
+<div class="alert alert-danger" role="alert">
+    <i data-feather="alert-triangle" class="me-2"></i>
+    <span>{{ 'EVOLUCAO.NO_EMPRESA_ASSOCIATED' | translate }}</span>
 </div>
 }
 
 @else if (!selectedEmpresaId && isAdmin) {
-<div class="empty-state">
-    <p>{{ 'EVOLUCAO.SELECT_EMPRESA_PLACEHOLDER' | translate }}</p>
+<div class="alert alert-danger" role="alert">
+    <i data-feather="alert-triangle" class="me-2"></i>
+    <span>{{ 'EVOLUCAO.SELECT_EMPRESA_PLACEHOLDER' | translate }}</span>
 </div>
 }

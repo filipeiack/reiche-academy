@@ -1,11 +1,6 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { IsNotEmpty, IsUUID, IsNumber, Min, Max, IsEnum, IsOptional } from 'class-validator';
-
-enum Criticidade {
-  ALTA = 'ALTA',
-  MÉDIA = 'MÉDIA',
-  BAIXA = 'BAIXA',
-}
+import { Criticidade } from '@prisma/client';
 
 export class CreateNotaRotinaDto {
   @ApiProperty({ example: 'uuid-da-rotina-empresa' })
@@ -20,8 +15,8 @@ export class CreateNotaRotinaDto {
   @Max(10, { message: 'A nota máxima é 10' })
   nota: number;
 
-  @ApiProperty({ example: 'MÉDIA', enum: Criticidade })
-  @IsEnum(Criticidade, { message: 'Criticidade deve ser ALTA, MÉDIA ou BAIXA' })
+  @ApiProperty({ example: 'MEDIA', enum: Criticidade })
+  @IsEnum(Criticidade, { message: 'Criticidade deve ser ALTA, MEDIA ou BAIXA' })
   @IsNotEmpty({ message: 'A criticidade é obrigatória' })
   criticidade: Criticidade;
 }

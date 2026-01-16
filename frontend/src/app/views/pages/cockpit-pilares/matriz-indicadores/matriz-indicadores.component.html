@@ -1,220 +1,49 @@
 <div class="card">
   <div class="card-body">
-    <div class="d-flex justify-content-between align-items-center mb-4">
-      <div>
-        <h5 class="card-title mb-0">
-          <i class="bi bi-bar-chart me-2"></i>
-          Matriz de Indicadores
-        </h5>
-      </div>
+    <h5 class="card-title mb-4">
+      <i class="bi bi-bar-chart me-2"></i>
+      Matriz de Indicadores
+    </h5>
 
-      <div class="d-flex align-items-center gap-3">
-        <!-- Botão Novo Indicador -->
-        <button class="btn btn-primary btn-sm" (click)="novoIndicador()">
-          <i class="bi bi-plus-circle me-1"></i>
-          Novo Indicador
-        </button>
+    <!-- Seção 1: Gestão de Indicadores (CRUD) -->
+    <div class="section-gestao mb-5">
+      <!-- <div class="section-header mb-3">
+        <h6 class="section-title">
+          <i class="bi bi-gear me-2"></i>
+          Gestão de Indicadores
+        </h6>
+        <small class="text-muted">
+          Adicione, edite e organize os indicadores do cockpit
+        </small>
+      </div> -->
 
-        <!-- Feedback de salvamento -->
-        @if (savingCount > 0) {
-          <div class="text-warning small">
-            <span class="spinner-border spinner-border-sm me-1"></span>
-            Salvando...
-          </div>
-        } @else if (lastSaveTime) {
-          <div class="text-success small">
-            <i class="bi bi-check-circle me-1"></i>
-            Salvo em {{ lastSaveTime | date: 'HH:mm:ss' }}
-          </div>
-        }
-      </div>
+      <app-gestao-indicadores
+        [cockpitId]="cockpitId"
+        (indicadorCriado)="onIndicadorCriado($event)"
+        (indicadorRemovido)="onIndicadorRemovido($event)"
+      >
+      </app-gestao-indicadores>
     </div>
 
-    <!-- Loading -->
-    @if (loading) {
-      <div class="text-center py-4">
-        <div class="spinner-border text-primary" role="status">
-          <span class="visually-hidden">Carregando...</span>
-        </div>
+    <hr class="my-4" />
+
+    <!-- Seção 2: Metas e Valores Mensais -->
+    <div class="section-valores">
+      <div class="section-header mb-3">
+        <h6 class="section-title">
+          <i class="bi bi-calendar-range me-2"></i>
+          Metas e Valores Mensais
+        </h6>
+        <!-- <small class="text-muted">
+          Preencha as metas e valores realizados mês a mês
+        </small> -->
       </div>
-    }
 
-    <!-- Indicadores -->
-    @if (!loading) {
-      @if (indicadores.length === 0) {
-        <div class="alert alert-info">
-          <i class="bi bi-info-circle me-2"></i>
-          Nenhum indicador criado ainda. Adicione indicadores para começar.
-        </div>
-      } @else {
-        @for (indicador of indicadores; track indicador.id) {
-          <div class="indicador-card mb-4">
-            <!-- Header do Indicador -->
-            <div class="indicador-header">
-              <div class="d-flex justify-content-between align-items-start">
-                <h6 class="mb-3">
-                  <span class="badge bg-primary me-2">{{ $index + 1 }}</span>
-                  {{ indicador.nome }}
-                  @if (indicador.descricao) {
-                    <small class="text-muted ms-2">({{ indicador.descricao }})</small>
-                  }
-                </h6>
-                
-                <!-- Botões de Ação -->
-                <div class="btn-group btn-group-sm">
-                  <button class="btn btn-outline-primary" (click)="editarIndicador(indicador)">
-                    <i class="bi bi-pencil me-1"></i>
-                    Editar
-                  </button>
-                  <button class="btn btn-outline-danger" (click)="excluirIndicador(indicador)">
-                    <i class="bi bi-trash"></i>
-                  </button>
-                </div>
-              </div>
-
-              <!-- Propriedades (Card separado) -->
-              <div class="row g-3 mb-3">
-                <div class="col-3">
-                  <div class="propriedade-box">
-                    <label class="form-label small text-muted">Tipo</label>
-                    <div class="fw-bold">
-                      @switch (indicador.tipoMedida) {
-                        @case ('REAL') {
-                          <i class="bi bi-currency-dollar"></i> R$
-                        }
-                        @case ('QUANTIDADE') {
-                          <i class="bi bi-hash"></i> #
-                        }
-                        @case ('TEMPO') {
-                          <i class="bi bi-clock"></i> h
-                        }
-                        @case ('PERCENTUAL') {
-                          <i class="bi bi-percent"></i> %
-                        }
-                      }
-                    </div>
-                  </div>
-                </div>
-
-                <div class="col-3">
-                  <div class="propriedade-box">
-                    <label class="form-label small text-muted">Status</label>
-                    <div class="fw-bold small">
-                      @switch (indicador.statusMedicao) {
-                        @case ('MEDIDO_CONFIAVEL') {
-                          <span class="badge bg-success">Confiável</span>
-                        }
-                        @case ('MEDIDO_NAO_CONFIAVEL') {
-                          <span class="badge bg-warning">Não Confiável</span>
-                        }
-                        @case ('NAO_MEDIDO') {
-                          <span class="badge bg-secondary">Não Medido</span>
-                        }
-                      }
-                    </div>
-                  </div>
-                </div>
-
-                <div class="col-3">
-                  <div class="propriedade-box">
-                    <label class="form-label small text-muted">Responsável</label>
-                    <div class="fw-bold small">
-                      {{ indicador.responsavelMedicao?.nome || 'Não definido' }}
-                    </div>
-                  </div>
-                </div>
-
-                <div class="col-3">
-                  <div class="propriedade-box">
-                    <label class="form-label small text-muted">Melhor</label>
-                    <div class="fw-bold">
-                      @if (indicador.melhor === 'MAIOR') {
-                        <i class="bi bi-arrow-up-circle text-success"></i> Maior
-                      } @else {
-                        <i class="bi bi-arrow-down-circle text-info"></i> Menor
-                      }
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <!-- Tabela Mensal -->
-            <div class="table-responsive">
-              <table class="table table-bordered table-sm">
-                <thead class="table-light">
-                  <tr>
-                    <th style="width: 80px;">Mês</th>
-                    <th style="width: 60px;">Melhor</th>
-                    <th style="width: 120px;">Meta</th>
-                    <th style="width: 120px;">Realizado</th>
-                    <th style="width: 100px;">Desvio</th>
-                    <th style="width: 100px;">Status</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  @for (mes of getMesesOrdenados(indicador); track mes.id) {
-                    <tr>
-                      <td class="fw-bold">{{ getNomeMes(mes.mes!) }}</td>
-                      <td class="text-center">
-                        @if (indicador.melhor === 'MAIOR') {
-                          <i class="bi bi-arrow-up text-success"></i>
-                        } @else {
-                          <i class="bi bi-arrow-down text-info"></i>
-                        }
-                      </td>
-                      <td>
-                        <input
-                          type="number"
-                          class="form-control form-control-sm"
-                          [value]="mes.meta"
-                          (input)="onValorChange(mes, 'meta', $event)"
-                          step="0.01"
-                        />
-                      </td>
-                      <td>
-                        <input
-                          type="number"
-                          class="form-control form-control-sm"
-                          [value]="mes.realizado"
-                          (input)="onValorChange(mes, 'realizado', $event)"
-                          step="0.01"
-                        />
-                      </td>
-                      <td class="text-center">
-                        @if (mes.meta && mes.realizado) {
-                          <span [class]="'badge bg-' + calcularStatus(indicador, mes)">
-                            {{ calcularDesvio(indicador, mes) | number: '1.1-1' }}%
-                          </span>
-                        } @else {
-                          <span class="text-muted">-</span>
-                        }
-                      </td>
-                      <td class="text-center">
-                        @if (calcularStatus(indicador, mes); as status) {
-                          @switch (status) {
-                            @case ('success') {
-                              <i class="bi bi-check-circle-fill text-success"></i>
-                            }
-                            @case ('warning') {
-                              <i class="bi bi-exclamation-triangle-fill text-warning"></i>
-                            }
-                            @case ('danger') {
-                              <i class="bi bi-x-circle-fill text-danger"></i>
-                            }
-                          }
-                        } @else {
-                          <span class="text-muted">-</span>
-                        }
-                      </td>
-                    </tr>
-                  }
-                </tbody>
-              </table>
-            </div>
-          </div>
-        }
-      }
-    }
+      <app-edicao-valores-mensais
+        #valoresMensais
+        [cockpitId]="cockpitId"
+      >
+      </app-edicao-valores-mensais>
+    </div>
   </div>
 </div>

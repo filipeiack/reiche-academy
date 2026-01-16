@@ -13,7 +13,7 @@
 
         @if (selectedEmpresaId) {
         <div id="savingBar" class="d-flex align-items-center gap-3">
-            
+
             @if (savingCount > 0) {
             <div class="saving-indicator">
                 <div class="spinner-border spinner-border-sm" role="status">
@@ -69,6 +69,7 @@
         }
     </div>
 </div>
+
 
 
 <!-- Conteúdo principal -->
@@ -139,11 +140,11 @@
                                 <a ngbDropdownItem class="d-flex align-items-center gap-1"
                                     (click)="navegarParaCockpit(pilar); $event.preventDefault()">
                                     @if (pilar.cockpit) {
-                                        <i class="feather icon-target icon-sm text-success"></i>
-                                        <span class="">Abrir Cockpit</span>
+                                    <i class="feather icon-target icon-sm text-success"></i>
+                                    <span class="">Abrir Cockpit</span>
                                     } @else {
-                                        <i class="feather icon-plus-circle icon-sm text-primary"></i>
-                                        <span class="">Criar Cockpit</span>
+                                    <i class="feather icon-plus-circle icon-sm text-primary"></i>
+                                    <span class="">Criar Cockpit</span>
                                     }
                                 </a>
 
@@ -244,28 +245,31 @@
 
 <!-- Error -->
 @else if (error && !loading) {
-<ngb-alert type="danger" [dismissible]="false">
-    <i class="feather icon-alert-circle"></i>
+<div class="alert alert-danger" role="alert">
+    <i data-feather="alert-triangle" class="me-2"></i>
     {{ error }}
-</ngb-alert>
+</div>
 }
 
 <!-- Estado vazio -->
 @else if (!loading && !error && pilares.length === 0 && selectedEmpresaId) {
-<div class="empty-state">
-    <p>{{ 'DIAGNOSTICO.NO_PILARES' | translate }}</p>
+<div class="alert alert-danger" role="alert">
+    <i data-feather="alert-triangle" class="me-2"></i>
+    <span>{{ 'DIAGNOSTICO.NO_PILARES' | translate }}</span>
 </div>
 }
 
 @else if (!loading && !error && !selectedEmpresaId && !isAdmin) {
-<div class="empty-state">
-    <p>{{ 'DIAGNOSTICO.NO_EMPRESA_ASSOCIATED' | translate }}</p>
+<div class="alert alert-danger" role="alert">
+    <i data-feather="alert-triangle" class="me-2"></i>
+    <span>{{ 'DIAGNOSTICO.NO_EMPRESA_ASSOCIATED' | translate }}</span>
 </div>
 }
 
 @else if (!selectedEmpresaId && isAdmin) {
-<div class="empty-state">
-    <p>{{ 'DIAGNOSTICO.SELECT_EMPRESA_PLACEHOLDER' | translate }}</p>
+<div class="alert alert-danger" role="alert">
+    <i data-feather="alert-triangle" class="me-2"></i>
+    <span>{{ 'DIAGNOSTICO.SELECT_EMPRESA_PLACEHOLDER' | translate }}</span>
 </div>
 }
 

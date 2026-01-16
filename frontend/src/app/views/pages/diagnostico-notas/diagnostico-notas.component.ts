@@ -44,7 +44,7 @@ interface AutoSaveQueueItem {
     NovaRotinaModalComponent,
     RotinasPilarModalComponent,
     MediaBadgeComponent,
-    CriarCockpitModalComponent
+    // CriarCockpitModalComponent (não usado no template)
 ],
   templateUrl: './diagnostico-notas.component.html',
   styleUrl: './diagnostico-notas.component.scss'
@@ -147,7 +147,7 @@ export class DiagnosticoNotasComponent implements OnInit, OnDestroy {
   // Opções de criticidade
   criticidadeOptions = [
     { value: 'BAIXA', label: 'BAIXA' },
-    { value: 'MÉDIA', label: 'MÉDIA' },
+    { value: 'MEDIA', label: 'MEDIA' },
     { value: 'ALTA', label: 'ALTA' },
   ];
 
@@ -164,6 +164,7 @@ export class DiagnosticoNotasComponent implements OnInit, OnDestroy {
         }
         
         this.selectedEmpresaId = empresaId;
+        
         if (empresaId) {
           this.loadDiagnostico();
         } else {
@@ -255,7 +256,7 @@ export class DiagnosticoNotasComponent implements OnInit, OnDestroy {
         }
       },
       error: (err: any) => {
-        this.error = err?.error?.message || 'Erro ao carregar diagnóstico';
+        this.error = err?.error?.message || 'Erro ao carregar dashboard da empresa';
         this.loading = false;
       }
     });
@@ -282,7 +283,7 @@ export class DiagnosticoNotasComponent implements OnInit, OnDestroy {
    * Callback quando pilares são modificados no modal
    */
   onPilaresModificados(): void {
-    // Recarregar diagnóstico para refletir mudanças nos pilares
+    // Recarregar dashboard da empresa para refletir mudanças nos pilares
     if (this.selectedEmpresaId) {
       this.loadDiagnostico(true);
     }
@@ -301,7 +302,7 @@ export class DiagnosticoNotasComponent implements OnInit, OnDestroy {
    * Callback quando responsável é atualizado
    */
   onResponsavelAtualizado(): void {
-    // Recarregar diagnóstico para refletir mudanças no responsável
+    // Recarregar dashboard da empresa para refletir mudanças no responsável
     if (this.selectedEmpresaId) {
       this.loadDiagnostico(true);
     }
@@ -334,7 +335,7 @@ export class DiagnosticoNotasComponent implements OnInit, OnDestroy {
    * Callback quando rotina é criada
    */
   onRotinaCriada(): void {
-    // Recarregar diagnóstico para refletir nova rotina
+    // Recarregar dashboard da empresa para refletir nova rotina
     if (this.selectedEmpresaId) {
       this.loadDiagnostico(true);
     }
@@ -344,7 +345,7 @@ export class DiagnosticoNotasComponent implements OnInit, OnDestroy {
    * Callback quando rotinas do pilar são modificadas
    */
   onRotinasModificadas(): void {
-    // Recarregar diagnóstico para refletir mudanças
+    // Recarregar dashboard da empresa para refletir mudanças
     if (this.selectedEmpresaId) {
       this.loadDiagnostico(true);
     }
@@ -419,7 +420,7 @@ export class DiagnosticoNotasComponent implements OnInit, OnDestroy {
 
     const dto: UpdateNotaRotinaDto = {
       nota: notaNum,
-      criticidade: criticidadeFinal as 'ALTA' | 'MÉDIA' | 'BAIXA',
+      criticidade: criticidadeFinal as 'ALTA' | 'MEDIA' | 'BAIXA',
     };
 
     console.log('➕ Adicionando à fila de auto-save:', dto);
@@ -537,7 +538,7 @@ export class DiagnosticoNotasComponent implements OnInit, OnDestroy {
     switch (criticidade) {
       case 'ALTA':
         return 'bg-danger';
-      case 'MÉDIA':
+      case 'MEDIA':
         return 'bg-warning';
       case 'BAIXA':
         return 'bg-success';
@@ -665,7 +666,7 @@ export class DiagnosticoNotasComponent implements OnInit, OnDestroy {
           rotinaEmpresaId,
           data: {
             nota: value.nota,
-            criticidade: value.criticidade as 'ALTA' | 'MÉDIA' | 'BAIXA'
+            criticidade: value.criticidade as 'ALTA' | 'MEDIA' | 'BAIXA'
           },
           retryCount: 0
         });

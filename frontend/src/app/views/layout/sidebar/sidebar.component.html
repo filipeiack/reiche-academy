@@ -35,15 +35,20 @@
 
           <!-- nav item -->
           @else {
-            <li class="nav-item" [class.mm-active]="item.expanded">
+            <li class="nav-item">
               <!-- nav item with submenu -->
               @if (hasItems(item)) {
-                <a class="nav-link" [routerLink]="item.link" [routerLinkActive]="['active']">
-                  <i class="link-icon" [attr.data-feather]="item.icon" appFeatherIcon></i>
+                <a class="nav-link" href="javascript:void(0);">
+                  @if (getFeatherIcon(item)) {
+                    <i class="link-icon" [attr.data-feather]="getFeatherIcon(item)" appFeatherIcon></i>
+                  }
+                  @if (getIconClass(item)) {
+                    <i class="link-icon" [ngClass]="getIconClass(item)"></i>
+                  }
                   <span class="link-title"> {{ item.label }}</span>
                   <span class="link-arrow" data-feather="chevron-down" appFeatherIcon></span>
                 </a>
-                <ul class="sidebar-nav sub-menu nav-second-level" [class.mm-show]="item.expanded" [attr.aria-expanded]="item.expanded ? 'true' : 'false'">
+                <ul class="sidebar-nav sub-menu nav-second-level" aria-expanded="false">
                   @for (subitem of item.subItems; track $index) {
                     <li class="nav-item" [ngClass]="{'side-nav-item': hasItems(subitem)}">
                       <!-- nav link with submenu -->
@@ -64,7 +69,7 @@
                       }
                       <!-- nav link without submenu -->
                       @else {
-                        <a class="nav-link nav-link-ref" [routerLink]="subitem.link" [routerLinkActive]="['active']">
+                        <a class="nav-link nav-link-ref" [routerLink]="subitem.link">
                           {{ subitem.label }}
                         </a>
                       }
@@ -75,7 +80,12 @@
               <!-- nav item without submenu -->
               @else {
                 <a class="nav-link nav-link-ref" [routerLink]="item.link">
-                  <i class="link-icon" [attr.data-feather]="item.icon" appFeatherIcon></i>
+                  @if (getFeatherIcon(item)) {
+                    <i class="link-icon" [attr.data-feather]="getFeatherIcon(item)" appFeatherIcon></i>
+                  }
+                  @if (getIconClass(item)) {
+                    <i class="link-icon" [ngClass]="getIconClass(item)"></i>
+                  }
                   <span class="link-title"> {{ item.label }}</span>
                   @if (item.badge) {
                     <span class="badge bg-{{item.badge.variant}}">{{item.badge.text}}</span>

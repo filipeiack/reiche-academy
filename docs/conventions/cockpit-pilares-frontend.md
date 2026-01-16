@@ -2,8 +2,9 @@
 
 **Baseado em:** diagnostico-notas component (extração de padrões)  
 **Aplicável a:** Implementação do Cockpit de Pilares  
-**Agente:** Business Rules Extractor  
+**Agente:** System Engineer + Business Rules Extractor  
 **Data:** 2026-01-15  
+**Última atualização:** 2026-01-15 (ADR-005: UX Excel-like)  
 **Status:** 📋 **NORMATIVO** (padrão obrigatório)
 
 ---
@@ -16,16 +17,39 @@ Este documento extrai padrões **comprovados e funcionais** do componente `diagn
 - Garantir consistência de UX entre módulos
 - Reutilizar soluções testadas (auto-save, feedback, RBAC)
 - Evitar reinvenção de padrões já validados
+- **Implementar UX Excel-like para Indicadores** (ADR-005)
 
 **Escopo:**
 - Estrutura de componentes
 - Injeção de dependências
-- Auto-save com debounce
+- Auto-save com debounce (1000ms)
 - Feedback visual (saving/saved/errors)
 - RBAC frontend
 - Modais
 - Gestão de estado (cache local)
 - Controle de accordions/expansão
+- **Grid inline editável (Excel-like)**
+- **Drag & drop para reordenação**
+- **Navegação Tab/Enter**
+
+---
+
+## 1.1. Decisão Arquitetural: UX Excel-like (ADR-005)
+
+**Contexto:** Usuários vêm de planilhas Excel e esperam experiência familiar de edição inline.
+
+**Decisão aprovada:**
+- **Desktop:** Grid editável com células inline (estilo Excel)
+- **Mobile:** Cards + Modal fullscreen
+- **Criação:** Botão "+ Nova Linha" adiciona linha em modo edição
+- **Edição:** Ícone ✏️ habilita edição inline
+- **Remoção:** Ícone 🗑️ deleta com confirmação
+- **Reordenação:** Drag & drop (desabilitado durante edição)
+- **Auto-save:** Debounce 1000ms ao perder foco
+- **Descrição:** Modal pequeno (campo longo)
+- **Responsável:** ng-select com search
+
+**Documentação completa:** `/docs/adr/ADR-005-ux-excel-like-indicadores.md`
 
 ---
 

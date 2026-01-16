@@ -4,13 +4,7 @@ import { DiagnosticosService } from './diagnosticos.service';
 import { PrismaService } from '../../common/prisma/prisma.service';
 import { AuditService } from '../audit/audit.service';
 import { RequestUser } from '../../common/interfaces/request-user.interface';
-
-// Enum de Criticidade (conforme DTO)
-enum Criticidade {
-  ALTO = 'ALTO',
-  MEDIO = 'MEDIO',
-  BAIXO = 'BAIXO',
-}
+import { Criticidade } from '@prisma/client';
 
 /**
  * QA UNITÁRIO ESTRITO - DiagnosticosService
@@ -86,7 +80,7 @@ describe('DiagnosticosService - Validação Completa de Regras de Negócio', () 
               id: 'nota-1',
               rotinaEmpresaId: 'rotina-emp-1',
               nota: 8,
-              criticidade: Criticidade.ALTO,
+              criticidade: Criticidade.ALTA,
               createdAt: new Date('2025-01-01'),
             },
           ],
@@ -119,7 +113,7 @@ describe('DiagnosticosService - Validação Completa de Regras de Negócio', () 
               id: 'nota-2',
               rotinaEmpresaId: 'rotina-emp-3',
               nota: 6,
-              criticidade: Criticidade.MEDIO,
+              criticidade: Criticidade.MEDIA,
               createdAt: new Date('2025-01-02'),
             },
           ],
@@ -146,7 +140,7 @@ describe('DiagnosticosService - Validação Completa de Regras de Negócio', () 
     id: 'nota-1',
     rotinaEmpresaId: 'rotina-emp-1',
     nota: 8,
-    criticidade: Criticidade.ALTO,
+    criticidade: Criticidade.ALTA,
     createdAt: new Date('2025-01-01'),
     updatedAt: new Date('2025-01-01'),
     createdBy: 'gestor-a-id',
@@ -330,7 +324,7 @@ describe('DiagnosticosService - Validação Completa de Regras de Negócio', () 
   describe('R-DIAG-002: Upsert de nota com auto-save', () => {
     const updateDto = {
       nota: 9,
-      criticidade: Criticidade.ALTO,
+      criticidade: Criticidade.ALTA,
     };
 
     it('deve CRIAR nova nota quando não existe nota anterior', async () => {
@@ -338,7 +332,7 @@ describe('DiagnosticosService - Validação Completa de Regras de Negócio', () 
         id: 'nota-nova-id',
         rotinaEmpresaId: 'rotina-emp-1',
         nota: 9,
-        criticidade: Criticidade.ALTO,
+        criticidade: Criticidade.ALTA,
         createdAt: new Date(),
         updatedAt: new Date(),
         createdBy: 'gestor-a-id',
@@ -363,7 +357,7 @@ describe('DiagnosticosService - Validação Completa de Regras de Negócio', () 
         data: {
           rotinaEmpresaId: 'rotina-emp-1',
           nota: 9,
-          criticidade: Criticidade.ALTO,
+          criticidade: Criticidade.ALTA,
           createdBy: 'gestor-a-id',
           updatedBy: 'gestor-a-id',
         },
@@ -377,7 +371,7 @@ describe('DiagnosticosService - Validação Completa de Regras de Negócio', () 
       const notaAtualizada = {
         ...mockNotaExistente,
         nota: 9,
-        criticidade: Criticidade.ALTO,
+        criticidade: Criticidade.ALTA,
         updatedAt: new Date(),
         updatedBy: 'gestor-a-id',
         rotinaEmpresa: {
@@ -400,7 +394,7 @@ describe('DiagnosticosService - Validação Completa de Regras de Negócio', () 
         where: { id: 'nota-1' },
         data: {
           nota: 9,
-          criticidade: Criticidade.ALTO,
+          criticidade: Criticidade.ALTA,
           updatedBy: 'gestor-a-id',
         },
         include: expect.any(Object),
@@ -431,7 +425,7 @@ describe('DiagnosticosService - Validação Completa de Regras de Negócio', () 
   describe('R-DIAG-003: Validação multi-tenant em upsert de nota', () => {
     const updateDto = {
       nota: 9,
-      criticidade: Criticidade.ALTO,
+      criticidade: Criticidade.ALTA,
     };
 
     it('deve permitir ADMINISTRADOR atualizar nota de qualquer empresa', async () => {
@@ -500,7 +494,7 @@ describe('DiagnosticosService - Validação Completa de Regras de Negócio', () 
   describe('RA-DIAG-001: Auditoria completa de notas (CREATE e UPDATE)', () => {
     const updateDto = {
       nota: 9,
-      criticidade: Criticidade.ALTO,
+      criticidade: Criticidade.ALTA,
     };
 
     it('deve registrar auditoria ao CRIAR nota (acao: CREATE)', async () => {
@@ -508,7 +502,7 @@ describe('DiagnosticosService - Validação Completa de Regras de Negócio', () 
         id: 'nota-nova-id',
         rotinaEmpresaId: 'rotina-emp-1',
         nota: 9,
-        criticidade: Criticidade.ALTO,
+        criticidade: Criticidade.ALTA,
         createdAt: new Date(),
         updatedAt: new Date(),
         createdBy: 'gestor-a-id',
@@ -535,7 +529,7 @@ describe('DiagnosticosService - Validação Completa de Regras de Negócio', () 
         acao: 'CREATE',
         dadosDepois: {
           nota: 9,
-          criticidade: Criticidade.ALTO,
+          criticidade: Criticidade.ALTA,
           rotinaEmpresaId: 'rotina-emp-1',
         },
       });
@@ -545,7 +539,7 @@ describe('DiagnosticosService - Validação Completa de Regras de Negócio', () 
       const notaAtualizada = {
         ...mockNotaExistente,
         nota: 9,
-        criticidade: Criticidade.ALTO,
+        criticidade: Criticidade.ALTA,
         updatedAt: new Date(),
         updatedBy: 'gestor-a-id',
         rotinaEmpresa: {
@@ -570,11 +564,11 @@ describe('DiagnosticosService - Validação Completa de Regras de Negócio', () 
         acao: 'UPDATE',
         dadosAntes: {
           nota: 8,
-          criticidade: Criticidade.ALTO,
+          criticidade: Criticidade.ALTA,
         },
         dadosDepois: {
           nota: 9,
-          criticidade: Criticidade.ALTO,
+          criticidade: Criticidade.ALTA,
         },
       });
     });
@@ -586,7 +580,7 @@ describe('DiagnosticosService - Validação Completa de Regras de Negócio', () 
         id: 'nota-id',
         rotinaEmpresaId: 'rotina-emp-1',
         nota: 9,
-        criticidade: Criticidade.ALTO,
+        criticidade: Criticidade.ALTA,
         rotinaEmpresa: { nome: 'Test', pilarEmpresa: { nome: 'Test' } },
       } as any);
       jest.spyOn(audit, 'log').mockResolvedValue(undefined);
@@ -609,7 +603,7 @@ describe('DiagnosticosService - Validação Completa de Regras de Negócio', () 
         id: 'nota-nova-123',
         rotinaEmpresaId: 'rotina-emp-1',
         nota: 9,
-        criticidade: Criticidade.ALTO,
+        criticidade: Criticidade.ALTA,
         rotinaEmpresa: { nome: 'Test', pilarEmpresa: { nome: 'Test' } },
       } as any);
       jest.spyOn(audit, 'log').mockResolvedValue(undefined);
@@ -632,7 +626,7 @@ describe('DiagnosticosService - Validação Completa de Regras de Negócio', () 
         id: 'nota-id',
         rotinaEmpresaId: 'rotina-emp-1',
         nota: 9,
-        criticidade: Criticidade.ALTO,
+        criticidade: Criticidade.ALTA,
         rotinaEmpresa: { nome: 'Test', pilarEmpresa: { nome: 'Test' } },
       } as any);
       jest.spyOn(audit, 'log').mockResolvedValue(undefined);
@@ -661,7 +655,7 @@ describe('DiagnosticosService - Validação Completa de Regras de Negócio', () 
       expect(updateCall).toHaveProperty('dadosAntes');
       expect(updateCall.dadosAntes).toEqual({
         nota: 8,
-        criticidade: Criticidade.ALTO,
+        criticidade: Criticidade.ALTA,
       });
     });
   });

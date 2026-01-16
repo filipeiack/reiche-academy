@@ -1,6 +1,6 @@
 <div class="modal-header">
   <h5 class="modal-title">
-    Criar Cockpit para: {{ pilar.nome || 'Pilar' }}
+    Criar Cockpit {{ pilar.nome || 'Pilar' }}
   </h5>
   <button
     type="button"
@@ -18,21 +18,16 @@
     </div>
   }
 
-  <p class="text-muted mb-4">
-    <i class="bi bi-pencil me-2"></i>
-    Defina o contexto estratégico do cockpit
-  </p>
-
   <div class="mb-3">
     <label class="form-label">ENTRADAS (opcional):</label>
     <textarea
       class="form-control"
       [(ngModel)]="entradas"
-      rows="3"
-      maxlength="500"
+      rows="2"
+      maxlength="300"
       placeholder="Ex: Pedidos de clientes, solicitações de propostas"
     ></textarea>
-    <small class="form-text text-muted">{{ entradas.length }}/500</small>
+    <small class="form-text text-muted">{{ entradas.length }}/300</small>
   </div>
 
   <div class="mb-3">
@@ -40,11 +35,11 @@
     <textarea
       class="form-control"
       [(ngModel)]="saidas"
-      rows="3"
-      maxlength="500"
+      rows="2"
+      maxlength="300"
       placeholder="Ex: Propostas enviadas, contratos fechados"
     ></textarea>
-    <small class="form-text text-muted">{{ saidas.length }}/500</small>
+    <small class="form-text text-muted">{{ saidas.length }}/300</small>
   </div>
 
   <div class="mb-3">
@@ -52,21 +47,11 @@
     <textarea
       class="form-control"
       [(ngModel)]="missao"
-      rows="3"
-      maxlength="1000"
+      rows="2"
+      maxlength="300"
       placeholder="Ex: Maximizar faturamento via canal indireto"
     ></textarea>
-    <small class="form-text text-muted">{{ missao.length }}/1000</small>
-  </div>
-
-  <div class="alert alert-info">
-    <i class="bi bi-info-circle me-2"></i>
-    Todos os campos são opcionais. Você pode preencher depois na aba "Contexto" do dashboard.
-  </div>
-
-  <div class="alert alert-info">
-    <i class="bi bi-info-circle me-2"></i>
-    Ao criar, as rotinas ativas deste pilar serão vinculadas automaticamente como processos prioritários.
+    <small class="form-text text-muted">{{ missao.length }}/300</small>
   </div>
 </div>
 

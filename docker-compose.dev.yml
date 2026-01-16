@@ -1,5 +1,6 @@
 # Docker Compose - Apenas Serviços (PostgreSQL + Redis)
 # Usar quando quiser rodar backend/frontend localmente no Windows
+# Uso: docker-compose -f docker-compose.dev.yml up -d
 
 services:
   # PostgreSQL Database
