@@ -445,7 +445,7 @@ export class GestaoIndicadoresComponent implements OnInit, OnDestroy {
         this.onCellBlur(indicador, 'descricao');
       },
       () => {
-        // Modal dismissed - no action needed
+        // Modal dismissed by user - description remains unchanged
       }
     );
   }

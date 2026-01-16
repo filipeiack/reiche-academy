@@ -1,4 +1,4 @@
-import { Component, Input, inject } from '@angular/core';
+import { Component, Input, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
@@ -10,9 +10,9 @@ import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
   templateUrl: './descricao-indicador-modal.component.html',
   styleUrl: './descricao-indicador-modal.component.scss',
 })
-export class DescricaoIndicadorModalComponent {
+export class DescricaoIndicadorModalComponent implements OnInit {
   @Input() nomeIndicador!: string;
-  @Input() descricao: string | null | undefined = '';
+  @Input() descricao: string | null = null;
 
   public activeModal = inject(NgbActiveModal);
 
