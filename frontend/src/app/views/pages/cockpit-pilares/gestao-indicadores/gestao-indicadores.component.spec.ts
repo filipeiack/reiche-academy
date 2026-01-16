@@ -4,6 +4,7 @@ import { CockpitPilaresService } from '@core/services/cockpit-pilares.service';
 import { UsersService } from '@core/services/users.service';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { of, throwError } from 'rxjs';
+import { DescricaoIndicadorModalComponent } from './descricao-indicador-modal/descricao-indicador-modal.component';
 
 describe('GestaoIndicadoresComponent', () => {
   let component: GestaoIndicadoresComponent;
@@ -138,5 +139,19 @@ describe('GestaoIndicadoresComponent', () => {
     component.toggleMelhor(indicador);
 
     expect(indicador.melhor).toBe('MAIOR');
+  });
+
+  it('should open description modal', () => {
+    const indicador = { 
+      nome: 'Test Indicador', 
+      descricao: 'Test Description',
+      id: 'ind-1'
+    } as any;
+    
+    component.descricaoModal = jasmine.createSpyObj('DescricaoIndicadorModalComponent', ['open']);
+    
+    component.openDescricaoModal(indicador);
+    
+    expect(component.descricaoModal.open).toHaveBeenCalledWith('Test Description', 'Test Indicador');
   });
 });

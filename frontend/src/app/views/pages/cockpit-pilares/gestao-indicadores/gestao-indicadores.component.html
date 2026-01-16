@@ -62,9 +62,13 @@
               [id]="'nome-' + indicador.ordem" placeholder="Nome do indicador"
               [class.is-invalid]="!indicador.nome.trim()" />
             } @else {
-            <a href="javascript:void(0)" (click)="openDescricaoModal(indicador)" title="Editar descrição">
+            <button type="button" 
+              class="btn btn-link p-0 me-2" 
+              (click)="openDescricaoModal(indicador)" 
+              title="Editar descrição"
+              aria-label="Editar descrição do indicador">
               <i class="bi bi-file-text"></i>
-            </a>
+            </button>
             {{ indicador.nome }}
             }
           </td>
@@ -222,3 +226,6 @@
     </div>
   </div>
 </div>
+
+<!-- Modal Component -->
+<app-descricao-indicador-modal></app-descricao-indicador-modal>
