@@ -3,11 +3,40 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { BaseChartDirective } from 'ng2-charts';
 import { ChartConfiguration, ChartType } from 'chart.js';
+import {
+  Chart,
+  CategoryScale,
+  LinearScale,
+  PointElement,
+  LineElement,
+  LineController,
+  BarElement,
+  BarController,
+  Title,
+  Tooltip,
+  Legend,
+  Filler
+} from 'chart.js';
 import { CockpitPilaresService } from '@core/services/cockpit-pilares.service';
 import {
   DadosGraficos,
   IndicadorCockpit,
 } from '@core/interfaces/cockpit-pilares.interface';
+
+// Registrar componentes do Chart.js
+Chart.register(
+  CategoryScale,
+  LinearScale,
+  PointElement,
+  LineElement,
+  LineController,
+  BarElement,
+  BarController,
+  Title,
+  Tooltip,
+  Legend,
+  Filler
+);
 
 @Component({
   selector: 'app-grafico-indicadores',
@@ -89,28 +118,42 @@ export class GraficoIndicadoresComponent implements OnInit, OnChanges {
     },
   };
 
-  public lineChartType: ChartType = 'line';
+  public lineChartType: ChartType = 'bar';
 
   ngOnInit(): void {
-    if (this.indicadores.length > 0) {
-      this.selectedIndicadorId = this.indicadores[0].id;
-      this.loadGrafico();
-    }
+    this.loadIndicadores();
   }
 
   ngOnChanges(changes: SimpleChanges): void {
-    // Recarregar quando cockpitId ou indicadores mudarem
+    // Recarregar quando cockpitId mudar
     if (changes['cockpitId'] && !changes['cockpitId'].firstChange) {
-      if (this.indicadores.length > 0) {
-        this.selectedIndicadorId = this.indicadores[0].id;
-        this.loadGrafico();
-      }
-    } else if (changes['indicadores'] && !changes['indicadores'].firstChange) {
-      if (this.indicadores.length > 0 && !this.selectedIndicadorId) {
-        this.selectedIndicadorId = this.indicadores[0].id;
-        this.loadGrafico();
-      }
+      this.loadIndicadores();
     }
+  }
+
+  /**
+   * Carregar indicadores do cockpit
+   */
+  private loadIndicadores(): void {
+    if (!this.cockpitId) return;
+
+    this.loading = true;
+    this.cockpitService.getCockpitById(this.cockpitId).subscribe({
+      next: (cockpit) => {
+        this.indicadores = cockpit.indicadores || [];
+        if (this.indicadores.length > 0) {
+          this.selectedIndicadorId = this.indicadores[0].id;
+          this.loadGrafico();
+        } else {
+          this.loading = false;
+        }
+      },
+      error: (err) => {
+        console.error('Erro ao carregar indicadores:', err);
+        this.error = 'Erro ao carregar indicadores';
+        this.loading = false;
+      }
+    });
   }
 
   onIndicadorChange(indicadorId: string): void {
@@ -156,6 +199,7 @@ export class GraficoIndicadoresComponent implements OnInit, OnChanges {
       labels: meses,
       datasets: [
         {
+          type: 'line',
           label: 'Meta',
           data: metas,
           borderColor: '#3b82f6',
@@ -164,16 +208,15 @@ export class GraficoIndicadoresComponent implements OnInit, OnChanges {
           tension: 0.4,
           pointRadius: 4,
           pointHoverRadius: 6,
+          fill: false,
         },
         {
+          type: 'bar',
           label: 'Realizado',
           data: realizados,
+          backgroundColor: 'rgba(16, 185, 129, 0.7)',
           borderColor: '#10b981',
-          backgroundColor: 'rgba(16, 185, 129, 0.1)',
-          borderWidth: 2,
-          tension: 0.4,
-          pointRadius: 4,
-          pointHoverRadius: 6,
+          borderWidth: 1,
         },
       ],
     };

@@ -92,6 +92,14 @@ export class EdicaoValoresMensaisComponent implements OnInit, OnChanges, OnDestr
     const input = event.target as HTMLInputElement;
     const valor = input.value ? parseFloat(input.value) : null;
 
+    // Atualizar valor localmente para recálculo imediato
+    indicadorMensal[campo] = valor ?? undefined;
+
+    // Se for meta, replicar para meses seguintes
+    if (campo === 'meta' && valor !== null) {
+      this.replicarMetaParaMesesSeguintes(indicadorMensal, valor);
+    }
+
     // Atualizar cache local
     const cacheKey = indicadorMensal.id;
     if (!this.valoresCache.has(cacheKey)) {
@@ -172,13 +180,73 @@ export class EdicaoValoresMensaisComponent implements OnInit, OnChanges, OnDestr
     });
   }
 
+  /**
+   * Replica a meta para todos os meses seguintes
+   */
+  private replicarMetaParaMesesSeguintes(
+    mesAtual: IndicadorMensal,
+    valorMeta: number
+  ): void {
+    // Encontrar o indicador que contém este mês
+    const indicador = this.indicadores.find(ind => 
+      ind.mesesIndicador?.some(m => m.id === mesAtual.id)
+    );
+
+    if (!indicador || !indicador.mesesIndicador) return;
+
+    // Coletar todos os meses seguintes
+    const mesesSeguintes = indicador.mesesIndicador
+      .filter(m => m.mes !== null && m.mes! > mesAtual.mes!);
+
+    if (mesesSeguintes.length === 0) return;
+
+    // Atualizar valores localmente
+    mesesSeguintes.forEach(m => {
+      m.meta = valorMeta;
+    });
+
+    // Preparar payload com todos os meses
+    const valores = mesesSeguintes.map(m => ({
+      mes: m.mes!,
+      ano: m.ano!,
+      meta: valorMeta,
+      realizado: m.realizado ?? undefined,
+    }));
+
+    // Salvar todos de uma vez
+    this.savingCount++;
+    if (this.savingCount === 1) {
+      this.saveFeedbackService.startSaving('Valores mensais');
+    }
+
+    this.cockpitService.updateValoresMensais(indicador.id, { valores }).subscribe({
+      next: () => {
+        this.savingCount--;
+        if (this.savingCount === 0) {
+          this.saveFeedbackService.completeSaving();
+        }
+      },
+      error: (err: unknown) => {
+        console.error('Erro ao replicar meta:', err);
+        alert('Erro ao replicar meta. Tente novamente.');
+        this.savingCount--;
+        if (this.savingCount === 0) {
+          this.saveFeedbackService.reset();
+        }
+      },
+    });
+  }
+
   calcularDesvio(indicador: IndicadorCockpit, mes: IndicadorMensal): number {
-    if (!mes.meta || !mes.realizado) return 0;
+    const meta = this.getValorAtualizado(mes, 'meta');
+    const realizado = this.getValorAtualizado(mes, 'realizado');
+    
+    if (!meta || !realizado) return 0;
 
     if (indicador.melhor === DirecaoIndicador.MAIOR) {
-      return ((mes.realizado - mes.meta) / mes.meta) * 100;
+      return ((realizado - meta) / meta) * 100;
     } else {
-      return ((mes.meta - mes.realizado) / mes.meta) * 100;
+      return ((meta - realizado) / meta) * 100;
     }
   }
 
@@ -186,9 +254,12 @@ export class EdicaoValoresMensaisComponent implements OnInit, OnChanges, OnDestr
     indicador: IndicadorCockpit,
     mes: IndicadorMensal
   ): 'success' | 'warning' | 'danger' | null {
-    if (!mes.meta || !mes.realizado) return null;
+    const meta = this.getValorAtualizado(mes, 'meta');
+    const realizado = this.getValorAtualizado(mes, 'realizado');
+    
+    if (!meta || !realizado) return null;
 
-    const percentual = (mes.realizado / mes.meta) * 100;
+    const percentual = (realizado / meta) * 100;
 
     if (indicador.melhor === DirecaoIndicador.MAIOR) {
       if (percentual >= 100) return 'success';
@@ -200,6 +271,20 @@ export class EdicaoValoresMensaisComponent implements OnInit, OnChanges, OnDestr
       if (percentual <= 120) return 'warning';
       return 'danger';
     }
+  }
+
+  /**
+   * Obtém o valor atualizado (cache ou valor original do objeto)
+   */
+  private getValorAtualizado(
+    mes: IndicadorMensal,
+    campo: 'meta' | 'realizado'
+  ): number | null {
+    const cached = this.valoresCache.get(mes.id);
+    if (cached && cached[campo] !== undefined) {
+      return cached[campo] ?? null;
+    }
+    return mes[campo] ?? null;
   }
 
   getMesesOrdenados(indicador: IndicadorCockpit): IndicadorMensal[] {

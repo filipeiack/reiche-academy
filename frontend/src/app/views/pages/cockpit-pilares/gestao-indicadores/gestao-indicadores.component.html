@@ -1,13 +1,10 @@
 <div class="gestao-indicadores-wrapper">
   <!-- Botão adicionar nova linha -->
-  <div class="mb-2 d-flex justify-content-end align-items-center gap-3">
-
-    @if (editingRowId) {
-    <small class="text-muted">
-      <i class="bi bi-info-circle me-1"></i>
-      Use Tab para navegar entre campos. Enter para próximo indicador.
-    </small>
-    }
+  <div class="mb-2 d-flex justify-content-between align-items-center gap-3">
+    <h5 class="card-title">
+      <i class="bi bi-bar-chart me-2"></i>
+      Matriz de Indicadores
+    </h5>
 
     <button class="btn btn-outline-primary btn-sm" (click)="addNewRow()" [disabled]="editingRowId !== null">
       <i class="bi bi-plus-circle me-1"></i>
@@ -29,20 +26,20 @@
         <tr>
           <!-- <th style="width: 40px;"></th> -->
           <!-- Drag handle -->
-          <th class="w-100">Nome *</th>
-          <th style="width: 150px;">Tipo *</th>
+          <th class="w-100">Nome</th>
+          <th style="min-width: 90px;">Tipo</th>
           <th style="width: 150px;">Status</th>
           <th>Responsável</th>
-          <th style="width: 100px;">Melhor *</th>
+          <th style="width: 100px;">Melhor</th>
           <!-- <th style="width: 80px;">Descrição</th> -->
           <th style="width: 100px;">Ações</th>
         </tr>
       </thead>
       <tbody cdkDropList (cdkDropListDropped)="onDrop($event)">
         @for (indicador of indicadores; track indicador.id || $index) {
-        <tr cdkDragHandle cdkDrag [cdkDragDisabled]="indicador.isEditing || false" [class.row-editing]="indicador.isEditing"
-          [class.row-new]="indicador.isNew" [class.row-saved]="indicador.saveStatus === 'saved'"
-          [class.row-error]="indicador.saveStatus === 'error'">
+        <tr cdkDragHandle cdkDrag [cdkDragDisabled]="indicador.isEditing || false"
+          [class.row-editing]="indicador.isEditing" [class.row-new]="indicador.isNew"
+          [class.row-saved]="indicador.saveStatus === 'saved'" [class.row-error]="indicador.saveStatus === 'error'">
           <!-- Drag Handle -->
           <!-- <td class="text-center">
            
@@ -50,10 +47,10 @@
 
           <!-- Nome -->
           <td>
-             @if (!indicador.isEditing) {
-            
-              <i class="bi bi-grip-vertical text-muted"></i>
-            
+            @if (!indicador.isEditing) {
+
+            <i class="bi bi-grip-vertical text-muted"></i>
+
             }
 
             @if (indicador.isEditing) {
@@ -62,11 +59,8 @@
               [id]="'nome-' + indicador.ordem" placeholder="Nome do indicador"
               [class.is-invalid]="!indicador.nome.trim()" />
             } @else {
-            <button type="button" 
-              class="btn btn-link p-0 me-2" 
-              (click)="openDescricaoModal(indicador)" 
-              title="Editar descrição"
-              aria-label="Editar descrição do indicador">
+            <button type="button" class="btn btn-link p-0 me-2" (click)="openDescricaoModal(indicador)"
+              title="Editar descrição" aria-label="Editar descrição do indicador">
               <i class="bi bi-file-text"></i>
             </button>
             {{ indicador.nome }}
@@ -76,24 +70,28 @@
           <!-- Tipo de Medida -->
           <td>
             @if (indicador.isEditing) {
-            <ng-select [(ngModel)]="indicador.tipoMedida" (change)="onCellBlur(indicador, 'tipoMedida')"
-              (keydown)="onKeyDown($event, indicador.ordem!, 'tipoMedida')" [items]="tiposMedida" bindLabel="label"
-              bindValue="value" placeholder="Selecione..." [searchable]="true" [clearable]="true"
-              [id]="'tipoMedida-' + indicador.ordem" [class.is-invalid]="!indicador.tipoMedida">
-            </ng-select>
+            <select class="form-select form-select-sm" [(ngModel)]="indicador.tipoMedida"
+              (change)="onCellBlur(indicador, 'tipoMedida')"
+              (keydown)="onKeyDown($event, indicador.ordem!, 'tipoMedida')" [id]="'tipoMedida-' + indicador.ordem"
+              [class.is-invalid]="!indicador.tipoMedida">
+              <option [value]="null">Selecione...</option>
+              @for (tipo of tiposMedida; track tipo.value) {
+              <option [value]="tipo.value">{{ tipo.label }}</option>
+              }
+            </select>
             } @else {
             @switch (indicador.tipoMedida) {
             @case ('REAL') {
-            <i class="bi bi-currency-dollar"></i> Real
+            <i class="bi bi-currency-dollar"></i>
             }
             @case ('QUANTIDADE') {
-            <i class="bi bi-hash"></i> Quantidade
+            <i class="bi bi-hash"></i>
             }
             @case ('TEMPO') {
-            <i class="bi bi-clock"></i> Tempo
+            <i class="bi bi-clock"></i>
             }
             @case ('PERCENTUAL') {
-            <i class="bi bi-percent"></i> Percentual
+            <i class="bi bi-percent"></i>
             }
             }
             }
@@ -102,17 +100,14 @@
           <!-- Status de Medição -->
           <td>
             @if (indicador.isEditing) {
-            <ng-select [(ngModel)]="indicador.statusMedicao"
+            <select class="form-select form-select-sm" [(ngModel)]="indicador.statusMedicao"
               (change)="onCellBlur(indicador, 'statusMedicao')"
               (keydown)="onKeyDown($event, indicador.ordem!, 'statusMedicao')"
-              [items]="statusMedicao"
-              bindLabel="label"
-              bindValue="value"
-              placeholder="Selecione..."
-              [searchable]="true"
-              [clearable]="true"
               [id]="'statusMedicao-' + indicador.ordem">
-            </ng-select>
+              @for (status of statusMedicao; track status.value) {
+              <option [value]="status.value">{{ status.label }}</option>
+              }
+            </select>
             } @else {
             @switch (indicador.statusMedicao) {
             @case ('MEDIDO_CONFIAVEL') {
@@ -122,7 +117,7 @@
             <span class="badge bg-warning">Não Confiável</span>
             }
             @case ('NAO_MEDIDO') {
-            <span class="badge bg-secondary">Não Medido</span>
+            <span class="badge bg-danger">Não Medido</span>
             }
             }
             }
@@ -131,9 +126,13 @@
           <!-- Responsável (ng-select) -->
           <td>
             @if (indicador.isEditing) {
-            <ng-select [(ngModel)]="indicador.responsavelMedicaoId" (change)="onCellBlur(indicador, 'responsavel')"
-              [items]="usuarios" bindLabel="nome" bindValue="id" placeholder="Selecione..." [searchable]="true"
-              [clearable]="true" [id]="'responsavel-' + indicador.ordem">
+            <ng-select [(ngModel)]="indicador.responsavelMedicaoId" 
+              (change)="onCellBlur(indicador, 'responsavel')"
+              [items]="usuarios" bindLabel="nome" bindValue="id" placeholder="Selecione..." 
+              [searchable]="true"
+              [addTag]="addUsuarioTag"
+              [clearable]="true" 
+              [id]="'responsavel-' + indicador.ordem" appendTo="body">
             </ng-select>
             } @else {
             {{ getResponsavelNome(indicador.responsavelMedicaoId) }}
@@ -217,6 +216,13 @@
     </table>
     }
   </div>
+
+  <!-- @if (editingRowId) {
+  <small class="text-muted">
+    <i class="bi bi-info-circle me-1"></i>
+    Use Tab para navegar entre campos. Enter para próximo indicador.
+  </small>
+  } -->
 
   <!-- Mobile: Cards (TODO: implementar) -->
   <div class="d-block d-lg-none">

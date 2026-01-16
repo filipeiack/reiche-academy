@@ -46,6 +46,15 @@ export class MatrizIndicadoresComponent implements OnInit {
   }
 
   /**
+   * Handler: Indicador atualizado (emitido por gestao-indicadores)
+   * Recarrega edição de valores para refletir mudanças
+   */
+  onIndicadorAtualizado(): void {
+    console.log('Indicador atualizado');
+    this.reloadValoresMensais();
+  }
+
+  /**
    * Recarrega componente de edição de valores mensais
    */
   private reloadValoresMensais(): void {
