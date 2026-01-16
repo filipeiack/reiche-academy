@@ -1,7 +1,7 @@
 import { Component, Input, Output, EventEmitter, TemplateRef, ViewChild, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { NgbModal, NgbModalModule } from '@ng-bootstrap/ng-bootstrap';
+import { NgbModal, NgbModalModule, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 
 @Component({
   selector: 'app-descricao-indicador-modal',
@@ -26,8 +26,9 @@ import { NgbModal, NgbModalModule } from '@ng-bootstrap/ng-bootstrap';
         }
 
         <div class="mb-3">
-          <label class="form-label">Descrição</label>
+          <label for="descricaoTextarea" class="form-label">Descrição</label>
           <textarea 
+            id="descricaoTextarea"
             class="form-control" 
             [(ngModel)]="descricao"
             rows="5"
@@ -63,7 +64,7 @@ export class DescricaoIndicadorModalComponent {
   @Input() indicadorNome?: string;
   @Output() descricaoSalva = new EventEmitter<string>();
 
-  private modalRef: any;
+  private modalRef: NgbModalRef | null = null;
   descricao: string = '';
 
   open(descricaoAtual: string = '', nomeIndicador: string = ''): void {

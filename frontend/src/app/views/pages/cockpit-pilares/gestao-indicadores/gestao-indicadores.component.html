@@ -62,7 +62,11 @@
               [id]="'nome-' + indicador.ordem" placeholder="Nome do indicador"
               [class.is-invalid]="!indicador.nome.trim()" />
             } @else {
-            <button type="button" class="btn btn-link p-0 me-2" (click)="openDescricaoModal(indicador)" title="Editar descrição">
+            <button type="button" 
+              class="btn btn-link p-0 me-2" 
+              (click)="openDescricaoModal(indicador)" 
+              title="Editar descrição"
+              aria-label="Editar descrição do indicador">
               <i class="bi bi-file-text"></i>
             </button>
             {{ indicador.nome }}
