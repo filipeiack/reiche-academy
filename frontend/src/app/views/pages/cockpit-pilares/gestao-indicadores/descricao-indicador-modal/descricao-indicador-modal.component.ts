@@ -31,8 +31,7 @@ import { NgbModal, NgbModalModule } from '@ng-bootstrap/ng-bootstrap';
             class="form-control" 
             [(ngModel)]="descricao"
             rows="5"
-            placeholder="Digite a descrição do indicador..."
-            autofocus></textarea>
+            placeholder="Digite a descrição do indicador..."></textarea>
           <small class="text-muted">
             Use este campo para detalhar como o indicador é medido, sua importância e observações relevantes.
           </small>
@@ -80,6 +79,9 @@ export class DescricaoIndicadorModalComponent {
 
   close(): void {
     this.modalRef?.close();
+    // Reset state to prevent stale data
+    this.descricao = '';
+    this.indicadorNome = '';
   }
 
   salvar(): void {

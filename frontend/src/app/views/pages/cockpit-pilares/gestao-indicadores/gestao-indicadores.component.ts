@@ -14,7 +14,7 @@ import { CdkDragDrop, DragDropModule, moveItemInArray } from '@angular/cdk/drag-
 import { NgSelectModule } from '@ng-select/ng-select';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { Subject } from 'rxjs';
-import { debounceTime, distinctUntilChanged } from 'rxjs/operators';
+import { debounceTime, distinctUntilChanged, take } from 'rxjs/operators';
 import { CockpitPilaresService } from '@core/services/cockpit-pilares.service';
 import { UsersService } from '@core/services/users.service';
 import {
@@ -434,11 +434,12 @@ export class GestaoIndicadoresComponent implements OnInit, OnDestroy {
   openDescricaoModal(indicador: IndicadorExtended): void {
     this.descricaoModal.open(indicador.descricao || '', indicador.nome);
     
-    // Subscribe to the modal save event
-    const subscription = this.descricaoModal.descricaoSalva.subscribe((descricao: string) => {
+    // Subscribe to the modal save event (will auto-unsubscribe after first emission)
+    this.descricaoModal.descricaoSalva.pipe(
+      take(1)
+    ).subscribe((descricao: string) => {
       indicador.descricao = descricao || undefined;
       this.onCellBlur(indicador, 'descricao');
-      subscription.unsubscribe();
     });
   }
 }
