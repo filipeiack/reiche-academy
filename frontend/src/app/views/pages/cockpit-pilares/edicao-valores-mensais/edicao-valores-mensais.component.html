@@ -1,19 +1,4 @@
 <div class="edicao-valores-wrapper">
-  <!-- Feedback de salvamento -->
-  <div class="d-flex justify-content-end align-items-center mb-2">
-    @if (savingCount > 0) {
-    <div class="text-warning small">
-      <span class="spinner-border spinner-border-sm me-1"></span>
-      Salvando...
-    </div>
-    } @else if (lastSaveTime) {
-    <div class="text-success small">
-      <i class="bi bi-check-circle me-1"></i>
-      Salvo em {{ lastSaveTime | date: 'HH:mm:ss' }}
-    </div>
-    }
-  </div>
-
   <!-- Loading -->
   @if (loading) {
   <div class="text-center py-4">
@@ -45,21 +30,21 @@
         </h6>
 
         <!-- Propriedades (Card separado) -->
-        <div class="row g-3 mb-3">
-          <div class="col-3">
-            <div class="propriedade-box">
+        <div class="d-flex flex-wrap gap-3 mb-3">
+          
+            <div class="badge bg-light gap-1 p-2">
               <label class="form-label small text-muted">Tipo</label>
-              <div class="fw-bold">
+              <div class="fw-bold text-dark">
                 <i [class]="getIconeTipoMedida(indicador.tipoMedida)"></i>
                 {{ getLabelTipoMedida(indicador.tipoMedida) }}
               </div>
             </div>
-          </div>
+          
 
-          <div class="col-3">
-            <div class="propriedade-box">
+          
+            <div class="badge bg-light gap-1 p-2">
               <label class="form-label small text-muted">Status</label>
-              <div class="fw-bold small">
+              <div class="fw-bold text-dark">
                 @switch (indicador.statusMedicao) {
                 @case ('MEDIDO_CONFIAVEL') {
                 <span class="badge bg-success">Confiável</span>
@@ -73,21 +58,21 @@
                 }
               </div>
             </div>
-          </div>
+          
 
-          <div class="col-3">
-            <div class="propriedade-box">
+          
+            <div class="badge bg-light gap-1 p-2">
               <label class="form-label small text-muted">Responsável</label>
-              <div class="fw-bold small">
+              <div class="fw-bold text-dark">
                 {{ indicador.responsavelMedicao?.nome || 'Não definido' }}
               </div>
             </div>
-          </div>
+          
 
-          <div class="col-3">
-            <div class="propriedade-box">
+          
+            <div class="badge bg-light gap-1 p-2">
               <label class="form-label small text-muted">Melhor</label>
-              <div class="fw-bold">
+              <div class="fw-bold text-dark">
                 @if (indicador.melhor === 'MAIOR') {
                 <i class="bi bi-arrow-up-circle text-success"></i> Maior
                 } @else {
@@ -95,7 +80,7 @@
                 }
               </div>
             </div>
-          </div>
+          
         </div>
       </div>
 

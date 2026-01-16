@@ -5,6 +5,7 @@ import { FormsModule } from '@angular/forms';
 import { Subject, Subscription } from 'rxjs';
 import { debounceTime, distinctUntilChanged } from 'rxjs/operators';
 import { CockpitPilaresService } from '@core/services/cockpit-pilares.service';
+import { SaveFeedbackService, SaveFeedback } from '@core/services/save-feedback.service';
 import { CockpitPilar } from '@core/interfaces/cockpit-pilares.interface';
 import { MatrizIndicadoresComponent } from '../matriz-indicadores/matriz-indicadores.component';
 import { GraficoIndicadoresComponent } from '../grafico-indicadores/grafico-indicadores.component';
@@ -25,6 +26,7 @@ import { MatrizProcessosComponent } from '../matriz-processos/matriz-processos.c
 })
 export class CockpitDashboardComponent implements OnInit, OnDestroy {
   private cockpitService = inject(CockpitPilaresService);
+  private saveFeedbackService = inject(SaveFeedbackService);
   private route = inject(ActivatedRoute);
   private router = inject(Router);
 
@@ -37,12 +39,18 @@ export class CockpitDashboardComponent implements OnInit, OnDestroy {
   entradas: string = '';
   saidas: string = '';
   missao: string = '';
-  savingContexto = false;
-  lastSaveTime: Date | null = null;
+  
+  // Feedback centralizado
+  saveFeedback: SaveFeedback = {
+    context: '',
+    saving: false,
+    lastSaveTime: null,
+  };
 
   // Auto-save Subject
   private autoSaveSubject = new Subject<void>();
   private routeParamsSubscription?: Subscription;
+  private feedbackSubscription?: Subscription;
 
   ngOnInit(): void {
     // Subscrever aos parâmetros da rota para detectar mudanças
@@ -53,6 +61,11 @@ export class CockpitDashboardComponent implements OnInit, OnDestroy {
       }
     });
 
+    // Subscrever ao feedback centralizado
+    this.feedbackSubscription = this.saveFeedbackService.feedback$.subscribe(
+      feedback => this.saveFeedback = feedback
+    );
+
     // Configurar auto-save após 1000ms de inatividade
     this.setupAutoSave();
   }
@@ -60,6 +73,8 @@ export class CockpitDashboardComponent implements OnInit, OnDestroy {
   ngOnDestroy(): void {
     this.autoSaveSubject.complete();
     this.routeParamsSubscription?.unsubscribe();
+    this.feedbackSubscription?.unsubscribe();
+    this.saveFeedbackService.reset();
   }
 
   private setupAutoSave(): void {
@@ -97,7 +112,7 @@ export class CockpitDashboardComponent implements OnInit, OnDestroy {
   saveContexto(): void {
     if (!this.cockpit) return;
 
-    this.savingContexto = true;
+    this.saveFeedbackService.startSaving('Contexto do pilar');
 
     this.cockpitService
       .updateCockpit(this.cockpit.id, {
@@ -108,12 +123,11 @@ export class CockpitDashboardComponent implements OnInit, OnDestroy {
       .subscribe({
         next: (updated: CockpitPilar) => {
           this.cockpit = updated;
-          this.savingContexto = false;
-          this.lastSaveTime = new Date();
+          this.saveFeedbackService.completeSaving();
         },
         error: (err: unknown) => {
           console.error('Erro ao salvar contexto:', err);
-          this.savingContexto = false;
+          this.saveFeedbackService.reset();
         },
       });
   }

@@ -1,24 +1,9 @@
 <div class="card">
   <div class="card-body">
-    <div class="d-flex justify-content-between align-items-center mb-4">
-      <h5 class="card-title mb-0">
-        <i class="bi bi-list-check me-2"></i>
-        Processos Prioritários
-      </h5>
-
-      <!-- Feedback de salvamento -->
-      @if (savingCount > 0) {
-        <div class="text-warning small">
-          <span class="spinner-border spinner-border-sm me-1"></span>
-          Salvando...
-        </div>
-      } @else if (lastSaveTime) {
-        <div class="text-success small">
-          <i class="bi bi-check-circle me-1"></i>
-          Salvo em {{ lastSaveTime | date: 'HH:mm:ss' }}
-        </div>
-      }
-    </div>
+    <h5 class="card-title mb-4">
+      <i class="bi bi-list-check me-2"></i>
+      Processos Prioritários
+    </h5>
 
     <!-- Processos -->
     @if (processos.length === 0) {
