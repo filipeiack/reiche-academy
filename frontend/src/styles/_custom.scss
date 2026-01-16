@@ -83,6 +83,13 @@
 		border-color: #2A2A2A;
 	}
 
+	.table-light {
+		--bs-table-bg: #1a1a1a;
+		--bs-table-color: #FFFFFF;
+		background-color: #1a1a1a !important;
+		color: #FFFFFF !important;
+	}
+
 	.bg-secondary {
 		color: #000000 !important;
 	}

@@ -1,49 +1,30 @@
-<div class="card">
-  <div class="card-body">
-    <h5 class="card-title mb-4">
+<div class="card mb-1">
+  <div class="card-body p-3 px-4">
+    <h5 class="card-title">
       <i class="bi bi-bar-chart me-2"></i>
       Matriz de Indicadores
     </h5>
 
-    <!-- Seção 1: Gestão de Indicadores (CRUD) -->
-    <div class="section-gestao mb-5">
-      <!-- <div class="section-header mb-3">
-        <h6 class="section-title">
-          <i class="bi bi-gear me-2"></i>
-          Gestão de Indicadores
-        </h6>
-        <small class="text-muted">
-          Adicione, edite e organize os indicadores do cockpit
-        </small>
-      </div> -->
+    <app-gestao-indicadores [cockpitId]="cockpitId" (indicadorCriado)="onIndicadorCriado($event)"
+      (indicadorRemovido)="onIndicadorRemovido($event)">
+    </app-gestao-indicadores>
 
-      <app-gestao-indicadores
-        [cockpitId]="cockpitId"
-        (indicadorCriado)="onIndicadorCriado($event)"
-        (indicadorRemovido)="onIndicadorRemovido($event)"
-      >
-      </app-gestao-indicadores>
-    </div>
-
-    <hr class="my-4" />
-
-    <!-- Seção 2: Metas e Valores Mensais -->
-    <div class="section-valores">
-      <div class="section-header mb-3">
-        <h6 class="section-title">
-          <i class="bi bi-calendar-range me-2"></i>
-          Metas e Valores Mensais
-        </h6>
-        <!-- <small class="text-muted">
-          Preencha as metas e valores realizados mês a mês
-        </small> -->
-      </div>
-
-      <app-edicao-valores-mensais
-        #valoresMensais
-        [cockpitId]="cockpitId"
-      >
-      </app-edicao-valores-mensais>
-    </div>
   </div>
 </div>
+
+<div class="card mb-1">
+  <div class="card-body p-2 px-4">
+    <h6 class="section-title">
+      <i class="bi bi-calendar-range me-2"></i>
+      Metas e Valores Mensais
+    </h6>
+    <!-- <small class="text-muted">
+          Preencha as metas e valores realizados mês a mês
+        </small> -->
+  </div>
+</div>
+
+<!-- Seção 2: Metas e Valores Mensais -->
+
+<app-edicao-valores-mensais #valoresMensais [cockpitId]="cockpitId">
+</app-edicao-valores-mensais>

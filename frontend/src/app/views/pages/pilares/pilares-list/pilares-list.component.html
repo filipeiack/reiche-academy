@@ -10,9 +10,9 @@
     </ol>
   </nav>
 
-  <button type="button" class="btn btn-primary btn-icon-text btn-xs" [routerLink]="['/pilares/novo']"
+  <button type="button" class="btn btn-outline-primary btn-sm" [routerLink]="['/pilares/novo']"
     [ngbTooltip]="'PILARES.NEW_PILAR_TOOLTIP' | translate">
-    <i class="feather icon-plus btn-icon-prepend"></i>
+    <i class="bi bi-plus-circle btn-icon-prepend"></i>
     {{ 'PILARES.NEW_PILAR' | translate }}
   </button>
 </div>
@@ -49,8 +49,8 @@
         </div>
         } @else {
         <div class="table-responsive">
-          <table class="table table-hover table-striped mb-2">
-            <thead>
+          <table class="table table-hover table-sm mb-2">
+            <thead class="table-light">
               <tr>
                 <th scope="col" class="w-100">{{ 'PILARES.FIELDS.NAME' | translate }}</th>
                 <th scope="col" class="text-center">{{ 'PILARES.FIELDS.ROTINAS' | translate }}</th>
@@ -62,8 +62,8 @@
               @for (pilar of paginatedPilares; track pilar.id) {
               <tr cdkDrag data-testid="pilar-list-item">
                 <!-- Nome -->
-                <td>
-                  <i class="feather icon-menu me-2" cdkDragHandle style="cursor: move;"></i>
+                <td cdkDragHandle>
+                  <i class="bi bi-grip-vertical me-2" style="cursor: move;"></i>
                   <span class="badge bg-secondary small me-2" [ngbTooltip]="'PILARES.FIELDS.ORDER' | translate">{{
                     pilar.ordem }}</span>
                   {{ pilar.nome }}

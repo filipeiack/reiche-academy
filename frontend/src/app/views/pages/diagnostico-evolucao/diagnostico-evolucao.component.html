@@ -13,7 +13,7 @@
 
         <!-- Botão Congelar -->
         @if (canCongelar) {
-        <button type="button" class="btn btn-sm btn-primary"
+        <button type="button" class="btn btn-outline-primary btn-sm"
             ngbTooltip="Congelar médias do período de avaliação atual e criar snapshots de todos os pilares"
             (click)="congelarMedias()" [disabled]="!periodoAtual || medias.length === 0">
             <i class="feather icon-archive"></i>
@@ -29,8 +29,8 @@
 <div class="card mb-2">
     <div class="card-body py-2">
         <div class="table-responsive" style="max-width: 90%; margin: 0 auto;">
-            <table class="table table-striped table-sm mb-0">
-                <thead>
+            <table class="table table-sm mb-0">
+                <thead class="table-light">
                     <tr>
                         <th class="py-2 w-100">{{ 'PILARES.PILAR' | translate }}</th>
                         <th sortable="mediaAtual" [direction]="sortColumn === 'mediaAtual' ? sortDirection : ''"

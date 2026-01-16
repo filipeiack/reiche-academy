@@ -1,23 +1,6 @@
-// Grid
-.table {
-  font-size: 0.9rem;
-
-  th {
-    background-color: #f8f9fa;
-    font-weight: 600;
-    position: sticky;
-    top: 0;
-    z-index: 10;
-  }
-
-  td {
-    vertical-align: middle;
-  }
-}
-
-// Estados da linha
+// Estados da linha (específicos da funcionalidade de edição inline)
 .row-editing {
-  background-color: #fff3cd !important; // Amarelo claro
+  background-color: #fff3cd !important;
 
   input,
   select,
@@ -27,19 +10,19 @@
 }
 
 .row-new {
-  border-left: 3px solid #0d6efd; // Azul
+  border-left: 3px solid #0d6efd;
 }
 
 .row-saved {
-  background-color: #d1e7dd !important; // Verde claro
+  background-color: #d1e7dd !important;
   transition: background-color 2s ease;
 }
 
 .row-error {
-  background-color: #f8d7da !important; // Vermelho claro
+  background-color: #f8d7da !important;
 }
 
-// Drag handle
+// Drag handle (específico do drag-drop)
 .drag-handle {
   cursor: grab;
   padding: 0.25rem;
@@ -49,7 +32,7 @@
   }
 }
 
-// CDK Drag Preview
+// CDK Drag Preview (necessário para Angular CDK)
 .cdk-drag-preview {
   opacity: 0.8;
   box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
@@ -62,58 +45,4 @@
 
 .cdk-drag-animating {
   transition: transform 250ms cubic-bezier(0, 0, 0.2, 1);
-}
-
-// Campos inline
-input.form-control-sm,
-select.form-select-sm {
-  &:disabled {
-    background-color: #e9ecef;
-    cursor: not-allowed;
-  }
-
-  &:focus {
-    border-color: #86b7fe;
-    box-shadow: 0 0 0 0.2rem rgba(13, 110, 253, 0.25);
-  }
-}
-
-// ng-select customização
-::ng-deep {
-  .ng-select.ng-select-disabled {
-    .ng-select-container {
-      background-color: #e9ecef;
-      cursor: not-allowed;
-    }
-  }
-
-  .ng-select-container {
-    min-height: 31px;
-    border-radius: 0.2rem;
-  }
-}
-
-// Botões de ação
-// .btn-group-sm {
-//   white-space: nowrap;
-// }
-
-// Feedback visual
-.spinner-border-sm {
-  width: 1rem;
-  height: 1rem;
-}
-
-// Validações
-.is-invalid {
-  border-color: #dc3545 !important;
-
-  &:focus {
-    box-shadow: 0 0 0 0.2rem rgba(220, 53, 69, 0.25) !important;
-  }
-}
-
-.invalid-feedback {
-  display: block;
-  font-size: 0.75rem;
 }

@@ -26,7 +26,6 @@ export class PilaresEmpresaFormComponent implements OnInit {
   pilaresDisponiveis: Pilar[] = [];
   pilaresAssociados: PilarEmpresa[] = [];
   loading = false;
-  temAlteracoes = false;
   editandoPilarId: string | null = null;
   nomeEditando: string = '';
 
@@ -172,12 +171,13 @@ export class PilaresEmpresaFormComponent implements OnInit {
     if (event.previousIndex !== event.currentIndex) {
       moveItemInArray(this.pilaresAssociados, event.previousIndex, event.currentIndex);
       
-      // Atualizar a ordem de todas as pilares
+      // Atualizar a ordem de todos os pilares
       this.pilaresAssociados.forEach((pilar, index) => {
         pilar.ordem = index + 1;
       });
       
-      this.temAlteracoes = true;
+      // Salvar automaticamente
+      this.salvarOrdem();
     }
   }
 
@@ -191,14 +191,12 @@ export class PilaresEmpresaFormComponent implements OnInit {
       if (this.empresaId) {
         await this.pilaresEmpresaService.reordenarPilares(this.empresaId, novasOrdens).toPromise();
       
-      this.showToast('Ordem das pilares atualizada com sucesso.', 'success');
-      
-      this.temAlteracoes = false;
+      this.showToast('Ordem dos pilares atualizada com sucesso.', 'success');
       this.pilaresChanged.emit();
     }
       
     } catch (error) {
-      this.showToast('Erro ao salvar a ordem das pilares. Tente novamente', 'error');
+      this.showToast('Erro ao salvar a ordem dos pilares. Tente novamente', 'error');
     }
   }
 

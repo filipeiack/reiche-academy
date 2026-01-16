@@ -52,9 +52,9 @@ import { TranslatePipe } from "../../../../core/pipes/translate.pipe";
               <i class="feather icon-info me-1"></i>
               Arraste as rotinas para reordenar, adicione novas rotinas ou remova as existentes.
             </p>
-            <button type="button" class="btn btn-primary btn-sm" 
+            <button type="button" class="btn btn-outline-primary btn-sm" 
                     (click)="abrirModalNovaRotina(); $event.preventDefault()">
-              <i class="feather icon-plus me-1"></i>
+              <i class="bi bi-plus-circle me-1"></i>
               Adicionar Rotina
             </button>
           </div>
@@ -65,8 +65,8 @@ import { TranslatePipe } from "../../../../core/pipes/translate.pipe";
             @for (rotinaEmpresa of rotinasEmpresa; track rotinaEmpresa.id) {
             <div class="rotina-item card mb-2" cdkDrag>
               <div class="card-body p-2">
-                <div class="d-flex align-items-center gap-2">
-                  <i class="feather icon-menu drag-handle" cdkDragHandle ngbTooltip="Arrastar para reordenar"></i>
+                <div class="d-flex align-items-center gap-2" cdkDragHandle>
+                  <i class="bi bi-grip-vertical drag-handle" ngbTooltip="Arrastar para reordenar"></i>
                   <span class="badge bg-secondary small">{{ rotinaEmpresa.ordem }}</span>
                   
                   @if (editandoRotinaId === rotinaEmpresa.id) {
@@ -114,12 +114,6 @@ import { TranslatePipe } from "../../../../core/pipes/translate.pipe";
       </div>
       <div class="modal-footer">
         <button type="button" class="btn btn-secondary" (click)="modal.close()">Fechar</button>
-        @if (temAlteracoes) {
-        <button type="button" class="btn btn-success" (click)="salvarOrdem()">
-          <i class="feather icon-save me-1"></i>
-          Salvar Ordem
-        </button>
-        }
       </div>
     </ng-template>
 
@@ -184,7 +178,6 @@ export class RotinasPilarModalComponent implements OnInit {
   rotinasEmpresa: RotinaEmpresa[] = [];
   rotinasDisponiveis: Rotina[] = [];
   novaRotinaId: string | null = null;
-  temAlteracoes = false;
   editandoRotinaId: string | null = null;
   nomeEditando: string = '';
 
@@ -234,7 +227,8 @@ export class RotinasPilarModalComponent implements OnInit {
         rotina.ordem = index + 1;
       });
       
-      this.temAlteracoes = true;
+      // Salvar automaticamente
+      this.salvarOrdem();
     }
   }
 
@@ -252,8 +246,6 @@ export class RotinasPilarModalComponent implements OnInit {
       ).toPromise();
       
       this.showToast('Ordem das rotinas atualizada com sucesso.', 'success');
-      
-      this.temAlteracoes = false;
       this.rotinasModificadas.emit();
       
     } catch (error) {

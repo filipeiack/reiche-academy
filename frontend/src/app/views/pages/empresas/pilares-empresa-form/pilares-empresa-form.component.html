@@ -39,8 +39,8 @@
 
     <div class="pilar-item card mb-2" cdkDrag>
         <div class="card-body p-2">
-            <div class="d-flex align-items-center gap-2">
-                <i class="feather icon-menu drag-handle" cdkDragHandle ngbTooltip="Arrastar para reordenar"></i>
+            <div class="d-flex align-items-center gap-2" cdkDragHandle>
+                <i class="bi bi-grip-vertical drag-handle" ngbTooltip="Arrastar para reordenar"></i>
                 <span class="badge bg-secondary small">{{ pilarEmpresa.ordem }}</span>
                 
                 @if (editandoPilarId === pilarEmpresa.id) {
