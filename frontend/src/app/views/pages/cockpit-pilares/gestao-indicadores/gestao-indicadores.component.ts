@@ -5,6 +5,7 @@ import {
   OnDestroy,
   OnInit,
   Output,
+  ViewChild,
   inject,
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
@@ -24,6 +25,7 @@ import {
 } from '@core/interfaces/cockpit-pilares.interface';
 import { Usuario } from '@core/models/auth.model';
 import { TranslatePipe } from '@core/pipes/translate.pipe';
+import { DescricaoIndicadorModalComponent } from './descricao-indicador-modal/descricao-indicador-modal.component';
 
 interface IndicadorExtended extends IndicadorCockpit {
   isEditing?: boolean;
@@ -34,7 +36,7 @@ interface IndicadorExtended extends IndicadorCockpit {
 @Component({
   selector: 'app-gestao-indicadores',
   standalone: true,
-  imports: [CommonModule, FormsModule, DragDropModule, NgSelectModule, TranslatePipe],
+  imports: [CommonModule, FormsModule, DragDropModule, NgSelectModule, TranslatePipe, DescricaoIndicadorModalComponent],
   templateUrl: './gestao-indicadores.component.html',
   styleUrl: './gestao-indicadores.component.scss',
 })
@@ -42,6 +44,7 @@ export class GestaoIndicadoresComponent implements OnInit, OnDestroy {
   @Input() cockpitId!: string;
   @Output() indicadorCriado = new EventEmitter<IndicadorCockpit>();
   @Output() indicadorRemovido = new EventEmitter<string>();
+  @ViewChild(DescricaoIndicadorModalComponent) descricaoModal!: DescricaoIndicadorModalComponent;
 
   private cockpitService = inject(CockpitPilaresService);
   private usersService = inject(UsersService);
@@ -426,14 +429,16 @@ export class GestaoIndicadoresComponent implements OnInit, OnDestroy {
   }
 
   /**
-   * Abrir modal de descrição (TODO: implementar modal)
+   * Abrir modal de descrição
    */
   openDescricaoModal(indicador: IndicadorExtended): void {
-    // TODO: Implementar DescricaoIndicadorModalComponent
-    const descricao = prompt('Descrição do indicador:', indicador.descricao || '');
-    if (descricao !== null) {
-      indicador.descricao = descricao.trim() || undefined;
+    this.descricaoModal.open(indicador.descricao || '', indicador.nome);
+    
+    // Subscribe to the modal save event
+    const subscription = this.descricaoModal.descricaoSalva.subscribe((descricao: string) => {
+      indicador.descricao = descricao || undefined;
       this.onCellBlur(indicador, 'descricao');
-    }
+      subscription.unsubscribe();
+    });
   }
 }
