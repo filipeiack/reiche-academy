@@ -14,7 +14,7 @@ import { PilarEmpresa } from '../../../../core/services/diagnostico-notas.servic
     <ng-template #modalContent let-modal>
       <div class="modal-header">
         <h5 class="modal-title">
-          <i class="feather icon-plus-circle me-2"></i>
+          <i class="bi bi-plus-circle me-2"></i>
           Nova Rotina Customizada
         </h5>
         <button type="button" class="btn-close" aria-label="Close" (click)="modal.dismiss()"></button>

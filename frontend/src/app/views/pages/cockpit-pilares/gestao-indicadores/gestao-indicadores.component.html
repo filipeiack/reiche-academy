@@ -24,15 +24,15 @@
       </div>
     </div>
     } @else {
-    <table class="table table-hover table-bordered table-sm">
+    <table class="table table-hover table-sm">
       <thead class="table-light">
         <tr>
-          <th style="width: 40px;"></th>
+          <!-- <th style="width: 40px;"></th> -->
           <!-- Drag handle -->
-          <th style="width: 250px;">Nome *</th>
+          <th class="w-100">Nome *</th>
           <th style="width: 150px;">Tipo *</th>
           <th style="width: 150px;">Status</th>
-          <th style="width: 200px;">Responsável</th>
+          <th>Responsável</th>
           <th style="width: 100px;">Melhor *</th>
           <!-- <th style="width: 80px;">Descrição</th> -->
           <th style="width: 100px;">Ações</th>
@@ -40,45 +40,47 @@
       </thead>
       <tbody cdkDropList (cdkDropListDropped)="onDrop($event)">
         @for (indicador of indicadores; track indicador.id || $index) {
-        <tr cdkDrag [cdkDragDisabled]="indicador.isEditing || false" [class.row-editing]="indicador.isEditing"
+        <tr cdkDragHandle cdkDrag [cdkDragDisabled]="indicador.isEditing || false" [class.row-editing]="indicador.isEditing"
           [class.row-new]="indicador.isNew" [class.row-saved]="indicador.saveStatus === 'saved'"
           [class.row-error]="indicador.saveStatus === 'error'">
           <!-- Drag Handle -->
-          <td class="text-center">
-            @if (!indicador.isEditing) {
-            <div class="drag-handle" cdkDragHandle>
-              <i class="bi bi-grip-vertical text-muted"></i>
-            </div>
-            }
-          </td>
+          <!-- <td class="text-center">
+           
+          </td> -->
 
           <!-- Nome -->
           <td>
+             @if (!indicador.isEditing) {
+            
+              <i class="bi bi-grip-vertical text-muted"></i>
+            
+            }
+
             @if (indicador.isEditing) {
             <input type="text" class="form-control form-control-sm" [(ngModel)]="indicador.nome"
               (blur)="onCellBlur(indicador, 'nome')" (keydown)="onKeyDown($event, indicador.ordem!, 'nome')"
               [id]="'nome-' + indicador.ordem" placeholder="Nome do indicador"
               [class.is-invalid]="!indicador.nome.trim()" />
             } @else {
-            {{ indicador.nome }}
-            <a href="javascript:void(0)" (click)="openDescricaoModal(indicador)" title="Editar descrição">
+            <button type="button" 
+              class="btn btn-link p-0 me-2" 
+              (click)="openDescricaoModal(indicador)" 
+              title="Editar descrição"
+              aria-label="Editar descrição do indicador">
               <i class="bi bi-file-text"></i>
-            </a>
+            </button>
+            {{ indicador.nome }}
             }
           </td>
 
           <!-- Tipo de Medida -->
           <td>
             @if (indicador.isEditing) {
-            <select class="form-select form-select-sm" [(ngModel)]="indicador.tipoMedida"
-              (change)="onCellBlur(indicador, 'tipoMedida')"
-              (keydown)="onKeyDown($event, indicador.ordem!, 'tipoMedida')" [id]="'tipoMedida-' + indicador.ordem"
-              [class.is-invalid]="!indicador.tipoMedida">
-              <option [value]="null">Selecione...</option>
-              @for (tipo of tiposMedida; track tipo.value) {
-              <option [value]="tipo.value">{{ tipo.label }}</option>
-              }
-            </select>
+            <ng-select [(ngModel)]="indicador.tipoMedida" (change)="onCellBlur(indicador, 'tipoMedida')"
+              (keydown)="onKeyDown($event, indicador.ordem!, 'tipoMedida')" [items]="tiposMedida" bindLabel="label"
+              bindValue="value" placeholder="Selecione..." [searchable]="true" [clearable]="true"
+              [id]="'tipoMedida-' + indicador.ordem" [class.is-invalid]="!indicador.tipoMedida">
+            </ng-select>
             } @else {
             @switch (indicador.tipoMedida) {
             @case ('REAL') {
@@ -100,14 +102,17 @@
           <!-- Status de Medição -->
           <td>
             @if (indicador.isEditing) {
-            <select class="form-select form-select-sm" [(ngModel)]="indicador.statusMedicao"
+            <ng-select [(ngModel)]="indicador.statusMedicao"
               (change)="onCellBlur(indicador, 'statusMedicao')"
               (keydown)="onKeyDown($event, indicador.ordem!, 'statusMedicao')"
+              [items]="statusMedicao"
+              bindLabel="label"
+              bindValue="value"
+              placeholder="Selecione..."
+              [searchable]="true"
+              [clearable]="true"
               [id]="'statusMedicao-' + indicador.ordem">
-              @for (status of statusMedicao; track status.value) {
-              <option [value]="status.value">{{ status.label }}</option>
-              }
-            </select>
+            </ng-select>
             } @else {
             @switch (indicador.statusMedicao) {
             @case ('MEDIDO_CONFIAVEL') {
@@ -221,3 +226,6 @@
     </div>
   </div>
 </div>
+
+<!-- Modal Component -->
+<app-descricao-indicador-modal></app-descricao-indicador-modal>

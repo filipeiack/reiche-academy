@@ -4,6 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { Subject, Subscription } from 'rxjs';
 import { debounceTime, distinctUntilChanged } from 'rxjs/operators';
 import { CockpitPilaresService } from '@core/services/cockpit-pilares.service';
+import { SaveFeedbackService } from '@core/services/save-feedback.service';
 import {
   ProcessoPrioritario,
   StatusProcesso,
@@ -22,12 +23,12 @@ export class MatrizProcessosComponent implements OnInit, OnChanges, OnDestroy {
   @Input() processos: ProcessoPrioritario[] = [];
 
   private cockpitService = inject(CockpitPilaresService);
+  private saveFeedbackService = inject(SaveFeedbackService);
 
   // Auto-save
   private autoSaveSubject = new Subject<{ processoId: string; status: StatusProcesso }>();
   private autoSaveSubscription: Subscription | null = null;
-  savingCount = 0;
-  lastSaveTime: Date | null = null;
+  private savingCount = 0;
 
   // StatusProcesso enum para template
   StatusProcesso = {
@@ -76,6 +77,9 @@ export class MatrizProcessosComponent implements OnInit, OnChanges, OnDestroy {
 
   private saveStatus(processoId: string, status: StatusProcesso): void {
     this.savingCount++;
+    if (this.savingCount === 1) {
+      this.saveFeedbackService.startSaving('Status de processos');
+    }
 
     // MVP Fase 1: Ambos status (mapeamento e treinamento) compartilham o mesmo valor
     const dto: UpdateProcessoPrioritarioDto = {
@@ -88,11 +92,16 @@ export class MatrizProcessosComponent implements OnInit, OnChanges, OnDestroy {
       .subscribe({
         next: () => {
           this.savingCount--;
-          this.lastSaveTime = new Date();
+          if (this.savingCount === 0) {
+            this.saveFeedbackService.completeSaving();
+          }
         },
         error: (err: unknown) => {
           console.error('Erro ao salvar status do processo:', err);
           this.savingCount--;
+          if (this.savingCount === 0) {
+            this.saveFeedbackService.reset();
+          }
           // TODO: Implementar retry ou notificação de erro
         },
       });

@@ -10,8 +10,9 @@
     </ol>
   </nav>
 
-  <button type="button" class="btn btn-primary btn-icon-text btn-xs" [routerLink]="['/rotinas/novo']" [ngbTooltip]="'ROTINAS.NEW_ROTINA_TOOLTIP' | translate">
-    <i class="feather icon-plus btn-icon-prepend"></i>
+  <button type="button" class="btn btn-outline-primary btn-sm" [routerLink]="['/rotinas/novo']"
+    [ngbTooltip]="'ROTINAS.NEW_ROTINA_TOOLTIP' | translate">
+    <i class="bi bi-plus-circle btn-icon-prepend"></i>
     {{ 'ROTINAS.NEW_ROTINA' | translate }}
   </button>
 </div>
@@ -54,26 +55,28 @@
 
         <!-- Table with Drag and Drop -->
         <div class="table-responsive" *ngIf="totalRotinas > 0">
-          <table class="table table-hover table-striped mb-2">
-            <thead>
+          <table class="table table-hover table-sm mb-2">
+            <thead class="table-light">
               <tr>
                 <th *ngIf="canReorder" style="width: 40px;"></th>
-                <th>{{ 'ROTINAS.FIELDS.PILAR' | translate }}</th>
                 <th>{{ 'ROTINAS.FIELDS.ROTINA' | translate }}</th>
+                <th>{{ 'ROTINAS.FIELDS.PILAR' | translate }}</th>
                 <th style="width: 120px;">{{ 'COMMON.ACTIONS' | translate }}</th>
               </tr>
             </thead>
             <tbody cdkDropList [cdkDropListDisabled]="!canReorder" (cdkDropListDropped)="onDrop($event)">
-              <tr *ngFor="let rotina of paginatedRotinas" cdkDrag [cdkDragDisabled]="!canReorder" data-testid="rotina-list-item">
+              <tr *ngFor="let rotina of paginatedRotinas" cdkDrag [cdkDragDisabled]="!canReorder"
+                data-testid="rotina-list-item">
                 <td *ngIf="canReorder" class="text-center">
-                  <i class="feather icon-list me-2"></i>
+                  <i class="bi bi-grip-vertical me-2"></i>
+                </td>
+                <td style="max-width: 500px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
+                  <span class="badge bg-secondary small" [ngbTooltip]="'ROTINAS.FIELDS.ORDER' | translate">{{
+                    rotina.ordem }}</span>
+                  <span [ngbTooltip]="rotina.nome"> {{ rotina.nome }} </span>
                 </td>
                 <td style="max-width: 300px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
                   {{ rotina.pilar?.nome || '—' }}
-                </td>
-                <td style="max-width: 500px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
-                  <span class="badge bg-secondary small" [ngbTooltip]="'ROTINAS.FIELDS.ORDER' | translate">{{ rotina.ordem }}</span>
-                  <span [ngbTooltip]="rotina.nome"> {{ rotina.nome }} </span>
                 </td>
                 <td class="text-nowrap">
                   <div class="btn-group btn-group-sm" role="group">
@@ -86,10 +89,10 @@
 
                     <!-- Toggle Ativar/Inativar -->
                     <button class="btn btn-icon text-primary"
-                        (click)="toggleStatus(rotina.id, rotina.nome, rotina.ativo)"
-                        [title]="rotina.ativo ? 'Inativar rotina' : 'Ativar rotina'">
-                        <i class="feather"
-                          [ngClass]="{'icon-toggle-right': rotina.ativo, 'icon-toggle-left': !rotina.ativo}"></i>
+                      (click)="toggleStatus(rotina.id, rotina.nome, rotina.ativo)"
+                      [title]="rotina.ativo ? 'Inativar rotina' : 'Ativar rotina'">
+                      <i class="feather"
+                        [ngClass]="{'icon-toggle-right': rotina.ativo, 'icon-toggle-left': !rotina.ativo}"></i>
                     </button>
 
                     <!-- Editar (sempre visível) -->
@@ -115,7 +118,8 @@
         <!-- Pagination -->
         <div class="d-flex justify-content-between p-2">
           <span class="text-muted fs-12">
-            Mostrando {{ getStartIndex() + 1 }}-{{ getEndIndex() }} de {{ totalRotinas }} {{ 'COMMON.ITEMS' | translate }}
+            Mostrando {{ getStartIndex() + 1 }}-{{ getEndIndex() }} de {{ totalRotinas }} {{ 'COMMON.ITEMS' | translate
+            }}
           </span>
           <ngb-pagination [(page)]="page" [pageSize]="pageSize" [collectionSize]="totalRotinas" size="sm"
             [rotate]="true" [boundaryLinks]="true">

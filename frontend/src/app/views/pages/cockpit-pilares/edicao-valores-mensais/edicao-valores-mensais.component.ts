@@ -4,6 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { Subject } from 'rxjs';
 import { debounceTime, distinctUntilChanged } from 'rxjs/operators';
 import { CockpitPilaresService } from '@core/services/cockpit-pilares.service';
+import { SaveFeedbackService } from '@core/services/save-feedback.service';
 import {
   CockpitPilar,
   IndicadorCockpit,
@@ -23,6 +24,7 @@ export class EdicaoValoresMensaisComponent implements OnInit, OnChanges, OnDestr
   @Input() cockpitId!: string;
 
   private cockpitService = inject(CockpitPilaresService);
+  private saveFeedbackService = inject(SaveFeedbackService);
   private autoSaveSubject = new Subject<{
     indicadorMensalId: string;
     campo: 'meta' | 'realizado';
@@ -31,8 +33,7 @@ export class EdicaoValoresMensaisComponent implements OnInit, OnChanges, OnDestr
 
   indicadores: IndicadorCockpit[] = [];
   loading = false;
-  savingCount = 0;
-  lastSaveTime: Date | null = null;
+  private savingCount = 0;
 
   // Cache de valores em edição
   private valoresCache = new Map<string, { meta?: number; realizado?: number }>();
@@ -113,6 +114,9 @@ export class EdicaoValoresMensaisComponent implements OnInit, OnChanges, OnDestr
     valor: number | null
   ): void {
     this.savingCount++;
+    if (this.savingCount === 1) {
+      this.saveFeedbackService.startSaving('Valores mensais');
+    }
 
     // Encontrar o indicador e mes
     let indicadorId: string | null = null;
@@ -130,6 +134,9 @@ export class EdicaoValoresMensaisComponent implements OnInit, OnChanges, OnDestr
     if (!indicadorId || !mes) {
       console.error('Mês não encontrado:', indicadorMensalId);
       this.savingCount--;
+      if (this.savingCount === 0) {
+        this.saveFeedbackService.reset();
+      }
       return;
     }
 
@@ -149,13 +156,18 @@ export class EdicaoValoresMensaisComponent implements OnInit, OnChanges, OnDestr
     this.cockpitService.updateValoresMensais(indicadorId, payload).subscribe({
       next: () => {
         this.savingCount--;
-        this.lastSaveTime = new Date();
+        if (this.savingCount === 0) {
+          this.saveFeedbackService.completeSaving();
+        }
         this.valoresCache.delete(indicadorMensalId);
       },
       error: (err: unknown) => {
         console.error('Erro ao salvar valor mensal:', err);
         alert('Erro ao salvar. Tente novamente.');
         this.savingCount--;
+        if (this.savingCount === 0) {
+          this.saveFeedbackService.reset();
+        }
       },
     });
   }
