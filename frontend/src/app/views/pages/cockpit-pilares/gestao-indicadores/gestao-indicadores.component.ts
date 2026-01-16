@@ -24,6 +24,7 @@ import {
 } from '@core/interfaces/cockpit-pilares.interface';
 import { Usuario } from '@core/models/auth.model';
 import { TranslatePipe } from '@core/pipes/translate.pipe';
+import { DescricaoIndicadorModalComponent } from './descricao-indicador-modal/descricao-indicador-modal.component';
 
 interface IndicadorExtended extends IndicadorCockpit {
   isEditing?: boolean;
@@ -426,14 +427,26 @@ export class GestaoIndicadoresComponent implements OnInit, OnDestroy {
   }
 
   /**
-   * Abrir modal de descrição (TODO: implementar modal)
+   * Abrir modal de descrição
    */
   openDescricaoModal(indicador: IndicadorExtended): void {
-    // TODO: Implementar DescricaoIndicadorModalComponent
-    const descricao = prompt('Descrição do indicador:', indicador.descricao || '');
-    if (descricao !== null) {
-      indicador.descricao = descricao.trim() || undefined;
-      this.onCellBlur(indicador, 'descricao');
-    }
+    const modalRef = this.modalService.open(DescricaoIndicadorModalComponent, {
+      size: 'lg',
+      backdrop: 'static',
+      keyboard: true,
+    });
+
+    modalRef.componentInstance.nomeIndicador = indicador.nome;
+    modalRef.componentInstance.descricao = indicador.descricao;
+
+    modalRef.result.then(
+      (descricao: string | null) => {
+        indicador.descricao = descricao || undefined;
+        this.onCellBlur(indicador, 'descricao');
+      },
+      () => {
+        // Modal dismissed - no action needed
+      }
+    );
   }
 }

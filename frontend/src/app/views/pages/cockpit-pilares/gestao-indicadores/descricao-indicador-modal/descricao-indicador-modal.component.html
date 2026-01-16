@@ -1,0 +1,50 @@
+<div class="modal-header">
+  <h5 class="modal-title">
+    <i class="bi bi-file-text me-2"></i>
+    Descrição do Indicador
+  </h5>
+  <button
+    type="button"
+    class="btn-close"
+    (click)="cancelar()"
+    aria-label="Close"
+  ></button>
+</div>
+
+<div class="modal-body">
+  <div class="mb-2">
+    <strong>Indicador:</strong> {{ nomeIndicador }}
+  </div>
+
+  <div class="mb-3">
+    <label class="form-label">Descrição:</label>
+    <textarea
+      class="form-control"
+      [(ngModel)]="descricaoAtual"
+      rows="5"
+      [maxlength]="maxLength"
+      placeholder="Digite a descrição detalhada do indicador..."
+      autofocus
+    ></textarea>
+    <small class="form-text text-muted">
+      {{ descricaoAtual.length }}/{{ maxLength }} caracteres
+    </small>
+  </div>
+</div>
+
+<div class="modal-footer">
+  <button
+    type="button"
+    class="btn btn-secondary"
+    (click)="cancelar()"
+  >
+    Cancelar
+  </button>
+  <button
+    type="button"
+    class="btn btn-primary"
+    (click)="salvar()"
+  >
+    Salvar
+  </button>
+</div>

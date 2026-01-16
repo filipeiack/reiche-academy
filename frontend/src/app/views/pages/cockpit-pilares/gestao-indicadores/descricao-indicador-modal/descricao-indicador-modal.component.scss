@@ -1,0 +1,9 @@
+// Estilos específicos para o modal de descrição do indicador
+.modal-body {
+  padding: 1.5rem;
+}
+
+textarea.form-control {
+  resize: vertical;
+  min-height: 120px;
+}
