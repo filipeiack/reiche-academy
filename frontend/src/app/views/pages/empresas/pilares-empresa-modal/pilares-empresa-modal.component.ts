@@ -12,7 +12,7 @@ import { PilaresEmpresaFormComponent } from '../pilares-empresa-form/pilares-emp
       <div class="modal-header">
         <h5 class="modal-title">
           <i class="feather icon-layers me-2"></i>
-          Gerenciar Pilares da Empresa
+          Editar Pilares da Empresa
         </h5>
         <button type="button" class="btn-close" aria-label="Close" (click)="modal.dismiss()"></button>
       </div>

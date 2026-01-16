@@ -1,0 +1,61 @@
+<div class="card">
+  <div class="card-body">
+    <h5 class="card-title mb-4">
+      <i class="bi bi-graph-up me-2"></i>
+      Gráfico de Indicadores
+    </h5>
+
+    <!-- Seletor de Indicador -->
+    <div class="mb-4">
+      <label for="indicadorSelect" class="form-label">Selecione um indicador:</label>
+      <select
+        id="indicadorSelect"
+        class="form-select"
+        [(ngModel)]="selectedIndicadorId"
+        (change)="onIndicadorChange($any($event.target).value)"
+      >
+        @for (indicador of indicadores; track indicador.id) {
+          <option [value]="indicador.id">
+            {{ indicador.nome }}
+          </option>
+        }
+      </select>
+    </div>
+
+    <!-- Loading -->
+    @if (loading) {
+      <div class="text-center py-5">
+        <div class="spinner-border text-primary" role="status">
+          <span class="visually-hidden">Carregando...</span>
+        </div>
+      </div>
+    }
+
+    <!-- Error -->
+    @if (error) {
+      <div class="alert alert-danger">
+        <i class="bi bi-exclamation-triangle me-2"></i>
+        {{ error }}
+      </div>
+    }
+
+    <!-- Chart Container -->
+    @if (!loading && !error && selectedIndicadorId) {
+      <div class="chart-container">
+        <canvas
+          baseChart
+          [data]="lineChartData"
+          [options]="lineChartOptions"
+          [type]="lineChartType"
+        ></canvas>
+      </div>
+    }
+
+    @if (indicadores.length === 0) {
+      <div class="alert alert-info">
+        <i class="bi bi-info-circle me-2"></i>
+        Nenhum indicador criado ainda. Adicione indicadores para visualizar os gráficos.
+      </div>
+    }
+  </div>
+</div>

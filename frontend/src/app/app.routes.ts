@@ -13,17 +13,6 @@ export const routes: Routes = [
     loadChildren: () => import('./views/pages/auth/auth.routes')
   },
   {
-    path: 'dashboard',
-    component: BaseComponent,
-    canActivate: [authGuard],
-    children: [
-      {
-        path: '',
-        loadComponent: () => import('./views/pages/dashboard/dashboard.component').then(m => m.DashboardComponent)
-      }
-    ]
-  },
-  {
     path: 'usuarios',
     component: BaseComponent,
     canActivate: [authGuard],
@@ -86,6 +75,21 @@ export const routes: Routes = [
       {
         path: '',
         loadComponent: () => import('./views/pages/diagnostico-evolucao/diagnostico-evolucao.component').then(m => m.DiagnosticoEvolucaoComponent)
+      }
+    ]
+  },
+  {
+    path: 'cockpits',
+    component: BaseComponent,
+    canActivate: [authGuard],
+    children: [
+      {
+        path: '',
+        loadComponent: () => import('./views/pages/cockpit-pilares/lista-cockpits/lista-cockpits.component').then(m => m.ListaCockpitsComponent)
+      },
+      {
+        path: ':id/dashboard',
+        loadComponent: () => import('./views/pages/cockpit-pilares/cockpit-dashboard/cockpit-dashboard.component').then(m => m.CockpitDashboardComponent)
       }
     ]
   },

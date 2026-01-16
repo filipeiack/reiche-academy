@@ -11,6 +11,8 @@ import { EmpresasService, Empresa } from '../../../core/services/empresas.servic
 import { EmpresaBasic } from '@app/core/models/auth.model';
 import { AuthService } from '../../../core/services/auth.service';
 import { EmpresaContextService } from '../../../core/services/empresa-context.service';
+import { PeriodosAvaliacaoService } from '../../../core/services/periodos-avaliacao.service';
+import { PeriodoAvaliacao } from '../../../core/models/periodo-avaliacao.model';
 import { Chart, registerables } from 'chart.js';
 import annotationPlugin from 'chartjs-plugin-annotation';
 import { MediaBadgeComponent } from '../../../shared/components/media-badge/media-badge.component';
@@ -39,6 +41,7 @@ export class DiagnosticoEvolucaoComponent implements OnInit, OnDestroy {
   private empresasService = inject(EmpresasService);
   private authService = inject(AuthService);
   private empresaContextService = inject(EmpresaContextService);
+  private periodosService = inject(PeriodosAvaliacaoService);
 
   empresaLogada: EmpresaBasic | null = null;
   selectedEmpresaId: string | null = null;
@@ -51,6 +54,9 @@ export class DiagnosticoEvolucaoComponent implements OnInit, OnDestroy {
   medias: MediaPilar[] = [];
   historico: any[] = []; // Agora armazena histórico de todos os pilares
   barChart: Chart | null = null;
+  periodoAtual: PeriodoAvaliacao | null = null;
+  anoFiltro: number | undefined = undefined;
+  anosDisponiveis: number[] = [];
 
   canCongelar = false; // ADMINISTRADOR, CONSULTOR, GESTOR
 
@@ -140,7 +146,11 @@ export class DiagnosticoEvolucaoComponent implements OnInit, OnDestroy {
       next: (data) => {
         this.medias = data;
         this.loading = false;
-        // Carregar histórico de todos os pilares
+        // Gerar anos disponíveis (últimos 5 anos a partir do ano atual)
+        this.gerarAnosDisponiveis();
+        // Carregar período atual
+        this.loadPeriodoAtual();
+        // Carregar histórico com filtro de ano
         this.loadAllHistorico();
       },
       error: (err: any) => {
@@ -154,37 +164,47 @@ export class DiagnosticoEvolucaoComponent implements OnInit, OnDestroy {
   congelarMedias(): void {
     if (!this.selectedEmpresaId || !this.canCongelar) return;
 
+    if (!this.periodoAtual) {
+      this.showToast('Não há período de avaliação ativo. Inicie um período primeiro.', 'warning', 4000);
+      return;
+    }
+
     if (this.medias.length === 0) {
       this.showToast('Não há médias para congelar', 'warning');
       return;
     }
 
     Swal.fire({
-      title: 'Congelar Médias',
-      text: `Deseja salvar/atualizar as médias de ${this.medias.length} pilar(es)? Se já existe registro de hoje, será atualizado.`,
+      title: 'Congelar Médias do Período',
+      text: `Deseja congelar as médias de ${this.medias.length} pilar(es) e encerrar o período ${this.getPeriodoMesAno()}?`,
       showCancelButton: true,
-      confirmButtonText: 'Sim, salvar',
+      confirmButtonText: 'Sim, congelar',
       cancelButtonText: 'Cancelar',
       confirmButtonColor: '#3085d6'
     }).then((result) => {
-      if (result.isConfirmed && this.selectedEmpresaId) {
+      if (result.isConfirmed && this.periodoAtual) {
         this.loading = true;
-        this.diagnosticoService.congelarMedias(this.selectedEmpresaId).subscribe({
+        this.periodosService.congelar(this.periodoAtual.id).subscribe({
           next: (response) => {
+            const dataRef = new Date(response.periodo.dataReferencia);
+            const mes = (dataRef.getMonth() + 1).toString().padStart(2, '0');
+            const ano = dataRef.getFullYear();
             this.showToast(
-              response.message,
+              `Período ${mes}/${ano} congelado com sucesso! ${response.snapshots?.length || 0} snapshots criados.`,
               'success',
               4000
             );
             this.loading = false;
-            // Recarregar histórico de todos os pilares
+            this.periodoAtual = null;
+            // Recarregar histórico
             this.loadAllHistorico();
           },
           error: (err: any) => {
             this.loading = false;
             this.showToast(
               err?.error?.message || 'Erro ao congelar médias',
-              'error'
+              'error',
+              4000
             );
           }
         });
@@ -193,7 +213,7 @@ export class DiagnosticoEvolucaoComponent implements OnInit, OnDestroy {
   }
 
   /**
-   * Carrega histórico de todos os pilares
+   * Carrega histórico de períodos congelados (baseado no novo endpoint)
    */
   private async loadAllHistorico(): Promise<void> {
     if (!this.selectedEmpresaId || this.medias.length === 0) {
@@ -203,26 +223,40 @@ export class DiagnosticoEvolucaoComponent implements OnInit, OnDestroy {
     }
 
     try {
-      // Fazer requisições paralelas para todos os pilares
-      const promises = this.medias.map(media =>
-        firstValueFrom(
-          this.diagnosticoService.buscarHistoricoEvolucao(this.selectedEmpresaId!, media.pilarEmpresaId)
-        ).catch(err => {
-          console.error(`Erro ao carregar histórico do pilar ${media.pilarNome}:`, err);
-          return []; // Retorna array vazio em caso de erro
-        })
+      // Buscar histórico de períodos congelados com filtro de ano
+      const periodos = await firstValueFrom(
+        this.periodosService.getHistorico(this.selectedEmpresaId, this.anoFiltro)
       );
 
-      const results = await Promise.all(promises);
+      // Converter períodos em estrutura de histórico para o chart
+      // Cada período usa sua dataReferencia real
+      this.historico = this.medias.map(media => {
+        const dadosPilar = periodos
+          .filter(p => !p.aberto) // Apenas períodos congelados
+          .sort((a, b) => {
+            // Ordenar por dataReferencia
+            const dataA = new Date(a.dataReferencia);
+            const dataB = new Date(b.dataReferencia);
+            return dataA.getTime() - dataB.getTime();
+          })
+          .map(periodo => {
+            // Buscar snapshot do pilar neste período
+            const snapshot = periodo.snapshots?.find(s => s.pilarEmpresaId === media.pilarEmpresaId);
+            return {
+              data: periodo.dataReferencia, // Usar dataReferencia real escolhida pelo admin
+              media: snapshot?.mediaNotas || null,
+              trimestre: periodo.trimestre,
+              ano: periodo.ano
+            };
+          })
+          .filter(d => d.media !== null); // Remover períodos sem snapshot
 
-      // Combinar resultados com informações do pilar
-      this.historico = results
-        .map((data, index) => ({
-          pilarEmpresaId: this.medias[index].pilarEmpresaId,
-          pilarNome: this.medias[index].pilarNome,
-          data: data || []
-        }))
-        .filter(h => h.data.length > 0);
+        return {
+          pilarEmpresaId: media.pilarEmpresaId,
+          pilarNome: media.pilarNome,
+          data: dadosPilar
+        };
+      }).filter(h => h.data.length > 0);
       
       // Pequeno delay para garantir que o DOM foi atualizado
       setTimeout(() => {
@@ -246,37 +280,65 @@ renderBarChart(): void {
     const ctx = document.getElementById('evolucaoBarChart') as HTMLCanvasElement;
     if (!ctx) return;
 
-    // Coletar todas as datas únicas de todos os pilares e ordenar
-    const allDates = new Set<string>();
-    this.historico.forEach(pilar => {
-      pilar.data.forEach((item: HistoricoEvolucao) => {
-        allDates.add(new Date(item.createdAt).toLocaleDateString('pt-BR'));
-      });
-    });
-    const sortedDates = Array.from(allDates).sort((a, b) => {
-      const dateA = a.split('/').reverse().join('-');
-      const dateB = b.split('/').reverse().join('-');
-      return dateA.localeCompare(dateB);
-    });
-
     // Labels são os nomes dos pilares
     const labels = this.historico.map(pilar => pilar.pilarNome.toUpperCase());
 
-    // Criar dataset para cada data
-    const datasets = sortedDates.map((date, index) => {
+    // Configurar largura dinâmica do canvas
+    const larguraMinimaPorPilar = 105; // pixels mínimos por pilar
+    const larguraNecessaria = this.historico.length * larguraMinimaPorPilar;
+    const container = document.getElementById('chartContainer');
+    if (container && this.historico.length > 10) {
+      container.style.width = `${larguraNecessaria}px`;
+    } else if (container) {
+      container.style.width = '100%';
+    }
+
+    // Criar dataset para cada período (mês/ano da dataReferencia real)
+    // Coletar todos os períodos únicos
+    interface PeriodoInfo {
+      mesAno: string; // formato MM/YYYY
+      data: Date;
+    }
+    const periodoMap = new Map<string, PeriodoInfo>();
+    this.historico.forEach(pilar => {
+      pilar.data.forEach((item: any) => {
+        // Extrair mês/ano da dataReferencia real
+        const dataRef = new Date(item.data);
+        const mes = (dataRef.getMonth() + 1).toString().padStart(2, '0');
+        const ano = dataRef.getFullYear();
+        const mesAno = `${mes}/${ano}`;
+        if (!periodoMap.has(mesAno)) {
+          periodoMap.set(mesAno, {
+            mesAno,
+            data: dataRef
+          });
+        }
+      });
+    });
+    // Ordenar por data
+    const sortedPeriodos = Array.from(periodoMap.values()).sort((a, b) => {
+      return a.data.getTime() - b.data.getTime();
+    });
+
+    // Criar dataset para cada período
+    const datasets = sortedPeriodos.map((periodo, index) => {
       const colorIndex = index % this.GRAY_COLORS.length;
       const grayColor = this.GRAY_COLORS[colorIndex];
 
-      // Para cada pilar, pegar a média da data correspondente
+      // Para cada pilar, pegar a média do período correspondente
       const data = this.historico.map(pilar => {
-        const item = pilar.data.find((h: HistoricoEvolucao) => 
-          new Date(h.createdAt).toLocaleDateString('pt-BR') === date
-        );
-        return item ? item.mediaNotas : null;
+        const item = pilar.data.find((h: any) => {
+          const dataItem = new Date(h.data);
+          const mesItem = (dataItem.getMonth() + 1).toString().padStart(2, '0');
+          const anoItem = dataItem.getFullYear();
+          const mesAnoItem = `${mesItem}/${anoItem}`;
+          return mesAnoItem === periodo.mesAno;
+        });
+        return item ? item.media : null;
       });
 
       return {
-        label: date,
+        label: periodo.mesAno,
         data: data,
         backgroundColor: grayColor,
         borderColor: grayColor,
@@ -332,7 +394,7 @@ renderBarChart(): void {
             },
             title: {
               display: true,
-              text: 'Média das Notas'
+              text: 'MÉDIAS'
             }
           },
           x: {
@@ -481,5 +543,55 @@ renderBarChart(): void {
       title,
       icon
     });
+  }
+
+  // ====================================================
+  // Métodos de Período de Avaliação
+  // ====================================================
+
+  /**
+   * Carrega o período de avaliação atual (aberto) da empresa
+   */
+  private loadPeriodoAtual(): void {
+    if (!this.selectedEmpresaId) return;
+
+    this.periodosService.getAtual(this.selectedEmpresaId).subscribe({
+      next: (periodo) => {
+        this.periodoAtual = periodo;
+      },
+      error: (err) => {
+        console.error('Erro ao carregar período atual:', err);
+        this.periodoAtual = null;
+      }
+    });
+  }
+
+  /**
+   * Gera lista de anos disponíveis para o filtro (últimos 5 anos a partir do ano atual)
+   */
+  private gerarAnosDisponiveis(): void {
+    const anoAtual = new Date().getFullYear();
+    this.anosDisponiveis = [];
+    for (let i = 0; i < 3; i++) {
+      this.anosDisponiveis.push(anoAtual - i);
+    }
+  }
+
+  /**
+   * Callback quando usuário muda o filtro de ano
+   */
+  onAnoChange(): void {
+    this.loadAllHistorico();
+  }
+
+  /**
+   * Retorna texto formatado do período atual (mês/ano) para exibição no botão
+   */
+  getPeriodoMesAno(): string {
+    if (!this.periodoAtual) return '';
+    const dataRef = new Date(this.periodoAtual.dataReferencia);
+    const mes = (dataRef.getMonth() + 1).toString().padStart(2, '0');
+    const ano = dataRef.getFullYear();
+    return `${mes}/${ano}`;
   }
 }

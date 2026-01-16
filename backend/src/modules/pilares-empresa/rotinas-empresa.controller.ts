@@ -55,6 +55,26 @@ export class RotinasEmpresaController {
     return this.rotinasEmpresaService.createRotinaEmpresa(empresaId, pilarEmpresaId, dto, req.user);
   }
 
+  @Patch('reordenar')
+  @Roles('ADMINISTRADOR', 'GESTOR')
+  @ApiOperation({ summary: 'Reordenar rotinas de um pilar da empresa' })
+  @ApiResponse({ status: 200, description: 'Rotinas reordenadas com sucesso' })
+  @ApiResponse({ status: 403, description: 'Acesso negado (multi-tenant)' })
+  @ApiResponse({ status: 404, description: 'Pilar ou rotinas não encontrados' })
+  reordenar(
+    @Param('empresaId') empresaId: string,
+    @Param('pilarEmpresaId') pilarEmpresaId: string,
+    @Body() dto: ReordenarRotinasDto,
+    @Request() req: ExpressRequest & { user: any },
+  ) {
+    return this.rotinasEmpresaService.reordenarRotinas(
+      empresaId,
+      pilarEmpresaId,
+      dto.ordens,
+      req.user
+    );
+  }
+
   @Delete(':rotinaEmpresaId')
   @Roles('ADMINISTRADOR', 'GESTOR')
   @ApiOperation({ summary: 'Remover uma rotina de um pilar (hard delete com cascade audit)' })
@@ -85,25 +105,5 @@ export class RotinasEmpresaController {
     @Request() req: ExpressRequest & { user: any },
   ) {
     return this.rotinasEmpresaService.updateRotinaEmpresa(empresaId, rotinaEmpresaId, dto, req.user);
-  }
-
-  @Patch('reordenar')
-  @Roles('ADMINISTRADOR', 'GESTOR')
-  @ApiOperation({ summary: 'Reordenar rotinas de um pilar da empresa' })
-  @ApiResponse({ status: 200, description: 'Rotinas reordenadas com sucesso' })
-  @ApiResponse({ status: 403, description: 'Acesso negado (multi-tenant)' })
-  @ApiResponse({ status: 404, description: 'Pilar ou rotinas não encontrados' })
-  reordenar(
-    @Param('empresaId') empresaId: string,
-    @Param('pilarEmpresaId') pilarEmpresaId: string,
-    @Body() dto: ReordenarRotinasDto,
-    @Request() req: ExpressRequest & { user: any },
-  ) {
-    return this.rotinasEmpresaService.reordenarRotinas(
-      empresaId,
-      pilarEmpresaId,
-      dto.ordens,
-      req.user
-    );
   }
 }

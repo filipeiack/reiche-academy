@@ -46,18 +46,7 @@
     </div>
 
     <ul class="navbar-nav">
-      <li class="theme-switcher-wrapper nav-item">
-        <input type="checkbox" (change)="onThemeCheckboxChange($event)" value="" id="theme-switcher">
-        <label for="theme-switcher">
-          <div class="box">
-            <div class="ball"></div>
-            <div class="icons">
-              <i class="feather icon-sun"></i>
-              <i class="feather icon-moon"></i>
-            </div>
-          </div>
-        </label>
-      </li>
+      <!-- Seletor de Idioma -->
       <li class="nav-item" ngbDropdown>
         <a class="nav-link" ngbDropdownToggle id="languageDropdown" role="button">
           <img [src]="currentLanguage?.flag" class="w-20px" [title]="currentLanguage?.code"
@@ -75,7 +64,21 @@
           }
         </div>
       </li>
-      <li class="nav-item nav-notifications" ngbDropdown>
+      <!-- Seletor de Tema -->
+      <li class="theme-switcher-wrapper nav-item">
+        <input type="checkbox" (change)="onThemeCheckboxChange($event)" value="" id="theme-switcher">
+        <label for="theme-switcher">
+          <div class="box">
+            <div class="ball"></div>
+            <div class="icons">
+              <i class="feather icon-sun"></i>
+              <i class="feather icon-moon"></i>
+            </div>
+          </div>
+        </label>
+      </li>
+      <!-- Notificações -->
+      <!-- <li class="nav-item nav-notifications" ngbDropdown>
         <a class="nav-link" ngbDropdownToggle id="notificationDropdown">
           <i class="link-icon feather icon-bell"></i>
           <div class="indicator">
@@ -143,7 +146,8 @@
             <a href="" (click)="false">View all</a>
           </div>
         </div>
-      </li>
+      </li> -->
+      <!-- Perfil do Usuário -->
       <li class="nav-item nav-profile" ngbDropdown>
         <a class="nav-link" ngbDropdownToggle id="profileDropdown">
           <app-user-avatar [nome]="currentUser?.nome" [fotoUrl]="currentUser?.fotoUrl" size="small">

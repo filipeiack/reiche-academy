@@ -1,7 +1,8 @@
 import { Component, OnInit, OnDestroy, ViewChild, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { NgbAlertModule, NgbProgressbar } from '@ng-bootstrap/ng-bootstrap';
+import { Router } from '@angular/router';
+import { NgbAlertModule, NgbProgressbar, NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { NgSelectModule } from '@ng-select/ng-select';
 import Swal from 'sweetalert2';
 import { Subject, Subscription, debounceTime, distinctUntilChanged } from 'rxjs';
@@ -11,12 +12,15 @@ import { EmpresasService, Empresa } from '../../../core/services/empresas.servic
 import { AuthService } from '../../../core/services/auth.service';
 import { EmpresaContextService } from '../../../core/services/empresa-context.service';
 import { EmpresaBasic } from '@app/core/models/auth.model';
+import { PeriodosAvaliacaoService } from '../../../core/services/periodos-avaliacao.service';
+import { PeriodoAvaliacao } from '../../../core/models/periodo-avaliacao.model';
 import { NgbDropdownModule } from '@ng-bootstrap/ng-bootstrap';
 import { PilaresEmpresaModalComponent } from '../empresas/pilares-empresa-modal/pilares-empresa-modal.component';
 import { ResponsavelPilarModalComponent } from './responsavel-pilar-modal/responsavel-pilar-modal.component';
 import { NovaRotinaModalComponent } from './nova-rotina-modal/nova-rotina-modal.component';
 import { RotinasPilarModalComponent } from './rotinas-pilar-modal/rotinas-pilar-modal.component';
 import { MediaBadgeComponent } from '../../../shared/components/media-badge/media-badge.component';
+import { CriarCockpitModalComponent } from '../cockpit-pilares/criar-cockpit-modal/criar-cockpit-modal.component';
 
 interface AutoSaveQueueItem {
   rotinaEmpresaId: string;
@@ -39,7 +43,8 @@ interface AutoSaveQueueItem {
     ResponsavelPilarModalComponent,
     NovaRotinaModalComponent,
     RotinasPilarModalComponent,
-    MediaBadgeComponent
+    MediaBadgeComponent,
+    // CriarCockpitModalComponent (não usado no template)
 ],
   templateUrl: './diagnostico-notas.component.html',
   styleUrl: './diagnostico-notas.component.scss'
@@ -49,6 +54,9 @@ export class DiagnosticoNotasComponent implements OnInit, OnDestroy {
   private empresasService = inject(EmpresasService);
   private authService = inject(AuthService);
   private empresaContextService = inject(EmpresaContextService);
+  private periodosService = inject(PeriodosAvaliacaoService);
+  private router = inject(Router);
+  private modalService = inject(NgbModal);
 
   @ViewChild(PilaresEmpresaModalComponent) pilaresModal!: PilaresEmpresaModalComponent;
   @ViewChild(ResponsavelPilarModalComponent) responsavelModal!: ResponsavelPilarModalComponent;
@@ -61,6 +69,9 @@ export class DiagnosticoNotasComponent implements OnInit, OnDestroy {
   isAdmin = false;
   loading = false;
   error = '';
+  periodoAtual: PeriodoAvaliacao | null = null;
+  showIniciarPeriodoModal = false;
+  dataReferenciaPeriodo: string = '';
   
   private empresaContextSubscription?: Subscription;
   private savedScrollPosition: number = 0;
@@ -135,9 +146,9 @@ export class DiagnosticoNotasComponent implements OnInit, OnDestroy {
 
   // Opções de criticidade
   criticidadeOptions = [
-    { value: 'BAIXO', label: 'BAIXO' },
-    { value: 'MEDIO', label: 'MEDIO' },
-    { value: 'ALTO', label: 'ALTO' },
+    { value: 'BAIXA', label: 'BAIXA' },
+    { value: 'MEDIA', label: 'MEDIA' },
+    { value: 'ALTA', label: 'ALTA' },
   ];
 
   ngOnInit(): void {
@@ -153,6 +164,7 @@ export class DiagnosticoNotasComponent implements OnInit, OnDestroy {
         }
         
         this.selectedEmpresaId = empresaId;
+        
         if (empresaId) {
           this.loadDiagnostico();
         } else {
@@ -165,6 +177,8 @@ export class DiagnosticoNotasComponent implements OnInit, OnDestroy {
   ngOnDestroy(): void {
     this.autoSaveSubscription?.unsubscribe();
     this.empresaContextSubscription?.unsubscribe();
+    // Limpar estado de expansão ao sair da tela
+    this.clearExpandedState();
   }
 
   private checkUserPerfil(): void {
@@ -227,6 +241,9 @@ export class DiagnosticoNotasComponent implements OnInit, OnDestroy {
         
         this.loading = false;
         
+        // Carregar período atual após carregar pilares
+        this.loadPeriodoAtual();
+        
         // Restaurar posição de scroll se foi salva
         if (preserveScroll && this.savedScrollPosition > 0) {
           setTimeout(() => {
@@ -239,7 +256,7 @@ export class DiagnosticoNotasComponent implements OnInit, OnDestroy {
         }
       },
       error: (err: any) => {
-        this.error = err?.error?.message || 'Erro ao carregar diagnóstico';
+        this.error = err?.error?.message || 'Erro ao carregar dashboard da empresa';
         this.loading = false;
       }
     });
@@ -266,7 +283,7 @@ export class DiagnosticoNotasComponent implements OnInit, OnDestroy {
    * Callback quando pilares são modificados no modal
    */
   onPilaresModificados(): void {
-    // Recarregar diagnóstico para refletir mudanças nos pilares
+    // Recarregar dashboard da empresa para refletir mudanças nos pilares
     if (this.selectedEmpresaId) {
       this.loadDiagnostico(true);
     }
@@ -285,7 +302,7 @@ export class DiagnosticoNotasComponent implements OnInit, OnDestroy {
    * Callback quando responsável é atualizado
    */
   onResponsavelAtualizado(): void {
-    // Recarregar diagnóstico para refletir mudanças no responsável
+    // Recarregar dashboard da empresa para refletir mudanças no responsável
     if (this.selectedEmpresaId) {
       this.loadDiagnostico(true);
     }
@@ -318,7 +335,7 @@ export class DiagnosticoNotasComponent implements OnInit, OnDestroy {
    * Callback quando rotina é criada
    */
   onRotinaCriada(): void {
-    // Recarregar diagnóstico para refletir nova rotina
+    // Recarregar dashboard da empresa para refletir nova rotina
     if (this.selectedEmpresaId) {
       this.loadDiagnostico(true);
     }
@@ -328,7 +345,7 @@ export class DiagnosticoNotasComponent implements OnInit, OnDestroy {
    * Callback quando rotinas do pilar são modificadas
    */
   onRotinasModificadas(): void {
-    // Recarregar diagnóstico para refletir mudanças
+    // Recarregar dashboard da empresa para refletir mudanças
     if (this.selectedEmpresaId) {
       this.loadDiagnostico(true);
     }
@@ -403,7 +420,7 @@ export class DiagnosticoNotasComponent implements OnInit, OnDestroy {
 
     const dto: UpdateNotaRotinaDto = {
       nota: notaNum,
-      criticidade: criticidadeFinal as 'ALTO' | 'MEDIO' | 'BAIXO',
+      criticidade: criticidadeFinal as 'ALTA' | 'MEDIA' | 'BAIXA',
     };
 
     console.log('➕ Adicionando à fila de auto-save:', dto);
@@ -519,11 +536,11 @@ export class DiagnosticoNotasComponent implements OnInit, OnDestroy {
    */
   getCriticidadeClass(criticidade: string | null): string {
     switch (criticidade) {
-      case 'ALTO':
+      case 'ALTA':
         return 'bg-danger';
-      case 'MEDIO':
+      case 'MEDIA':
         return 'bg-warning';
-      case 'BAIXO':
+      case 'BAIXA':
         return 'bg-success';
       default:
         return '';
@@ -649,7 +666,7 @@ export class DiagnosticoNotasComponent implements OnInit, OnDestroy {
           rotinaEmpresaId,
           data: {
             nota: value.nota,
-            criticidade: value.criticidade as 'ALTO' | 'MEDIO' | 'BAIXO'
+            criticidade: value.criticidade as 'ALTA' | 'MEDIA' | 'BAIXA'
           },
           retryCount: 0
         });
@@ -679,5 +696,115 @@ export class DiagnosticoNotasComponent implements OnInit, OnDestroy {
       title,
       icon
     });
+  }
+
+  // ====================================================
+  // Métodos de Período de Avaliação
+  // ====================================================
+
+  /**
+   * Carrega o período de avaliação atual (aberto) da empresa
+   */
+  private loadPeriodoAtual(): void {
+    if (!this.selectedEmpresaId) return;
+
+    this.periodosService.getAtual(this.selectedEmpresaId).subscribe({
+      next: (periodo) => {
+        this.periodoAtual = periodo;
+      },
+      error: (err) => {
+        console.error('Erro ao carregar período atual:', err);
+        this.periodoAtual = null;
+      }
+    });
+  }
+
+  /**
+   * Abre modal para iniciar novo período de avaliação
+   */
+  abrirModalIniciarPeriodo(): void {
+    // Sugerir data atual como referência
+    const hoje = new Date();
+    
+    // Formatar como YYYY-MM-DD para input type="date"
+    this.dataReferenciaPeriodo = hoje.toISOString().split('T')[0];
+    this.showIniciarPeriodoModal = true;
+  }
+
+  /**
+   * Fecha modal de iniciar período
+   */
+  fecharModalIniciarPeriodo(): void {
+    this.showIniciarPeriodoModal = false;
+    this.dataReferenciaPeriodo = '';
+  }
+
+  /**
+   * Confirma criação do novo período de avaliação
+   */
+  confirmarIniciarPeriodo(): void {
+    if (!this.selectedEmpresaId || !this.dataReferenciaPeriodo) {
+      this.showToast('Data de referência é obrigatória', 'error');
+      return;
+    }
+
+    // Backend calculará trimestre e ano baseado na dataReferencia
+    this.periodosService.iniciar(this.selectedEmpresaId, this.dataReferenciaPeriodo).subscribe({
+      next: (periodo) => {
+        this.periodoAtual = periodo;
+        this.fecharModalIniciarPeriodo();
+        const dataRef = new Date(periodo.dataReferencia);
+        const mes = (dataRef.getMonth() + 1).toString().padStart(2, '0');
+        const ano = dataRef.getFullYear();
+        this.showToast(`Período ${mes}/${ano} iniciado com sucesso!`, 'success');
+      },
+      error: (err) => {
+        const mensagem = err?.error?.message || 'Erro ao iniciar período de avaliação';
+        this.showToast(mensagem, 'error', 5000);
+      }
+    });
+  }
+
+  /**
+   * Retorna texto formatado do período atual para exibição no badge
+   */
+  getPeriodoAtualTexto(): string {
+    if (!this.periodoAtual) return '';
+    const dataRef = new Date(this.periodoAtual.dataReferencia);
+    const mes = (dataRef.getMonth() + 1).toString().padStart(2, '0');
+    const ano = dataRef.getFullYear();
+    return `Avaliação ${mes}/${ano} em andamento`;
+  }
+
+  /**
+   * Navegar para cockpit do pilar (criar se não existir)
+   */
+  async navegarParaCockpit(pilar: PilarEmpresa): Promise<void> {
+    // Verificar se cockpit já existe
+    if (pilar.cockpit?.id) {
+      // Se existe, redirecionar para dashboard
+      this.router.navigate(['/cockpits', pilar.cockpit.id, 'dashboard']);
+    } else {
+      // Se não existe, abrir modal de criação
+      const modalRef = this.modalService.open(CriarCockpitModalComponent, {
+        size: 'lg',
+        backdrop: 'static',
+        centered: true,
+      });
+
+      modalRef.componentInstance.pilar = pilar;
+
+      try {
+        const result = await modalRef.result;
+        if (result) {
+          // Após criar, redirecionar para dashboard
+          this.showToast('Cockpit criado com sucesso!', 'success');
+          this.router.navigate(['/cockpits', result.id, 'dashboard']);
+        }
+      } catch (error) {
+        // Modal foi fechado/cancelado
+        console.log('Modal de criar cockpit cancelado');
+      }
+    }
   }
 }

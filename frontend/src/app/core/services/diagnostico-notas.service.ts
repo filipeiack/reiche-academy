@@ -8,7 +8,7 @@ export interface NotaRotina {
   id: string;
   rotinaEmpresaId: string;
   nota: number;
-  criticidade: 'ALTO' | 'MEDIO' | 'BAIXO';
+  criticidade: 'ALTA' | 'MEDIA' | 'BAIXA';
   createdAt: string;
   updatedAt: string;
   createdBy?: string;
@@ -50,11 +50,12 @@ export interface PilarEmpresa {
   pilarTemplate?: Pilar;
   responsavel?: ResponsavelPilar;
   rotinasEmpresa: RotinaEmpresa[];
+  cockpit?: { id: string; pilarEmpresaId: string } | null;
 }
 
 export interface UpdateNotaRotinaDto {
   nota: number;
-  criticidade: 'ALTO' | 'MEDIO' | 'BAIXO';
+  criticidade: 'ALTA' | 'MEDIA' | 'BAIXA';
 }
 
 export interface VincularRotinaDto {

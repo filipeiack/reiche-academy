@@ -1,5 +1,5 @@
-<div id="headerEmpresa" class="mb-0">
-    <div class="mb-0 align-items-center d-flex justify-content-between flex-wrap">
+<div id="headerEmpresa" class="mb-1">
+    <div class="mb-2 align-items-center d-flex justify-content-between flex-wrap">
         <nav aria-label="breadcrumb">
             <ol class="breadcrumb breadcrumb-arrow">
                 <li class="breadcrumb-item">
@@ -10,6 +10,16 @@
                 </li>
             </ol>
         </nav>
+
+        <!-- Botão Congelar -->
+        @if (canCongelar) {
+        <button type="button" class="btn btn-sm btn-primary"
+            ngbTooltip="Congelar médias do período de avaliação atual e criar snapshots de todos os pilares"
+            (click)="congelarMedias()" [disabled]="!periodoAtual || medias.length === 0">
+            <i class="feather icon-archive"></i>
+            Atualizar Histórico {{ getPeriodoMesAno() }}
+        </button>
+        }
     </div>
 </div>
 
@@ -23,7 +33,8 @@
                 <thead>
                     <tr>
                         <th class="py-2 w-100">{{ 'PILARES.PILAR' | translate }}</th>
-                        <th sortable="mediaAtual" [direction]="sortColumn === 'mediaAtual' ? sortDirection : ''" (sort)="onSort($event)" class="text-center py-2">{{ 'EVOLUCAO.MEDIA_ATUAL'
+                        <th sortable="mediaAtual" [direction]="sortColumn === 'mediaAtual' ? sortDirection : ''"
+                            (sort)="onSort($event)" class="text-center py-2">{{ 'EVOLUCAO.MEDIA_ATUAL'
                             | translate }}</th>
                         <th class="text-center py-2">Última Atualização</th>
                     </tr>
@@ -41,10 +52,10 @@
                         <td class="text-center py-2">
                             <small class="text-muted">
                                 @if (media.ultimaAtualizacao) {
-                                    <i class="feather icon-clock me-1"></i>
-                                    {{ formatarData(media.ultimaAtualizacao) }}
+                                <i class="feather icon-clock me-1"></i>
+                                {{ formatarData(media.ultimaAtualizacao) }}
                                 } @else {
-                                    <span class="text-muted">-</span>
+                                <span class="text-muted">-</span>
                                 }
                             </small>
                         </td>
@@ -59,24 +70,33 @@
 <!-- Gráfico de Colunas por Data -->
 <div class="card">
     <div class="card-body">
-        <div class="d-flex justify-content-between align-items-center mb-3">
-            <h5 class="card-title mb-0">{{ 'EVOLUCAO.GRAFICO_TITLE' | translate }}</h5>
-            <!-- Botão Congelar -->
-            @if (canCongelar) {
-            <button type="button" class="btn btn-primary" ngbTooltip="{{('EVOLUCAO.CONGELAR_DESC' | translate)}}"
-                (click)="congelarMedias()" [disabled]="medias.length === 0">
-                <i class="feather icon-archive"></i>
-                {{ 'EVOLUCAO.CONGELAR_BTN' | translate }}
-            </button>
-            }
+        <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+            <div class="d-flex align-items-center gap-3">
+                <h5 class="card-title mb-0">{{ 'EVOLUCAO.GRAFICO_TITLE' | translate }}</h5>
+            </div>
+            <!-- Filtro de Ano -->
+            <ng-select 
+                [(ngModel)]="anoFiltro"
+                (ngModelChange)="onAnoChange()"
+                [items]="anosDisponiveis"
+                [clearable]="true"
+                [searchable]="false"
+                placeholder="Filtrar por ano"
+                class="ng-select-sm"
+                style="width: 150px;">
+            </ng-select>
+
+
         </div>
         <p class="text-muted small mb-3">
             <i class="feather icon-info me-1"></i>
-            Cada pilar exibe suas médias congeladas ao longo do tempo
+            Cada pilar exibe suas médias congeladas por período (mês/ano do trimestre)
         </p>
 
-        <div>
-            <canvas id="evolucaoBarChart"></canvas>
+        <div style="overflow-x: auto; overflow-y: hidden;">
+            <div id="chartContainer" style="min-width: 100%; position: relative;">
+                <canvas id="evolucaoBarChart"></canvas>
+            </div>
         </div>
 
         @if (historico.length === 0) {
@@ -100,29 +120,30 @@
 
 <!-- Error -->
 @else if (error && !loading) {
-<ngb-alert type="danger" [dismissible]="false">
-    <i class="feather icon-alert-circle"></i>
+<div class="alert alert-danger" role="alert">
+    <i data-feather="alert-triangle" class="me-2"></i>
     {{ error }}
-</ngb-alert>
+</div>
 }
 
 <!-- Estado vazio -->
 @else if (!loading && !error && medias.length === 0 && selectedEmpresaId) {
-<div class="empty-state">
-    <i class="feather icon-folder"></i>
-    <p>{{ 'EVOLUCAO.NO_MEDIAS' | translate }}</p>
+<div class="alert alert-danger" role="alert">
+    <i data-feather="alert-triangle" class="me-2"></i>
+    <span>{{ 'EVOLUCAO.NO_MEDIAS' | translate }}</span>
 </div>
 }
 
 @else if (!loading && !error && !selectedEmpresaId && !isAdmin) {
-<div class="empty-state">
-    <i class="feather icon-alert-circle"></i>
-    <p>{{ 'EVOLUCAO.NO_EMPRESA_ASSOCIATED' | translate }}</p>
+<div class="alert alert-danger" role="alert">
+    <i data-feather="alert-triangle" class="me-2"></i>
+    <span>{{ 'EVOLUCAO.NO_EMPRESA_ASSOCIATED' | translate }}</span>
 </div>
 }
 
 @else if (!selectedEmpresaId && isAdmin) {
-<div class="empty-state">
-    <p>{{ 'EVOLUCAO.SELECT_EMPRESA_PLACEHOLDER' | translate }}</p>
+<div class="alert alert-danger" role="alert">
+    <i data-feather="alert-triangle" class="me-2"></i>
+    <span>{{ 'EVOLUCAO.SELECT_EMPRESA_PLACEHOLDER' | translate }}</span>
 </div>
 }

@@ -39,7 +39,12 @@
               <!-- nav item with submenu -->
               @if (hasItems(item)) {
                 <a class="nav-link" href="javascript:void(0);">
-                  <i class="link-icon" [attr.data-feather]="item.icon" appFeatherIcon></i>
+                  @if (getFeatherIcon(item)) {
+                    <i class="link-icon" [attr.data-feather]="getFeatherIcon(item)" appFeatherIcon></i>
+                  }
+                  @if (getIconClass(item)) {
+                    <i class="link-icon" [ngClass]="getIconClass(item)"></i>
+                  }
                   <span class="link-title"> {{ item.label }}</span>
                   <span class="link-arrow" data-feather="chevron-down" appFeatherIcon></span>
                 </a>
@@ -75,7 +80,12 @@
               <!-- nav item without submenu -->
               @else {
                 <a class="nav-link nav-link-ref" [routerLink]="item.link">
-                  <i class="link-icon" [attr.data-feather]="item.icon" appFeatherIcon></i>
+                  @if (getFeatherIcon(item)) {
+                    <i class="link-icon" [attr.data-feather]="getFeatherIcon(item)" appFeatherIcon></i>
+                  }
+                  @if (getIconClass(item)) {
+                    <i class="link-icon" [ngClass]="getIconClass(item)"></i>
+                  }
                   <span class="link-title"> {{ item.label }}</span>
                   @if (item.badge) {
                     <span class="badge bg-{{item.badge.variant}}">{{item.badge.text}}</span>

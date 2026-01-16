@@ -133,6 +133,44 @@ export class SidebarComponent implements OnInit, AfterViewInit {
     return item.subItems !== undefined ? item.subItems.length > 0 : false;
   }
 
+  /**
+   * Checks if the icon is a Bootstrap Icon
+   * @param icon icon string
+   */
+  isBootstrapIcon(icon?: string): boolean {
+    return icon ? icon.startsWith('bi bi-') : false;
+  }
+
+  /**
+   * Gets the icon class for rendering
+   * @param item menuItem
+   */
+  getIconClass(item: MenuItem): string {
+    if (!item.icon) return '';
+    
+    // Explicit type definition
+    if (item.iconType === 'bootstrap') return item.icon;
+    if (item.iconType === 'feather') return '';
+    
+    // Auto-detect: if starts with 'bi bi-', it's Bootstrap
+    return this.isBootstrapIcon(item.icon) ? item.icon : '';
+  }
+
+  /**
+   * Gets the feather icon name (without 'bi bi-' prefix)
+   * @param item menuItem
+   */
+  getFeatherIcon(item: MenuItem): string {
+    if (!item.icon) return '';
+    
+    // Explicit type definition
+    if (item.iconType === 'bootstrap') return '';
+    if (item.iconType === 'feather') return item.icon;
+    
+    // Auto-detect: if doesn't start with 'bi bi-', it's Feather
+    return this.isBootstrapIcon(item.icon) ? '' : item.icon;
+  }
+
 
   /**
    * Reset the menus, then highlight the currently active menu item

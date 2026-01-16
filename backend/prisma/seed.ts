@@ -711,11 +711,11 @@ async function main() {
       // Definir criticidade baseada na nota
       let criticidade: Criticidade;
       if (notaFinal >= 7) {
-        criticidade = 'BAIXO';
+        criticidade = 'BAIXA';
       } else if (notaFinal >= 4) {
-        criticidade = 'MEDIO';
+        criticidade = 'MEDIA';
       } else {
-        criticidade = 'ALTO';
+        criticidade = 'ALTA';
       }
 
       await prisma.notaRotina.create({
@@ -768,11 +768,61 @@ async function main() {
     hoje, // trimestre atual
   ];
 
+  // Criar períodos de avaliação para Empresa Teste A (um por trimestre)
+  // Os 3 primeiros períodos são congelados (histórico), o último permanece aberto
+  const periodosMap = new Map<string, string>();
+
+  for (let i = 0; i < trimestres.length; i++) {
+    const dataRef = trimestres[i];
+    const trimestreNum = Math.floor(dataRef.getMonth() / 3) + 1; // 1-4
+    const ano = dataRef.getFullYear();
+    
+    // Apenas o último período (atual) permanece aberto
+    const isAberto = i === trimestres.length - 1;
+    const dataCongelamento = isAberto 
+      ? null 
+      : new Date(dataRef.getFullYear(), dataRef.getMonth() + 3, 15, 10, 0, 0); // 15 dias após o fim do trimestre
+
+    const periodo = await prisma.periodoAvaliacao.upsert({
+      where: {
+        empresaId_trimestre_ano: {
+          empresaId: empresaA.id,
+          trimestre: trimestreNum,
+          ano,
+        },
+      },
+      update: {
+        dataReferencia: dataRef,
+        aberto: isAberto,
+        dataCongelamento,
+      },
+      create: {
+        empresaId: empresaA.id,
+        trimestre: trimestreNum,
+        ano,
+        dataReferencia: dataRef,
+        aberto: isAberto,
+        dataCongelamento,
+      },
+    });
+
+    periodosMap.set(`${trimestreNum}-${ano}`, periodo.id);
+  }
+
+  console.log(`✅ ${trimestres.length} períodos de avaliação criados para ${empresaA.nome} (${trimestres.length - 1} congelados, 1 aberto)`);
+
   let evoluçõesCriadas = 0;
 
   for (const pilarComMedia of pilaresComMedia) {
     for (let i = 0; i < trimestres.length; i++) {
       const dataRegistro = trimestres[i];
+      const trimestreNum = Math.floor(dataRegistro.getMonth() / 3) + 1;
+      const periodoKey = `${trimestreNum}-${dataRegistro.getFullYear()}`;
+      const periodoId = periodosMap.get(periodoKey);
+
+      if (!periodoId) {
+        throw new Error(`Período de avaliação não encontrado para chave ${periodoKey}`);
+      }
       
       // Simular evolução gradual: começar com nota mais baixa e evoluir até a média atual
       // Por exemplo: se média atual é 7, começar em 4 e evoluir gradualmente
@@ -788,9 +838,20 @@ async function main() {
       const variacao = (Math.random() - 0.5) * 0.6;
       const mediaComVariacao = Math.max(0, Math.min(10, mediaNoTrimestre + variacao));
 
-      await prisma.pilarEvolucao.create({
-        data: {
+      await prisma.pilarEvolucao.upsert({
+        where: {
+          pilarEmpresaId_periodoAvaliacaoId: {
+            pilarEmpresaId: pilarComMedia.pilarEmpresaId,
+            periodoAvaliacaoId: periodoId,
+          },
+        },
+        update: {
+          mediaNotas: parseFloat(mediaComVariacao.toFixed(2)),
+          updatedAt: dataRegistro,
+        },
+        create: {
           pilarEmpresaId: pilarComMedia.pilarEmpresaId,
+          periodoAvaliacaoId: periodoId,
           mediaNotas: parseFloat(mediaComVariacao.toFixed(2)),
           createdAt: dataRegistro,
           updatedAt: dataRegistro,

@@ -13,6 +13,7 @@
 
         @if (selectedEmpresaId) {
         <div id="savingBar" class="d-flex align-items-center gap-3">
+
             @if (savingCount > 0) {
             <div class="saving-indicator">
                 <div class="spinner-border spinner-border-sm" role="status">
@@ -27,12 +28,15 @@
             </div>
             }
 
-            <button type="button" class="btn btn-sm btn-primary" (click)="forceSaveAll()"
-                [disabled]="savingCount > 0 || !hasUnsavedChanges()">
-                <i class="feather icon-save icon-sm"></i>
-                Salvar Tudo
-            </button>
+            <!-- Badge indicador de período de avaliação ativo -->
+            @if (periodoAtual) {
+            <div class="badge bg-light text-dark small d-flex align-items-center gap-1 px-3 py-2">
+                <i class="feather icon-calendar icon-sm"></i>
+                <span>{{ getPeriodoAtualTexto() }}</span>
+            </div>
+            }
 
+            <!-- Menu Dropdown de Ações -->
             @if (selectedEmpresaId && !isReadOnlyPerfil) {
             <div class="ms-2">
                 <div ngbDropdown class="mb-2">
@@ -41,9 +45,21 @@
                     </a>
                     <div ngbDropdownMenu aria-labelledby="dropdownMenuButton">
                         <a ngbDropdownItem class="d-flex align-items-center gap-1"
+                            (click)="abrirModalIniciarPeriodo(); $event.preventDefault()"
+                            [class.disabled]="periodoAtual !== null">
+                            <i class="feather icon-play-circle icon-sm"></i>
+                            <span class="">Iniciar Avaliação Trimestral</span>
+                        </a>
+                        <a ngbDropdownItem class="d-flex align-items-center gap-1"
+                            (click)="forceSaveAll(); $event.preventDefault()"
+                            [class.disabled]="savingCount > 0 || !hasUnsavedChanges()">
+                            <i class="feather icon-save icon-sm"></i>
+                            <span class="">Salvar Tudo</span>
+                        </a>
+                        <a ngbDropdownItem class="d-flex align-items-center gap-1"
                             (click)="abrirModalPilares(); $event.preventDefault()">
                             <i class="feather icon-edit icon-sm"></i>
-                            <span class="">Gerenciar Pilares</span>
+                            <span class="">Editar Pilares</span>
                         </a>
                     </div>
                 </div>
@@ -53,6 +69,7 @@
         }
     </div>
 </div>
+
 
 
 <!-- Conteúdo principal -->
@@ -114,7 +131,21 @@
                                 <a ngbDropdownItem class="d-flex align-items-center gap-1"
                                     (click)="abrirModalEditarRotinas(pilar); $event.preventDefault()">
                                     <i class="feather icon-edit icon-sm"></i>
-                                    <span class="">Gerenciar Rotinas</span>
+                                    <span class="">Editar Rotinas</span>
+                                </a>
+
+                                <div class="dropdown-divider"></div>
+
+                                <!-- Botão Cockpit -->
+                                <a ngbDropdownItem class="d-flex align-items-center gap-1"
+                                    (click)="navegarParaCockpit(pilar); $event.preventDefault()">
+                                    @if (pilar.cockpit) {
+                                    <i class="feather icon-target icon-sm text-success"></i>
+                                    <span class="">Abrir Cockpit</span>
+                                    } @else {
+                                    <i class="feather icon-plus-circle icon-sm text-primary"></i>
+                                    <span class="">Criar Cockpit</span>
+                                    }
                                 </a>
 
                             </div>
@@ -214,32 +245,35 @@
 
 <!-- Error -->
 @else if (error && !loading) {
-<ngb-alert type="danger" [dismissible]="false">
-    <i class="feather icon-alert-circle"></i>
+<div class="alert alert-danger" role="alert">
+    <i data-feather="alert-triangle" class="me-2"></i>
     {{ error }}
-</ngb-alert>
+</div>
 }
 
 <!-- Estado vazio -->
 @else if (!loading && !error && pilares.length === 0 && selectedEmpresaId) {
-<div class="empty-state">
-    <p>{{ 'DIAGNOSTICO.NO_PILARES' | translate }}</p>
+<div class="alert alert-danger" role="alert">
+    <i data-feather="alert-triangle" class="me-2"></i>
+    <span>{{ 'DIAGNOSTICO.NO_PILARES' | translate }}</span>
 </div>
 }
 
 @else if (!loading && !error && !selectedEmpresaId && !isAdmin) {
-<div class="empty-state">
-    <p>{{ 'DIAGNOSTICO.NO_EMPRESA_ASSOCIATED' | translate }}</p>
+<div class="alert alert-danger" role="alert">
+    <i data-feather="alert-triangle" class="me-2"></i>
+    <span>{{ 'DIAGNOSTICO.NO_EMPRESA_ASSOCIATED' | translate }}</span>
 </div>
 }
 
 @else if (!selectedEmpresaId && isAdmin) {
-<div class="empty-state">
-    <p>{{ 'DIAGNOSTICO.SELECT_EMPRESA_PLACEHOLDER' | translate }}</p>
+<div class="alert alert-danger" role="alert">
+    <i data-feather="alert-triangle" class="me-2"></i>
+    <span>{{ 'DIAGNOSTICO.SELECT_EMPRESA_PLACEHOLDER' | translate }}</span>
 </div>
 }
 
-<!-- Modal para gerenciar pilares -->
+<!-- Modal para editar pilares -->
 <app-pilares-empresa-modal [empresaId]="selectedEmpresaId || ''" [isPerfilCliente]="isReadOnlyPerfil"
     (pilaresModificados)="onPilaresModificados()">
 </app-pilares-empresa-modal>
@@ -252,6 +286,53 @@
 <app-nova-rotina-modal [empresaId]="selectedEmpresaId || ''" (rotinaCriada)="onRotinaCriada()">
 </app-nova-rotina-modal>
 
-<!-- Modal para gerenciar rotinas do pilar -->
+<!-- Modal para editar rotinas do pilar -->
 <app-rotinas-pilar-modal (rotinasModificadas)="onRotinasModificadas()">
 </app-rotinas-pilar-modal>
+
+<!-- Modal para iniciar período de avaliação -->
+@if (showIniciarPeriodoModal) {
+<div class="modal fade show d-block" tabindex="-1" role="dialog" style="background: rgba(0,0,0,0.5);">
+    <div class="modal-dialog modal-dialog-centered" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="feather icon-calendar me-2"></i>
+                    Iniciar Nova Avaliação Trimestral
+                </h5>
+                <button type="button" class="btn-close" (click)="fecharModalIniciarPeriodo()"></button>
+            </div>
+            <div class="modal-body">
+                <p class="text-muted mb-3">
+                    Selecione a data de referência para o novo período de avaliação.
+                </p>
+
+                <div class="mb-3">
+                    <label for="dataReferencia" class="form-label">Data de Referência *</label>
+                    <input type="date" class="form-control" id="dataReferencia" [(ngModel)]="dataReferenciaPeriodo"
+                        required>
+
+                </div>
+
+                <div class="alert alert-info mb-0">
+                    <i class="feather icon-info me-2"></i>
+                    <small>
+                        O intervalo mínimo entre períodos é de <strong>90 dias</strong>,
+                        calculado com base nas datas de referência escolhidas.
+                    </small>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" (click)="fecharModalIniciarPeriodo()">
+                    Cancelar
+                </button>
+                <button type="button" class="btn btn-primary" (click)="confirmarIniciarPeriodo()"
+                    [disabled]="!dataReferenciaPeriodo">
+                    <i class="feather icon-check me-2"></i>
+                    Iniciar Período
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+}
