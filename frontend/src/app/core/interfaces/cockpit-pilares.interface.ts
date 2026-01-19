@@ -85,8 +85,8 @@ export interface ProcessoPrioritario {
   cockpitPilarId: string;
   rotinaEmpresaId: string;
   rotinaEmpresa?: any; // RotinaEmpresa
-  statusMapeamento: StatusProcesso;
-  statusTreinamento: StatusProcesso;
+  statusMapeamento: StatusProcesso | null;
+  statusTreinamento: StatusProcesso | null;
   ordem: number;
   createdAt: string;
   updatedAt: string;
@@ -140,8 +140,8 @@ export interface UpdateValoresMensaisDto {
 }
 
 export interface UpdateProcessoPrioritarioDto {
-  statusMapeamento: StatusProcesso;
-  statusTreinamento: StatusProcesso;
+  statusMapeamento: StatusProcesso | null;
+  statusTreinamento: StatusProcesso | null;
 }
 
 export interface DadosGraficos {

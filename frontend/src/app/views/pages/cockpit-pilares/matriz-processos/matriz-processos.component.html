@@ -1,81 +1,93 @@
 <div class="card">
   <div class="card-body">
-    <h5 class="card-title mb-4">
+    <h5 class="card-title mb-2">
       <i class="bi bi-list-check me-2"></i>
-      Processos Prioritários
+      Matriz de Processos Prioritários
     </h5>
 
     <!-- Processos -->
     @if (processos.length === 0) {
-      <div class="alert alert-info">
-        <i class="bi bi-info-circle me-2"></i>
-        Nenhum processo prioritário definido ainda.
-      </div>
+    <div class="alert alert-info">
+      <i class="bi bi-info-circle me-2"></i>
+      Nenhum processo prioritário definido ainda.
+    </div>
     } @else {
-      <div class="table-responsive">
-        <table class="table table-hover table-sm">
-          <thead class="table-light">
-            <tr>
-              <th style="width: 5%;">#</th>
-              <th style="width: 35%;">Descrição</th>
-              <th style="width: 20%;">Responsável</th>
-              <th style="width: 15%;">Prazo</th>
-              <th style="width: 25%;">Status</th>
-            </tr>
-          </thead>
-          <tbody>
-            @for (processo of processos; track processo.id) {
-              <tr>
-                <td class="text-center fw-bold text-muted">
-                  {{ $index + 1 }}
-                </td>
-                <td>
-                  <div class="fw-bold">{{ processo.rotinaEmpresa?.rotina?.nome || 'Processo' }}</div>
-                  @if (processo.rotinaEmpresa?.rotina?.objetivo) {
-                    <small class="text-muted">{{ processo.rotinaEmpresa.rotina.objetivo }}</small>
-                  }
-                </td>
-                <td>
-                  <div class="d-flex align-items-center">
-                    <i class="bi bi-person-circle me-2 text-primary"></i>
-                    <span>{{ processo.rotinaEmpresa?.responsavel?.nome || 'Não definido' }}</span>
-                  </div>
-                </td>
-                <td>
-                  @if (processo.rotinaEmpresa?.prazoImplementacao) {
-                    <span class="text-muted">
-                      <i class="bi bi-calendar-event me-1"></i>
-                      {{ processo.rotinaEmpresa.prazoImplementacao | date: 'dd/MM/yyyy' }}
-                    </span>
-                  } @else {
-                    <span class="text-muted">-</span>
-                  }
-                </td>
-                <td>
-                  <select
-                    class="form-select form-select-sm"
-                    [value]="processo.statusMapeamento"
-                    (change)="onStatusChange(processo.id, $any($event.target).value)"
-                    [class.select-pendente]="processo.statusMapeamento === StatusProcesso.PENDENTE"
-                    [class.select-em-andamento]="processo.statusMapeamento === StatusProcesso.EM_ANDAMENTO"
-                    [class.select-concluido]="processo.statusMapeamento === StatusProcesso.CONCLUIDO"
-                  >
-                    <option [value]="StatusProcesso.PENDENTE">
-                      Pendente
-                    </option>
-                    <option [value]="StatusProcesso.EM_ANDAMENTO">
-                      Em Andamento
-                    </option>
-                    <option [value]="StatusProcesso.CONCLUIDO">
-                      Concluído
-                    </option>
-                  </select>
-                </td>
-              </tr>
-            }
-          </tbody>
-        </table>
-      </div>
+    <div class="table-responsive">
+      <table class="table table-hover table-sm" style="table-layout: fixed;">
+        <thead class="table-light small">
+          <tr>
+            <th style="width: 50%;">Nome da Rotina</th>
+            <th class="text-center" style="width: 12%;">Criticidade</th>
+            <th class="text-center" style="width: 8%;">Nota</th>
+            <th class="text-center" style="width: 15%; white-space: normal; ">Status Mapeamento</th>
+            <th class="text-center" style="width: 15%; white-space: normal;">Status Treinamento</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (processo of processos; track processo.id) {
+          <tr>
+
+            <td style="white-space: normal; overflow-wrap: break-word;">
+              <span class="badge bg-secondary small">{{ processo.rotinaEmpresa?.ordem }}</span>
+              {{ processo.rotinaEmpresa?.nome || 'Processo' }}
+            </td>
+            <td class="text-center">
+              @if (processo.rotinaEmpresa?.notas && processo.rotinaEmpresa.notas.length > 0) {
+              @switch (processo.rotinaEmpresa.notas[0].criticidade) {
+              @case ('ALTA') {
+              <span class="badge bg-danger">Alta</span>
+              }
+              @case ('MEDIA') {
+              <span class="badge bg-warning">Média</span>
+              }
+              @case ('BAIXA') {
+              <span class="badge bg-success">Baixa</span>
+              }
+              @default {
+              <span class="text-muted">-</span>
+              }
+              }
+              } @else {
+              <span class="text-muted">-</span>
+              }
+            </td>
+            <td class="text-center">
+              @if (processo.rotinaEmpresa?.notas && processo.rotinaEmpresa.notas.length > 0) {
+              <span class="badge" [class]="getNotaClass(processo.rotinaEmpresa.notas[0].nota)">
+                {{ processo.rotinaEmpresa.notas[0].nota?.toFixed(1) || '-' }}
+              </span>
+              } @else {
+              <span class="text-muted">-</span>
+              }
+            </td>
+
+            <td>
+              <ng-select [(ngModel)]="processo.statusMapeamento"
+                (ngModelChange)="onStatusMapeamentoChange(processo.id, $event)"
+                [items]="statusOptions"
+                bindLabel="label"
+                bindValue="value"
+                [clearable]="true"
+                [searchable]="false"
+                [id]="'statusMapeamento-' + processo.id">
+              </ng-select>
+            </td>
+            <td>
+              <ng-select [(ngModel)]="processo.statusTreinamento"
+                (ngModelChange)="onStatusTreinamentoChange(processo.id, $event)"
+                [items]="statusOptions"
+                bindLabel="label"
+                bindValue="value"
+                [clearable]="true"
+                [searchable]="false"
+                [id]="'statusTreinamento-' + processo.id">
+              </ng-select>
+            </td>
+          </tr>
+          }
+        </tbody>
+      </table>
+    </div>
     }
   </div>
 </div>

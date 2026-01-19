@@ -1,6 +1,7 @@
 import { Component, Input, OnInit, OnChanges, SimpleChanges, OnDestroy, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { NgSelectModule } from '@ng-select/ng-select';
 import { Subject, Subscription } from 'rxjs';
 import { debounceTime, distinctUntilChanged } from 'rxjs/operators';
 import { CockpitPilaresService } from '@core/services/cockpit-pilares.service';
@@ -14,19 +15,31 @@ import {
 @Component({
   selector: 'app-matriz-processos',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, NgSelectModule],
   templateUrl: './matriz-processos.component.html',
   styleUrl: './matriz-processos.component.scss',
 })
 export class MatrizProcessosComponent implements OnInit, OnChanges, OnDestroy {
   @Input() cockpitId!: string;
-  @Input() processos: ProcessoPrioritario[] = [];
 
   private cockpitService = inject(CockpitPilaresService);
   private saveFeedbackService = inject(SaveFeedbackService);
 
+  processos: ProcessoPrioritario[] = [];
+
+  // Opções para ng-select
+  statusOptions = [
+    { value: StatusProcesso.PENDENTE, label: 'Pendente' },
+    { value: StatusProcesso.EM_ANDAMENTO, label: 'Em Andamento' },
+    { value: StatusProcesso.CONCLUIDO, label: 'Concluído' }
+  ];
+
   // Auto-save
-  private autoSaveSubject = new Subject<{ processoId: string; status: StatusProcesso }>();
+  private autoSaveSubject = new Subject<{ 
+    processoId: string; 
+    statusMapeamento: StatusProcesso | null;
+    statusTreinamento: StatusProcesso | null;
+  }>();
   private autoSaveSubscription: Subscription | null = null;
   private savingCount = 0;
 
@@ -39,15 +52,32 @@ export class MatrizProcessosComponent implements OnInit, OnChanges, OnDestroy {
 
   ngOnInit(): void {
     this.setupAutoSave();
+    this.loadProcessos();
   }
 
   ngOnChanges(changes: SimpleChanges): void {
-    // Componente recebe processos via Input, não precisa recarregar
-    // A atualização é automática via data binding
+    // Recarregar quando cockpitId mudar
+    if (changes['cockpitId'] && !changes['cockpitId'].firstChange) {
+      this.loadProcessos();
+    }
   }
 
   ngOnDestroy(): void {
     this.autoSaveSubscription?.unsubscribe();
+  }
+
+  private loadProcessos(): void {
+    if (!this.cockpitId) return;
+
+    this.cockpitService.getProcessosPrioritarios(this.cockpitId).subscribe({
+      next: (processos) => {
+        this.processos = processos;
+      },
+      error: (err: unknown) => {
+        console.error('Erro ao carregar processos:', err);
+        this.processos = [];
+      },
+    });
   }
 
   private setupAutoSave(): void {
@@ -55,36 +85,55 @@ export class MatrizProcessosComponent implements OnInit, OnChanges, OnDestroy {
       .pipe(
         debounceTime(1000),
         distinctUntilChanged((prev, curr) =>
-          prev.processoId === curr.processoId && prev.status === curr.status
+          prev.processoId === curr.processoId && 
+          prev.statusMapeamento === curr.statusMapeamento &&
+          prev.statusTreinamento === curr.statusTreinamento
         )
       )
-      .subscribe(({ processoId, status }) => {
-        this.saveStatus(processoId, status);
+      .subscribe(({ processoId, statusMapeamento, statusTreinamento }) => {
+        this.saveStatus(processoId, statusMapeamento, statusTreinamento);
       });
   }
 
-  onStatusChange(processoId: string, newStatus: StatusProcesso): void {
-    // Atualiza localmente (MVP: apenas statusMapeamento exibido, mas ambos são sincronizados)
+  onStatusMapeamentoChange(processoId: string, newStatus: StatusProcesso | null): void {
     const processo = this.processos.find((p) => p.id === processoId);
     if (processo) {
       processo.statusMapeamento = newStatus;
+    }
+
+    this.autoSaveSubject.next({ 
+      processoId, 
+      statusMapeamento: newStatus,
+      statusTreinamento: processo?.statusTreinamento || null
+    });
+  }
+
+  onStatusTreinamentoChange(processoId: string, newStatus: StatusProcesso | null): void {
+    const processo = this.processos.find((p) => p.id === processoId);
+    if (processo) {
       processo.statusTreinamento = newStatus;
     }
 
-    // Enfileira para auto-save
-    this.autoSaveSubject.next({ processoId, status: newStatus });
+    this.autoSaveSubject.next({ 
+      processoId, 
+      statusMapeamento: processo?.statusMapeamento || null,
+      statusTreinamento: newStatus
+    });
   }
 
-  private saveStatus(processoId: string, status: StatusProcesso): void {
+  private saveStatus(
+    processoId: string, 
+    statusMapeamento: StatusProcesso | null,
+    statusTreinamento: StatusProcesso | null
+  ): void {
     this.savingCount++;
     if (this.savingCount === 1) {
       this.saveFeedbackService.startSaving('Status de processos');
     }
 
-    // MVP Fase 1: Ambos status (mapeamento e treinamento) compartilham o mesmo valor
     const dto: UpdateProcessoPrioritarioDto = {
-      statusMapeamento: status,
-      statusTreinamento: status,
+      statusMapeamento,
+      statusTreinamento,
     };
 
     this.cockpitService
@@ -102,7 +151,6 @@ export class MatrizProcessosComponent implements OnInit, OnChanges, OnDestroy {
           if (this.savingCount === 0) {
             this.saveFeedbackService.reset();
           }
-          // TODO: Implementar retry ou notificação de erro
         },
       });
   }
@@ -110,13 +158,13 @@ export class MatrizProcessosComponent implements OnInit, OnChanges, OnDestroy {
   getStatusBadgeClass(status: StatusProcesso): string {
     switch (status) {
       case 'PENDENTE':
-        return 'bg-secondary';
+        return 'bg-danger';
       case 'EM_ANDAMENTO':
-        return 'bg-primary';
+        return 'bg-warning';
       case 'CONCLUIDO':
         return 'bg-success';
       default:
-        return 'bg-secondary';
+        return 'bg-primary';
     }
   }
 
@@ -144,5 +192,21 @@ export class MatrizProcessosComponent implements OnInit, OnChanges, OnDestroy {
       default:
         return '';
     }
+  }
+
+  getNotaClass(nota: number | null): string {
+    if (nota === null || nota === undefined) {
+      return '';
+    }
+    
+    if (nota >= 1 && nota <= 5) {
+      return 'bg-danger';
+    } else if (nota >= 6 && nota <= 8) {
+      return 'bg-warning';
+    } else if (nota >= 9 && nota <= 10) {
+      return 'bg-success';
+    }
+    
+    return '';
   }
 }

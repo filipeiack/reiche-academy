@@ -82,8 +82,7 @@ export class GestaoIndicadoresComponent implements OnInit, OnDestroy {
   statusMedicao = StatusMedicaoUtil.getAllOptions();
 
   ngOnInit(): void {
-    this.loadIndicadores();
-    this.loadUsuarios();
+    this.loadIndicadores(); // loadUsuarios será chamado após carregar o cockpit
     this.setupAutoSave();
     this.carregarPerfilColaborador();
   }
@@ -114,6 +113,9 @@ export class GestaoIndicadoresComponent implements OnInit, OnDestroy {
         this.indicadores = (cockpit.indicadores || []) as IndicadorExtended[];
         this.empresaId = cockpit.pilarEmpresa?.empresaId || null;
         this.loading = false;
+        
+        // Carregar usuários após obter empresaId
+        this.loadUsuarios();
       },
       error: (err) => {
         console.error('Erro ao carregar indicadores:', err);
@@ -124,9 +126,18 @@ export class GestaoIndicadoresComponent implements OnInit, OnDestroy {
   }
 
   private loadUsuarios(): void {
+    if (!this.empresaId) {
+      console.error('empresaId não definido');
+      return;
+    }
+
     this.usersService.getAll().subscribe({
       next: (usuarios: Usuario[]) => {
-        this.usuarios = usuarios;
+        // Filtrar apenas usuários com perfil CLIENTE da empresa atual
+        this.usuarios = usuarios.filter(u => 
+          u.empresaId === this.empresaId && 
+          u.perfil?.codigo === 'CLIENTE'
+        );
       },
       error: (err: unknown) => {
         console.error('Erro ao carregar usuários:', err);
