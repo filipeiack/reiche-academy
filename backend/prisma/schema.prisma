@@ -505,8 +505,8 @@ model ProcessoPrioritario {
   rotinaEmpresaId String
   rotinaEmpresa   RotinaEmpresa @relation(fields: [rotinaEmpresaId], references: [id], onDelete: Cascade)
 
-  statusMapeamento  StatusProcesso @default(PENDENTE)
-  statusTreinamento StatusProcesso @default(PENDENTE)
+  statusMapeamento  StatusProcesso?
+  statusTreinamento StatusProcesso?
 
   ordem Int
 

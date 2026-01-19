@@ -681,7 +681,14 @@ export class CockpitPilaresService {
         cockpitPilarId: cockpitId,
       },
       include: {
-        rotinaEmpresa: true,
+        rotinaEmpresa: {
+          include: {
+            notas: {
+              orderBy: { createdAt: 'desc' },
+              take: 1, // Pega apenas a nota mais recente
+            },
+          },
+        },
       },
       orderBy: { ordem: 'asc' },
     });
