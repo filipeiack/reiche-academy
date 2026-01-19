@@ -1,6 +1,7 @@
 import { Component, Input, OnInit, OnChanges, SimpleChanges, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { NgSelectModule } from '@ng-select/ng-select';
 import { BaseChartDirective } from 'ng2-charts';
 import { ChartConfiguration, ChartType } from 'chart.js';
 import {
@@ -44,7 +45,7 @@ Chart.register(
 @Component({
   selector: 'app-grafico-indicadores',
   standalone: true,
-  imports: [CommonModule, FormsModule, BaseChartDirective],
+  imports: [CommonModule, FormsModule, NgSelectModule, BaseChartDirective],
   templateUrl: './grafico-indicadores.component.html',
   styleUrl: './grafico-indicadores.component.scss',
 })
@@ -55,6 +56,7 @@ export class GraficoIndicadoresComponent implements OnInit, OnChanges {
   private cockpitService = inject(CockpitPilaresService);
 
   selectedIndicadorId: string | null = null;
+  indicador: IndicadorCockpit | null = null;
   anoAtual = new Date().getFullYear();
   loading = false;
   error: string | null = null;
@@ -175,6 +177,7 @@ export class GraficoIndicadoresComponent implements OnInit, OnChanges {
         this.indicadores = cockpit.indicadores || [];
         if (this.indicadores.length > 0) {
           this.selectedIndicadorId = this.indicadores[0].id;
+          this.indicador = this.indicadores[0];
           this.loadGrafico();
         } else {
           this.loading = false;
@@ -188,9 +191,15 @@ export class GraficoIndicadoresComponent implements OnInit, OnChanges {
     });
   }
 
-  onIndicadorChange(indicadorId: string): void {
-    this.selectedIndicadorId = indicadorId;
-    this.loadGrafico();
+  onIndicadorChange(indicadorId: string | null): void {
+    if (indicadorId) {
+      this.indicador = this.indicadores.find(i => i.id === indicadorId) || null;
+      this.loadGrafico();
+    } else {
+      this.indicador = null;
+      this.error = null;
+      this.lineChartData = { datasets: [], labels: [] };
+    }
   }
 
   loadGrafico(): void {
@@ -313,13 +322,28 @@ export class GraficoIndicadoresComponent implements OnInit, OnChanges {
       case 'REAL':
         return ' R$';
       case 'PERCENTUAL':
-        return '%';
+        return ' %';
+      case 'TEMPO':
+        return ' ts';
+      case 'QUANTIDADE':
+        return ' un';
+      default:
+        return '';
+    }
+  }
+
+  getLabelTipoMedida(tipo: string): string {
+    switch (tipo) {
+      case 'REAL':
+        return 'Real (R$)';
+      case 'PERCENTUAL':
+        return 'Percentual (%)';
       case 'TEMPO':
         return 'Tempo';
       case 'QUANTIDADE':
-        return 'Qtde';
+        return 'Quantidade';
       default:
-        return '';
+        return tipo;
     }
   }
 }
