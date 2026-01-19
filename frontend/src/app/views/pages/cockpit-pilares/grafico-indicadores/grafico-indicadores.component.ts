@@ -17,10 +17,12 @@ import {
   Legend,
   Filler
 } from 'chart.js';
+import ChartDataLabels from 'chartjs-plugin-datalabels';
 import { CockpitPilaresService } from '@core/services/cockpit-pilares.service';
 import {
   DadosGraficos,
   IndicadorCockpit,
+  DirecaoIndicador,
 } from '@core/interfaces/cockpit-pilares.interface';
 
 // Registrar componentes do Chart.js
@@ -35,7 +37,8 @@ Chart.register(
   Title,
   Tooltip,
   Legend,
-  Filler
+  Filler,
+  ChartDataLabels
 );
 
 @Component({
@@ -92,6 +95,35 @@ export class GraficoIndicadoresComponent implements OnInit, OnChanges {
 
             return `${label}: ${value?.toFixed(2) || '-'}`;
           },
+        },
+      },
+      datalabels: {
+        display: true,
+        color: (context) => {
+          // Branco para barras, preto para linha
+          return context.dataset.type === 'bar' ? '#FFFFFF' : '#000000';
+        },
+        font: {
+          size: 11,
+          weight: 'bold' as const,
+        },
+        formatter: (value, context) => {
+          if (value === null || value === undefined) return '';
+          
+          const indicador = this.indicadores.find(
+            (i) => i.id === this.selectedIndicadorId
+          );
+          const suffix = indicador ? this.getTipoMedidaSuffix(indicador.tipoMedida) : '';
+          
+          return `${value.toFixed(1)}${suffix}`;
+        },
+        anchor: (context) => {
+          // Centro para barras, end para linha
+          return context.dataset.type === 'bar' ? 'center' : 'end';
+        },
+        align: (context) => {
+          // Centro para barras, top para linha
+          return context.dataset.type === 'bar' ? 'center' : 'top';
         },
       },
     },
@@ -195,6 +227,21 @@ export class GraficoIndicadoresComponent implements OnInit, OnChanges {
     const metas = mesesData.map((m) => m.meta || null);
     const realizados = mesesData.map((m) => m.realizado || null);
 
+    // Calcular cores das barras baseado no status (verde/vermelho)
+    const coresBarras = mesesData.map((m) => {
+      const status = this.calcularStatus(indicador, m.meta, m.realizado);
+      if (status === 'success') return 'rgba(25, 135, 84, 0.7)'; // Bootstrap success
+      if (status === 'danger') return 'rgba(220, 53, 69, 0.7)'; // Bootstrap danger
+      return 'rgba(170, 170, 170, 0.7)'; // Cinza (sem dados)
+    });
+
+    const coresBordasBarras = mesesData.map((m) => {
+      const status = this.calcularStatus(indicador, m.meta, m.realizado);
+      if (status === 'success') return '#198754'; // Bootstrap success
+      if (status === 'danger') return '#dc3545'; // Bootstrap danger
+      return '#AAAAAA'; // Cinza
+    });
+
     this.lineChartData = {
       labels: meses,
       datasets: [
@@ -214,12 +261,33 @@ export class GraficoIndicadoresComponent implements OnInit, OnChanges {
           type: 'bar',
           label: 'Realizado',
           data: realizados,
-          backgroundColor: 'rgba(16, 185, 129, 0.7)',
-          borderColor: '#10b981',
+          backgroundColor: coresBarras,
+          borderColor: coresBordasBarras,
           borderWidth: 1,
         },
       ],
     };
+  }
+
+  /**
+   * Calcula status do mês (verde/vermelho) baseado no desvio
+   */
+  private calcularStatus(
+    indicador: IndicadorCockpit,
+    meta: number | null | undefined,
+    realizado: number | null | undefined
+  ): 'success' | 'danger' | null {
+    if (!meta || !realizado) return null;
+
+    const percentual = (realizado / meta) * 100;
+
+    if (indicador.melhor === DirecaoIndicador.MAIOR) {
+      if (percentual >= 100) return 'success'; // Verde
+      return 'danger'; // Vermelho
+    } else {
+      if (percentual <= 100) return 'success'; // Verde
+      return 'danger'; // Vermelho
+    }
   }
 
   private getNomeMes(mes: number): string {
@@ -249,7 +317,7 @@ export class GraficoIndicadoresComponent implements OnInit, OnChanges {
       case 'TEMPO':
         return 'h';
       case 'QUANTIDADE':
-        return '';
+        return 'Qtde';
       default:
         return '';
     }

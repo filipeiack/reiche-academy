@@ -53,7 +53,7 @@ export class DiagnosticoEvolucaoComponent implements OnInit, OnDestroy {
 
   medias: MediaPilar[] = [];
   historico: any[] = []; // Agora armazena histórico de todos os pilares
-  barChart: Chart | null = null;
+  barChart: Chart<'bar', any[], any> | null = null;
   periodoAtual: PeriodoAvaliacao | null = null;
   anoFiltro: number | undefined = undefined;
   anosDisponiveis: number[] = [];
@@ -358,8 +358,6 @@ renderBarChart(): void {
         id: 'datalabels',
         afterDatasetsDraw: (chart: any) => {
           const ctx = chart.ctx;
-          // Obter a cor do texto do tema atual
-          const textColor = getComputedStyle(document.documentElement).getPropertyValue('--bs-body-color').trim() || '#212121';
           
           chart.data.datasets.forEach((dataset: any, datasetIndex: number) => {
             const meta = chart.getDatasetMeta(datasetIndex);
@@ -367,11 +365,13 @@ renderBarChart(): void {
               meta.data.forEach((bar: any, index: number) => {
                 const data = dataset.data[index];
                 if (data !== null && data !== undefined) {
-                  ctx.fillStyle = textColor;
+                  ctx.fillStyle = '#000000';
                   ctx.font = 'bold 11px Arial';
                   ctx.textAlign = 'center';
-                  ctx.textBaseline = 'bottom';
-                  ctx.fillText(data.toFixed(1), bar.x, bar.y - 5);
+                  ctx.textBaseline = 'middle';
+                  // Calcular posição Y no meio da barra
+                  const yMid = (bar.y + bar.base) / 2;
+                  ctx.fillText(data.toFixed(1), bar.x, yMid);
                 }
               });
             }

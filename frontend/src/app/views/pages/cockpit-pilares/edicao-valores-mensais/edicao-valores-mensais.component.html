@@ -21,13 +21,13 @@
     <div class="card-body p-3 px-4">
       <!-- Header do Indicador -->
       <div class="indicador-header">
-        <h6 class="mb-3">
+        <h6>
           <span class="badge bg-primary me-2">{{ $index + 1 }}</span>
           {{ indicador.nome }}
+        </h6>
           @if (indicador.descricao) {
           <small class="text-muted ms-2">({{ indicador.descricao }})</small>
           }
-        </h6>
 
         <!-- Propriedades (Card separado) -->
         <div class="d-flex flex-wrap gap-3 mb-3">
