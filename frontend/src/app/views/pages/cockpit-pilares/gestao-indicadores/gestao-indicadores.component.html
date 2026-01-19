@@ -22,15 +22,15 @@
     </div>
     } @else {
     <table class="table table-hover table-sm">
-      <thead class="table-light">
+      <thead class="table-light small">
         <tr>
           <!-- <th style="width: 40px;"></th> -->
           <!-- Drag handle -->
           <th class="w-100">Nome</th>
-          <th style="min-width: 90px;">Tipo</th>
-          <th style="width: 150px;">Status</th>
+          <th style="min-width: 90px;">Medida</th>
+          <th style="max-width: 90px;">Status</th>
           <th>Responsável</th>
-          <th style="width: 100px;">Melhor</th>
+          <th class="text-center">Melhor</th>
           <!-- <th style="width: 80px;">Descrição</th> -->
           <th style="width: 100px;">Ações</th>
         </tr>
@@ -82,16 +82,16 @@
             } @else {
             @switch (indicador.tipoMedida) {
             @case ('REAL') {
-            <i class="bi bi-currency-dollar"></i>
+            R$
             }
             @case ('QUANTIDADE') {
-            <i class="bi bi-hash"></i>
+            Qtde
             }
             @case ('TEMPO') {
-            <i class="bi bi-clock"></i>
+            Tempo
             }
             @case ('PERCENTUAL') {
-            <i class="bi bi-percent"></i>
+            %
             }
             }
             }
@@ -111,13 +111,13 @@
             } @else {
             @switch (indicador.statusMedicao) {
             @case ('MEDIDO_CONFIAVEL') {
-            <span class="badge bg-success">Confiável</span>
+            <span class="badge bg-success">Medido e confiável</span>
             }
             @case ('MEDIDO_NAO_CONFIAVEL') {
-            <span class="badge bg-warning">Não Confiável</span>
+            <span class="badge bg-warning">Medido, mas não é confiável.</span>
             }
             @case ('NAO_MEDIDO') {
-            <span class="badge bg-danger">Não Medido</span>
+            <span class="badge bg-danger">Não é medido</span>
             }
             }
             }
@@ -140,22 +140,22 @@
           </td>
 
           <!-- Melhor (Toggle) -->
-          <td>
+          <td class="text-center">
             @if (indicador.isEditing) {
-            <button class="btn btn-sm w-100" [class.btn-success]="indicador.melhor === 'MAIOR'"
+            <button class="btn btn-sm" [class.btn-success]="indicador.melhor === 'MAIOR'"
               [class.btn-info]="indicador.melhor === 'MENOR'" (click)="toggleMelhor(indicador)"
               [id]="'melhor-' + indicador.ordem">
               @if (indicador.melhor === 'MAIOR') {
-              <i class="bi bi-arrow-up"></i> Maior
+              <i class="bi bi-arrow-up-circle"></i>
               } @else {
-              <i class="bi bi-arrow-down"></i> Menor
+              <i class="bi bi-arrow-down-circle"></i>
               }
             </button>
             } @else {
             @if (indicador.melhor === 'MAIOR') {
-            <i class="bi bi-arrow-up-circle text-success"></i> Maior
+            <i class="bi bi-arrow-up-circle text-success"></i>
             } @else {
-            <i class="bi bi-arrow-down-circle text-info"></i> Menor
+            <i class="bi bi-arrow-down-circle text-info"></i>
             }
             }
           </td>
@@ -173,33 +173,26 @@
 
           <!-- Ações -->
           <td>
-            <div class="btn-group btn-group-sm">
-              @if (indicador.isEditing) {
-              <button class="btn btn-success" (click)="disableEdit(indicador)" title="Confirmar">
-                <i class="bi bi-check"></i>
+            @if (indicador.isEditing) {
+            <div class="d-flex gap-1">
+              <button type="button" class="btn btn-sm btn-success" (click)="disableEdit(indicador)" title="Salvar edição">
+                <i class="feather icon-check"></i>
               </button>
-              } @else {
+              <button type="button" class="btn btn-sm btn-secondary" (click)="cancelarEdicao(indicador)" title="Cancelar">
+                <i class="feather icon-x"></i>
+              </button>
+            </div>
+            } @else {
+            <div class="d-flex gap-1">
               <button data-testid="edit-indicador-button" class="btn btn-icon text-secondary"
                 (click)="enableEdit(indicador)" [title]="'BUTTONS.EDIT' | translate">
                 <i class="feather icon-edit"></i>
               </button>
-              }
-
               <button data-testid="delete-indicador-button" class="btn btn-icon text-danger"
                 (click)="deleteIndicador(indicador)" [title]="'BUTTONS.DELETE' | translate">
                 <i class="feather icon-trash-2"></i>
               </button>
             </div>
-
-            <!-- Feedback de salvamento -->
-            @if (indicador.saveStatus === 'saving') {
-            <div class="spinner-border spinner-border-sm text-primary ms-2"></div>
-            }
-            @if (indicador.saveStatus === 'saved') {
-            <i class="bi bi-check-circle-fill text-success ms-2"></i>
-            }
-            @if (indicador.saveStatus === 'error') {
-            <i class="bi bi-x-circle-fill text-danger ms-2"></i>
             }
           </td>
         </tr>

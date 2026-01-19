@@ -16,6 +16,7 @@ import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { Subject } from 'rxjs';
 import { debounceTime, distinctUntilChanged, take } from 'rxjs/operators';
 import { CockpitPilaresService } from '@core/services/cockpit-pilares.service';
+import { SaveFeedbackService } from '@core/services/save-feedback.service';
 import { CreateUsuarioDto, UsersService } from '@core/services/users.service';
 import { PerfisService } from '@core/services/perfis.service';
 import {
@@ -28,6 +29,7 @@ import { Usuario } from '@core/models/auth.model';
 import { TranslatePipe } from '@core/pipes/translate.pipe';
 import { DescricaoIndicadorModalComponent } from './descricao-indicador-modal/descricao-indicador-modal.component';
 import Swal from 'sweetalert2';
+import { StatusMedicaoUtil } from '@core/utils/status-medicao.util';
 
 interface IndicadorExtended extends IndicadorCockpit {
   isEditing?: boolean;
@@ -50,6 +52,7 @@ export class GestaoIndicadoresComponent implements OnInit, OnDestroy {
   @ViewChild(DescricaoIndicadorModalComponent) descricaoModal!: DescricaoIndicadorModalComponent;
 
   private cockpitService = inject(CockpitPilaresService);
+  private saveFeedbackService = inject(SaveFeedbackService);
   private usersService = inject(UsersService);
   private modalService = inject(NgbModal);
   private perfisService = inject(PerfisService);
@@ -71,19 +74,12 @@ export class GestaoIndicadoresComponent implements OnInit, OnDestroy {
   // Enums para template
   tiposMedida = [
     { value: TipoMedidaIndicador.REAL, label: 'R$ (Reais)' },
-    { value: TipoMedidaIndicador.QUANTIDADE, label: 'Quantidade' },
+    { value: TipoMedidaIndicador.QUANTIDADE, label: 'Qtde' },
     { value: TipoMedidaIndicador.TEMPO, label: 'Tempo' },
     { value: TipoMedidaIndicador.PERCENTUAL, label: '% (Percentual)' },
   ];
 
-  statusMedicao = [
-    { value: StatusMedicaoIndicador.NAO_MEDIDO, label: 'Não Medido' },
-    {
-      value: StatusMedicaoIndicador.MEDIDO_NAO_CONFIAVEL,
-      label: 'Não Confiável',
-    },
-    { value: StatusMedicaoIndicador.MEDIDO_CONFIAVEL, label: 'Confiável' },
-  ];
+  statusMedicao = StatusMedicaoUtil.getAllOptions();
 
   ngOnInit(): void {
     this.loadIndicadores();
@@ -266,6 +262,22 @@ export class GestaoIndicadoresComponent implements OnInit, OnDestroy {
   }
 
   /**
+   * Cancelar edição e restaurar valores originais
+   */
+  cancelarEdicao(indicador: IndicadorExtended): void {
+    if (indicador.isNew) {
+      // Se for nova linha, remover do array
+      this.indicadores = this.indicadores.filter(i => i.id !== indicador.id);
+    }
+    
+    indicador.isEditing = false;
+    this.editingRowId = null;
+    
+    // Recarregar dados para restaurar valores originais
+    this.loadIndicadores();
+  }
+
+  /**
    * Validação mínima para salvar
    */
   isValidForSave(indicador: IndicadorExtended): boolean {
@@ -288,7 +300,8 @@ export class GestaoIndicadoresComponent implements OnInit, OnDestroy {
    * Salvar indicador (CREATE ou UPDATE)
    */
   private async saveIndicador(indicador: IndicadorExtended): Promise<void> {
-    indicador.saveStatus = 'saving';
+    const tipoOperacao = indicador.isNew ? 'Indicador criado' : 'Indicador atualizado';
+    this.saveFeedbackService.startSaving(tipoOperacao);
 
     const payload = {
       nome: indicador.nome,
@@ -310,18 +323,19 @@ export class GestaoIndicadoresComponent implements OnInit, OnDestroy {
               // Atualizar com dados do backend
               Object.assign(indicador, created);
               indicador.isNew = false;
-              indicador.isEditing = false;
-              indicador.saveStatus = 'saved';
-              this.editingRowId = null;
+              // NÃO desabilitar edição - manter editando após auto-save
+              indicador.isEditing = true;
+              this.editingRowId = indicador.id;
 
               // Emitir evento para container
               this.indicadorCriado.emit(created);
 
-              setTimeout(() => (indicador.saveStatus = null), 2000);
+              // Feedback centralizado
+              this.saveFeedbackService.completeSaving();
             },
             error: (err) => {
               console.error('Erro ao criar indicador:', err);
-              indicador.saveStatus = 'error';
+              this.saveFeedbackService.reset();
               alert('Erro ao salvar indicador');
             },
           });
@@ -329,20 +343,20 @@ export class GestaoIndicadoresComponent implements OnInit, OnDestroy {
         // PATCH /indicadores/:id
         this.cockpitService.updateIndicador(indicador.id, payload).subscribe({
           next: () => {
-            indicador.saveStatus = 'saved';
             this.indicadorAtualizado.emit();
-            setTimeout(() => (indicador.saveStatus = null), 2000);
+            // Feedback centralizado
+            this.saveFeedbackService.completeSaving();
           },
           error: (err) => {
             console.error('Erro ao atualizar indicador:', err);
-            indicador.saveStatus = 'error';
+            this.saveFeedbackService.reset();
             alert('Erro ao salvar indicador');
           },
         });
       }
     } catch (error) {
       console.error('Erro inesperado ao salvar:', error);
-      indicador.saveStatus = 'error';
+      this.saveFeedbackService.reset();
     }
   }
 

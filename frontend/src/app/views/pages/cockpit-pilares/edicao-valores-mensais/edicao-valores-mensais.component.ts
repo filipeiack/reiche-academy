@@ -296,25 +296,15 @@ export class EdicaoValoresMensaisComponent implements OnInit, OnChanges, OnDestr
 
   getNomeMes(mes: number): string {
     const meses = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'];
-    return meses[mes - 1] || '';
-  }
-
-  getIconeTipoMedida(tipo: string): string {
-    const icones: Record<string, string> = {
-      'REAL': 'bi bi-currency-dollar',
-      'QUANTIDADE': 'bi bi-hash',
-      'TEMPO': 'bi bi-clock',
-      'PERCENTUAL': 'bi bi-percent'
-    };
-    return icones[tipo] || 'bi bi-question-circle';
+    return meses[mes - 1].toUpperCase() || '';
   }
 
   getLabelTipoMedida(tipo: string): string {
     const labels: Record<string, string> = {
-      'REAL': 'Real',
-      'QUANTIDADE': 'Quantidade',
+      'REAL': 'R$',
+      'QUANTIDADE': 'Qtde',
       'TEMPO': 'Tempo',
-      'PERCENTUAL': 'Percentual'
+      'PERCENTUAL': '%'
     };
     return labels[tipo] || tipo;
   }

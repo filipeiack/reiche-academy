@@ -1,15 +1,5 @@
 @import '../../shared-styles/_sticky-headers';
 
-.sticky-header-card {
-  top: calc(var(--navbar-height, 60px) + var(--headerDashboard-height, 40px));
-  position: sticky;
-  z-index: 1;
-  background: var(--bs-body-bg);
-  
-  &.collapsed {
-    padding: 0.5rem 1rem;
-  }
-}
 
 // Cursor pointer nas tabs
 .nav-tabs .nav-link {

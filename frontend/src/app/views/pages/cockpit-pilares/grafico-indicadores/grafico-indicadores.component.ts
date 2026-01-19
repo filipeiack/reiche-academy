@@ -315,7 +315,7 @@ export class GraficoIndicadoresComponent implements OnInit, OnChanges {
       case 'PERCENTUAL':
         return '%';
       case 'TEMPO':
-        return 'h';
+        return 'Tempo';
       case 'QUANTIDADE':
         return 'Qtde';
       default:
