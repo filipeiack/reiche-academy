@@ -9,8 +9,8 @@ develop → staging → main
 ```
 
 - **develop**: Desenvolvimento local
-- **staging**: VPS Staging (staging.reicheacademy.com.br)
-- **main**: VPS Produção (app.reicheacademy.com.br)
+- **staging**: VPS Staging (staging.reicheacademy.cloud)
+- **main**: VPS Produção (app.reicheacademy.cloud)
 
 ---
 
@@ -38,8 +38,8 @@ bash scripts/deploy-vps.sh
 
 ### **3. Configurar DNS**
 ```
-app.reicheacademy.com.br      → 76.13.66.10
-staging.reicheacademy.com.br  → 76.13.66.10
+app.reicheacademy.cloud      → 76.13.66.10
+staging.reicheacademy.cloud  → 76.13.66.10
 ```
 
 ---
@@ -70,8 +70,8 @@ Substitua:
 apt install certbot -y
 docker compose -f docker-compose.vps.yml stop nginx
 
-certbot certonly --standalone -d app.reicheacademy.com.br
-certbot certonly --standalone -d staging.reicheacademy.com.br
+certbot certonly --standalone -d app.reicheacademy.cloud
+certbot certonly --standalone -d staging.reicheacademy.cloud
 
 # Copiar certificados (ver guia completo)
 # Descomentar blocos HTTPS no nginx/nginx.conf
@@ -138,7 +138,7 @@ bash scripts/maintenance-vps.sh logs
 
 ## ✅ Checklist Pós-Deploy
 
-- [ ] DNS configurado (verifique com `nslookup app.reicheacademy.com.br`)
+- [ ] DNS configurado (verifique com `nslookup app.reicheacademy.cloud`)
 - [ ] Todos os containers rodando (`docker compose ps`)
 - [ ] Health check passando (`curl /api/health`)
 - [ ] SSL instalado e funcionando

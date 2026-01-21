@@ -24,7 +24,7 @@ main     → Produção no VPS
 
 ### **staging** - Homologação
 - **Ambiente**: VPS Staging
-- **URL**: https://staging.reicheacademy.com.br
+- **URL**: https://staging.reicheacademy.cloud
 - **Uso**: Testes e validação QA
 - **Commits**: Apenas via merge de `develop`
 - **Deploy**: Manual no VPS
@@ -33,7 +33,7 @@ main     → Produção no VPS
 
 ### **main** - Produção
 - **Ambiente**: VPS Produção
-- **URL**: https://app.reicheacademy.com.br
+- **URL**: https://app.reicheacademy.cloud
 - **Uso**: Usuários finais
 - **Commits**: Apenas via merge de `staging`
 - **Deploy**: Manual no VPS (com backup obrigatório)
@@ -94,7 +94,7 @@ docker compose -f docker-compose.vps.yml exec backend-staging npm run migration:
 ### **3. Testes em Staging**
 
 ```bash
-# Acessar https://staging.reicheacademy.com.br
+# Acessar https://staging.reicheacademy.cloud
 # Executar testes manuais
 # Validar funcionalidades
 # QA sign-off

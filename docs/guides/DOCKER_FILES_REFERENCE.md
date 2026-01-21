@@ -54,8 +54,8 @@ docker compose -f docker-compose.vps.yml up -d
 ```
 
 **Acesso:**
-- Produção: https://app.reicheacademy.com.br
-- Staging: https://staging.reicheacademy.com.br
+- Produção: https://app.reicheacademy.cloud
+- Staging: https://staging.reicheacademy.cloud
 
 ---
 

@@ -21,10 +21,10 @@ fi
 # Definir branch baseado no ambiente
 if [ "$ENVIRONMENT" == "staging" ]; then
     BRANCH="staging"
-    DOMAIN="staging.reicheacademy.com.br"
+    DOMAIN="staging.reicheacademy.cloud"
 else
     BRANCH="main"
-    DOMAIN="app.reicheacademy.com.br"
+    DOMAIN="app.reicheacademy.cloud"
 fi
 
 echo "🚀 Iniciando Deploy do Reiche Academy no VPS..."
@@ -179,8 +179,8 @@ docker compose -f docker-compose.vps.yml ps
 
 echo ""
 echo "🔗 URLs de acesso:"
-echo "  Produção:  http://app.reicheacademy.com.br (após DNS configurado)"
-echo "  Staging:   http://staging.reicheacademy.com.br (após DNS configurado)"
+echo "  Produção:  http://app.reicheacademy.cloud (após DNS configurado)"
+echo "  Staging:   http://staging.reicheacademy.cloud (após DNS configurado)"
 echo ""
 
 echo "📝 Próximos passos:"
@@ -190,13 +190,13 @@ echo "   docker compose -f docker-compose.vps.yml logs -f"
 echo ""
 echo "2️⃣  Configurar SSL (Let's Encrypt):"
 echo "   apt install certbot -y"
-echo "   certbot certonly --standalone -d app.reicheacademy.com.br"
-echo "   certbot certonly --standalone -d staging.reicheacademy.com.br"
+echo "   certbot certonly --standalone -d app.reicheacademy.cloud"
+echo "   certbot certonly --standalone -d staging.reicheacademy.cloud"
 echo ""
 echo "3️⃣  Copiar certificados para o Nginx:"
 echo "   mkdir -p /opt/reiche-academy/nginx/ssl"
-echo "   cp /etc/letsencrypt/live/app.reicheacademy.com.br/fullchain.pem nginx/ssl/app.crt"
-echo "   cp /etc/letsencrypt/live/app.reicheacademy.com.br/privkey.pem nginx/ssl/app.key"
+echo "   cp /etc/letsencrypt/live/app.reicheacademy.cloud/fullchain.pem nginx/ssl/app.crt"
+echo "   cp /etc/letsencrypt/live/app.reicheacademy.cloud/privkey.pem nginx/ssl/app.key"
 echo ""
 echo "4️⃣  Editar nginx/nginx.conf para ativar HTTPS e reiniciar:"
 echo "   docker compose -f docker-compose.vps.yml restart nginx"

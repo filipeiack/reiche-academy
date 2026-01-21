@@ -23,13 +23,13 @@ main (produção)
 - Apenas código testado e aprovado
 - Protegida: só aceita merges de `staging` ou `hotfix/*`
 - Sempre deployável
-- **Deploy automático**: app.reicheacademy.com.br
+- **Deploy automático**: app.reicheacademy.cloud
 
 ### **`staging`** - Homologação 🔧
 - Ambiente de testes pré-produção
 - Código que passou pelos testes de desenvolvimento
 - Validação final antes de produção
-- **Deploy automático**: staging.reicheacademy.com.br
+- **Deploy automático**: staging.reicheacademy.cloud
 
 ### **`develop`** - Desenvolvimento 🏗️
 - Base para novas features
@@ -80,7 +80,7 @@ git pull origin staging
 git merge develop
 git push origin staging
 
-# Isso dispara deploy automático para staging.reicheacademy.com.br
+# Isso dispara deploy automático para staging.reicheacademy.cloud
 ```
 
 ---
@@ -94,7 +94,7 @@ git pull origin main
 git merge staging
 git push origin main
 
-# Isso dispara deploy automático para app.reicheacademy.com.br
+# Isso dispara deploy automático para app.reicheacademy.cloud
 ```
 
 ---
@@ -281,7 +281,7 @@ git push -u origin develop
 └─────────────────────────────────────────────────────────┘
                    │
     ┌──────────────────────────────────┐
-    │         staging                   │ (staging.reicheacademy.com.br)
+    │         staging                   │ (staging.reicheacademy.cloud)
     └──────────────┬───────────────────┘
                    │ Após testes OK
                    ▼
@@ -290,7 +290,7 @@ git push -u origin develop
 └─────────────────────────────────────────────────────────┘
                    │
     ┌──────────────────────────────────┐
-    │          main                     │ (app.reicheacademy.com.br)
+    │          main                     │ (app.reicheacademy.cloud)
     └───────────────────────────────────┘
 ```
 
@@ -301,8 +301,8 @@ git push -u origin develop
 | Branch | Docker Compose | Deploy | URL |
 |--------|----------------|--------|-----|
 | `develop` | `docker-compose.yml` | Local | http://localhost:4200 |
-| `staging` | `docker-compose.vps.yml` | VPS (auto) | https://staging.reicheacademy.com.br |
-| `main` | `docker-compose.vps.yml` | VPS (auto) | https://app.reicheacademy.com.br |
+| `staging` | `docker-compose.vps.yml` | VPS (auto) | https://staging.reicheacademy.cloud |
+| `main` | `docker-compose.vps.yml` | VPS (auto) | https://app.reicheacademy.cloud |
 
 ---
 

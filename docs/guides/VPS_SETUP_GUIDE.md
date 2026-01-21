@@ -17,8 +17,8 @@ main     ← Produção (VPS produção)
 | Branch | Ambiente | URL | Uso |
 |--------|----------|-----|-----|
 | **develop** | Local | localhost:4200 | Desenvolvimento diário |
-| **staging** | VPS Staging | staging.reicheacademy.com.br | Testes e validação |
-| **main** | VPS Produção | app.reicheacademy.com.br | Usuários finais |
+| **staging** | VPS Staging | staging.reicheacademy.cloud | Testes e validação |
+| **main** | VPS Produção | app.reicheacademy.cloud | Usuários finais |
 
 > **Importante**: Nunca faça commit direto em `main` ou `staging`. Sempre faça merge de `develop → staging → main`.
 
@@ -89,15 +89,15 @@ Banda: Ilimitada
 
 | Domínio | Vai Para | Uso |
 |---------|----------|-----|
-| `app.reicheacademy.com.br` | Frontend Produção → Backend Produção | Usuários finais |
-| `staging.reicheacademy.com.br` | Frontend Staging → Backend Staging | Testes |
+| `app.reicheacademy.cloud` | Frontend Produção → Backend Produção | Usuários finais |
+| `staging.reicheacademy.cloud` | Frontend Staging → Backend Staging | Testes |
 
 ---
 
 ## 📦 Componentes Criados
 
 1. **[docker-compose.vps.yml](../../docker-compose.vps.yml)** - Orquestração completa (staging + prod)
-2. **[nginx/nginx.vps.conf](../../nginx/nginx.vps.conf)** - Roteamento por subdomínio
+2. **[nginx/nginx.conf](../../nginx/nginx.conf)** - Roteamento por subdomínio
 3. **[scripts/init-databases.sh](../../scripts/init-databases.sh)** - Cria 2 databases automaticamente
 4. **[.env.vps](../../.env.vps)** - Variáveis de ambiente para o VPS
 
@@ -176,8 +176,8 @@ bash scripts/maintenance-vps.sh restart   # Reiniciar serviços
 No painel do seu registrador de domínios, criar 2 registros A:
 
 ```
-app.reicheacademy.com.br      → 76.13.66.10
-staging.reicheacademy.com.br  → 76.13.66.10
+app.reicheacademy.cloud      → 76.13.66.10
+staging.reicheacademy.cloud  → 76.13.66.10
 ```
 
 ⏱️ **Nota**: Propagação de DNS pode levar até 48h.
@@ -282,23 +282,23 @@ apt install certbot -y
 docker compose -f docker-compose.vps.yml stop nginx
 
 # Gerar certificados (fazer 2x, um para cada domínio)
-certbot certonly --standalone -d app.reicheacademy.com.br
-certbot certonly --standalone -d staging.reicheacademy.com.br
+certbot certonly --standalone -d app.reicheacademy.cloud
+certbot certonly --standalone -d staging.reicheacademy.cloud
 
 # Copiar certificados
 mkdir -p nginx/ssl
 
 # Produção
-cp /etc/letsencrypt/live/app.reicheacademy.com.br/fullchain.pem \
-   nginx/ssl/app.reicheacademy.com.br.crt
-cp /etc/letsencrypt/live/app.reicheacademy.com.br/privkey.pem \
-   nginx/ssl/app.reicheacademy.com.br.key
+cp /etc/letsencrypt/live/app.reicheacademy.cloud/fullchain.pem \
+   nginx/ssl/app.reicheacademy.cloud.crt
+cp /etc/letsencrypt/live/app.reicheacademy.cloud/privkey.pem \
+   nginx/ssl/app.reicheacademy.cloud.key
 
 # Staging
-cp /etc/letsencrypt/live/staging.reicheacademy.com.br/fullchain.pem \
-   nginx/ssl/staging.reicheacademy.com.br.crt
-cp /etc/letsencrypt/live/staging.reicheacademy.com.br/privkey.pem \
-   nginx/ssl/staging.reicheacademy.com.br.key
+cp /etc/letsencrypt/live/staging.reicheacademy.cloud/fullchain.pem \
+   nginx/ssl/staging.reicheacademy.cloud.crt
+cp /etc/letsencrypt/live/staging.reicheacademy.cloud/privkey.pem \
+   nginx/ssl/staging.reicheacademy.cloud.key
 
 # Editar nginx.vps.conf e descomentar seções HTTPS
 nano nginx/nginx.vps.conf
@@ -311,12 +311,12 @@ docker compose -f docker-compose.vps.yml start nginx
 
 ```bash
 # Produção
-curl http://app.reicheacademy.com.br
-curl http://app.reicheacademy.com.br/api/health
+curl http://app.reicheacademy.cloud
+curl http://app.reicheacademy.cloud/api/health
 
 # Staging
-curl http://staging.reicheacademy.com.br
-curl http://staging.reicheacademy.com.br/api/health
+curl http://staging.reicheacademy.cloud
+curl http://staging.reicheacademy.cloud/api/health
 ```
 
 ---
@@ -351,9 +351,9 @@ curl http://staging.reicheacademy.com.br/api/health
 ```
 develop  → Branch de desenvolvimento (local)
    ↓
-staging  → Branch de homologação (staging.reicheacademy.com.br)
+staging  → Branch de homologação (staging.reicheacademy.cloud)
    ↓
-main     → Branch de produção (app.reicheacademy.com.br)
+main     → Branch de produção (app.reicheacademy.cloud)
 ```
 
 ### **Desenvolvimento → Staging → Produção**
@@ -393,7 +393,7 @@ docker compose -f docker-compose.vps.yml exec backend-staging npm run migration:
 
 #### **3. Testar em Staging**
 ```bash
-# Acessar https://staging.reicheacademy.com.br
+# Acessar https://staging.reicheacademy.cloud
 # Executar testes manuais e validações
 # Se tudo OK → prosseguir para produção
 ```
@@ -538,7 +538,7 @@ echo "Produção:"
 curl -s http://localhost/api/health || echo "FALHOU!"
 echo ""
 echo "Staging:"
-curl -s -H "Host: staging.reicheacademy.com.br" http://localhost/api/health || echo "FALHOU!"
+curl -s -H "Host: staging.reicheacademy.cloud" http://localhost/api/health || echo "FALHOU!"
 EOF
 
 chmod +x /opt/reiche-academy/healthcheck.sh
