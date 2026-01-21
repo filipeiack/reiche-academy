@@ -1,5 +1,23 @@
 # 📚 Guias de Configuração - Reiche Academy
 
+## 🌿 Estratégia de Branches
+
+O projeto utiliza **GitFlow simplificado**:
+
+```
+develop  ← Desenvolvimento (local)
+   ↓
+staging  ← Homologação (VPS)
+   ↓
+main     ← Produção (VPS)
+```
+
+**Regra de ouro**: Nunca faça commit direto em `staging` ou `main`. Sempre faça merge sequencial.
+
+📖 **Documentação completa**: [/docs/GIT_STRATEGY.md](../GIT_STRATEGY.md)
+
+---
+
 ## 🗺️ Navegação Rápida
 
 ### Desenvolvimento Local (Windows)

@@ -2,6 +2,18 @@
 
 > **📖 Guia completo:** [VPS_SETUP_GUIDE.md](VPS_SETUP_GUIDE.md)
 
+## 🌿 Estratégia de Branches
+
+```
+develop → staging → main
+```
+
+- **develop**: Desenvolvimento local
+- **staging**: VPS Staging (staging.reicheacademy.com.br)
+- **main**: VPS Produção (app.reicheacademy.com.br)
+
+---
+
 ## ⚡ 3 Passos para Deploy
 
 ### **1. Conectar**
@@ -14,6 +26,13 @@ ssh root@76.13.66.10
 ```bash
 mkdir -p /opt/reiche-academy && cd /opt/reiche-academy
 git clone https://github.com/filipeiack/reiche-academy.git .
+
+# Para staging: usar branch staging
+git checkout staging
+
+# Para produção: usar branch main
+# git checkout main
+
 bash scripts/deploy-vps.sh
 ```
 
@@ -63,6 +82,39 @@ docker compose -f docker-compose.vps.yml up -d nginx
 
 ## 🔄 Manutenção
 
+### **Atualizar Staging**
+```bash
+ssh root@76.13.66.10
+cd /opt/reiche-academy
+git fetch origin
+git checkout staging
+git pull origin staging
+
+# Rebuild staging
+docker compose -f docker-compose.vps.yml build backend-staging frontend-staging
+docker compose -f docker-compose.vps.yml up -d --no-deps backend-staging frontend-staging
+docker compose -f docker-compose.vps.yml exec backend-staging npm run migration:prod
+```
+
+### **Atualizar Produção**
+```bash
+ssh root@76.13.66.10
+cd /opt/reiche-academy
+
+# BACKUP PRIMEIRO!
+bash scripts/maintenance-vps.sh backup
+
+git fetch origin
+git checkout main
+git pull origin main
+
+# Rebuild produção
+docker compose -f docker-compose.vps.yml build backend-prod frontend-prod
+docker compose -f docker-compose.vps.yml up -d --no-deps backend-prod frontend-prod
+docker compose -f docker-compose.vps.yml exec backend-prod npm run migration:prod
+```
+
+### **Comandos Gerais**
 ```bash
 # Health check
 bash scripts/maintenance-vps.sh health
@@ -70,8 +122,8 @@ bash scripts/maintenance-vps.sh health
 # Backup
 bash scripts/maintenance-vps.sh backup
 
-# Atualizar código
-bash scripts/maintenance-vps.sh update
+# Ver logs
+bash scripts/maintenance-vps.sh logs
 ```
 
 ---

@@ -2,6 +2,28 @@
 
 Este guia explica como rodar **staging e produção no mesmo VPS** (Ubuntu com Docker).
 
+## 🌿 Estratégia de Branches Git
+
+O projeto utiliza **GitFlow simplificado** com 3 branches principais:
+
+```
+develop  ← Desenvolvimento ativo (local)
+   ↓ merge
+staging  ← Homologação (VPS staging)
+   ↓ merge  
+main     ← Produção (VPS produção)
+```
+
+| Branch | Ambiente | URL | Uso |
+|--------|----------|-----|-----|
+| **develop** | Local | localhost:4200 | Desenvolvimento diário |
+| **staging** | VPS Staging | staging.reicheacademy.com.br | Testes e validação |
+| **main** | VPS Produção | app.reicheacademy.com.br | Usuários finais |
+
+> **Importante**: Nunca faça commit direto em `main` ou `staging`. Sempre faça merge de `develop → staging → main`.
+
+---
+
 ## 📋 Dados de Acesso ao VPS
 
 ```
@@ -198,8 +220,11 @@ cd /opt/reiche-academy
 ### **4. Fazer Deploy**
 
 ```bash
-# Clonar repositório
+# Clonar repositório (branch develop por padrão)
 git clone https://github.com/filipeiack/reiche-academy.git .
+
+# Configurar branches no VPS
+# O VPS precisa dos branches staging e main para os ambientes correspondentes
 
 # Copiar e configurar ambiente
 cp .env.vps .env
@@ -209,6 +234,11 @@ nano .env
 # Gerar JWT secrets com:
 node -e "console.log(require('crypto').randomBytes(64).toString('hex'))"
 ```
+
+> **Nota sobre branches no VPS:**
+> - Mantenha o VPS sincronizado com `staging` para o ambiente de staging
+> - Mude para `main` antes de fazer deploy de produção
+> - Use `git fetch origin` + `git checkout <branch>` para trocar entre ambientes
 
 ### **5. Build e Start**
 
@@ -316,19 +346,42 @@ curl http://staging.reicheacademy.com.br/api/health
 
 ## 🔄 Fluxo de Trabalho
 
+### **Estratégia de Branches**
+
+```
+develop  → Branch de desenvolvimento (local)
+   ↓
+staging  → Branch de homologação (staging.reicheacademy.com.br)
+   ↓
+main     → Branch de produção (app.reicheacademy.com.br)
+```
+
 ### **Desenvolvimento → Staging → Produção**
 
+#### **1. Desenvolvimento Local (branch develop)**
 ```bash
-# 1. Desenvolvimento local
-# ... fazer alterações ...
+# Fazer alterações no código
+git checkout develop
 git add .
 git commit -m "feat: nova funcionalidade"
-git push origin main
+git push origin develop
+```
 
-# 2. Deploy Staging (no VPS)
-ssh usuario@VPS
+#### **2. Merge para Staging e Deploy**
+```bash
+# Mesclar develop → staging
+git checkout staging
+git merge develop
+git push origin staging
+
+# No VPS: Atualizar ambiente de staging
+ssh root@76.13.66.10
 cd /opt/reiche-academy
-git pull origin main
+
+# Fazer checkout para staging
+git fetch origin
+git checkout staging
+git pull origin staging
 
 # Rebuild apenas staging
 docker compose -f docker-compose.vps.yml build backend-staging frontend-staging
@@ -336,14 +389,34 @@ docker compose -f docker-compose.vps.yml up -d --no-deps backend-staging fronten
 
 # Migrations staging
 docker compose -f docker-compose.vps.yml exec backend-staging npm run migration:prod
+```
 
-# 3. Testar em staging.reicheacademy.com.br
-# ... QA, testes manuais ...
+#### **3. Testar em Staging**
+```bash
+# Acessar https://staging.reicheacademy.com.br
+# Executar testes manuais e validações
+# Se tudo OK → prosseguir para produção
+```
 
-# 4. Deploy Produção (se tudo OK)
-# Backup primeiro!
+#### **4. Merge para Produção e Deploy**
+```bash
+# Local: Mesclar staging → main
+git checkout main
+git merge staging
+git push origin main
+
+# No VPS: Backup primeiro!
+ssh root@76.13.66.10
+cd /opt/reiche-academy
+
+# Fazer backup do banco de produção
 docker compose -f docker-compose.vps.yml exec postgres \
   pg_dump -U reiche_admin reiche_academy_prod | gzip > backups/backup_$(date +%Y%m%d_%H%M%S).sql.gz
+
+# Atualizar código para main
+git fetch origin
+git checkout main
+git pull origin main
 
 # Rebuild produção
 docker compose -f docker-compose.vps.yml build backend-prod frontend-prod
@@ -351,6 +424,32 @@ docker compose -f docker-compose.vps.yml up -d --no-deps backend-prod frontend-p
 
 # Migrations produção
 docker compose -f docker-compose.vps.yml exec backend-prod npm run migration:prod
+```
+
+#### **5. Hotfix (correção urgente em produção)**
+```bash
+# Criar hotfix a partir de main
+git checkout main
+git checkout -b hotfix/correcao-urgente
+
+# Fazer correção
+git add .
+git commit -m "fix: correção urgente"
+
+# Merge de volta para main E develop
+git checkout main
+git merge hotfix/correcao-urgente
+git push origin main
+
+git checkout develop
+git merge hotfix/correcao-urgente
+git push origin develop
+
+git checkout staging
+git merge hotfix/correcao-urgente
+git push origin staging
+
+# Deploy em produção (seguir passo 4)
 ```
 
 ---

@@ -3,13 +3,34 @@
 # ============================================================================
 # Deploy Script para VPS - Reiche Academy (Staging + Produção)
 # ============================================================================
-# Uso: bash deploy-vps.sh
+# Uso: bash deploy-vps.sh [staging|prod]
 # Executa em: root@76.13.66.10
 # ============================================================================
 
 set -e  # Para em qualquer erro
 
+# Definir ambiente (padrão: staging)
+ENVIRONMENT=${1:-staging}
+
+if [[ "$ENVIRONMENT" != "staging" && "$ENVIRONMENT" != "prod" ]]; then
+    echo "❌ Ambiente inválido: $ENVIRONMENT"
+    echo "Uso: bash deploy-vps.sh [staging|prod]"
+    exit 1
+fi
+
+# Definir branch baseado no ambiente
+if [ "$ENVIRONMENT" == "staging" ]; then
+    BRANCH="staging"
+    DOMAIN="staging.reicheacademy.com.br"
+else
+    BRANCH="main"
+    DOMAIN="app.reicheacademy.com.br"
+fi
+
 echo "🚀 Iniciando Deploy do Reiche Academy no VPS..."
+echo "📍 Ambiente: $ENVIRONMENT"
+echo "🌿 Branch: $BRANCH"
+echo "🌐 Domínio: $DOMAIN"
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 
 # ============================================================================
@@ -57,13 +78,16 @@ echo "📥 [4/8] Clonando repositório..."
 cd /opt/reiche-academy
 
 if [ -d ".git" ]; then
-    echo "✅ Repositório já existe. Atualizando..."
+    echo "✅ Repositório já existe. Atualizando branch $BRANCH..."
     git fetch origin
-    git reset --hard origin/main
+    git checkout "$BRANCH"
+    git pull origin "$BRANCH"
 else
     echo "📥 Clonando repositório pela primeira vez..."
-    git clone https://github.com/filipeiack/reiche-academy.git .
+    git clone -b "$BRANCH" https://github.com/filipeiack/reiche-academy.git .
 fi
+
+echo "✅ Usando branch: $(git branch --show-current)"
 
 # ============================================================================
 # STEP 5: Configurar variáveis de ambiente
