@@ -81,7 +81,73 @@ Banda: Ilimitada
 
 ---
 
-## 🚀 Deploy Passo a Passo
+## � Scripts Automatizados
+
+Este projeto inclui scripts para facilitar deploy e manutenção:
+
+### **deploy-vps.sh** - Deploy Automático
+
+Realiza o setup completo do VPS em uma execução.
+
+```bash
+cd /opt/reiche-academy
+bash scripts/deploy-vps.sh
+```
+
+**O que faz:**
+- ✅ Atualiza sistema Ubuntu
+- ✅ Instala Docker e Docker Compose (se necessário)
+- ✅ Clona/atualiza repositório GitHub
+- ✅ Configura variáveis de ambiente
+- ✅ Faz build de todas as imagens
+- ✅ Inicia todos os serviços
+- ✅ Executa migrations
+- ✅ Carrega dados iniciais (seeds)
+
+**Tempo estimado**: 20-30 minutos (primeira execução)
+
+### **maintenance-vps.sh** - Manutenção Contínua
+
+Script interativo para monitorar e manter a saúde do VPS.
+
+**Uso Interativo:**
+```bash
+bash scripts/maintenance-vps.sh
+```
+
+**Menu:**
+```
+1) 📊 Health Check        - Verifica saúde de todos os serviços
+2) 💾 Backup Database     - Faz backup completo dos bancos
+3) 📋 Verificar Logs      - Procura erros nos logs
+4) 📥 Atualizar Código    - Puxa novo código e faz redeploy
+5) 🔄 Reiniciar Serviços  - Reinicia containers específicos
+6) 📊 Mostrar Status      - Mostra docker ps
+7) 📈 Uso de Recursos     - Mostra docker stats
+8) 🚪 Sair
+```
+
+**Uso Direto:**
+```bash
+bash scripts/maintenance-vps.sh health    # Health check
+bash scripts/maintenance-vps.sh backup    # Fazer backup
+bash scripts/maintenance-vps.sh logs      # Ver logs com erros
+bash scripts/maintenance-vps.sh update    # Atualizar código
+bash scripts/maintenance-vps.sh restart   # Reiniciar serviços
+```
+
+**Automação com Cron:**
+```bash
+# Backup automático (3h da manhã)
+0 3 * * * cd /opt/reiche-academy && bash scripts/maintenance-vps.sh backup >> maintenance.log 2>&1
+
+# Health check diário (9h da manhã)
+0 9 * * * cd /opt/reiche-academy && bash scripts/maintenance-vps.sh health >> maintenance.log 2>&1
+```
+
+---
+
+## �🚀 Deploy Passo a Passo
 
 ### **1. Configurar DNS**
 
