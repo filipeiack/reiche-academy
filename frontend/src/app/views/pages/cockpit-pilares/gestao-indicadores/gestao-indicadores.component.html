@@ -142,8 +142,7 @@
           <!-- Melhor (Toggle) -->
           <td class="text-center">
             @if (indicador.isEditing) {
-            <button class="btn btn-sm" [class.btn-success]="indicador.melhor === 'MAIOR'"
-              [class.btn-info]="indicador.melhor === 'MENOR'" (click)="toggleMelhor(indicador)"
+            <button class="btn btn-sm btn-info" (click)="toggleMelhor(indicador)"
               [id]="'melhor-' + indicador.ordem">
               @if (indicador.melhor === 'MAIOR') {
               <i class="bi bi-arrow-up-circle"></i>
@@ -153,9 +152,9 @@
             </button>
             } @else {
             @if (indicador.melhor === 'MAIOR') {
-            <i class="bi bi-arrow-up-circle text-success" style="font-size: 1.25rem;"></i>
+            <i class="bi bi-arrow-up-circle text-black" style="font-size: 1.25rem;"></i>
             } @else {
-            <i class="bi bi-arrow-down-circle text-info" style="font-size: 1.25rem;"></i>
+            <i class="bi bi-arrow-down-circle text-black" style="font-size: 1.25rem;"></i>
             }
             }
           </td>
