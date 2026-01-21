@@ -101,10 +101,11 @@ export class GraficoIndicadoresComponent implements OnInit, OnChanges {
       },
       datalabels: {
         display: true,
-        color: (context) => {
-          // Branco para barras, preto para linha
-          return context.dataset.type === 'bar' ? '#FFFFFF' : '#000000';
+        rotation: (context) => {
+          // Vertical para barras, horizontal para linha
+          return context.dataset.type === 'bar' ? -90 : 0;
         },
+        color: '#000000',
         font: {
           size: 11,
           weight: 'bold' as const,
@@ -235,6 +236,7 @@ export class GraficoIndicadoresComponent implements OnInit, OnChanges {
     const meses = mesesData.map((m) => this.getNomeMes(m.mes!));
     const metas = mesesData.map((m) => m.meta || null);
     const realizados = mesesData.map((m) => m.realizado || null);
+    const historicos = mesesData.map((m) => m.historico || null);
 
     // Calcular cores das barras baseado no status (verde/vermelho)
     const coresBarras = mesesData.map((m) => {
@@ -255,6 +257,15 @@ export class GraficoIndicadoresComponent implements OnInit, OnChanges {
       labels: meses,
       datasets: [
         {
+          type: 'bar',
+          label: 'Histórico',
+          data: historicos,
+          backgroundColor: 'rgba(200, 200, 200, 0.5)',
+          borderColor: 'rgba(150, 150, 150, 0.8)',
+          borderWidth: 1,
+          order: 2,
+        },
+        {
           type: 'line',
           label: 'Meta',
           data: metas,
@@ -265,6 +276,7 @@ export class GraficoIndicadoresComponent implements OnInit, OnChanges {
           pointRadius: 4,
           pointHoverRadius: 6,
           fill: false,
+          order: 1,
         },
         {
           type: 'bar',
@@ -273,6 +285,7 @@ export class GraficoIndicadoresComponent implements OnInit, OnChanges {
           backgroundColor: coresBarras,
           borderColor: coresBordasBarras,
           borderWidth: 1,
+          order: 3,
         },
       ],
     };

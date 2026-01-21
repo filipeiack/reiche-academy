@@ -129,7 +129,7 @@ enum DirecaoIndicador {
 
 ### 2.3. IndicadorMensal
 
-**Descrição:** Valores de meta e realizado para cada mês (jan-dez) + resumo anual de um indicador.
+**Descrição:** Valores de meta, histórico e realizado para cada mês (jan-dez) + resumo anual de um indicador.
 
 | Campo | Tipo | Descrição |
 |-------|------|-----------|
@@ -138,6 +138,7 @@ enum DirecaoIndicador {
 | mes | Int? | 1-12 (null para resumo anual) |
 | ano | Int | Ano de referência (ex: 2026) |
 | meta | Float? | Valor de meta |
+| historico | Float? | Valor histórico de referência (períodos anteriores) |
 | realizado | Float? | Valor realizado |
 | createdAt | DateTime | Data de criação |
 | updatedAt | DateTime | Data da última atualização |
@@ -156,8 +157,10 @@ enum DirecaoIndicador {
 
 **Regras de Negócio:**
 - `mes = null` representa resumo anual
-- Meta e realizado podem ser null (não preenchido)
+- Meta, histórico e realizado podem ser null (não preenchido)
+- Histórico representa valores de períodos anteriores usados como baseline/referência
 - Status visual calculado no frontend baseado em meta vs realizado
+- Gráfico exibe histórico como barras cinza claro para diferenciação visual
 
 ---
 

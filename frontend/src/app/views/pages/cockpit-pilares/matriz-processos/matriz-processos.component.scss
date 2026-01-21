@@ -1,24 +1,21 @@
-// Status-based select styling (específico da lógica de negócio)
-.form-select {
-  border-width: 2px;
-  font-weight: 600;
-  transition: all 0.2s;
 
-  &.select-pendente {
-    border-color: #6c757d;
-    background-color: #f8f9fa;
-    color: #6c757d;
-  }
+/* Classes de status para ng-select */
+::ng-deep ng-select.bg-danger .ng-select-container {
+  background-color: var(--bs-danger-bg-subtle) !important;
+  border-color: var(--bs-danger) !important;
+}
 
-  &.select-em-andamento {
-    border-color: #0d6efd;
-    background-color: #e7f1ff;
-    color: #0d6efd;
-  }
+::ng-deep ng-select.bg-warning .ng-select-container {
+  background-color: var(--bs-warning-bg-subtle) !important;
+  border-color: var(--bs-warning) !important;
+}
 
-  &.select-concluido {
-    border-color: #198754;
-    background-color: #d1e7dd;
-    color: #198754;
-  }
+::ng-deep ng-select.bg-warning .ng-value-label,
+::ng-deep ng-select.bg-warning .ng-placeholder {
+  color: var(--bs-emphasis-color) !important;
+}
+
+::ng-deep ng-select.bg-success .ng-select-container {
+  background-color: var(--bs-success-bg-subtle) !important;
+  border-color: var(--bs-success) !important;
 }

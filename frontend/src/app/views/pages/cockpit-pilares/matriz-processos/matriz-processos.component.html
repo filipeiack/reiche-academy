@@ -16,11 +16,11 @@
       <table class="table table-hover table-sm" style="table-layout: fixed;">
         <thead class="table-light small">
           <tr>
-            <th style="width: 50%;">Nome da Rotina</th>
-            <th class="text-center" style="width: 12%;">Criticidade</th>
-            <th class="text-center" style="width: 8%;">Nota</th>
-            <th class="text-center" style="width: 15%; white-space: normal; ">Status Mapeamento</th>
-            <th class="text-center" style="width: 15%; white-space: normal;">Status Treinamento</th>
+            <th style="width: 45%;">Nome da Rotina</th>
+            <th class="text-center" style="width: 10%;">Criticidade</th>
+            <th class="text-center" style="width: 5%;">Nota</th>
+            <th class="text-center" style="width: 20%;" title="STATUS DO MAPEAMENTO">Status Mapeamento</th>
+            <th class="text-center" style="width: 20%;" title="STATUS DO TREINAMENTO/EXECUÇÃO">Status Treinamento</th>
           </tr>
         </thead>
         <tbody>
@@ -69,6 +69,7 @@
                 bindValue="value"
                 [clearable]="true"
                 [searchable]="false"
+                [ngClass]="processo.statusMapeamento ? getStatusBadgeClass(processo.statusMapeamento) : ''"
                 [id]="'statusMapeamento-' + processo.id">
               </ng-select>
             </td>
@@ -80,6 +81,7 @@
                 bindValue="value"
                 [clearable]="true"
                 [searchable]="false"
+                [ngClass]="processo.statusTreinamento ? getStatusBadgeClass(processo.statusTreinamento) : ''"
                 [id]="'statusTreinamento-' + processo.id">
               </ng-select>
             </td>

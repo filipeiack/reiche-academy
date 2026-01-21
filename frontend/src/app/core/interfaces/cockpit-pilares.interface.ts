@@ -74,6 +74,7 @@ export interface IndicadorMensal {
   ano: number;
   meta?: number;
   realizado?: number;
+  historico?: number;
   createdAt: string;
   updatedAt: string;
   createdBy?: string;

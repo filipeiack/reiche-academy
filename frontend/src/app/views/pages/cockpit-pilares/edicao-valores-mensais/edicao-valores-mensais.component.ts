@@ -27,7 +27,7 @@ export class EdicaoValoresMensaisComponent implements OnInit, OnChanges, OnDestr
   private saveFeedbackService = inject(SaveFeedbackService);
   private autoSaveSubject = new Subject<{
     indicadorMensalId: string;
-    campo: 'meta' | 'realizado';
+    campo: 'meta' | 'realizado' | 'historico';
     valor: number | null;
   }>();
 
@@ -36,7 +36,7 @@ export class EdicaoValoresMensaisComponent implements OnInit, OnChanges, OnDestr
   private savingCount = 0;
 
   // Cache de valores em edição
-  private valoresCache = new Map<string, { meta?: number; realizado?: number }>();
+  private valoresCache = new Map<string, { meta?: number; realizado?: number; historico?: number }>();
 
   ngOnInit(): void {
     this.setupAutoSave();
@@ -86,7 +86,7 @@ export class EdicaoValoresMensaisComponent implements OnInit, OnChanges, OnDestr
 
   onValorChange(
     indicadorMensal: IndicadorMensal,
-    campo: 'meta' | 'realizado',
+    campo: 'meta' | 'realizado' | 'historico',
     event: Event
   ): void {
     const input = event.target as HTMLInputElement;
@@ -118,7 +118,7 @@ export class EdicaoValoresMensaisComponent implements OnInit, OnChanges, OnDestr
 
   private executeSave(
     indicadorMensalId: string,
-    campo: 'meta' | 'realizado',
+    campo: 'meta' | 'realizado' | 'historico',
     valor: number | null
   ): void {
     this.savingCount++;
@@ -157,6 +157,7 @@ export class EdicaoValoresMensaisComponent implements OnInit, OnChanges, OnDestr
           ano: mes.ano,
           meta: cached.meta ?? mes.meta ?? undefined,
           realizado: cached.realizado ?? mes.realizado ?? undefined,
+          historico: cached.historico ?? mes.historico ?? undefined,
         },
       ],
     };
@@ -289,7 +290,7 @@ export class EdicaoValoresMensaisComponent implements OnInit, OnChanges, OnDestr
    */
   private getValorAtualizado(
     mes: IndicadorMensal,
-    campo: 'meta' | 'realizado'
+    campo: 'meta' | 'realizado' | 'historico'
   ): number | null {
     const cached = this.valoresCache.get(mes.id);
     if (cached && cached[campo] !== undefined) {

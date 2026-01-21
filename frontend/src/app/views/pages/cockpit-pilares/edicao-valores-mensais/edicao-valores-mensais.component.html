@@ -87,6 +87,9 @@
             <tr>
               <th style="width: 80px;">Mês</th>
               <th class="text-center" style="width: 60px;">Melhor</th>
+              <th style="width: 120px;">Histórico
+                ({{ getLabelTipoMedida(indicador.tipoMedida) }})
+              </th>
               <th style="width: 120px;">Meta
                 ({{ getLabelTipoMedida(indicador.tipoMedida) }})
               </th>
@@ -115,12 +118,16 @@
                 }
               </td>
               <td style="width: 120px;">
+                <input type="number" class="form-control form-control-sm" [value]="mes.historico"
+                  (input)="onValorChange(mes, 'historico', $event)" step="1" />
+              </td>
+              <td style="width: 120px;">
                 <input type="number" class="form-control form-control-sm" [value]="mes.meta"
-                  (input)="onValorChange(mes, 'meta', $event)" step="0.01" />
+                  (input)="onValorChange(mes, 'meta', $event)" step="1" />
               </td>
               <td style="width: 120px;">
                 <input type="number" class="form-control form-control-sm" [value]="mes.realizado"
-                  (input)="onValorChange(mes, 'realizado', $event)" step="0.01" />
+                  (input)="onValorChange(mes, 'realizado', $event)" step="1" />
               </td>
               <td class="text-center" style="width: 100px;">
                 @if (mes.meta && mes.realizado) {

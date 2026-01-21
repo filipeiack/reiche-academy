@@ -29,9 +29,9 @@ export class MatrizProcessosComponent implements OnInit, OnChanges, OnDestroy {
 
   // Opções para ng-select
   statusOptions = [
-    { value: StatusProcesso.PENDENTE, label: 'Pendente' },
-    { value: StatusProcesso.EM_ANDAMENTO, label: 'Em Andamento' },
-    { value: StatusProcesso.CONCLUIDO, label: 'Concluído' }
+    { value: StatusProcesso.PENDENTE, label: 'PENDENTE' },
+    { value: StatusProcesso.EM_ANDAMENTO, label: 'EM ANDAMENTO' },
+    { value: StatusProcesso.CONCLUIDO, label: 'CONCLUÍDO' }
   ];
 
   // Auto-save
@@ -184,11 +184,11 @@ export class MatrizProcessosComponent implements OnInit, OnChanges, OnDestroy {
   getStatusLabel(status: StatusProcesso): string {
     switch (status) {
       case 'PENDENTE':
-        return 'Pendente';
+        return 'PENDENTE';
       case 'EM_ANDAMENTO':
-        return 'Em Andamento';
+        return 'EM ANDAMENTO';
       case 'CONCLUIDO':
-        return 'Concluído';
+        return 'CONCLUÍDO';
       default:
         return '';
     }
