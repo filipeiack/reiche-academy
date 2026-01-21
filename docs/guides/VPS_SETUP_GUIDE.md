@@ -256,7 +256,23 @@ docker compose -f docker-compose.vps.yml ps
 docker compose -f docker-compose.vps.yml logs -f
 ```
 
-### **6. Configurar Databases**
+### **6. Criar Databases (se necessário)**
+
+```bash
+# Verificar se databases existem
+docker compose -f docker-compose.vps.yml exec postgres psql -U reiche_admin -d postgres -c "\l"
+
+# Se NÃO existirem, criar manualmente:
+docker compose -f docker-compose.vps.yml exec postgres psql -U reiche_admin -d postgres -c "CREATE DATABASE reiche_academy_prod;"
+docker compose -f docker-compose.vps.yml exec postgres psql -U reiche_admin -d postgres -c "CREATE DATABASE reiche_academy_staging;"
+
+# Reiniciar backends para reconectar
+docker compose -f docker-compose.vps.yml restart backend-prod backend-staging
+```
+
+> **Nota**: O script `init-databases.sh` executa automaticamente apenas na **primeira vez** que o PostgreSQL é criado. Se o volume já existia, é necessário criar manualmente.
+
+### **7. Executar Migrations e Seeds**
 
 ```bash
 # PRODUÇÃO - Migrations
@@ -272,7 +288,7 @@ docker compose -f docker-compose.vps.yml exec backend-staging npm run migration:
 docker compose -f docker-compose.vps.yml exec backend-staging npm run seed
 ```
 
-### **7. Configurar SSL (Let's Encrypt - Grátis)**
+### **8. Configurar SSL (Let's Encrypt - Grátis)**
 
 ```bash
 # Instalar Certbot
@@ -300,24 +316,28 @@ cp /etc/letsencrypt/live/staging.reicheacademy.cloud/fullchain.pem \
 cp /etc/letsencrypt/live/staging.reicheacademy.cloud/privkey.pem \
    nginx/ssl/staging.reicheacademy.cloud.key
 
-# Editar nginx.vps.conf e descomentar seções HTTPS
-nano nginx/nginx.vps.conf
+# Editar nginx.conf e descomentar seções HTTPS
+nano nginx/nginx.conf
 
 # Reiniciar Nginx
 docker compose -f docker-compose.vps.yml start nginx
 ```
 
-### **8. Testar Acesso**
+### **9. Testar Acesso (Antes de Configurar DNS)**
 
 ```bash
-# Produção
-curl http://app.reicheacademy.cloud
-curl http://app.reicheacademy.cloud/api/health
+# Testar Backends Diretamente (Produção e Staging)
+curl http://localhost:3001/api/health  # Backend Produção
+curl http://localhost:3002/api/health  # Backend Staging
 
-# Staging
-curl http://staging.reicheacademy.cloud
-curl http://staging.reicheacademy.cloud/api/health
+# Testar via Nginx (usando header Host)
+curl -H "Host: app.reicheacademy.cloud" http://localhost/api/health        # Produção
+curl -H "Host: staging.reicheacademy.cloud" http://localhost/api/health    # Staging
+
+# Se tudo retornar {"status":"ok"}, os serviços estão funcionando! ✅
 ```
+
+> **Nota**: Os domínios `app.reicheacademy.cloud` e `staging.reicheacademy.cloud` só funcionarão **após configurar o DNS** (passo 1). Por enquanto, use localhost para testar.
 
 ---
 
