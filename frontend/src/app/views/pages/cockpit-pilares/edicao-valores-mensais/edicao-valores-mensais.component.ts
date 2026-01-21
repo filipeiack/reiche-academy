@@ -250,6 +250,19 @@ export class EdicaoValoresMensaisComponent implements OnInit, OnChanges, OnDestr
     }
   }
 
+  calcularDesvioAbsoluto(indicador: IndicadorCockpit, mes: IndicadorMensal): number {
+    const meta = this.getValorAtualizado(mes, 'meta');
+    const realizado = this.getValorAtualizado(mes, 'realizado');
+    
+    if (!meta || !realizado) return 0;
+
+    if (indicador.melhor === DirecaoIndicador.MAIOR) {
+      return realizado - meta;
+    } else {
+      return meta - realizado;
+    }
+  }
+
   calcularStatus(
     indicador: IndicadorCockpit,
     mes: IndicadorMensal
@@ -263,12 +276,10 @@ export class EdicaoValoresMensaisComponent implements OnInit, OnChanges, OnDestr
 
     if (indicador.melhor === DirecaoIndicador.MAIOR) {
       if (percentual >= 100) return 'success';
-      if (percentual >= 80) return 'warning';
       return 'danger';
     } else {
       // Para MENOR, quanto menor melhor
       if (percentual <= 100) return 'success';
-      if (percentual <= 120) return 'warning';
       return 'danger';
     }
   }
