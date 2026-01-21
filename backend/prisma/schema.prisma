@@ -485,6 +485,7 @@ model IndicadorMensal {
 
   meta       Float?
   realizado  Float?
+  historico  Float?
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt

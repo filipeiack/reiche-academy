@@ -600,6 +600,7 @@ export class CockpitPilaresService {
           data: {
             meta: valor.meta,
             realizado: valor.realizado,
+            historico: valor.historico,
             updatedBy: user.id,
           },
         });
@@ -612,6 +613,7 @@ export class CockpitPilaresService {
             mes: valor.mes,
             meta: valor.meta,
             realizado: valor.realizado,
+            historico: valor.historico,
             createdBy: user.id,
             updatedBy: user.id,
           },

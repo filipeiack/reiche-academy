@@ -46,6 +46,14 @@ export class ValorMensalDto {
   @IsOptional()
   @IsNumber({}, { message: 'realizado deve ser um número' })
   realizado?: number;
+
+  @ApiProperty({
+    example: 1200000,
+    description: 'Valor histórico de referência',
+  })
+  @IsOptional()
+  @IsNumber({}, { message: 'historico deve ser um número' })
+  historico?: number;
 }
 
 export class UpdateValoresMensaisDto {
