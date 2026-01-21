@@ -44,7 +44,7 @@ FROM nginx:alpine AS production
 # COPY nginx.conf /etc/nginx/nginx.conf
 
 # Copy built application
-COPY --from=builder /app/dist/frontend/browser /usr/share/nginx/html
+COPY --from=builder /app/dist/reiche-academy/browser /usr/share/nginx/html
 
 # Expose port
 EXPOSE 80
