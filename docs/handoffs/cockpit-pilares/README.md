@@ -1,10 +1,11 @@
 # Handoff: Cockpit de Pilares
 
 **Feature:** Cockpit de Pilares (Painel Gerencial Especializado)  
-**Status:** 🟢 READY FOR IMPLEMENTATION  
+**Status:** 🟢 READY FOR QA  
 **Criado em:** 2026-01-15  
-**Última atualização:** 2026-01-15 (v1.1)  
-**System Engineer:** v1
+**Última atualização:** 2026-01-21 (Revisão Completa)  
+**System Engineer:** v1  
+**Business Rules Reviewer:** ✅ APROVADO (2026-01-21)
 
 ---
 
@@ -38,8 +39,22 @@ Criação de **painéis gerenciais especializados** por pilar, permitindo:
 
 ## Documentos deste Handoff
 
-### 0. Atualização v1.1 (LEIA PRIMEIRO)
-📄 **[ATUALIZACAO_v1.1.md](./ATUALIZACAO_v1.1.md)** ← **NOVO**
+### 0. Business Rules Reviewer (2026-01-21) ← **NOVO**
+📄 **[reviewer-v1.md](./reviewer-v1.md)** ✅
+
+**Conteúdo:**
+- Revisão completa de 5 documentos de regras de negócio
+- Validação de rastreabilidade ao código (100% verificada)
+- Análise de riscos e lacunas (nenhum bloqueador)
+- Recomendações não-vinculantes
+- Aprovação para QA Unitário
+
+**Quando ler:** Para entender qualidade da documentação e ressalvas identificadas.
+
+---
+
+### 1. Atualização v1.1 (LEIA PRIMEIRO)
+📄 **[ATUALIZACAO_v1.1.md](./ATUALIZACAO_v1.1.md)**
 
 **Conteúdo:**
 - ProcessoPrioritario: Vínculo (não snapshot)
@@ -100,7 +115,18 @@ Criação de **painéis gerenciais especializados** por pilar, permitindo:
 
 ## Documentos Relacionados
 
-### Regra de Negócio (contrato)
+### Regras de Negócio Extraídas (2026-01-21) ✅
+📄 **[/docs/business-rules/cockpit-multi-tenant-seguranca.md](../../business-rules/cockpit-multi-tenant-seguranca.md)** — Controle multi-tenant e segurança  
+📄 **[/docs/business-rules/cockpit-gestao-indicadores.md](../../business-rules/cockpit-gestao-indicadores.md)** — CRUD de indicadores customizados  
+📄 **[/docs/business-rules/cockpit-valores-mensais.md](../../business-rules/cockpit-valores-mensais.md)** — Edição de valores mensais e cálculos  
+📄 **[/docs/business-rules/cockpit-processos-prioritarios.md](../../business-rules/cockpit-processos-prioritarios.md)** — Auto-vinculação de rotinas  
+📄 **[/docs/business-rules/cockpit-ux-excel-like.md](../../business-rules/cockpit-ux-excel-like.md)** — Comportamentos de interface Excel-like
+
+**Status:** ✅ REVISADO (reviewer-v1.md) - APROVADO PARA QA
+
+---
+
+### Regra de Negócio Original (contrato)
 📄 **[/docs/business-rules/cockpit-pilares.md](../../business-rules/cockpit-pilares.md)**
 
 Define:

@@ -360,7 +360,71 @@ await auditService.log({
 
 ---
 
-### R-PEVOL-003: Buscar Período Aberto
+### R-PEVOL-003: Validação com Período de Mentoria
+
+**Descrição:** Trimestres devem ser criados dentro do período de mentoria ativo.
+
+**Implementação:**
+- **Endpoint:** `POST /empresas/:id/periodos-avaliacao`
+- **Método:** `PeriodosAvaliacaoService.create()`
+
+**Validações adicionais:**
+
+1. **Buscar período de mentoria ativo:**
+```typescript
+const periodoMentoria = await this.prisma.periodoMentoria.findFirst({
+  where: {
+    empresaId,
+    ativo: true,
+  },
+});
+
+if (!periodoMentoria) {
+  throw new BadRequestException(
+    'Empresa não possui período de mentoria ativo'
+  );
+}
+```
+
+2. **Validar dataReferencia dentro do período:**
+```typescript
+const dataReferencia = new Date(dto.dataReferencia);
+
+if (
+  dataReferencia < periodoMentoria.dataInicio ||
+  dataReferencia > periodoMentoria.dataFim
+) {
+  throw new BadRequestException(
+    `Data de referência (${format(dataReferencia, 'dd/MM/yyyy')}) deve estar dentro do período de mentoria ativo (${format(periodoMentoria.dataInicio, 'dd/MM/yyyy')} - ${format(periodoMentoria.dataFim, 'dd/MM/yyyy')})`
+  );
+}
+```
+
+3. **Vincular período ao período de mentoria:**
+```typescript
+const periodo = await this.prisma.periodoAvaliacao.create({
+  data: {
+    empresaId,
+    trimestre,
+    ano,
+    dataReferencia,
+    periodoMentoriaId: periodoMentoria.id, // ✅ VÍNCULO
+    aberto: true,
+    dataInicio: new Date(),
+    createdBy: user.id,
+  },
+});
+```
+
+**Arquivos afetados:**
+- `backend/src/modules/periodos-avaliacao/periodos-avaliacao.service.ts`
+- `backend/prisma/schema.prisma` (campo `periodoMentoriaId`)
+
+**Ref:** ADR-007 (Período de Mentoria de 1 Ano) | [periodo-mentoria.md](periodo-mentoria.md)
+
+---
+
+### R-PEVOL-004: Buscar Período Aberto
 
 **Descrição:** Retorna período ativo da empresa (se existir).
 
@@ -405,7 +469,7 @@ null
 
 ---
 
-### R-PEVOL-004: Listar Histórico de Períodos
+### R-PEVOL-005: Listar Histórico de Períodos
 
 **Descrição:** Retorna lista de períodos congelados com snapshots (filtro opcional por ano).
 
