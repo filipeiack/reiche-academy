@@ -101,7 +101,7 @@ export class EmpresasService {
   }
 
   async findAll() {
-    return this.prisma.empresa.findMany({
+    const empresas = await this.prisma.empresa.findMany({
       where: { ativo: true },
       include: {
         _count: {
@@ -110,9 +110,20 @@ export class EmpresasService {
             pilares: true,
           },
         },
+        periodosMentoria: {
+          where: { ativo: true },
+          take: 1,
+        },
       },
       orderBy: { nome: 'asc' },
     });
+
+    // Mapear para incluir periodoMentoriaAtivo
+    return empresas.map((empresa) => ({
+      ...empresa,
+      periodoMentoriaAtivo: empresa.periodosMentoria[0] || null,
+      periodosMentoria: undefined, // Remover array original
+    }));
   }
 
   async findAllByEmpresa(empresaId: string) {

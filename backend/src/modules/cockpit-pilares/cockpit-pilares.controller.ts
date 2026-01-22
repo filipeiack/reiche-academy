@@ -310,6 +310,7 @@ export class CockpitPilaresController {
   getDadosGraficos(
     @Param('cockpitId') cockpitId: string,
     @Query('ano', ParseIntPipe) ano: number,
+    @Query('periodoMentoriaId') periodoMentoriaId: string | undefined,
     @Request() req: ExpressRequest & { user: any },
   ) {
     const anoAtual = ano || new Date().getFullYear();
@@ -317,6 +318,7 @@ export class CockpitPilaresController {
       cockpitId,
       anoAtual,
       req.user,
+      periodoMentoriaId,
     );
   }
 }

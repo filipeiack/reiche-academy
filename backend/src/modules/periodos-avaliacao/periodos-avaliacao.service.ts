@@ -42,7 +42,28 @@ export class PeriodosAvaliacaoService {
     const trimestre = getQuarter(dataRef);
     const ano = getYear(dataRef);
 
-    // 3. Validar se já existe período aberto
+    // 3. R-PEVOL-003: Buscar período de mentoria ativo e validar dataReferencia
+    const periodoMentoria = await this.prisma.periodoMentoria.findFirst({
+      where: {
+        empresaId,
+        ativo: true,
+      },
+    });
+
+    if (!periodoMentoria) {
+      throw new BadRequestException(
+        'Empresa não possui período de mentoria ativo. Configure um período de mentoria antes de criar período de avaliação.',
+      );
+    }
+
+    // Validar que dataReferencia está dentro do período de mentoria
+    if (dataRef < periodoMentoria.dataInicio || dataRef > periodoMentoria.dataFim) {
+      throw new BadRequestException(
+        `Data de referência deve estar dentro do período de mentoria ativo (${format(periodoMentoria.dataInicio, 'dd/MM/yyyy')} - ${format(periodoMentoria.dataFim, 'dd/MM/yyyy')})`,
+      );
+    }
+
+    // 4. Validar se já existe período aberto
     const periodoAberto = await this.prisma.periodoAvaliacao.findFirst({
       where: { empresaId, aberto: true },
     });
@@ -53,7 +74,7 @@ export class PeriodosAvaliacaoService {
       );
     }
 
-    // 4. Validar intervalo de 90 dias
+    // 5. Validar intervalo de 90 dias
     const ultimoPeriodo = await this.prisma.periodoAvaliacao.findFirst({
       where: { empresaId },
       orderBy: { dataReferencia: 'desc' },
@@ -71,10 +92,11 @@ export class PeriodosAvaliacaoService {
       }
     }
 
-    // 5. Criar período
+    // 6. Criar período vinculado ao período de mentoria
     const periodo = await this.prisma.periodoAvaliacao.create({
       data: {
         empresaId,
+        periodoMentoriaId: periodoMentoria.id,
         trimestre,
         ano,
         dataReferencia: dataRef,
@@ -83,7 +105,7 @@ export class PeriodosAvaliacaoService {
       },
     });
 
-    // 6. Auditar
+    // 7. Auditar
     await this.auditService.log({
       usuarioId: user.id,
       usuarioNome: user.nome,
@@ -91,7 +113,7 @@ export class PeriodosAvaliacaoService {
       entidade: 'PeriodoAvaliacao',
       entidadeId: periodo.id,
       acao: 'CREATE',
-      dadosDepois: { trimestre, ano, dataReferencia: dto.dataReferencia },
+      dadosDepois: { trimestre, ano, dataReferencia: dto.dataReferencia, periodoMentoriaId: periodoMentoria.id },
     });
 
     return periodo;

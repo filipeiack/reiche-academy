@@ -84,6 +84,54 @@ async function main() {
   console.log(`✅ 2 empresas criadas: ${empresaA.nome}, ${empresaB.nome}`);
 
   // ========================================
+  // 2.1. PERÍODOS DE MENTORIA (retroativo)
+  // ========================================
+
+  const { addYears } = await import('date-fns');
+
+  // Criar período de mentoria retroativo para Empresa A
+  const periodoMentoriaA = await prisma.periodoMentoria.upsert({
+    where: {
+      empresaId_numero: {
+        empresaId: empresaA.id,
+        numero: 1,
+      },
+    },
+    update: {},
+    create: {
+      empresaId: empresaA.id,
+      numero: 1,
+      dataInicio: empresaA.createdAt,
+      dataFim: addYears(empresaA.createdAt, 1),
+      ativo: true,
+      createdBy: null, // Seed não tem usuário
+    },
+  });
+
+  // Criar período de mentoria retroativo para Empresa B
+  const periodoMentoriaB = await prisma.periodoMentoria.upsert({
+    where: {
+      empresaId_numero: {
+        empresaId: empresaB.id,
+        numero: 1,
+      },
+    },
+    update: {},
+    create: {
+      empresaId: empresaB.id,
+      numero: 1,
+      dataInicio: empresaB.createdAt,
+      dataFim: addYears(empresaB.createdAt, 1),
+      ativo: true,
+      createdBy: null, // Seed não tem usuário
+    },
+  });
+
+  console.log(`✅ 2 períodos de mentoria criados:`);
+  console.log(`   - Empresa A: Período ${periodoMentoriaA.numero} (${periodoMentoriaA.dataInicio.toISOString().split('T')[0]} - ${periodoMentoriaA.dataFim.toISOString().split('T')[0]})`);
+  console.log(`   - Empresa B: Período ${periodoMentoriaB.numero} (${periodoMentoriaB.dataInicio.toISOString().split('T')[0]} - ${periodoMentoriaB.dataFim.toISOString().split('T')[0]})`);
+
+  // ========================================
   // 3. USUÁRIOS (senha padrão: Admin@123)
   // ========================================
 

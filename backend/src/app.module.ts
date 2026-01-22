@@ -13,6 +13,7 @@ import { AuditModule } from './modules/audit/audit.module';
 import { PerfisModule } from './modules/perfis/perfis.module';
 import { PeriodosAvaliacaoModule } from './modules/periodos-avaliacao/periodos-avaliacao.module';
 import { CockpitPilaresModule } from './modules/cockpit-pilares/cockpit-pilares.module';
+import { PeriodosMentoriaModule } from './modules/periodos-mentoria/periodos-mentoria.module';
 
 @Module({
   imports: [
@@ -38,6 +39,7 @@ import { CockpitPilaresModule } from './modules/cockpit-pilares/cockpit-pilares.
     PerfisModule,
     PeriodosAvaliacaoModule,
     CockpitPilaresModule,
+    PeriodosMentoriaModule,
   ],
 })
 export class AppModule {}

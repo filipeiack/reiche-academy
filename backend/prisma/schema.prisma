@@ -192,6 +192,7 @@ model Empresa {
   usuarios          Usuario[]
   pilares           PilarEmpresa[]
   periodosAvaliacao PeriodoAvaliacao[]
+  periodosMentoria  PeriodoMentoria[]
 
   @@map("empresas")
 }
@@ -275,6 +276,9 @@ model PeriodoAvaliacao {
 
   empresaId String
   empresa   Empresa @relation(fields: [empresaId], references: [id], onDelete: Cascade)
+
+  periodoMentoriaId String?
+  periodoMentoria   PeriodoMentoria? @relation(fields: [periodoMentoriaId], references: [id], onDelete: Cascade)
 
   // Período que está sendo avaliado
   trimestre      Int // 1, 2, 3, 4
@@ -480,6 +484,9 @@ model IndicadorMensal {
   indicadorCockpitId String
   indicadorCockpit   IndicadorCockpit @relation(fields: [indicadorCockpitId], references: [id], onDelete: Cascade)
 
+  periodoMentoriaId String?
+  periodoMentoria   PeriodoMentoria? @relation(fields: [periodoMentoriaId], references: [id], onDelete: Cascade)
+
   mes Int? // 1-12 (null para resumo anual)
   ano Int
 
@@ -492,8 +499,8 @@ model IndicadorMensal {
   createdBy String?
   updatedBy String?
 
-  @@unique([indicadorCockpitId, ano, mes])
   @@index([indicadorCockpitId])
+  @@index([periodoMentoriaId])
   @@map("indicadores_mensais")
 }
 
@@ -608,3 +615,34 @@ model AcaoCockpit {
   @@map("acoes_cockpit")
 }
 
+// ===== PERÍODO DE MENTORIA =====
+
+model PeriodoMentoria {
+  id String @id @default(uuid())
+
+  empresaId String
+  empresa   Empresa @relation(fields: [empresaId], references: [id], onDelete: Cascade)
+
+  // Identificação do período
+  numero     Int      // 1, 2, 3... (sequencial por empresa)
+  dataInicio DateTime // Ex: 2026-05-01 (quando contratou)
+  dataFim    DateTime // Ex: 2027-04-30 (calculado: dataInicio + 1 ano)
+
+  // Controle
+  ativo            Boolean   @default(true) // Apenas 1 ativo por empresa
+  dataContratacao  DateTime  @default(now()) // Quando foi contratado
+  dataEncerramento DateTime? // Quando foi encerrado (renovação ou cancelamento)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  createdBy String?
+  updatedBy String?
+
+  // Relations
+  periodosAvaliacao  PeriodoAvaliacao[]
+  indicadoresMensais IndicadorMensal[]
+
+  @@unique([empresaId, numero]) // Evita duplicatas
+  @@index([empresaId, ativo]) // Buscar período ativo rapidamente
+  @@map("periodos_mentoria")
+}

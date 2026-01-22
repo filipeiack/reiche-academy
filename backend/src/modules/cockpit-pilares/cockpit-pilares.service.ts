@@ -574,6 +574,13 @@ export class CockpitPilaresService {
   ) {
     const indicador = await this.prisma.indicadorCockpit.findUnique({
       where: { id: indicadorId },
+      include: {
+        cockpitPilar: {
+          include: {
+            pilarEmpresa: true,
+          },
+        },
+      },
     });
 
     if (!indicador) {
@@ -582,14 +589,51 @@ export class CockpitPilaresService {
 
     await this.validateCockpitAccess(indicador.cockpitPilarId, user);
 
+    // R-MENT-008: Buscar período de mentoria ativo para validação
+    const periodoMentoria = await this.prisma.periodoMentoria.findFirst({
+      where: {
+        empresaId: indicador.cockpitPilar.pilarEmpresa.empresaId,
+        ativo: true,
+      },
+    });
+
+    if (!periodoMentoria) {
+      throw new BadRequestException(
+        'Empresa não possui período de mentoria ativo',
+      );
+    }
+
     // Atualizar cada valor mensal
     const updates = dto.valores.map(async (valor) => {
+      // R-MENT-008: Validar que mes/ano está dentro do período (exceto histórico)
+      if (valor.historico === undefined || valor.historico === null) {
+        // Validar apenas meta e realizado
+        const dataValor = new Date(valor.ano, (valor.mes ?? 1) - 1, 1);
+        const dataInicioPeriodo = new Date(
+          periodoMentoria.dataInicio.getFullYear(),
+          periodoMentoria.dataInicio.getMonth(),
+          1,
+        );
+        const dataFimPeriodo = new Date(
+          periodoMentoria.dataFim.getFullYear(),
+          periodoMentoria.dataFim.getMonth(),
+          1,
+        );
+
+        if (valor.mes && (dataValor < dataInicioPeriodo || dataValor > dataFimPeriodo)) {
+          throw new BadRequestException(
+            `Mês ${valor.mes}/${valor.ano} está fora do período de mentoria ativo`,
+          );
+        }
+      }
+
       // Buscar ou criar mês
       const mes = await this.prisma.indicadorMensal.findFirst({
         where: {
           indicadorCockpitId: indicadorId,
           ano: valor.ano,
           mes: valor.mes,
+          periodoMentoriaId: periodoMentoria.id,
         },
       });
 
@@ -605,10 +649,11 @@ export class CockpitPilaresService {
           },
         });
       } else {
-        // Criar novo
+        // Criar novo vinculado ao período
         return this.prisma.indicadorMensal.create({
           data: {
             indicadorCockpitId: indicadorId,
+            periodoMentoriaId: periodoMentoria.id,
             ano: valor.ano,
             mes: valor.mes,
             meta: valor.meta,
@@ -631,7 +676,7 @@ export class CockpitPilaresService {
       entidade: 'IndicadorMensal',
       entidadeId: indicadorId,
       acao: 'UPDATE',
-      dadosDepois: { valores: dto.valores },
+      dadosDepois: { valores: dto.valores, periodoMentoriaId: periodoMentoria.id },
     });
 
     // Retornar meses atualizados
@@ -752,8 +797,14 @@ export class CockpitPilaresService {
     cockpitId: string,
     ano: number,
     user: RequestUser,
+    periodoMentoriaId?: string,
   ) {
     await this.validateCockpitAccess(cockpitId, user);
+
+    // R-MENT-008: Filtrar por período de mentoria se fornecido
+    const whereClause: any = periodoMentoriaId
+      ? { periodoMentoriaId }
+      : { ano };
 
     const indicadores = await this.prisma.indicadorCockpit.findMany({
       where: {
@@ -762,10 +813,8 @@ export class CockpitPilaresService {
       },
       include: {
         mesesIndicador: {
-          where: {
-            ano,
-          },
-          orderBy: { mes: 'asc' },
+          where: whereClause,
+          orderBy: [{ ano: 'asc' }, { mes: 'asc' }],
         },
         responsavelMedicao: {
           select: {
@@ -780,6 +829,7 @@ export class CockpitPilaresService {
 
     return {
       ano,
+      periodoMentoriaId,
       indicadores,
     };
   }
