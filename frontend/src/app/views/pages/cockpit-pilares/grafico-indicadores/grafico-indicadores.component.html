@@ -1,39 +1,31 @@
 <div class="card">
   <div class="card-body">
     <!-- Titulo -->
-    <div class="mb-2">
-      <h5 class="card-title">
+    <div class="mb-2 d-flex justify-content-between align-items-center">
+      <h5 class="card-title align-self-center mb-0">
         <i class="bi bi-graph-up me-2"></i>
         Gráfico de Indicadores
       </h5>
+
+      <!-- R-MENT-008: Seletor de Período de Mentoria -->
+      <ng-select id="periodoSelect" style="width: 200px; font-size: 0.875rem;" [(ngModel)]="selectedPeriodoId"
+        (ngModelChange)="onPeriodoChange($event)" [items]="periodosMentoria" bindValue="id" placeholder="Período"
+        [clearable]="false">
+        <ng-template ng-label-tmp let-item="item">
+          <small>{{ getPeriodoLabel(item) }}</small>
+        </ng-template>
+        <ng-template ng-option-tmp let-item="item">
+          <small>{{ getPeriodoLabel(item) }}</small>
+        </ng-template>
+      </ng-select>
     </div>
 
     <!-- Seletor e Detalhes -->
     <div class="mb-2 d-flex gap-3 align-items-start">
-      <!-- R-MENT-008: Seletor de Período de Mentoria -->
-      <div class="flex-fill">
-        <label for="periodoSelect" class="form-label small text-muted">Período de Mentoria</label>
-        <ng-select 
-          id="periodoSelect" 
-          style="min-width: 250px;" 
-          [(ngModel)]="selectedPeriodoId"
-          (ngModelChange)="onPeriodoChange($event)" 
-          [items]="periodosMentoria" 
-          bindValue="id"
-          placeholder="Selecione um período" 
-          [clearable]="false">
-          <ng-template ng-label-tmp let-item="item">
-            {{ getPeriodoLabel(item) }}
-          </ng-template>
-          <ng-template ng-option-tmp let-item="item">
-            {{ getPeriodoLabel(item) }}
-          </ng-template>
-        </ng-select>
-      </div>
 
       <!-- Seletor de Indicador -->
       <div class="flex-fill">
-        <label for="indicadorSelect" class="form-label small text-muted">Indicador</label>
+
         <ng-select id="indicadorSelect" style="min-width: 300px;" [(ngModel)]="selectedIndicadorId"
           (ngModelChange)="onIndicadorChange($event)" [items]="indicadores" bindLabel="nome" bindValue="id"
           placeholder="Selecione um indicador" [clearable]="true">
@@ -42,51 +34,52 @@
 
       <!-- Detalhes do Indicador -->
       <div class="flex-fill">
-          @if (indicador) {
-          <div class="d-flex gap-2">
-            <!-- <div class="badge bg-light gap-1 p-2 flex-fill">
-              <label class="form-label small text-muted mb-2">Tipo</label>
-              <div class="fw-bold text-dark">
-                ({{ getLabelTipoMedida(indicador.tipoMedida) }})
-              </div>
-            </div> -->
+        @if (indicador) {
+        <div class="d-flex gap-2">
 
-            <div class="badge bg-light gap-1 p-2 flex-fill">
-              <label class="form-label small text-muted mb-2">Status</label>
-              <div class="fw-bold text-dark">
-                @switch (indicador.statusMedicao) {
-                @case ('MEDIDO_CONFIAVEL') {
-                <span class="badge bg-success">Medido e confiável</span>
-                }
-                @case ('MEDIDO_NAO_CONFIAVEL') {
-                <span class="badge bg-warning">Medido, mas não é confiável.</span>
-                }
-                @case ('NAO_MEDIDO') {
-                <span class="badge bg-danger">Não é medido</span>
-                }
-                }
-              </div>
-            </div>
-
-            <div class="badge bg-light gap-1 p-2 flex-fill">
-              <label class="form-label small text-muted mb-2">Responsável</label>
-              <div class="fw-bold text-dark">
-                {{ indicador.responsavelMedicao?.nome || 'Não definido' }}
-              </div>
-            </div>
-
-            <div class="badge bg-light gap-1 p-2 flex-fill">
-              <label class="form-label small text-muted mb-2">Melhor</label>
-              <div>
-                @if (indicador.melhor === 'MAIOR') {
-                <i class="bi bi-arrow-up-circle text-black" style="font-size: 1.25rem;"></i>
-                } @else {
-                <i class="bi bi-arrow-down-circle text-black" style="font-size: 1.25rem;"></i>
-                }
-              </div>
+          <div class="badge bg-light gap-1 p-2">
+            <label class="form-label small text-muted mb-2">Tipo</label>
+            <div class="fw-bold text-dark">
+              ({{ getLabelTipoMedida(indicador.tipoMedida) }})
             </div>
           </div>
-          }
+
+          <div class="badge bg-light gap-1 p-2 flex-fill">
+            <label class="form-label small text-muted mb-2">Status</label>
+            <div class="fw-bold text-dark">
+              @switch (indicador.statusMedicao) {
+              @case ('MEDIDO_CONFIAVEL') {
+              <span class="badge bg-success">Medido e confiável</span>
+              }
+              @case ('MEDIDO_NAO_CONFIAVEL') {
+              <span class="badge bg-warning">Medido, mas não é confiável.</span>
+              }
+              @case ('NAO_MEDIDO') {
+              <span class="badge bg-danger">Não é medido</span>
+              }
+              }
+            </div>
+          </div>
+
+          <div class="badge bg-light gap-1 p-2 flex-fill">
+            <label class="form-label small text-muted mb-2">Responsável</label>
+            <div class="fw-bold text-dark">
+              {{ indicador.responsavelMedicao?.nome || 'Não definido' }}
+            </div>
+          </div>
+
+          <div class="badge bg-light gap-1 p-2 flex-fill">
+            <label class="form-label small text-muted mb-2">Melhor</label>
+            <div>
+              @if (indicador.melhor === 'MAIOR') {
+              <i class="bi bi-arrow-up text-black" style="font-size: 1.25rem;"></i>
+              } @else {
+              <i class="bi bi-arrow-down text-black" style="font-size: 1.25rem;"></i>
+              }
+            </div>
+          </div>
+        </div>
+        }
       </div>
     </div>
 
@@ -109,7 +102,7 @@
 
     <!-- Chart Container -->
     @if (!loading && !error && selectedIndicadorId) {
-    <div class="chart-container">
+    <div class="chart-container mb-4">
       <canvas baseChart [data]="lineChartData" [options]="lineChartOptions" [type]="lineChartType"></canvas>
     </div>
     }

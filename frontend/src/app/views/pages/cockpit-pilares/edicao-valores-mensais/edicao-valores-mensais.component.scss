@@ -18,3 +18,25 @@
   }
 }
 
+
+/* Classes badges para span */
+span.bg-danger {
+  background-color: var(--bs-danger-bg-subtle) !important;
+  border-color: var(--bs-danger) !important;
+  border: 1px solid;
+  color: var(--bs-body-color);
+}
+
+span.bg-warning {
+  background-color: var(--bs-warning-bg-subtle) !important;
+  border-color: var(--bs-warning) !important;
+  border: 1px solid;
+  color: var(--bs-body-color);
+}
+
+span.bg-success {
+  background-color: var(--bs-success-bg-subtle) !important;
+  border-color: var(--bs-success) !important;
+  border: 1px solid;
+  color: var(--bs-body-color);
+}

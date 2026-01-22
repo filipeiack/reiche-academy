@@ -145,16 +145,16 @@
             <button class="btn btn-sm btn-info" (click)="toggleMelhor(indicador)"
               [id]="'melhor-' + indicador.ordem">
               @if (indicador.melhor === 'MAIOR') {
-              <i class="bi bi-arrow-up-circle"></i>
+              <i class="bi bi-arrow-up"></i>
               } @else {
-              <i class="bi bi-arrow-down-circle"></i>
+              <i class="bi bi-arrow-down"></i>
               }
             </button>
             } @else {
             @if (indicador.melhor === 'MAIOR') {
-            <i class="bi bi-arrow-up-circle text-black" style="font-size: 1.25rem;"></i>
+            <i class="bi bi-arrow-up text-black" style="font-size: 1.25rem;"></i>
             } @else {
-            <i class="bi bi-arrow-down-circle text-black" style="font-size: 1.25rem;"></i>
+            <i class="bi bi-arrow-down text-black" style="font-size: 1.25rem;"></i>
             }
             }
           </td>

@@ -227,9 +227,11 @@ export class EdicaoValoresMensaisComponent implements OnInit, OnChanges, OnDestr
           this.saveFeedbackService.completeSaving();
         }
       },
-      error: (err: unknown) => {
+      error: (err: any) => {
         console.error('Erro ao replicar meta:', err);
-        alert('Erro ao replicar meta. Tente novamente.');
+        console.error('Detalhes do erro:', err.error);
+        console.error('Valores enviados:', valores);
+        alert(`Erro ao replicar meta: ${err.error?.message || err.message || 'Erro desconhecido'}`);
         this.savingCount--;
         if (this.savingCount === 0) {
           this.saveFeedbackService.reset();
@@ -319,5 +321,47 @@ export class EdicaoValoresMensaisComponent implements OnInit, OnChanges, OnDestr
       'PERCENTUAL': '%'
     };
     return labels[tipo] || tipo;
+  }
+
+  calcularTotalHistorico(indicador: IndicadorCockpit): number {
+    if (!indicador.mesesIndicador) return 0;
+    return indicador.mesesIndicador.reduce((total, mes) => {
+      const valor = this.getValorAtualizado(mes, 'historico');
+      return total + (valor || 0);
+    }, 0);
+  }
+
+  calcularTotalMeta(indicador: IndicadorCockpit): number {
+    if (!indicador.mesesIndicador) return 0;
+    return indicador.mesesIndicador.reduce((total, mes) => {
+      const valor = this.getValorAtualizado(mes, 'meta');
+      return total + (valor || 0);
+    }, 0);
+  }
+
+  calcularTotalRealizado(indicador: IndicadorCockpit): number {
+    if (!indicador.mesesIndicador) return 0;
+    return indicador.mesesIndicador.reduce((total, mes) => {
+      const valor = this.getValorAtualizado(mes, 'realizado');
+      return total + (valor || 0);
+    }, 0);
+  }
+
+  calcularMediaHistorico(indicador: IndicadorCockpit): number {
+    if (!indicador.mesesIndicador || indicador.mesesIndicador.length === 0) return 0;
+    const total = this.calcularTotalHistorico(indicador);
+    return total / indicador.mesesIndicador.length;
+  }
+
+  calcularMediaMeta(indicador: IndicadorCockpit): number {
+    if (!indicador.mesesIndicador || indicador.mesesIndicador.length === 0) return 0;
+    const total = this.calcularTotalMeta(indicador);
+    return total / indicador.mesesIndicador.length;
+  }
+
+  calcularMediaRealizado(indicador: IndicadorCockpit): number {
+    if (!indicador.mesesIndicador || indicador.mesesIndicador.length === 0) return 0;
+    const total = this.calcularTotalRealizado(indicador);
+    return total / indicador.mesesIndicador.length;
   }
 }

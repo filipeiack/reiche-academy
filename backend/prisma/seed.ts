@@ -89,6 +89,9 @@ async function main() {
 
   const { addYears } = await import('date-fns');
 
+  // Data de início padrão: 01/01/2026
+  const dataInicioDefault = new Date(2026, 0, 1); // Janeiro de 2026
+
   // Criar período de mentoria retroativo para Empresa A
   const periodoMentoriaA = await prisma.periodoMentoria.upsert({
     where: {
@@ -101,8 +104,8 @@ async function main() {
     create: {
       empresaId: empresaA.id,
       numero: 1,
-      dataInicio: empresaA.createdAt,
-      dataFim: addYears(empresaA.createdAt, 1),
+      dataInicio: dataInicioDefault,
+      dataFim: addYears(dataInicioDefault, 1),
       ativo: true,
       createdBy: null, // Seed não tem usuário
     },
@@ -120,8 +123,8 @@ async function main() {
     create: {
       empresaId: empresaB.id,
       numero: 1,
-      dataInicio: empresaB.createdAt,
-      dataFim: addYears(empresaB.createdAt, 1),
+      dataInicio: dataInicioDefault,
+      dataFim: addYears(dataInicioDefault, 1),
       ativo: true,
       createdBy: null, // Seed não tem usuário
     },
@@ -912,18 +915,206 @@ async function main() {
   console.log(`✅ ${evoluçõesCriadas} registros de evolução criados (${trimestres.length} trimestres para ${pilaresComMedia.length} pilares)`);
 
   // ========================================
-  // 10. RESUMO FINAL
+  // 10. COCKPIT DE MARKETING + INDICADORES
+  // ========================================
+
+  // Encontrar o pilar de Marketing da Empresa A
+  const pilarMarketingA = pilaresEmpresaA.find(p => p.nome === 'MARKETING');
+
+  if (!pilarMarketingA) {
+    throw new Error('Pilar de Marketing não encontrado para Empresa A');
+  }
+
+  // Criar Cockpit de Marketing
+  const cockpitMarketing = await prisma.cockpitPilar.upsert({
+    where: {
+      pilarEmpresaId: pilarMarketingA.id,
+    },
+    update: {},
+    create: {
+      pilarEmpresaId: pilarMarketingA.id,
+    },
+  });
+
+  console.log('✅ Cockpit de Marketing criado');
+
+  // Criar 5 indicadores para o cockpit de Marketing
+  const indicadoresData = [
+    {
+      nome: 'Leads Gerados',
+      descricao: 'Total de leads captados através de todas as fontes de marketing',
+      tipoMedida: 'QUANTIDADE' as const,
+      statusMedicao: 'MEDIDO_CONFIAVEL' as const,
+      melhor: 'MAIOR' as const,
+      ordem: 1,
+    },
+    {
+      nome: 'Taxa de Conversão',
+      descricao: 'Percentual de leads que se tornam clientes',
+      tipoMedida: 'PERCENTUAL' as const,
+      statusMedicao: 'MEDIDO_CONFIAVEL' as const,
+      melhor: 'MAIOR' as const,
+      ordem: 2,
+    },
+    {
+      nome: 'CAC (Custo de Aquisição de Cliente)',
+      descricao: 'Investimento médio necessário para conquistar um novo cliente',
+      tipoMedida: 'REAL' as const,
+      statusMedicao: 'MEDIDO_CONFIAVEL' as const,
+      melhor: 'MENOR' as const,
+      ordem: 3,
+    },
+    {
+      nome: 'ROI de Campanhas',
+      descricao: 'Retorno sobre investimento das campanhas de marketing',
+      tipoMedida: 'PERCENTUAL' as const,
+      statusMedicao: 'MEDIDO_CONFIAVEL' as const,
+      melhor: 'MAIOR' as const,
+      ordem: 4,
+    },
+    {
+      nome: 'Engajamento nas Redes Sociais',
+      descricao: 'Média de interações (curtidas, comentários, compartilhamentos) nas redes sociais',
+      tipoMedida: 'QUANTIDADE' as const,
+      statusMedicao: 'MEDIDO_CONFIAVEL' as const,
+      melhor: 'MAIOR' as const,
+      ordem: 5,
+    },
+  ];
+
+  const indicadoresCriados = [];
+  for (const indData of indicadoresData) {
+    const indicador = await prisma.indicadorCockpit.upsert({
+      where: {
+        cockpitPilarId_nome: {
+          cockpitPilarId: cockpitMarketing.id,
+          nome: indData.nome,
+        },
+      },
+      update: {},
+      create: {
+        cockpitPilarId: cockpitMarketing.id,
+        nome: indData.nome,
+        descricao: indData.descricao,
+        tipoMedida: indData.tipoMedida,
+        statusMedicao: indData.statusMedicao,
+        melhor: indData.melhor,
+        ordem: indData.ordem,
+        ativo: true,
+      },
+    });
+    indicadoresCriados.push(indicador);
+  }
+
+  console.log(`✅ ${indicadoresCriados.length} indicadores criados para Cockpit de Marketing`);
+
+  // Criar valores mensais para o primeiro indicador (Leads Gerados)
+  // 12 meses de dados (janeiro a dezembro 2026) com meta, realizado e histórico
+  const indicadorLeads = indicadoresCriados[0];
+  const mesesData = [
+    { mes: 1, meta: 80, realizado: 75, historico: 65 },
+    { mes: 2, meta: 85, realizado: 90, historico: 70 },
+    { mes: 3, meta: 90, realizado: 88, historico: 72 },
+    { mes: 4, meta: 95, realizado: 92, historico: 75 },
+    { mes: 5, meta: 100, realizado: 105, historico: 80 },
+    { mes: 6, meta: 100, realizado: 98, historico: 82 },
+    { mes: 7, meta: 105, realizado: 110, historico: 85 },
+    { mes: 8, meta: 105, realizado: 102, historico: 87 },
+    { mes: 9, meta: 110, realizado: 115, historico: 90 },
+    { mes: 10, meta: 115, realizado: 118, historico: 92 },
+    { mes: 11, meta: 120, realizado: 122, historico: 95 },
+    { mes: 12, meta: 125, realizado: 130, historico: 98 },
+  ];
+
+  let valoresCriados = 0;
+  for (const mesData of mesesData) {
+    // Find existing record
+    const existing = await prisma.indicadorMensal.findFirst({
+      where: {
+        indicadorCockpitId: indicadorLeads.id,
+        ano: 2026,
+        mes: mesData.mes,
+      },
+    });
+
+    if (!existing) {
+      await prisma.indicadorMensal.create({
+        data: {
+          indicadorCockpitId: indicadorLeads.id,
+          periodoMentoriaId: periodoMentoriaA.id,
+          ano: 2026,
+          mes: mesData.mes,
+          meta: mesData.meta,
+          realizado: mesData.realizado,
+          historico: mesData.historico,
+        },
+      });
+      valoresCriados++;
+    }
+  }
+
+  console.log(`✅ ${valoresCriados} valores mensais criados para indicador "${indicadorLeads.nome}"`);
+
+  // Criar valores para o segundo indicador (Taxa de Conversão) - apenas alguns meses para variedade
+  const indicadorConversao = indicadoresCriados[1];
+  const mesesConversaoData = [
+    { mes: 1, meta: 12.0, realizado: 11.5, historico: 10.0 },
+    { mes: 2, meta: 12.5, realizado: 13.0, historico: 10.5 },
+    { mes: 3, meta: 13.0, realizado: 12.8, historico: 11.0 },
+    { mes: 4, meta: 13.5, realizado: 13.2, historico: 11.5 },
+    { mes: 5, meta: 14.0, realizado: 14.5, historico: 12.0 },
+    { mes: 6, meta: 14.0, realizado: 13.8, historico: 12.5 },
+  ];
+
+  let valoresConversaoCriados = 0;
+  for (const mesData of mesesConversaoData) {
+    // Find existing record
+    const existing = await prisma.indicadorMensal.findFirst({
+      where: {
+        indicadorCockpitId: indicadorConversao.id,
+        ano: 2026,
+        mes: mesData.mes,
+      },
+    });
+
+    if (!existing) {
+      await prisma.indicadorMensal.create({
+        data: {
+          indicadorCockpitId: indicadorConversao.id,
+          periodoMentoriaId: periodoMentoriaA.id,
+          ano: 2026,
+          mes: mesData.mes,
+          meta: mesData.meta,
+          realizado: mesData.realizado,
+          historico: mesData.historico,
+        },
+      });
+      valoresConversaoCriados++;
+    }
+  }
+
+  console.log(`✅ ${valoresConversaoCriados} valores mensais criados para indicador "${indicadorConversao.nome}"`);
+
+  // ========================================
+  // 11. RESUMO FINAL
   // ========================================
 
   console.log('\n🎉 E2E Seed completed!');
   console.log('\n📊 Resumo:');
   console.log(`   - 4 perfis de usuário`);
   console.log(`   - 2 empresas`);
+  console.log(`   - 2 períodos de mentoria`);
   console.log(`   - 4 usuários`);
   console.log(`   - ${pilaresCriados.length} pilares globais (ESTRATÉGICO, MARKETING, VENDAS, PESSOAS, FINANCEIRO, COMPRAS/ESTOQUE)`);
   console.log(`   - ${totalRotinasCriadas} rotinas globais (10 por pilar)`);
   console.log(`   - ${pilaresEmpresaA.length + pilaresEmpresaB.length} pilares vinculados às empresas`);
   console.log(`   - ${rotinasEmpresaCriadas} rotinas vinculadas às empresas`);
+  console.log(`   - ${notasCriadas} diagnósticos criados`);
+  console.log(`   - ${trimestres.length} períodos de avaliação`);
+  console.log(`   - ${evoluçõesCriadas} registros de evolução`);
+  console.log(`   - 1 cockpit de Marketing`);
+  console.log(`   - 5 indicadores de Marketing`);
+  console.log(`   - ${valoresCriados + valoresConversaoCriados} valores mensais (meta, realizado, histórico)`);
   console.log('\n🔑 Credenciais de acesso:');
   console.log('   Email: admin@reiche.com.br | Senha: Admin@123');
   console.log('   Email: gestor@empresa-a.com | Senha: Admin@123');

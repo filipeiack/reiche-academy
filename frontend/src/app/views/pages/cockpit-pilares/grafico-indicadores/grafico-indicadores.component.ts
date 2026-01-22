@@ -87,6 +87,7 @@ export class GraficoIndicadoresComponent implements OnInit, OnChanges {
           font: {
             size: 12,
           },
+          usePointStyle: true,
         },
       },
       tooltip: {
@@ -100,10 +101,10 @@ export class GraficoIndicadoresComponent implements OnInit, OnChanges {
               (i) => i.id === this.selectedIndicadorId
             );
 
-            if (indicador) {
-              const suffix = this.getTipoMedidaSuffix(indicador.tipoMedida);
-              return `${label}: ${value?.toFixed(2) || '-'}${suffix}`;
-            }
+            // if (indicador) {
+              //const suffix = this.getTipoMedidaSuffix(indicador.tipoMedida);
+              //return `${label}: ${value?.toFixed(2) || '-'}${suffix}`;
+            // }
 
             return `${label}: ${value?.toFixed(2) || '-'}`;
           },
@@ -117,7 +118,7 @@ export class GraficoIndicadoresComponent implements OnInit, OnChanges {
         },
         color: '#000000',
         font: {
-          size: 11,
+          size: 12,
           weight: 'bold' as const,
         },
         formatter: (value, context) => {
@@ -126,9 +127,10 @@ export class GraficoIndicadoresComponent implements OnInit, OnChanges {
           const indicador = this.indicadores.find(
             (i) => i.id === this.selectedIndicadorId
           );
-          const suffix = indicador ? this.getTipoMedidaSuffix(indicador.tipoMedida) : '';
+          //const suffix = indicador ? this.getTipoMedidaSuffix(indicador.tipoMedida) : '';
           
-          return `${value.toFixed(1)}${suffix}`;
+          //return `${value.toFixed(1)}${suffix}`;
+          return `${value.toFixed(1)}`;
         },
         anchor: (context) => {
           // Centro para barras, end para linha
@@ -153,10 +155,11 @@ export class GraficoIndicadoresComponent implements OnInit, OnChanges {
             const indicador = this.indicadores.find(
               (i) => i.id === this.selectedIndicadorId
             );
-            const suffix = indicador
-              ? this.getTipoMedidaSuffix(indicador.tipoMedida)
-              : '';
-            return `${value}${suffix}`;
+            // const suffix = indicador
+            //   ? this.getTipoMedidaSuffix(indicador.tipoMedida)
+            //   : '';
+            // return `${value}${suffix}`;
+            return `${value}`;
           },
         },
       },
@@ -302,6 +305,7 @@ export class GraficoIndicadoresComponent implements OnInit, OnChanges {
           pointHoverRadius: 6,
           fill: false,
           order: 1,
+          pointStyle: 'line',
         },
         {
           type: 'bar',

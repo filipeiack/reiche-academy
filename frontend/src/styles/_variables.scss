@@ -372,7 +372,7 @@ $input-group-addon-padding-x:           .563rem !default;
 // Navs
 $nav-tabs-link-bg:                    var(--#{$prefix}body-bg); // custom variable
 $nav-tabs-link-border-color:          var(--#{$prefix}border-color) var(--#{$prefix}border-color); // custom variable
-$nav-tabs-link-active-bg:             var(--#{$prefix}body-bg) !default;
+$nav-tabs-link-active-bg:             var(--#{$prefix}body-emphasis-color) !default;
 
 
 // Dropdowns

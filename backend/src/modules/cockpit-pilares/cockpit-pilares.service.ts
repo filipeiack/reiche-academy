@@ -608,21 +608,13 @@ export class CockpitPilaresService {
       // R-MENT-008: Validar que mes/ano está dentro do período (exceto histórico)
       if (valor.historico === undefined || valor.historico === null) {
         // Validar apenas meta e realizado
-        const dataValor = new Date(valor.ano, (valor.mes ?? 1) - 1, 1);
-        const dataInicioPeriodo = new Date(
-          periodoMentoria.dataInicio.getFullYear(),
-          periodoMentoria.dataInicio.getMonth(),
-          1,
-        );
-        const dataFimPeriodo = new Date(
-          periodoMentoria.dataFim.getFullYear(),
-          periodoMentoria.dataFim.getMonth(),
-          1,
-        );
+        const anoMesValor = valor.ano * 100 + (valor.mes ?? 1); // Ex: 202605 para mai/2026
+        const anoMesInicio = periodoMentoria.dataInicio.getFullYear() * 100 + (periodoMentoria.dataInicio.getMonth() + 1);
+        const anoMesFim = periodoMentoria.dataFim.getFullYear() * 100 + (periodoMentoria.dataFim.getMonth() + 1);
 
-        if (valor.mes && (dataValor < dataInicioPeriodo || dataValor > dataFimPeriodo)) {
+        if (valor.mes && (anoMesValor < anoMesInicio || anoMesValor > anoMesFim)) {
           throw new BadRequestException(
-            `Mês ${valor.mes}/${valor.ano} está fora do período de mentoria ativo`,
+            `Mês ${valor.mes}/${valor.ano} está fora do período de mentoria ativo (${periodoMentoria.dataInicio.toLocaleDateString('pt-BR')} - ${periodoMentoria.dataFim.toLocaleDateString('pt-BR')})`,
           );
         }
       }

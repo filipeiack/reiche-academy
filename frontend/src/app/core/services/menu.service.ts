@@ -109,7 +109,7 @@ export class MenuService {
       }
 
       // Encontrar o item "Cockpits" no menu
-      const cockpitIndex = menu.findIndex(item => item.link === '/cockpits');
+      const cockpitIndex = menu.findIndex(item => item.id === 999);
       
       if (cockpitIndex === -1) {
         return menu;
@@ -118,7 +118,7 @@ export class MenuService {
       // Criar submenus para cada cockpit
       const cockpitSubItems: MenuItem[] = cockpits.map((cockpit, index) => ({
         id: 1000 + index, // IDs únicos começando de 1000
-        label: 'Cockpit ' + cockpit.pilarEmpresa?.pilarTemplate?.nome.toLowerCase(),
+        label: cockpit.pilarEmpresa?.nome.toLowerCase(),
         link: `/cockpits/${cockpit.id}/dashboard`
       }));
 
