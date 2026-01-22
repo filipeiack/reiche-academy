@@ -11,6 +11,7 @@ import {
   StatusProcesso,
   UpdateProcessoPrioritarioDto,
 } from '@core/interfaces/cockpit-pilares.interface';
+import { NgbTooltip } from "../../../../../../node_modules/@ng-bootstrap/ng-bootstrap/tooltip/tooltip";
 
 @Component({
   selector: 'app-matriz-processos',

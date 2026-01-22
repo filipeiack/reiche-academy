@@ -14,6 +14,17 @@ export interface EmpresaCounts {
   pilares: number;
 }
 
+export interface PeriodoMentoria {
+  id: string;
+  empresaId: string;
+  numero: number;
+  dataInicio: Date;
+  dataFim: Date;
+  ativo: boolean;
+  dataContratacao: Date;
+  dataEncerramento?: Date;
+}
+
 export interface Empresa {
   id: string;
   nome: string;
@@ -25,6 +36,7 @@ export interface Empresa {
   loginUrl?: string | null;
   ativo: boolean;
   _count?: EmpresaCounts;
+  periodoMentoriaAtivo?: PeriodoMentoria | null;
   createdAt?: Date;
   updatedAt?: Date;
 }

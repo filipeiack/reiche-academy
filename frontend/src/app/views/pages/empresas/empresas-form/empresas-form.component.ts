@@ -10,6 +10,7 @@ import { Usuario } from '../../../../core/models/auth.model';
 import { AuthService } from '../../../../core/services/auth.service';
 import { PilaresService, Pilar, CreatePilarDto } from '../../../../core/services/pilares.service';
 import { PilaresEmpresaService, PilarEmpresa } from '../../../../core/services/pilares-empresa.service';
+import { PeriodosMentoriaService } from '../../../../core/services/periodos-mentoria.service';
 import { TranslatePipe } from '../../../../core/pipes/translate.pipe';
 import { environment } from '../../../../../environments/environment';
 import { NgSelectModule } from '@ng-select/ng-select';
@@ -29,6 +30,7 @@ export class EmpresasFormComponent implements OnInit {
   private authService = inject(AuthService);
   private pilaresService = inject(PilaresService);
   private pilaresEmpresaService = inject(PilaresEmpresaService);
+  private periodosMentoriaService = inject(PeriodosMentoriaService);
   private fb = inject(FormBuilder);
   private router = inject(Router);
   private route = inject(ActivatedRoute);
@@ -69,6 +71,10 @@ export class EmpresasFormComponent implements OnInit {
   previewUrl: string | null = null;
   logoFile: File | null = null;
 
+  // Período de Mentoria
+  dataInicioMentoria: Date | null = null;
+  periodoAtivo: any = null;
+
   get isPerfilCliente(): boolean {
     if (!this.currentLoggedUser?.perfil) return false;
     const perfilCodigo = typeof this.currentLoggedUser.perfil === 'object' 
@@ -97,7 +103,78 @@ export class EmpresasFormComponent implements OnInit {
       this.loadEmpresa(this.empresaId);
       this.loadUsuariosAssociados(this.empresaId);
       this.loadPilaresAssociados(this.empresaId);
+      this.loadPeriodoAtivo(this.empresaId);
     }
+  }
+
+  loadPeriodoAtivo(empresaId: string): void {
+    this.periodosMentoriaService.getPeriodoAtivo(empresaId).subscribe({
+      next: (periodo) => {
+        this.periodoAtivo = periodo;
+        if (periodo) {
+          this.dataInicioMentoria = new Date(periodo.dataInicio);
+        }
+      },
+      error: (err) => console.error('Erro ao carregar período ativo:', err)
+    });
+  }
+
+  calcularDataFim(): Date | null {
+    if (!this.dataInicioMentoria) return null;
+    const dataFim = new Date(this.dataInicioMentoria);
+    dataFim.setFullYear(dataFim.getFullYear() + 1);
+    dataFim.setDate(dataFim.getDate() - 1);
+    return dataFim;
+  }
+
+  formatarDataPeriodo(data: Date | string): string {
+    const d = typeof data === 'string' ? new Date(data) : data;
+    const meses = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'];
+    const mes = meses[d.getMonth()];
+    const ano = d.getFullYear().toString().slice(-2);
+    return `${mes}/${ano}`;
+  }
+
+  criarPeriodo(): void {
+    if (!this.dataInicioMentoria || !this.empresaId) return;
+    
+    this.periodosMentoriaService.create(this.empresaId, { dataInicio: this.dataInicioMentoria }).subscribe({
+      next: (periodo) => {
+        this.periodoAtivo = periodo;
+        this.showToast('Período de mentoria criado com sucesso!', 'success');
+      },
+      error: (err) => this.showToast(err?.error?.message || 'Erro ao criar período', 'error')
+    });
+  }
+
+  renovarPeriodo(): void {
+    if (!this.periodoAtivo || !this.empresaId) return;
+
+    Swal.fire({
+      title: 'Renovar Mentoria?',
+      html: `<p>O período atual <strong>Período ${this.periodoAtivo.numero}</strong> será encerrado.</p>
+             <p>Um novo período <strong>Período ${this.periodoAtivo.numero + 1}</strong> será criado automaticamente.</p>`,
+      icon: 'question',
+      showCancelButton: true,
+      confirmButtonText: 'Sim, renovar',
+      cancelButtonText: 'Cancelar',
+      confirmButtonColor: '#3085d6',
+    }).then((result) => {
+      if (result.isConfirmed && this.periodoAtivo && this.empresaId) {
+        const dataFim = new Date(this.periodoAtivo.dataFim);
+        const novaDataInicio = new Date(dataFim);
+        novaDataInicio.setDate(novaDataInicio.getDate() + 1);
+
+        this.periodosMentoriaService.renovar(this.empresaId, this.periodoAtivo.id, novaDataInicio).subscribe({
+          next: (novoPeriodo) => {
+            this.periodoAtivo = novoPeriodo;
+            this.dataInicioMentoria = new Date(novoPeriodo.dataInicio);
+            this.showToast('Mentoria renovada com sucesso!', 'success');
+          },
+          error: (err) => this.showToast(err?.error?.message || 'Erro ao renovar período', 'error')
+        });
+      }
+    });
   }
 
   private getRedirectUrl(): string {
@@ -203,6 +280,17 @@ export class EmpresasFormComponent implements OnInit {
           if (this.logoFile && novaEmpresa.id) {
             console.log('Iniciando upload do logo para empresa recém-criada');
             this.uploadLogo(this.logoFile, novaEmpresa.id);
+          }
+
+          // Criar período de mentoria se dataInicio foi definida
+          if (this.dataInicioMentoria) {
+            this.periodosMentoriaService.create(novaEmpresa.id, { dataInicio: this.dataInicioMentoria }).subscribe({
+              next: (periodo) => {
+                this.periodoAtivo = periodo;
+                console.log('Período de mentoria criado:', periodo);
+              },
+              error: (err) => console.error('Erro ao criar período:', err)
+            });
           }
 
           // Carregar dados para a etapa 2

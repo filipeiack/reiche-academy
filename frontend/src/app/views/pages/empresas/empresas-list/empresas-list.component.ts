@@ -53,6 +53,19 @@ export class EmpresasListComponent implements OnInit {
   selectedEmpresa: Empresa | null = null;
   loadingDetails = false;
 
+  formatarPeriodo(periodo: any): string {
+    const dataInicio = new Date(periodo.dataInicio);
+    const dataFim = new Date(periodo.dataFim);
+    const meses = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'];
+    
+    const mesInicio = meses[dataInicio.getMonth()];
+    const anoInicio = dataInicio.getFullYear().toString().slice(-2);
+    const mesFim = meses[dataFim.getMonth()];
+    const anoFim = dataFim.getFullYear().toString().slice(-2);
+    
+    return `${mesInicio}/${anoInicio} - ${mesFim}/${anoFim}`;
+  }
+
   ngOnInit(): void {
     this.loadEmpresas();
   }

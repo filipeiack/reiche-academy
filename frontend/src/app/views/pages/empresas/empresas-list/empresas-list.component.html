@@ -58,6 +58,7 @@
                   </th> -->
                   <th scope="col" sortable="nome" (sort)="onSort($event)" class="w-100">{{ 'COMPANIES.NAME' | translate }}</th>
                   <th scope="col">{{ 'COMPANIES.USUARIOS_COUNT' | translate }}</th>
+                  <th scope="col">Mentoria</th>
                   <th>{{ 'COMMON.STATUS' | translate }}</th>
                   <th>{{ 'COMMON.ACTIONS' | translate }}</th>
                 </tr>
@@ -73,6 +74,20 @@
                     <small class="text-muted">{{ empresa.cnpj | cnpj }} {{ empresa.estado }}</small>
                   </td>
                   <td class="text-muted">{{ empresa._count?.usuarios ?? 0 }}</td>
+                  <td>
+                    @if (empresa.periodoMentoriaAtivo) {
+                    <span class="badge bg-success">
+                      <i class="feather icon-check-circle me-1"></i>
+                      Período {{ empresa.periodoMentoriaAtivo.numero }}
+                      <small class="d-block mt-1">{{ formatarPeriodo(empresa.periodoMentoriaAtivo) }}</small>
+                    </span>
+                    } @else {
+                    <span class="badge bg-secondary">
+                      <i class="feather icon-x-circle me-1"></i>
+                      Sem mentoria
+                    </span>
+                    }
+                  </td>
                   <td class="text-muted">
                     {{ empresa.ativo ? ('COMMON.ACTIVE' | translate) : ('COMMON.INACTIVE' | translate) }}
                   </td>

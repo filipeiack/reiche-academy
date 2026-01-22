@@ -131,9 +131,15 @@ export class CockpitPilaresService {
 
   // ==================== GRÁFICOS ====================
 
-  getDadosGraficos(cockpitId: string, ano: number): Observable<DadosGraficos> {
-    return this.http.get<DadosGraficos>(
-      `${this.API}/cockpits/${cockpitId}/graficos/dados?ano=${ano}`
-    );
+  getDadosGraficos(
+    cockpitId: string, 
+    ano: number,
+    periodoMentoriaId?: string
+  ): Observable<DadosGraficos> {
+    let url = `${this.API}/cockpits/${cockpitId}/graficos/dados?ano=${ano}`;
+    if (periodoMentoriaId) {
+      url += `&periodoMentoriaId=${periodoMentoriaId}`;
+    }
+    return this.http.get<DadosGraficos>(url);
   }
 }

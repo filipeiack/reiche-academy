@@ -257,11 +257,11 @@ export class EdicaoValoresMensaisComponent implements OnInit, OnChanges, OnDestr
     
     if (!meta || !realizado) return 0;
 
-    if (indicador.melhor === DirecaoIndicador.MAIOR) {
-      return realizado - meta;
-    } else {
-      return meta - realizado;
-    }
+    const desvio = indicador.melhor === DirecaoIndicador.MAIOR
+      ? realizado - meta
+      : meta - realizado;
+    
+    return parseFloat(desvio.toFixed(2));
   }
 
   calcularStatus(

@@ -10,8 +10,30 @@
 
     <!-- Seletor e Detalhes -->
     <div class="mb-2 d-flex gap-3 align-items-start">
+      <!-- R-MENT-008: Seletor de Período de Mentoria -->
+      <div class="flex-fill">
+        <label for="periodoSelect" class="form-label small text-muted">Período de Mentoria</label>
+        <ng-select 
+          id="periodoSelect" 
+          style="min-width: 250px;" 
+          [(ngModel)]="selectedPeriodoId"
+          (ngModelChange)="onPeriodoChange($event)" 
+          [items]="periodosMentoria" 
+          bindValue="id"
+          placeholder="Selecione um período" 
+          [clearable]="false">
+          <ng-template ng-label-tmp let-item="item">
+            {{ getPeriodoLabel(item) }}
+          </ng-template>
+          <ng-template ng-option-tmp let-item="item">
+            {{ getPeriodoLabel(item) }}
+          </ng-template>
+        </ng-select>
+      </div>
+
       <!-- Seletor de Indicador -->
       <div class="flex-fill">
+        <label for="indicadorSelect" class="form-label small text-muted">Indicador</label>
         <ng-select id="indicadorSelect" style="min-width: 300px;" [(ngModel)]="selectedIndicadorId"
           (ngModelChange)="onIndicadorChange($event)" [items]="indicadores" bindLabel="nome" bindValue="id"
           placeholder="Selecione um indicador" [clearable]="true">

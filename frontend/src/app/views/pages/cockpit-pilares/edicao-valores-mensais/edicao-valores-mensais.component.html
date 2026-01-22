@@ -133,7 +133,7 @@
                 @if (mes.meta && mes.realizado) {
                 <div class="d-flex flex-column gap-1">
                   <span [class]="'badge bg-' + calcularStatus(indicador, mes)" style="font-size: 0.75rem;">
-                    {{ calcularDesvioAbsoluto(indicador, mes) | number: '1.1-1' }}
+                    {{ calcularDesvioAbsoluto(indicador, mes) | number: '1.2-2' }} ({{ getLabelTipoMedida(indicador.tipoMedida) }})
                   </span>
                   <span [class]="'badge bg-' + calcularStatus(indicador, mes)" style="font-size: 0.75rem;">
                     {{ calcularDesvio(indicador, mes) | number: '1.1-1' }}%

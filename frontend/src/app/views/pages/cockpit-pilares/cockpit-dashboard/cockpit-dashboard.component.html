@@ -108,7 +108,10 @@
 
     <!-- Gráficos -->
     @if (activeTab === 'graficos') {
-    <app-grafico-indicadores [cockpitId]="cockpit.id"></app-grafico-indicadores>
+    <app-grafico-indicadores 
+      [cockpitId]="cockpit.id"
+      [empresaId]="cockpit.pilarEmpresa?.empresaId || ''">
+    </app-grafico-indicadores>
     }
 
     <!-- Processos -->
