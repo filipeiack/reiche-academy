@@ -10,9 +10,9 @@ import {
 import { PeriodosMentoriaService } from './periodos-mentoria.service';
 import { CreatePeriodoMentoriaDto } from './dto/create-periodo-mentoria.dto';
 import { RenovarPeriodoMentoriaDto } from './dto/renovar-periodo-mentoria.dto';
-import { JwtAuthGuard } from '@/modules/auth/guards/jwt-auth.guard';
-import { RolesGuard } from '@/modules/auth/guards/roles.guard';
-import { Roles } from '@/modules/auth/decorators/roles.decorator';
+import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import { RolesGuard } from '../auth/guards/roles.guard';
+import { Roles } from '../auth/decorators/roles.decorator';
 import { Request } from 'express';
 
 @Controller('empresas/:empresaId/periodos-mentoria')
