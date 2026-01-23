@@ -5,6 +5,7 @@ import { PrismaService } from '../../common/prisma/prisma.service';
 import { AuditService } from '../audit/audit.service';
 import { RequestUser } from '../../common/interfaces/request-user.interface';
 import { PilaresEmpresaService } from '../pilares-empresa/pilares-empresa.service';
+import { RotinasEmpresaService } from '../pilares-empresa/rotinas-empresa.service';
 
 /**
  * QA UNITÁRIO ESTRITO - Suite Completa
@@ -17,6 +18,8 @@ describe('EmpresasService - Validação Completa de Regras de Negócio', () => {
   let service: EmpresasService;
   let prisma: PrismaService;
   let audit: AuditService;
+  let pilaresEmpresaService: PilaresEmpresaService;
+  let rotinasEmpresaService: RotinasEmpresaService;
 
   const mockAdminUser: RequestUser = {
     id: 'admin-id',
@@ -116,12 +119,20 @@ describe('EmpresasService - Validação Completa de Regras de Negócio', () => {
             createRotinaEmpresa: jest.fn(),
           },
         },
+        {
+          provide: RotinasEmpresaService,
+          useValue: {
+            createMany: jest.fn(),
+          },
+        },
       ],
     }).compile();
 
     service = module.get<EmpresasService>(EmpresasService);
     prisma = module.get<PrismaService>(PrismaService);
     audit = module.get<AuditService>(AuditService);
+    pilaresEmpresaService = module.get<PilaresEmpresaService>(PilaresEmpresaService);
+    rotinasEmpresaService = module.get<RotinasEmpresaService>(RotinasEmpresaService);
   });
 
   afterEach(() => {

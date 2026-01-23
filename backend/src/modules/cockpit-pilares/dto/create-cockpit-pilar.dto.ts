@@ -13,7 +13,7 @@ export class CreateCockpitPilarDto {
     description: 'UUID do PilarEmpresa para criar o cockpit',
   })
   @IsNotEmpty({ message: 'pilarEmpresaId é obrigatório' })
-  @IsUUID('4', { message: 'pilarEmpresaId deve ser um UUID válido' })
+  @IsUUID('all', { message: 'pilarEmpresaId deve ser um UUID válido' })
   pilarEmpresaId: string;
 
   @ApiPropertyOptional({

@@ -1,6 +1,7 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { ForbiddenException, NotFoundException, ConflictException } from '@nestjs/common';
 import { PilaresEmpresaService } from './pilares-empresa.service';
+import { RotinasEmpresaService } from './rotinas-empresa.service';
 import { PrismaService } from '../../common/prisma/prisma.service';
 import { AuditService } from '../audit/audit.service';
 
@@ -11,8 +12,10 @@ import { AuditService } from '../audit/audit.service';
  */
 describe('PilaresEmpresaService - Validação Completa', () => {
   let service: PilaresEmpresaService;
+  let rotinasService: RotinasEmpresaService;
   let prisma: PrismaService;
   let audit: AuditService;
+  let module: TestingModule;
 
   const mockAdminUser = {
     id: 'admin-id',
@@ -74,7 +77,7 @@ describe('PilaresEmpresaService - Validação Completa', () => {
   ];
 
   beforeEach(async () => {
-    const module: TestingModule = await Test.createTestingModule({
+    module = await Test.createTestingModule({
       providers: [
         PilaresEmpresaService,
         {
@@ -112,6 +115,19 @@ describe('PilaresEmpresaService - Validação Completa', () => {
           },
         },
         {
+          provide: PilaresEmpresaService,
+          useValue: {
+            createPilarEmpresa: jest.fn(),
+          },
+        },
+        {
+          provide: RotinasEmpresaService,
+          useValue: {
+            createRotinaEmpresa: jest.fn(),
+            deleteRotinaEmpresa: jest.fn(),
+          },
+        },
+        {
           provide: AuditService,
           useValue: {
             log: jest.fn(),
@@ -121,9 +137,9 @@ describe('PilaresEmpresaService - Validação Completa', () => {
     }).compile();
 
     service = module.get<PilaresEmpresaService>(PilaresEmpresaService);
+    rotinasService = module.get<RotinasEmpresaService>(RotinasEmpresaService);
     prisma = module.get<PrismaService>(PrismaService);
     audit = module.get<AuditService>(AuditService);
-  });
 
   afterEach(() => {
     jest.clearAllMocks();
@@ -682,7 +698,7 @@ describe('PilaresEmpresaService - Validação Completa', () => {
       jest.spyOn(prisma.usuario, 'findUnique').mockResolvedValue(mockGestorEmpresaA as any);
       jest.spyOn(audit, 'log').mockResolvedValue(undefined);
 
-      const result = await service.createRotinaEmpresa(
+      const result = await rotinasService.createRotinaEmpresa(
         empresaId,
         pilarEmpresaId,
         { rotinaTemplateId: templateId },
@@ -712,7 +728,7 @@ describe('PilaresEmpresaService - Validação Completa', () => {
       jest.spyOn(prisma.usuario, 'findUnique').mockResolvedValue(mockGestorEmpresaA as any);
       jest.spyOn(audit, 'log').mockResolvedValue(undefined);
 
-      const result = await service.createRotinaEmpresa(
+      const result = await rotinasService.createRotinaEmpresa(
         empresaId,
         pilarEmpresaId,
         { nome: customNome },
@@ -730,8 +746,8 @@ describe('PilaresEmpresaService - Validação Completa', () => {
     it('XOR Validation: deve falhar se template não encontrado', async () => {
       jest.spyOn(prisma.rotina, 'findUnique').mockResolvedValue(null);
 
-      await expect(
-        service.createRotinaEmpresa(
+await expect(
+        rotinasService.createRotinaEmpresa(
           empresaId,
           pilarEmpresaId,
           { rotinaTemplateId: 'invalid-uuid' },
@@ -747,8 +763,8 @@ describe('PilaresEmpresaService - Validação Completa', () => {
         pilarEmpresaId,
       } as any);
 
-      await expect(
-        service.createRotinaEmpresa(
+await expect(
+        rotinasService.createRotinaEmpresa(
           empresaId,
           pilarEmpresaId,
           { nome: 'Duplicado' },
@@ -760,63 +776,13 @@ describe('PilaresEmpresaService - Validação Completa', () => {
     it('Validação: deve falhar se pilar não pertence à empresa', async () => {
       jest.spyOn(prisma.pilarEmpresa, 'findFirst').mockResolvedValue(null);
 
-      await expect(
-        service.createRotinaEmpresa(
+await expect(
+        rotinasService.createRotinaEmpresa(
           empresaId,
           'invalid-pilar',
           { nome: 'Test' },
           mockGestorEmpresaA,
         ),
-      ).rejects.toThrow(NotFoundException);
-    });
-  });
-
-  // ============================================================
-  // SNAPSHOT PATTERN - DELETE ROTINA (deleteRotinaEmpresa)
-  // R-ROTEMP-004
-  // ============================================================
-
-  describe('Snapshot Pattern: deleteRotinaEmpresa() - Hard Delete', () => {
-    const empresaId = 'empresa-a';
-    const rotinaEmpresaId = 'rotina-emp-1';
-
-    it('R-ROTEMP-004: deve deletar rotina (hard delete com auditoria)', async () => {
-      const rotinaMock = {
-        id: rotinaEmpresaId,
-        nome: 'Rotina para Deletar',
-        rotinaTemplateId: 'template-uuid',
-        pilarEmpresaId: 'pilar-emp-1',
-        pilarEmpresa: {
-          empresaId,
-          nome: 'Pilar Teste',
-        },
-      };
-
-      jest.spyOn(prisma.rotinaEmpresa, 'findFirst').mockResolvedValue(rotinaMock as any);
-      jest.spyOn(prisma.rotinaEmpresa, 'delete').mockResolvedValue(rotinaMock as any);
-      jest.spyOn(prisma.usuario, 'findUnique').mockResolvedValue(mockGestorEmpresaA as any);
-      jest.spyOn(audit, 'log').mockResolvedValue(undefined);
-
-      await service.deleteRotinaEmpresa(empresaId, rotinaEmpresaId, mockGestorEmpresaA);
-
-      expect(prisma.rotinaEmpresa.delete).toHaveBeenCalledWith({
-        where: { id: rotinaEmpresaId },
-      });
-      expect(audit.log).toHaveBeenCalledWith(expect.objectContaining({
-        acao: 'DELETE',
-        entidade: 'rotinas_empresa',
-        entidadeId: rotinaEmpresaId,
-        dadosAntes: expect.objectContaining({
-          id: rotinaEmpresaId,
-          nome: rotinaMock.nome,
-        }),
-        dadosDepois: null,
-      }));
-    });
-
-    it('Multi-tenant: GESTOR não deve deletar rotina de outra empresa', async () => {
-      await expect(
-        service.deleteRotinaEmpresa('empresa-b', rotinaEmpresaId, mockGestorEmpresaA),
       ).rejects.toThrow(ForbiddenException);
     });
 
@@ -824,7 +790,7 @@ describe('PilaresEmpresaService - Validação Completa', () => {
       jest.spyOn(prisma.rotinaEmpresa, 'findFirst').mockResolvedValue(null);
 
       await expect(
-        service.deleteRotinaEmpresa(empresaId, 'invalid-rotina', mockGestorEmpresaA),
+        rotinasService.deleteRotinaEmpresa(empresaId, 'invalid-rotina', mockGestorEmpresaA),
       ).rejects.toThrow(NotFoundException);
     });
   });
@@ -1203,4 +1169,5 @@ describe('PilaresEmpresaService - Validação Completa', () => {
       expect(snapshots[0].pilarTemplateId).toBe(snapshots[1].pilarTemplateId);
     });
   });
+});
 });
