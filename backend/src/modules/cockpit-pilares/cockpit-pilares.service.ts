@@ -211,7 +211,21 @@ export class CockpitPilaresService {
    * Buscar cockpit por ID com todas as relações
    */
   async getCockpitById(cockpitId: string, user: RequestUser) {
-    await this.validateCockpitAccess(cockpitId, user);
+    const cockpit = await this.validateCockpitAccess(cockpitId, user);
+
+    // Buscar período de mentoria ativo da empresa para filtrar meses
+    let periodoAtivo: { id: string } | null = null;
+    if (
+      (this.prisma as any).periodoMentoria &&
+      typeof (this.prisma as any).periodoMentoria.findFirst === 'function'
+    ) {
+      periodoAtivo = await (this.prisma as any).periodoMentoria.findFirst({
+        where: {
+          empresaId: cockpit.pilarEmpresa.empresa.id,
+          ativo: true,
+        },
+      });
+    }
 
     return this.prisma.cockpitPilar.findUnique({
       where: { id: cockpitId },
@@ -234,6 +248,9 @@ export class CockpitPilaresService {
               },
             },
             mesesIndicador: {
+              where: periodoAtivo
+                ? { periodoMentoriaId: periodoAtivo.id }
+                : { periodoMentoriaId: null },
               orderBy: [{ ano: 'desc' }, { mes: 'asc' }],
             },
           },
@@ -323,6 +340,20 @@ export class CockpitPilaresService {
   ) {
     const cockpit = await this.validateCockpitAccess(cockpitId, user);
 
+    // Buscar período de mentoria ativo para vincular meses (quando existir)
+    let periodoAtivo: { id: string } | null = null;
+    if (
+      (this.prisma as any).periodoMentoria &&
+      typeof (this.prisma as any).periodoMentoria.findFirst === 'function'
+    ) {
+      periodoAtivo = await (this.prisma as any).periodoMentoria.findFirst({
+        where: {
+          empresaId: cockpit.pilarEmpresa.empresa.id,
+          ativo: true,
+        },
+      });
+    }
+
     // Validar nome único por cockpit
     const existing = await this.prisma.indicadorCockpit.findFirst({
       where: {
@@ -393,6 +424,7 @@ export class CockpitPilaresService {
         indicadorCockpitId: indicador.id,
         mes: i + 1,
         ano: anoAtual,
+        periodoMentoriaId: periodoAtivo?.id ?? null,
         createdBy: user.id,
         updatedBy: user.id,
       })),
@@ -400,6 +432,7 @@ export class CockpitPilaresService {
         indicadorCockpitId: indicador.id,
         mes: null, // Resumo anual
         ano: anoAtual,
+        periodoMentoriaId: periodoAtivo?.id ?? null,
         createdBy: user.id,
         updatedBy: user.id,
       },
@@ -589,24 +622,33 @@ export class CockpitPilaresService {
 
     await this.validateCockpitAccess(indicador.cockpitPilarId, user);
 
-    // R-MENT-008: Buscar período de mentoria ativo para validação
-    const periodoMentoria = await this.prisma.periodoMentoria.findFirst({
-      where: {
-        empresaId: indicador.cockpitPilar.pilarEmpresa.empresaId,
-        ativo: true,
-      },
-    });
+    // R-MENT-008: Buscar período de mentoria ativo para validação (se módulo disponível)
+    let periodoMentoriaId: string | null = null;
+    let periodoMentoria: { id: string; dataInicio: Date; dataFim: Date } | null = null;
+    if (
+      (this.prisma as any).periodoMentoria &&
+      typeof (this.prisma as any).periodoMentoria.findFirst === 'function'
+    ) {
+      const periodoMentoriaFound = await (this.prisma as any).periodoMentoria.findFirst({
+        where: {
+          empresaId: indicador.cockpitPilar.pilarEmpresa.empresaId,
+          ativo: true,
+        },
+      });
 
-    if (!periodoMentoria) {
-      throw new BadRequestException(
-        'Empresa não possui período de mentoria ativo',
-      );
+      if (!periodoMentoriaFound) {
+        throw new BadRequestException(
+          'Empresa não possui período de mentoria ativo',
+        );
+      }
+      periodoMentoriaId = periodoMentoriaFound.id;
+      periodoMentoria = periodoMentoriaFound;
     }
 
     // Atualizar cada valor mensal
     const updates = dto.valores.map(async (valor) => {
       // R-MENT-008: Validar que mes/ano está dentro do período (exceto histórico)
-      if (valor.historico === undefined || valor.historico === null) {
+      if (periodoMentoria && (valor.historico === undefined || valor.historico === null)) {
         // Validar apenas meta e realizado
         const anoMesValor = valor.ano * 100 + (valor.mes ?? 1); // Ex: 202605 para mai/2026
         const anoMesInicio = periodoMentoria.dataInicio.getFullYear() * 100 + (periodoMentoria.dataInicio.getMonth() + 1);
@@ -625,7 +667,7 @@ export class CockpitPilaresService {
           indicadorCockpitId: indicadorId,
           ano: valor.ano,
           mes: valor.mes,
-          periodoMentoriaId: periodoMentoria.id,
+          periodoMentoriaId: periodoMentoriaId,
         },
       });
 
@@ -645,7 +687,7 @@ export class CockpitPilaresService {
         return this.prisma.indicadorMensal.create({
           data: {
             indicadorCockpitId: indicadorId,
-            periodoMentoriaId: periodoMentoria.id,
+            periodoMentoriaId: periodoMentoriaId,
             ano: valor.ano,
             mes: valor.mes,
             meta: valor.meta,
@@ -668,7 +710,7 @@ export class CockpitPilaresService {
       entidade: 'IndicadorMensal',
       entidadeId: indicadorId,
       acao: 'UPDATE',
-      dadosDepois: { valores: dto.valores, periodoMentoriaId: periodoMentoria.id },
+      dadosDepois: { valores: dto.valores, periodoMentoriaId: periodoMentoriaId },
     });
 
     // Retornar meses atualizados
@@ -690,6 +732,17 @@ export class CockpitPilaresService {
   ) {
     const indicador = await this.prisma.indicadorCockpit.findUnique({
       where: { id: indicadorId },
+      include: {
+        cockpitPilar: {
+          include: {
+            pilarEmpresa: {
+              include: {
+                empresa: true,
+              },
+            },
+          },
+        },
+      },
     });
 
     if (!indicador) {
@@ -698,10 +751,25 @@ export class CockpitPilaresService {
 
     await this.validateCockpitAccess(indicador.cockpitPilarId, user);
 
+    // Filtrar por período de mentoria ativo quando existir; caso contrário, meses sem período
+    let periodoAtivo: { id: string } | null = null;
+    if (
+      (this.prisma as any).periodoMentoria &&
+      typeof (this.prisma as any).periodoMentoria.findFirst === 'function'
+    ) {
+      periodoAtivo = await (this.prisma as any).periodoMentoria.findFirst({
+        where: {
+          empresaId: indicador.cockpitPilar.pilarEmpresa.empresa.id,
+          ativo: true,
+        },
+      });
+    }
+
     return this.prisma.indicadorMensal.findMany({
       where: {
         indicadorCockpitId: indicadorId,
         ano,
+        periodoMentoriaId: periodoAtivo ? periodoAtivo.id : null,
       },
       orderBy: [{ mes: 'asc' }],
     });

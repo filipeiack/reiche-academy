@@ -35,13 +35,6 @@
         <div class="d-flex flex-nowrap gap-2" style="flex-shrink: 0;">
 
           <div class="badge bg-light gap-1 p-2">
-            <label class="form-label small text-muted mb-2">Tipo</label>
-            <div class="fw-bold text-dark">
-              ({{ getLabelTipoMedida(indicador.tipoMedida) }})
-            </div>
-          </div>
-
-          <div class="badge bg-light gap-1 p-2">
             <label class="form-label small text-muted mb-2">Status</label>
             <div class="fw-bold text-dark">
               @switch (indicador.statusMedicao) {
@@ -75,6 +68,14 @@
               }
             </div>
           </div>
+
+          <div class="badge bg-light gap-1 p-2">
+            <label class="form-label small text-muted mb-2">Tipo</label>
+            <div class="fw-bold text-dark">
+              ({{ getLabelTipoMedida(indicador.tipoMedida) }})
+            </div>
+          </div>
+
 
         </div>
       </div>

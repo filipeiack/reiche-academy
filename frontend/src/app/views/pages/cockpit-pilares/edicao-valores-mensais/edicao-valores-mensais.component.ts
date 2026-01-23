@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Subject } from 'rxjs';
 import { debounceTime, distinctUntilChanged } from 'rxjs/operators';
+import { environment } from '@environments/environment';
 import { CockpitPilaresService } from '@core/services/cockpit-pilares.service';
 import { SaveFeedbackService } from '@core/services/save-feedback.service';
 import {
@@ -56,7 +57,7 @@ export class EdicaoValoresMensaisComponent implements OnInit, OnChanges, OnDestr
 
   private setupAutoSave(): void {
     this.autoSaveSubject
-      .pipe(debounceTime(1000), distinctUntilChanged())
+      .pipe(debounceTime(environment.debounceTime), distinctUntilChanged())
       .subscribe((change) => {
         this.executeSave(change.indicadorMensalId, change.campo, change.valor);
       });

@@ -7,7 +7,7 @@
     </div>
 
     <!-- Seletor de Empresa (Admin) ou Exibição (Cliente) -->
-    <div class="empresa-selector-wrapper">
+    <div class="empresa-selector-wrapper d-flex gap-3 align-items-center">
       @if (isAdmin) {
       <!-- Admin: combo para selecionar empresa -->
       <ng-select data-testid="empresa-select" id="empresaNavbarSelect" [items]="empresas" bindLabel="nome"
@@ -25,23 +25,21 @@
       </ng-select>
       } @else if (currentUser?.empresa) {
 
-      <div class="d-flex gap-3 align-items-center">
+      <div class="d-flex align-items-center gap-2">
         <i class="feather icon-briefcase"></i>
-        <span class="h3">
+        <span class="h3 mb-0">
           {{ getEmpresaNomeUsuario() }}
         </span>
+      </div>
 
-        <div class="d-flex flex-column gap-1">
-
+      <div class="d-flex flex-column gap-1 justify-content-center">
           @if (getEmpresaCnpj()) {
-          <span class="text-muted fs-12px">{{ getEmpresaCnpj() }}</span>
+          <span class="text-muted fs-12px">{{ getEmpresaCnpj() | cnpj }}</span>
           }
           @if (getEmpresaLocalizacao()) {
           <span class="text-muted fs-12px">{{ getEmpresaLocalizacao() }}</span>
           }
         </div>
-
-      </div>
       }
     </div>
 

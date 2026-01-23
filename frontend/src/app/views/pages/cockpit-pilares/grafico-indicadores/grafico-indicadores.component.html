@@ -33,16 +33,9 @@
       </div>
 
       <!-- Detalhes do Indicador -->
-      <div class="flex-fill">
+      
         @if (indicador) {
-        <div class="d-flex gap-2">
-
-          <div class="badge bg-light gap-1 p-2">
-            <label class="form-label small text-muted mb-2">Tipo</label>
-            <div class="fw-bold text-dark">
-              ({{ getLabelTipoMedida(indicador.tipoMedida) }})
-            </div>
-          </div>
+        <div class="d-flex flex-nowrap gap-2" style="flex-shrink: 0;">
 
           <div class="badge bg-light gap-1 p-2 flex-fill">
             <label class="form-label small text-muted mb-2">Status</label>
@@ -78,9 +71,17 @@
               }
             </div>
           </div>
+
+          <div class="badge bg-light gap-1 p-2">
+            <label class="form-label small text-muted mb-2">Tipo</label>
+            <div class="fw-bold text-dark">
+              {{ getLabelTipoMedida(indicador.tipoMedida) }}
+            </div>
+          </div>
+
         </div>
         }
-      </div>
+      
     </div>
 
     <!-- Loading -->

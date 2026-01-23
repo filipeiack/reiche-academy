@@ -213,9 +213,14 @@ export class NavbarComponent implements OnInit {
 
   getEmpresaLocalizacao(): string {
     if (!this.currentUser?.empresa) return '';
-    return typeof this.currentUser.empresa === 'object' 
-      ? this.currentUser.empresa.cidade + '/' + this.currentUser.empresa.estado
-      : '';
+    if (typeof this.currentUser.empresa !== 'object') return '';
+    
+    const { cidade, estado } = this.currentUser.empresa;
+    if (!cidade && !estado) return '';
+    if (!cidade) return estado || '';
+    if (!estado) return cidade;
+    
+    return `${cidade}/${estado}`;
   }
 
   /**

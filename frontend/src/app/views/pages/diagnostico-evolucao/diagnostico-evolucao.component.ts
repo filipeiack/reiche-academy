@@ -371,7 +371,7 @@ renderBarChart(): void {
                   ctx.textBaseline = 'middle';
                   // Calcular posição Y no meio da barra
                   const yMid = (bar.y + bar.base) / 2;
-                  ctx.fillText(data.toFixed(1), bar.x, yMid);
+                  ctx.fillText(data.toLocaleString('pt-BR', { minimumFractionDigits: 1, maximumFractionDigits: 1 }), bar.x, yMid);
                 }
               });
             }
@@ -405,6 +405,9 @@ renderBarChart(): void {
           }
         },
         plugins: {
+          datalabels: {
+            display: false // Desabilita labels automáticos do Chart.js (evita duplicação)
+          },
           legend: {
             display: true,
             position: 'top',
@@ -428,7 +431,7 @@ renderBarChart(): void {
                   label += ': ';
                 }
                 if (context.parsed.y !== null) {
-                  label += context.parsed.y.toFixed(2);
+                  label += context.parsed.y.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
                 }
                 return label;
               }

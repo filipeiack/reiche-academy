@@ -106,6 +106,8 @@ export class AuthService {
               id: true,
               nome: true,
               cnpj: true,
+              cidade: true,
+              estado: true,
               logoUrl: true,
             },
           },

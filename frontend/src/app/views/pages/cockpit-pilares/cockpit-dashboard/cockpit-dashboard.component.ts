@@ -4,6 +4,7 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { Subject, Subscription } from 'rxjs';
 import { debounceTime, distinctUntilChanged } from 'rxjs/operators';
+import { environment } from '@environments/environment';
 import { CockpitPilaresService } from '@core/services/cockpit-pilares.service';
 import { SaveFeedbackService, SaveFeedback } from '@core/services/save-feedback.service';
 import { CockpitPilar } from '@core/interfaces/cockpit-pilares.interface';
@@ -79,7 +80,7 @@ export class CockpitDashboardComponent implements OnInit, OnDestroy {
 
   private setupAutoSave(): void {
     this.autoSaveSubject
-      .pipe(debounceTime(1000), distinctUntilChanged())
+      .pipe(debounceTime(environment.debounceTime), distinctUntilChanged())
       .subscribe(() => {
         this.saveContexto();
       });

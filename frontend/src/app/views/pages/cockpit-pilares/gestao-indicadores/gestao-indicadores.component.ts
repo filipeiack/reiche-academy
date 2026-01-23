@@ -15,6 +15,7 @@ import { NgSelectModule } from '@ng-select/ng-select';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { Subject } from 'rxjs';
 import { debounceTime, distinctUntilChanged, take } from 'rxjs/operators';
+import { environment } from '@environments/environment';
 import { CockpitPilaresService } from '@core/services/cockpit-pilares.service';
 import { SaveFeedbackService } from '@core/services/save-feedback.service';
 import { CreateUsuarioDto, UsersService } from '@core/services/users.service';
@@ -94,7 +95,7 @@ export class GestaoIndicadoresComponent implements OnInit, OnDestroy {
   private setupAutoSave(): void {
     this.autoSaveSubject
       .pipe(
-        debounceTime(1000),
+        debounceTime(environment.debounceTime),
         distinctUntilChanged(
           (prev, curr) =>
             prev.indicador.id === curr.indicador.id && prev.field === curr.field
@@ -133,10 +134,12 @@ export class GestaoIndicadoresComponent implements OnInit, OnDestroy {
 
     this.usersService.getAll().subscribe({
       next: (usuarios: Usuario[]) => {
-        // Filtrar apenas usuários com perfil CLIENTE da empresa atual
-        this.usuarios = usuarios.filter(u => 
-          u.empresaId === this.empresaId && 
-          u.perfil?.codigo === 'CLIENTE'
+        // Filtrar usuários ativos da empresa atual com perfis válidos para responsabilidade
+        const perfisPermitidos = ['GESTOR', 'COLABORADOR', 'LEITURA'];
+        this.usuarios = usuarios.filter(u =>
+          u.empresaId === this.empresaId &&
+          (!!u.ativo) &&
+          (!!u.perfil?.codigo && perfisPermitidos.includes(u.perfil.codigo))
         );
       },
       error: (err: unknown) => {

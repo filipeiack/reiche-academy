@@ -36,11 +36,11 @@ export class MediaBadgeComponent {
   @Input() justMedia?: boolean = false;
 
   get label(): string {
-    return this.justMedia ? this.labelMedia : `MÉDIA DO PILAR: ${this.media.toFixed(1)}`;
+    return this.justMedia ? this.labelMedia : `MÉDIA DO PILAR: ${this.media.toLocaleString('pt-BR', { minimumFractionDigits: 1, maximumFractionDigits: 1 })}`;
   }
 
   get labelMedia(): string {
-    return ` ${this.media.toFixed(1)} `;
+    return ` ${this.media.toLocaleString('pt-BR', { minimumFractionDigits: 1, maximumFractionDigits: 1 })} `;
   }
 
   get badgeClass(): string {

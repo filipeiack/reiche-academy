@@ -1,9 +1,14 @@
-import { APP_INITIALIZER, ApplicationConfig, importProvidersFrom, provideZoneChangeDetection } from '@angular/core';
+import { APP_INITIALIZER, ApplicationConfig, importProvidersFrom, provideZoneChangeDetection, LOCALE_ID } from '@angular/core';
 import { provideRouter, withInMemoryScrolling } from '@angular/router';
 import { provideHttpClient, withInterceptorsFromDi, HTTP_INTERCEPTORS } from '@angular/common/http';
+import { registerLocaleData } from '@angular/common';
+import localePt from '@angular/common/locales/pt';
 
 import { routes } from './app.routes';
 import { provideAnimationsAsync } from '@angular/platform-browser/animations/async';
+
+// Registrar locale pt-BR
+registerLocaleData(localePt, 'pt-BR');
 
 import { SweetAlert2Module } from '@sweetalert2/ngx-sweetalert2';
 import { provideHighlightOptions } from 'ngx-highlightjs';
@@ -38,6 +43,7 @@ export const appConfig: ApplicationConfig = {
     provideAnimationsAsync(),
     importProvidersFrom([SweetAlert2Module.forRoot()]), // ngx-sweetalert2: https://github.com/sweetalert2/ngx-sweetalert2
     provideHighlightOptions(highlightOptions), // ngx-highlightjs: https://github.com/murhafsousli/ngx-highlightjs
+    { provide: LOCALE_ID, useValue: 'pt-BR' },
     {
       provide: HTTP_INTERCEPTORS,
       useClass: AuthInterceptor,

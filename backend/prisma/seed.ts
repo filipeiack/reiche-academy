@@ -159,7 +159,7 @@ async function main() {
     update: {},
     create: {
       email: 'gestor@empresa-a.com',
-      nome: 'Gestor Empresa A',
+      nome: 'Flavio Gestor Empresa A',
       senha,
       perfilId: perfilGestor.id,
       cargo: 'Gerente',
@@ -173,7 +173,7 @@ async function main() {
     update: {},
     create: {
       email: 'gestor@empresa-b.com',
-      nome: 'Gestor Empresa B',
+      nome: 'Bruno Gestor Empresa B',
       senha,
       perfilId: perfilGestor.id,
       cargo: 'Gerente',
@@ -187,7 +187,7 @@ async function main() {
     update: {},
     create: {
       email: 'colab@empresa-a.com',
-      nome: 'Colaborador Empresa A',
+      nome: 'Carlos Colaborador Empresa A',
       senha,
       perfilId: perfilColab.id,
       cargo: 'Analista',
@@ -196,11 +196,27 @@ async function main() {
     },
   });
 
-  console.log(`✅ 4 usuários criados:`);
+  const perfilLeitura = await prisma.perfilUsuario.findUnique({ where: { codigo: 'LEITURA' } });
+  const leituraA = await prisma.usuario.upsert({
+    where: { email: 'leitura@empresa-a.com' },
+    update: {},
+    create: {
+      email: 'leitura@empresa-a.com',
+      nome: 'Marina Leitura Empresa A',
+      senha,
+      perfilId: perfilLeitura!.id,
+      cargo: 'Consultor',
+      ativo: true,
+      empresaId: empresaA.id,
+    },
+  });
+
+  console.log(`✅ 5 usuários criados:`);
   console.log(`   - ${admin.email} (senha: Admin@123)`);
   console.log(`   - ${gestorA.email} (senha: Admin@123)`);
   console.log(`   - ${gestorB.email} (senha: Admin@123)`);
   console.log(`   - ${colaboradorA.email} (senha: Admin@123)`);
+  console.log(`   - ${leituraA.email} (senha: Admin@123)`);
 
   // ========================================
   // 4. PILARES GLOBAIS COMPLETOS
@@ -982,8 +998,14 @@ async function main() {
     },
   ];
 
+  // Responsáveis para os indicadores (distribuindo entre gestorA e colaboradorA)
+  const responsaveisIndicadores = [gestorA, colaboradorA, gestorA, colaboradorA, gestorA];
+
   const indicadoresCriados = [];
-  for (const indData of indicadoresData) {
+  for (let i = 0; i < indicadoresData.length; i++) {
+    const indData = indicadoresData[i];
+    const responsavel = responsaveisIndicadores[i];
+
     const indicador = await prisma.indicadorCockpit.upsert({
       where: {
         cockpitPilarId_nome: {
@@ -991,7 +1013,9 @@ async function main() {
           nome: indData.nome,
         },
       },
-      update: {},
+      update: {
+        responsavelMedicaoId: responsavel.id,
+      },
       create: {
         cockpitPilarId: cockpitMarketing.id,
         nome: indData.nome,
@@ -1000,6 +1024,7 @@ async function main() {
         statusMedicao: indData.statusMedicao,
         melhor: indData.melhor,
         ordem: indData.ordem,
+        responsavelMedicaoId: responsavel.id,
         ativo: true,
       },
     });
@@ -1007,11 +1032,47 @@ async function main() {
   }
 
   console.log(`✅ ${indicadoresCriados.length} indicadores criados para Cockpit de Marketing`);
+  console.log(`   - Responsáveis vinculados: ${gestorA.nome}, ${colaboradorA.nome}`);
 
-  // Criar valores mensais para o primeiro indicador (Leads Gerados)
-  // 12 meses de dados (janeiro a dezembro 2026) com meta, realizado e histórico
-  const indicadorLeads = indicadoresCriados[0];
-  const mesesData = [
+  // ========================================
+  // 10.1. ASSOCIAR ROTINAS AOS PROCESSOS PRIORITÁRIOS
+  // ========================================
+
+  // Buscar todas as rotinas do pilar Marketing da Empresa A
+  const rotinasMarketingA = await prisma.rotinaEmpresa.findMany({
+    where: {
+      pilarEmpresaId: pilarMarketingA.id,
+      ativo: true,
+    },
+    orderBy: { ordem: 'asc' },
+  });
+
+  // Associar cada rotina como processo prioritário do cockpit
+  let processosAssociados = 0;
+  for (let i = 0; i < rotinasMarketingA.length; i++) {
+    const rotina = rotinasMarketingA[i];
+    
+    const processo = await prisma.processoPrioritario.upsert({
+      where: {
+        cockpitPilarId_rotinaEmpresaId: {
+          cockpitPilarId: cockpitMarketing.id,
+          rotinaEmpresaId: rotina.id,
+        },
+      },
+      update: {},
+      create: {
+        cockpitPilarId: cockpitMarketing.id,
+        rotinaEmpresaId: rotina.id,
+        ordem: i + 1,
+      },
+    });
+    processosAssociados++;
+  }
+
+  console.log(`✅ ${processosAssociados} rotinas do Marketing associadas como processos prioritários`);
+
+  // Dados de 12 meses para cada indicador (jan-dez 2026)
+  const todosMesesData = [
     { mes: 1, meta: 80, realizado: 75, historico: 65 },
     { mes: 2, meta: 85, realizado: 90, historico: 70 },
     { mes: 3, meta: 90, realizado: 88, historico: 72 },
@@ -1026,74 +1087,120 @@ async function main() {
     { mes: 12, meta: 125, realizado: 130, historico: 98 },
   ];
 
-  let valoresCriados = 0;
-  for (const mesData of mesesData) {
-    // Find existing record
-    const existing = await prisma.indicadorMensal.findFirst({
-      where: {
-        indicadorCockpitId: indicadorLeads.id,
-        ano: 2026,
-        mes: mesData.mes,
-      },
-    });
-
-    if (!existing) {
-      await prisma.indicadorMensal.create({
-        data: {
-          indicadorCockpitId: indicadorLeads.id,
-          periodoMentoriaId: periodoMentoriaA.id,
-          ano: 2026,
-          mes: mesData.mes,
-          meta: mesData.meta,
-          realizado: mesData.realizado,
-          historico: mesData.historico,
-        },
-      });
-      valoresCriados++;
-    }
-  }
-
-  console.log(`✅ ${valoresCriados} valores mensais criados para indicador "${indicadorLeads.nome}"`);
-
-  // Criar valores para o segundo indicador (Taxa de Conversão) - apenas alguns meses para variedade
-  const indicadorConversao = indicadoresCriados[1];
-  const mesesConversaoData = [
-    { mes: 1, meta: 12.0, realizado: 11.5, historico: 10.0 },
-    { mes: 2, meta: 12.5, realizado: 13.0, historico: 10.5 },
-    { mes: 3, meta: 13.0, realizado: 12.8, historico: 11.0 },
-    { mes: 4, meta: 13.5, realizado: 13.2, historico: 11.5 },
-    { mes: 5, meta: 14.0, realizado: 14.5, historico: 12.0 },
-    { mes: 6, meta: 14.0, realizado: 13.8, historico: 12.5 },
+  // Dados específicos por indicador (ajustados para a realidade de cada métrica)
+  const indicadoresValores = [
+    {
+      nome: 'Leads Gerados',
+      valores: todosMesesData, // Quantidade
+    },
+    {
+      nome: 'Taxa de Conversão',
+      valores: [
+        { mes: 1, meta: 12.0, realizado: 11.5, historico: 10.0 },
+        { mes: 2, meta: 12.5, realizado: 13.0, historico: 10.5 },
+        { mes: 3, meta: 13.0, realizado: 12.8, historico: 11.0 },
+        { mes: 4, meta: 13.5, realizado: 13.2, historico: 11.5 },
+        { mes: 5, meta: 14.0, realizado: 14.5, historico: 12.0 },
+        { mes: 6, meta: 14.0, realizado: 13.8, historico: 12.5 },
+        { mes: 7, meta: 14.5, realizado: 14.2, historico: 13.0 },
+        { mes: 8, meta: 15.0, realizado: 15.5, historico: 13.5 },
+        { mes: 9, meta: 15.5, realizado: 15.8, historico: 14.0 },
+        { mes: 10, meta: 16.0, realizado: 16.2, historico: 14.5 },
+        { mes: 11, meta: 16.5, realizado: 16.8, historico: 15.0 },
+        { mes: 12, meta: 17.0, realizado: 17.3, historico: 15.5 },
+      ], // Percentual
+    },
+    {
+      nome: 'CAC (Custo de Aquisição de Cliente)',
+      valores: [
+        { mes: 1, meta: 450, realizado: 480, historico: 500 },
+        { mes: 2, meta: 440, realizado: 420, historico: 490 },
+        { mes: 3, meta: 430, realizado: 450, historico: 480 },
+        { mes: 4, meta: 420, realizado: 410, historico: 470 },
+        { mes: 5, meta: 410, realizado: 390, historico: 460 },
+        { mes: 6, meta: 400, realizado: 405, historico: 450 },
+        { mes: 7, meta: 390, realizado: 380, historico: 440 },
+        { mes: 8, meta: 380, realizado: 385, historico: 430 },
+        { mes: 9, meta: 370, realizado: 360, historico: 420 },
+        { mes: 10, meta: 360, realizado: 350, historico: 410 },
+        { mes: 11, meta: 350, realizado: 340, historico: 400 },
+        { mes: 12, meta: 340, realizado: 330, historico: 390 },
+      ], // Real (R$)
+    },
+    {
+      nome: 'ROI de Campanhas',
+      valores: [
+        { mes: 1, meta: 250, realizado: 240, historico: 200 },
+        { mes: 2, meta: 260, realizado: 280, historico: 210 },
+        { mes: 3, meta: 270, realizado: 265, historico: 220 },
+        { mes: 4, meta: 280, realizado: 290, historico: 230 },
+        { mes: 5, meta: 290, realizado: 310, historico: 240 },
+        { mes: 6, meta: 300, realizado: 295, historico: 250 },
+        { mes: 7, meta: 310, realizado: 320, historico: 260 },
+        { mes: 8, meta: 320, realizado: 315, historico: 270 },
+        { mes: 9, meta: 330, realizado: 340, historico: 280 },
+        { mes: 10, meta: 340, realizado: 350, historico: 290 },
+        { mes: 11, meta: 350, realizado: 360, historico: 300 },
+        { mes: 12, meta: 360, realizado: 370, historico: 310 },
+      ], // Percentual
+    },
+    {
+      nome: 'Engajamento nas Redes Sociais',
+      valores: [
+        { mes: 1, meta: 1200, realizado: 1100, historico: 800 },
+        { mes: 2, meta: 1300, realizado: 1400, historico: 900 },
+        { mes: 3, meta: 1400, realizado: 1350, historico: 1000 },
+        { mes: 4, meta: 1500, realizado: 1550, historico: 1100 },
+        { mes: 5, meta: 1600, realizado: 1650, historico: 1200 },
+        { mes: 6, meta: 1600, realizado: 1580, historico: 1300 },
+        { mes: 7, meta: 1700, realizado: 1750, historico: 1400 },
+        { mes: 8, meta: 1700, realizado: 1680, historico: 1500 },
+        { mes: 9, meta: 1800, realizado: 1850, historico: 1600 },
+        { mes: 10, meta: 1900, realizado: 1920, historico: 1700 },
+        { mes: 11, meta: 2000, realizado: 2050, historico: 1800 },
+        { mes: 12, meta: 2100, realizado: 2150, historico: 1900 },
+      ], // Quantidade
+    },
   ];
 
-  let valoresConversaoCriados = 0;
-  for (const mesData of mesesConversaoData) {
-    // Find existing record
-    const existing = await prisma.indicadorMensal.findFirst({
-      where: {
-        indicadorCockpitId: indicadorConversao.id,
-        ano: 2026,
-        mes: mesData.mes,
-      },
-    });
+  // Criar valores mensais para TODOS os 5 indicadores
+  let totalValoresCriados = 0;
+  for (const indicadorData of indicadoresValores) {
+    const indicador = indicadoresCriados.find(ind => ind.nome === indicadorData.nome);
+    if (!indicador) continue;
 
-    if (!existing) {
-      await prisma.indicadorMensal.create({
-        data: {
-          indicadorCockpitId: indicadorConversao.id,
-          periodoMentoriaId: periodoMentoriaA.id,
+    for (const mesData of indicadorData.valores) {
+      // Verificar se já existe registro
+      const existing = await prisma.indicadorMensal.findFirst({
+        where: {
+          indicadorCockpitId: indicador.id,
           ano: 2026,
           mes: mesData.mes,
-          meta: mesData.meta,
-          realizado: mesData.realizado,
-          historico: mesData.historico,
+          periodoMentoriaId: periodoMentoriaA.id,
         },
       });
-      valoresConversaoCriados++;
+
+      if (!existing) {
+        await prisma.indicadorMensal.create({
+          data: {
+            indicadorCockpitId: indicador.id,
+            periodoMentoriaId: periodoMentoriaA.id,
+            ano: 2026,
+            mes: mesData.mes,
+            meta: mesData.meta,
+            realizado: mesData.realizado,
+            historico: mesData.historico,
+          },
+        });
+        totalValoresCriados++;
+      }
     }
+
+    const countMeses = indicadorData.valores.length;
+    console.log(`✅ ${countMeses} valores mensais criados para "${indicadorData.nome}"`);
   }
 
-  console.log(`✅ ${valoresConversaoCriados} valores mensais criados para indicador "${indicadorConversao.nome}"`);
+  console.log(`\n✅ Total de ${totalValoresCriados} valores mensais criados para todos os indicadores da Empresa A`);
 
   // ========================================
   // 11. RESUMO FINAL
@@ -1104,7 +1211,7 @@ async function main() {
   console.log(`   - 4 perfis de usuário`);
   console.log(`   - 2 empresas`);
   console.log(`   - 2 períodos de mentoria`);
-  console.log(`   - 4 usuários`);
+  console.log(`   - 5 usuários`);
   console.log(`   - ${pilaresCriados.length} pilares globais (ESTRATÉGICO, MARKETING, VENDAS, PESSOAS, FINANCEIRO, COMPRAS/ESTOQUE)`);
   console.log(`   - ${totalRotinasCriadas} rotinas globais (10 por pilar)`);
   console.log(`   - ${pilaresEmpresaA.length + pilaresEmpresaB.length} pilares vinculados às empresas`);
@@ -1113,13 +1220,15 @@ async function main() {
   console.log(`   - ${trimestres.length} períodos de avaliação`);
   console.log(`   - ${evoluçõesCriadas} registros de evolução`);
   console.log(`   - 1 cockpit de Marketing`);
-  console.log(`   - 5 indicadores de Marketing`);
-  console.log(`   - ${valoresCriados + valoresConversaoCriados} valores mensais (meta, realizado, histórico)`);
+  console.log(`   - 5 indicadores de Marketing (com responsáveis vinculados)`);
+  console.log(`   - ${processosAssociados} processos prioritários (rotinas do Marketing associadas)`);
+  console.log(`   - ${totalValoresCriados} valores mensais (meta, realizado, histórico para 12 meses em cada indicador)`);
   console.log('\n🔑 Credenciais de acesso:');
-  console.log('   Email: admin@reiche.com.br | Senha: Admin@123');
-  console.log('   Email: gestor@empresa-a.com | Senha: Admin@123');
-  console.log('   Email: gestor@empresa-b.com | Senha: Admin@123');
-  console.log('   Email: colab@empresa-a.com | Senha: Admin@123');
+  console.log('   Email: admin@reiche.com.br | Senha: Admin@123 (ADMINISTRADOR)');
+  console.log('   Email: gestor@empresa-a.com | Senha: Admin@123 (GESTOR - Empresa A)');
+  console.log('   Email: colab@empresa-a.com | Senha: Admin@123 (COLABORADOR - Empresa A)');
+  console.log('   Email: leitura@empresa-a.com | Senha: Admin@123 (LEITURA - Empresa A)');
+  console.log('   Email: gestor@empresa-b.com | Senha: Admin@123 (GESTOR - Empresa B)');
 }
 
 main()

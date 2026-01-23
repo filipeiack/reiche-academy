@@ -69,6 +69,10 @@ describe('DiagnosticosService - Validação Completa de Regras de Negócio', () 
         email: 'gestor-a@test.com',
         cargo: 'Gestor',
       },
+      cockpit: {
+        id: 'cockpit-1',
+        pilarEmpresaId: 'pilar-emp-1',
+      },
       rotinasEmpresa: [
         {
           id: 'rotina-emp-1',
@@ -102,6 +106,7 @@ describe('DiagnosticosService - Validação Completa de Regras de Negócio', () 
       ordem: 2,
       ativo: true,
       responsavel: null,
+      cockpit: null,
       rotinasEmpresa: [
         {
           id: 'rotina-emp-3',
@@ -217,6 +222,7 @@ describe('DiagnosticosService - Validação Completa de Regras de Negócio', () 
         },
         include: expect.objectContaining({
           responsavel: expect.any(Object),
+          cockpit: expect.any(Object),
           rotinasEmpresa: expect.any(Object),
         }),
         orderBy: { ordem: 'asc' },

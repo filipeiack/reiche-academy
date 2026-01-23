@@ -6,6 +6,7 @@ import { NgbAlertModule, NgbProgressbar, NgbModal } from '@ng-bootstrap/ng-boots
 import { NgSelectModule } from '@ng-select/ng-select';
 import Swal from 'sweetalert2';
 import { Subject, Subscription, debounceTime, distinctUntilChanged } from 'rxjs';
+import { environment } from '@environments/environment';
 import { TranslatePipe } from '../../../core/pipes/translate.pipe';
 import { DiagnosticoNotasService, PilarEmpresa, RotinaEmpresa, UpdateNotaRotinaDto } from '../../../core/services/diagnostico-notas.service';
 import { EmpresasService, Empresa } from '../../../core/services/empresas.service';
@@ -352,13 +353,13 @@ export class DiagnosticoNotasComponent implements OnInit, OnDestroy {
   }
 
   /**
-   * Configura o auto-save com debounce de 1000ms
+   * Configura o auto-save com debounce configurado
    */
   private setupAutoSave(): void {
     console.log('🔧 Configurando auto-save subject...');
     this.autoSaveSubscription = this.autoSaveSubject
       .pipe(
-        debounceTime(1000), // Aguarda 1000ms após última alteração
+        debounceTime(environment.debounceTime), // Aguarda após última alteração
         distinctUntilChanged((prev, curr) => 
           prev.rotinaEmpresaId === curr.rotinaEmpresaId &&
           prev.data.nota === curr.data.nota &&

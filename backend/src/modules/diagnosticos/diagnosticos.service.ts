@@ -61,6 +61,12 @@ export class DiagnosticosService {
             cargo: true,
           },
         },
+        cockpit: {
+          select: {
+            id: true,
+            pilarEmpresaId: true,
+          },
+        },
         rotinasEmpresa: {
           where: {
             ativo: true,

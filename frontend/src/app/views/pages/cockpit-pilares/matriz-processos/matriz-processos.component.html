@@ -54,7 +54,7 @@
             <td class="text-center">
               @if (processo.rotinaEmpresa?.notas && processo.rotinaEmpresa.notas.length > 0) {
               <span class="badge" [class]="getNotaClass(processo.rotinaEmpresa.notas[0].nota)">
-                {{ processo.rotinaEmpresa.notas[0].nota?.toFixed(1) || '-' }}
+                {{ processo.rotinaEmpresa.notas[0].nota?.toLocaleString('pt-BR', { minimumFractionDigits: 1, maximumFractionDigits: 1 }) || '-' }}
               </span>
               } @else {
               <span class="text-muted">-</span>

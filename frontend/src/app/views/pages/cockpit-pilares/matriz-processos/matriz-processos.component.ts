@@ -4,6 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { NgSelectModule } from '@ng-select/ng-select';
 import { Subject, Subscription } from 'rxjs';
 import { debounceTime, distinctUntilChanged } from 'rxjs/operators';
+import { environment } from '@environments/environment';
 import { CockpitPilaresService } from '@core/services/cockpit-pilares.service';
 import { SaveFeedbackService } from '@core/services/save-feedback.service';
 import {
@@ -84,7 +85,7 @@ export class MatrizProcessosComponent implements OnInit, OnChanges, OnDestroy {
   private setupAutoSave(): void {
     this.autoSaveSubscription = this.autoSaveSubject
       .pipe(
-        debounceTime(1000),
+        debounceTime(environment.debounceTime),
         distinctUntilChanged((prev, curr) =>
           prev.processoId === curr.processoId && 
           prev.statusMapeamento === curr.statusMapeamento &&

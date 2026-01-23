@@ -84,6 +84,38 @@ export class GraficoIndicadoresComponent implements OnInit, OnChanges {
       legend: {
         position: 'top',
         labels: {
+          generateLabels: (chart) => {
+          // Gerar labels padrão dos datasets
+          const original = Chart.defaults.plugins.legend.labels.generateLabels(chart);
+          
+          original.pop();
+          // Adicionar labels customizados
+          original.push({
+            text: 'Realizado abaixo da meta',
+            fillStyle: 'rgba(220, 53, 69, 0.7)',
+            strokeStyle: '#dc3545',
+            lineWidth: 1,
+            hidden: false,
+            pointStyle: 'circle',
+            // Opcional: index para controlar ordem
+            datasetIndex: -1
+          });
+
+          original.push({
+            text: 'Realizado acima da meta',
+            fillStyle: 'rgba(25, 135, 84, 0.7)',
+            strokeStyle: '#198754',
+            lineWidth: 1,
+            hidden: false,
+            pointStyle: 'circle',
+            // Opcional: index para controlar ordem
+            datasetIndex: -1
+          });
+
+          
+          
+          return original;
+        },
           font: {
             size: 12,
           },
@@ -106,7 +138,7 @@ export class GraficoIndicadoresComponent implements OnInit, OnChanges {
               //return `${label}: ${value?.toFixed(2) || '-'}${suffix}`;
             // }
 
-            return `${label}: ${value?.toFixed(2) || '-'}`;
+            return `${label}: ${value?.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) || '-'}`;
           },
         },
       },
@@ -130,7 +162,7 @@ export class GraficoIndicadoresComponent implements OnInit, OnChanges {
           //const suffix = indicador ? this.getTipoMedidaSuffix(indicador.tipoMedida) : '';
           
           //return `${value.toFixed(1)}${suffix}`;
-          return `${value.toFixed(1)}`;
+          return `${value.toLocaleString('pt-BR', { minimumFractionDigits: 1, maximumFractionDigits: 1 })}`;
         },
         anchor: (context) => {
           // Centro para barras, end para linha
@@ -377,13 +409,13 @@ export class GraficoIndicadoresComponent implements OnInit, OnChanges {
   getLabelTipoMedida(tipo: string): string {
     switch (tipo) {
       case 'REAL':
-        return 'Real (R$)';
+        return '(R$)';
       case 'PERCENTUAL':
-        return 'Percentual (%)';
+        return '(%)';
       case 'TEMPO':
-        return 'Tempo';
+        return '(ts))';
       case 'QUANTIDADE':
-        return 'Quantidade';
+        return '(un)';
       default:
         return tipo;
     }
