@@ -251,7 +251,7 @@ describe('PeriodosMentoriaService - Impacto em Diagnosticos Evolução', () => {
         const periodoAvaliacao = mockPeriodosAvaliacao.find(
           pa => pa.id === evolucao.periodoAvaliacaoId
         );
-        const periodoMentoriaId = periodoAvaliacao?.periodoMentoriaId;
+        const periodoMentoriaId = periodoAvaliacao?.periodoMentoriaId || 'unknown';
 
         if (!acc[periodoMentoriaId]) acc[periodoMentoriaId] = [];
         acc[periodoMentoriaId].push(evolucao);
@@ -370,19 +370,17 @@ describe('PeriodosMentoriaService - Impacto em Diagnosticos Evolução', () => {
         },
       ];
 
-      jest.spyOn(prisma, 'diagnostico', 'get').mockReturnValue({
-        findMany: jest.fn().mockResolvedValue(mockDiagnosticos as any)
-      } as any);
+      jest.spyOn(mockPrisma.diagnostico, 'findMany').mockResolvedValue(mockDiagnosticos as any);
 
       const periodos = await service.findByEmpresa('empresa-diagnosticos-uuid');
-      const diagnosticos = await (prisma as any).diagnostico.findMany();
+      const diagnosticos = await mockPrisma.diagnostico.findMany();
 
       // Organização de diagnosticos por período:
       const diagnosticosPorPeriodo = diagnosticos.reduce((acc: any, diagnostico: any) => {
         const periodoAvaliacao = mockPeriodosAvaliacao.find(
           pa => pa.id === diagnostico.periodoAvaliacaoId
         );
-        const periodoMentoriaId = periodoAvaliacao?.periodoMentoriaId;
+        const periodoMentoriaId = periodoAvaliacao?.periodoMentoriaId || 'unknown';
 
         if (!acc[periodoMentoriaId]) acc[periodoMentoriaId] = [];
         acc[periodoMentoriaId].push(diagnostico);

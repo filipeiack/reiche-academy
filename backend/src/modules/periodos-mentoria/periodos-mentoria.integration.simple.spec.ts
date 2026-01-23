@@ -120,12 +120,12 @@ describe('PeriodosMentoriaService - Integração Simplificada', () => {
 
     it('deve suportar renovação que afeta estrutura de Indicadores Mensais', async () => {
       const dataInicioRenovacao = new Date('2025-01-01');
-      const novoPeriodo = {
+      const mockNovoPeriodo = {
         id: 'novo-periodo-renovacao',
         empresaId: 'empresa-integracao-uuid',
         numero: 3,
         dataInicio: dataInicioRenovacao,
-        dataFim: addYears(dataInicioRenovacao, 1),
+        dataFim: new Date('2025-12-31'), // Final do mesmo ano
         ativo: true,
         createdAt: new Date(),
         updatedAt: new Date(),
@@ -134,7 +134,7 @@ describe('PeriodosMentoriaService - Integração Simplificada', () => {
       jest.spyOn(prisma.periodoMentoria, 'findFirst').mockResolvedValue(mockPeriodoAtivo as any);
       jest.spyOn(prisma, '$transaction').mockResolvedValue([
         { ...mockPeriodoAtivo, ativo: false, dataEncerramento: new Date() },
-        novoPeriodo,
+        mockNovoPeriodo,
       ] as any);
 
       const resultado = await service.renovar(
@@ -143,10 +143,13 @@ describe('PeriodosMentoriaService - Integração Simplificada', () => {
         { dataInicio: '2025-01-01' },
       );
 
+      // $transaction retorna array, pegar o segundo elemento (novo período)
+      const novoPeriodo = Array.isArray(resultado) ? resultado[1] : resultado;
+
       // Validação do impacto:
-      expect(resultado.numero).toBe(3); // Novo número sequencial
-      expect(resultado.dataInicio).toEqual(new Date('2025-01-01')); // Nova janela temporal
-      expect(resultado.dataFim).toEqual(new Date('2025-12-31')); // Novo limite
+      expect(novoPeriodo.numero).toBe(3); // Novo número sequencial
+      expect(novoPeriodo.dataInicio).toEqual(new Date('2025-01-01')); // Nova janela temporal
+      expect(novoPeriodo.dataFim).toEqual(new Date('2025-12-31')); // Novo limite
     });
   });
 

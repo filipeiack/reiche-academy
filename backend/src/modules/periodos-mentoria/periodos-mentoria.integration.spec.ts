@@ -62,6 +62,7 @@ describe('PeriodosMentoriaService - Integração com Outros Módulos', () => {
     pilarId: 'pilar-uuid',
     periodoAvaliacaoId: 'periodo-avaliacao-uuid',
     empresaId: 'empresa-integracao-uuid',
+    periodoMentoriaId: 'periodo-ativo-uuid', // Adicionado para testes
     mediaAnterior: 6.5,
     mediaAtual: 7.2,
     createdAt: new Date(),
@@ -291,12 +292,12 @@ describe('PeriodosMentoriaService - Integração com Outros Módulos', () => {
       expect(resultadoEvolucao).toHaveLength(2);
 
       // Frontend exibiria evolução por período:
-      const evolucaoPorPeriodo = resultadoEvolucao.reduce((acc, evolucao) => {
+      const evolucaoPorPeriodo = resultadoEvolucao.reduce((acc: Record<string, any[]>, evolucao: any) => {
         const periodoId = evolucao.periodoMentoriaId;
         if (!acc[periodoId]) acc[periodoId] = [];
         acc[periodoId].push(evolucao);
         return acc;
-      }, {});
+      }, {} as Record<string, any[]>);
 
       expect(Object.keys(evolucaoPorPeriodo)).toHaveLength(2);
     });
@@ -313,8 +314,8 @@ describe('PeriodosMentoriaService - Integração com Outros Módulos', () => {
       expect(periodoAtivo).toBeDefined();
       expect(avaliacoes).toHaveLength(1);
       expect(avaliacoes[0].periodoMentoriaId).toBe(periodoAtivo!.id);
-      expect(avaliacoes[0].dataReferencia).toBeGreaterThanOrEqual(periodoAtivo!.dataInicio);
-      expect(avaliacoes[0].dataReferencia).toBeLessThanOrEqual(periodoAtivo!.dataFim);
+      expect(avaliacoes[0].dataReferencia.getTime()).toBeGreaterThanOrEqual(periodoAtivo!.dataInicio.getTime());
+      expect(avaliacoes[0].dataReferencia.getTime()).toBeLessThanOrEqual(periodoAtivo!.dataFim.getTime());
     });
   });
 

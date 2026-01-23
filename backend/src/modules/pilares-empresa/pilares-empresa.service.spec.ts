@@ -115,12 +115,6 @@ describe('PilaresEmpresaService - Validação Completa', () => {
           },
         },
         {
-          provide: PilaresEmpresaService,
-          useValue: {
-            createPilarEmpresa: jest.fn(),
-          },
-        },
-        {
           provide: RotinasEmpresaService,
           useValue: {
             createRotinaEmpresa: jest.fn(),
@@ -140,6 +134,8 @@ describe('PilaresEmpresaService - Validação Completa', () => {
     rotinasService = module.get<RotinasEmpresaService>(RotinasEmpresaService);
     prisma = module.get<PrismaService>(PrismaService);
     audit = module.get<AuditService>(AuditService);
+
+  });
 
   afterEach(() => {
     jest.clearAllMocks();
@@ -208,7 +204,6 @@ describe('PilaresEmpresaService - Validação Completa', () => {
           where: {
             empresaId: 'empresa-a',
             ativo: true,
-            pilarTemplate: { ativo: true }, // Filtro de cascata lógica
           },
         }),
       );
@@ -695,6 +690,16 @@ describe('PilaresEmpresaService - Validação Completa', () => {
         pilarEmpresaId,
         ordem: 3,
       } as any);
+
+      // Mock do rotinasService.createRotinaEmpresa
+      jest.spyOn(rotinasService, 'createRotinaEmpresa').mockResolvedValue({
+        id: 'new-rotina-id',
+        rotinaTemplateId: templateId,
+        nome: templateMock.nome,
+        descricao: templateMock.descricao,
+        pilarEmpresaId,
+        ordem: 3,
+      } as any);
       jest.spyOn(prisma.usuario, 'findUnique').mockResolvedValue(mockGestorEmpresaA as any);
       jest.spyOn(audit, 'log').mockResolvedValue(undefined);
 
@@ -1169,5 +1174,4 @@ await expect(
       expect(snapshots[0].pilarTemplateId).toBe(snapshots[1].pilarTemplateId);
     });
   });
-});
 });

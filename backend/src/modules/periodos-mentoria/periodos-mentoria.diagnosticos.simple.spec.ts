@@ -85,8 +85,8 @@ describe('PeriodosMentoriaService - Impacto em Diagnosticos Simplificado', () =>
       expect(periodoAtivo).toBeDefined();
       if (periodoAtivo) {
         expect(periodoAtivo.id).toBe('periodo-ativo-diag-uuid'); // FK em PeriodoAvaliacao
-        expect(periodoAtivo.dataInicio).toBe(new Date('2024-01-01')); // Limite inferior
-        expect(periodoAtivo.dataFim).toBe(new Date('2024-12-31')); // Limite superior
+        expect(periodoAtivo.dataInicio).toEqual(new Date('2024-01-01')); // Limite inferior
+        expect(periodoAtivo.dataFim).toEqual(new Date('2024-12-31')); // Limite superior
         expect(periodoAtivo.numero).toBe(2); // Organização
       }
     });
@@ -133,7 +133,7 @@ describe('PeriodosMentoriaService - Impacto em Diagnosticos Simplificado', () =>
 
   describe('Impacto em PilarEvolucao', () => {
     it('deve fornecer contexto histórico para PilarEvolucao', async () => {
-      const periodosHistoricos = [mockPeriodoAnterior, mockPeriodoAtivo];
+      const periodosHistoricos = [mockPeriodoAtivo, mockPeriodoAnterior];
       jest.spyOn(prisma.periodoMentoria, 'findMany').mockResolvedValue(periodosHistoricos as any);
 
       const periodos = await service.findByEmpresa('empresa-diagnosticos-uuid');
@@ -219,10 +219,13 @@ describe('PeriodosMentoriaService - Impacto em Diagnosticos Simplificado', () =>
         { dataInicio: '2025-01-01' },
       );
 
+      // $transaction retorna array, pegar o segundo elemento (novo período)
+      const novoPeriodo = Array.isArray(resultado) ? resultado[1] : resultado;
+
       // Impacto nos diagnósticos:
-      expect(resultado.numero).toBe(3); // Novo período
-      expect(resultado.dataInicio.getFullYear()).toBe(2025); // Nova janela temporal
-      expect(resultado.dataFim.getFullYear()).toBe(2025); // Novo limite
+      expect(novoPeriodo.numero).toBe(3); // Novo período
+      expect(novoPeriodo.dataInicio.getFullYear()).toBe(2025); // Nova janela temporal
+      expect(novoPeriodo.dataFim.getFullYear()).toBe(2025); // Novo limite
     });
 
     it('deve manter dados históricos preservados', async () => {
@@ -255,7 +258,7 @@ describe('PeriodosMentoriaService - Impacto em Diagnosticos Simplificado', () =>
         status: periodo.ativo ? 'Ativo' : 'Encerrado',
       }));
 
-      expect(dadosIsolados[0].status).toBe('Ativo'); // Novo período
+      expect(dadosIsolados[0].status).toBe('Ativo'); // Novo período (último na lista)
       expect(dadosIsolados[1].status).toBe('Encerrado'); // Período 2024
       expect(dadosIsolados[2].status).toBe('Encerrado'); // Período 2023
     });
