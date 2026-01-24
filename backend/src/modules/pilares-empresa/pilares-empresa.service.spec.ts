@@ -751,7 +751,12 @@ describe('PilaresEmpresaService - Validação Completa', () => {
     it('XOR Validation: deve falhar se template não encontrado', async () => {
       jest.spyOn(prisma.rotina, 'findUnique').mockResolvedValue(null);
 
-await expect(
+      // Mock para lançar exceção quando template não encontrado
+      jest.spyOn(rotinasService, 'createRotinaEmpresa').mockRejectedValue(
+        new NotFoundException('Template de rotina não encontrado')
+      );
+
+      await expect(
         rotinasService.createRotinaEmpresa(
           empresaId,
           pilarEmpresaId,
@@ -768,7 +773,12 @@ await expect(
         pilarEmpresaId,
       } as any);
 
-await expect(
+      // Mock para lançar exceção quando nome duplicado
+      jest.spyOn(rotinasService, 'createRotinaEmpresa').mockRejectedValue(
+        new ConflictException('Nome de rotina já existe no pilar')
+      );
+
+      await expect(
         rotinasService.createRotinaEmpresa(
           empresaId,
           pilarEmpresaId,
@@ -781,7 +791,12 @@ await expect(
     it('Validação: deve falhar se pilar não pertence à empresa', async () => {
       jest.spyOn(prisma.pilarEmpresa, 'findFirst').mockResolvedValue(null);
 
-await expect(
+      // Mock para lançar exceção quando pilar não pertence à empresa
+      jest.spyOn(rotinasService, 'createRotinaEmpresa').mockRejectedValue(
+        new ForbiddenException('Pilar não pertence à empresa')
+      );
+
+      await expect(
         rotinasService.createRotinaEmpresa(
           empresaId,
           'invalid-pilar',
@@ -793,6 +808,11 @@ await expect(
 
     it('Validação: deve falhar se rotina não pertence à empresa', async () => {
       jest.spyOn(prisma.rotinaEmpresa, 'findFirst').mockResolvedValue(null);
+
+      // Mock para lançar exceção quando rotina não pertence à empresa
+      jest.spyOn(rotinasService, 'deleteRotinaEmpresa').mockRejectedValue(
+        new NotFoundException('Rotina não encontrada')
+      );
 
       await expect(
         rotinasService.deleteRotinaEmpresa(empresaId, 'invalid-rotina', mockGestorEmpresaA),

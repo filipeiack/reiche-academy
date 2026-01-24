@@ -14,6 +14,24 @@ export class PeriodosMentoriaService {
   constructor(private readonly prisma: PrismaService) {}
 
   /**
+   * Calcula data fim corrigida para períodos anuais
+   * Retorna 31 de dezembro do ano da dataInicio (meia-noite UTC)
+   */
+  private calcularDataFimAno(dataInicio: Date): Date {
+    // Usar UTC para evitar timezone issues
+    const ano = dataInicio.getUTCFullYear();
+    // UTC: 31/dez/ano 23:59:59 UTC
+    return new Date(Date.UTC(ano, 11, 31, 23, 59, 59, 999));
+  }
+
+  /**
+   * Obtém ano de forma segura (UTC) para evitar timezone issues
+   */
+  private getAnoUTC(data: Date): number {
+    return data.getUTCFullYear();
+  }
+
+  /**
    * R-MENT-001: Criar período com dataFim = dataInicio + 1 ano
    * R-MENT-002: Validar apenas 1 período ativo por empresa
    */
@@ -51,7 +69,7 @@ export class PeriodosMentoriaService {
 
     // R-MENT-001: Calcular dataFim (dataInicio + 1 ano)
     const dataInicio = new Date(dto.dataInicio);
-    const dataFim = addYears(dataInicio, 1);
+    const dataFim = this.calcularDataFimAno(dataInicio);
 
     // Criar período
     const periodo = await this.prisma.periodoMentoria.create({
@@ -125,7 +143,7 @@ export class PeriodosMentoriaService {
     }
 
     // R-MENT-003: Encerrar período atual e criar novo
-    const dataFim = addYears(dataInicio, 1);
+    const dataFim = this.calcularDataFimAno(dataInicio);
     const novoNumero = periodoAtual.numero + 1;
 
     const [periodoEncerrado, novoPeriodo] = await this.prisma.$transaction([
