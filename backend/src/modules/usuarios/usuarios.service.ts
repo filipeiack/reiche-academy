@@ -1,4 +1,5 @@
-import { Injectable, NotFoundException, ConflictException, ForbiddenException, Logger } from '@nestjs/common';
+import { Injectable, NotFoundException, ConflictException, ForbiddenException, Logger, UnauthorizedException } from '@nestjs/common';
+import { JwtService } from '@nestjs/jwt';
 import { PrismaService } from '../../common/prisma/prisma.service';
 import * as argon2 from 'argon2';
 import * as fs from 'fs';
@@ -12,16 +13,42 @@ import { RequestUser } from '../../common/interfaces/request-user.interface';
 export class UsuariosService {
   private readonly logger = new Logger(UsuariosService.name);
   
-  constructor(private prisma: PrismaService, private audit: AuditService) {}
+  constructor(
+    private prisma: PrismaService, 
+    private audit: AuditService,
+    private jwtService: JwtService
+  ) {}
 
   /**
    * RA-001: Valida isolamento multi-tenant
-   * ADMINISTRADOR tem acesso global
+   * RN-SEC-002.5: Auditoria de acessos ADMINISTRADOR
+   * ADMINISTRADOR tem acesso global (com auditoria)
    * Outros perfis só acessam usuários da mesma empresa
    */
-  private validateTenantAccess(targetUsuario: { empresaId: string | null }, requestUser: RequestUser, action: string) {
+  private async validateTenantAccess(targetUsuario: { empresaId: string | null }, requestUser: RequestUser, action: string) {
     // ADMINISTRADOR tem acesso global
     if (requestUser.perfil?.codigo === 'ADMINISTRADOR') {
+      // RN-SEC-002.5: Auditar acessos cross-tenant de ADMINISTRADOR
+      if (targetUsuario.empresaId && targetUsuario.empresaId !== requestUser.empresaId) {
+        await this.audit.log({
+          usuarioId: requestUser.id,
+          usuarioNome: requestUser.nome,
+          usuarioEmail: requestUser.email,
+          entidade: 'Usuario',
+          entidadeId: targetUsuario.empresaId,
+          acao: 'CROSS_TENANT_ACCESS',
+          dadosAntes: null,
+          dadosDepois: {
+            action,
+            adminCompanyId: requestUser.empresaId,
+            targetCompanyId: targetUsuario.empresaId,
+            timestamp: new Date().toISOString(),
+          },
+        });
+        this.logger.warn(
+          `ADMIN ${requestUser.email} acessou usuário de outra empresa (${targetUsuario.empresaId}) - Ação: ${action}`
+        );
+      }
       return;
     }
 
@@ -106,9 +133,16 @@ export class UsuariosService {
 
   async findAll(requestUser?: RequestUser) {
     // RA-011: ADMINISTRADOR vê todos, outros perfis veem apenas da própria empresa
-    const where = requestUser?.perfil?.codigo !== 'ADMINISTRADOR' && requestUser?.empresaId
-      ? { empresaId: requestUser.empresaId }
-      : {};
+    // RN-SEC-002.3: Defense in depth - validação empresaId em service layer
+    const where: any = {};
+    
+    if (requestUser?.perfil?.codigo !== 'ADMINISTRADOR') {
+      // Non-admin users MUST be filtered by empresaId
+      if (!requestUser?.empresaId) {
+        throw new ForbiddenException('Usuário sem empresa associada não pode listar usuários');
+      }
+      where.empresaId = requestUser.empresaId;
+    }
 
     return this.prisma.usuario.findMany({
       where,
@@ -168,6 +202,7 @@ export class UsuariosService {
   }
 
   async findById(id: string, requestUser: RequestUser, action: string = 'visualizar') {
+    // RN-SEC-002.3: Defense in depth - validar multi-tenant no service
     const usuario = await this.prisma.usuario.findUnique({
       where: { id },
       select: {
@@ -197,8 +232,8 @@ export class UsuariosService {
       throw new NotFoundException('Usuário não encontrado');
     }
 
-    // RA-001: Validar acesso multi-tenant
-    this.validateTenantAccess(usuario, requestUser, action);
+    // RA-001: Validar acesso multi-tenant (com auditoria ADMIN)
+    await this.validateTenantAccess(usuario, requestUser, action);
 
     return usuario;
   }
@@ -227,6 +262,43 @@ export class UsuariosService {
         },
       },
     });
+  }
+
+  async validateToken(token: string) {
+    try {
+      const decoded = this.jwtService.verify(token);
+      const user = await this.prisma.usuario.findUnique({
+        where: { id: decoded.sub },
+        include: {
+          perfil: {
+            select: {
+              id: true,
+              codigo: true,
+              nome: true,
+              nivel: true,
+            },
+          },
+          empresa: {
+            select: {
+              id: true,
+              nome: true,
+              cnpj: true,
+              cidade: true,
+              estado: true,
+              logoUrl: true,
+            },
+          },
+        },
+      });
+
+      if (!user || !user.ativo) {
+        throw new Error('Usuário inválido ou inativo');
+      }
+
+      return user;
+    } catch (error) {
+      throw new UnauthorizedException('Token inválido');
+    }
   }
 
   async create(data: CreateUsuarioDto, requestUser: RequestUser) {
@@ -302,8 +374,8 @@ export class UsuariosService {
   async update(id: string, data: UpdateUsuarioDto, requestUser: RequestUser) {
     const before = await this.findById(id, requestUser);
 
-    // RA-001: Validar isolamento multi-tenant
-    this.validateTenantAccess(before, requestUser, 'editar');
+    // RA-001: Validar isolamento multi-tenant (com auditoria ADMIN)
+    await this.validateTenantAccess(before, requestUser, 'editar');
 
     // RA-002: Bloquear auto-edição de campos privilegiados (exceto para ADMINISTRADOR)
     const isSelfEdit = id === requestUser.id;
@@ -451,8 +523,8 @@ export class UsuariosService {
       throw new ForbiddenException('Você não pode alterar a foto de outro usuário');
     }
 
-    // RA-001: Validar isolamento multi-tenant
-    this.validateTenantAccess(usuario, requestUser, 'alterar foto de');
+    // RA-001: Validar isolamento multi-tenant (com auditoria ADMIN)
+    await this.validateTenantAccess(usuario, requestUser, 'alterar foto de');
 
     // Remove o arquivo anterior para evitar acúmulo de imagens
     if (usuario.fotoUrl && usuario.fotoUrl !== fotoUrl) {
@@ -506,8 +578,8 @@ export class UsuariosService {
       throw new ForbiddenException('Você não pode deletar a foto de outro usuário');
     }
 
-    // RA-001: Validar isolamento multi-tenant
-    this.validateTenantAccess(usuario, requestUser, 'deletar foto de');
+    // RA-001: Validar isolamento multi-tenant (com auditoria ADMIN)
+    await this.validateTenantAccess(usuario, requestUser, 'deletar foto de');
 
     // Delete file from filesystem if it exists
     if (usuario.fotoUrl) {

@@ -473,7 +473,7 @@ test.describe('CRUD de Usuários', () => {
   });
 
   test.describe('Validações de RBAC e Perfis', () => {
-    test.skip('COLABORADOR não deve ter acesso ao CRUD de usuários', async ({ page }) => {
+    test('COLABORADOR não deve ter acesso ao CRUD de usuários', async ({ page }) => {
       await login(page, TEST_USERS['colaborador']);
       
       // Tentar acessar diretamente

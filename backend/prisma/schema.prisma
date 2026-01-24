@@ -116,11 +116,12 @@ model Usuario {
   createdBy String?
   updatedBy String?
 
-  // Relations
+// Relations
   reunioes           AgendaReuniao[]
   passwordResets     PasswordReset[]
   loginHistory       LoginHistory[]
   pilaresResponsavel PilarEmpresa[]  @relation("ResponsavelPilarEmpresa")
+  refreshTokens      RefreshToken[]
   
   // Cockpit relations
   indicadoresResponsavel IndicadorCockpit[] @relation("ResponsavelMedicaoIndicador")
@@ -168,6 +169,31 @@ model LoginHistory {
   @@index([createdAt])
   @@index([sucesso])
   @@map("login_history")
+}
+
+model RefreshToken {
+  id        String   @id @default(uuid())
+  token     String   @unique
+  userId    String
+  isActive  Boolean  @default(true)
+  expiresAt DateTime
+  
+  // Security tracking
+  ipAddress   String?
+  userAgent   String?
+  dispositivo String?
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  user Usuario @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([token])
+  @@index([userId])
+  @@index([expiresAt])
+  @@index([userId, isActive])
+  @@map("refresh_tokens")
 }
 
 model Empresa {

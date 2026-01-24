@@ -6,6 +6,7 @@ import { randomBytes } from 'crypto';
 import { UsuariosService } from '../usuarios/usuarios.service';
 import { PrismaService } from '../../common/prisma/prisma.service';
 import { EmailService } from './email.service';
+import { RefreshTokensService } from './refresh-tokens.service';
 import { ForgotPasswordDto } from './dto/forgot-password.dto';
 import { ResetPasswordDto } from './dto/reset-password.dto';
 
@@ -17,6 +18,7 @@ export class AuthService {
     private configService: ConfigService,
     private prisma: PrismaService,
     private emailService: EmailService,
+    private refreshTokensService: RefreshTokensService,
   ) {}
 
   async validateUser(email: string, senha: string, ip?: string, userAgent?: string): Promise<any> {
@@ -59,10 +61,13 @@ export class AuthService {
     };
 
     const accessToken = this.jwtService.sign(payload);
-    const refreshToken = this.jwtService.sign(payload, {
-      secret: this.configService.get('JWT_REFRESH_SECRET'),
-      expiresIn: this.configService.get('JWT_REFRESH_EXPIRATION', '7d'),
-    });
+    
+    // Create secure refresh token
+    const refreshToken = await this.refreshTokensService.createRefreshToken(
+      usuario.id,
+      ip,
+      userAgent
+    );
 
     // Registra login bem-sucedido
     await this.registrarLogin(usuario.id, usuario.email, true, null, ip, userAgent);
@@ -83,45 +88,61 @@ export class AuthService {
     };
   }
 
-  async refreshToken(token: string) {
+  async refreshToken(oldRefreshToken: string, ip?: string, userAgent?: string) {
     try {
-      const payload = this.jwtService.verify(token, {
-        secret: this.configService.get('JWT_REFRESH_SECRET'),
-      });
-
-      // Busca direta no Prisma (contexto de autenticação, sem validação de tenant)
-      const usuario = await this.prisma.usuario.findUnique({
-        where: { id: payload.sub },
-        include: {
-          perfil: {
-            select: {
-              id: true,
-              codigo: true,
-              nome: true,
-              nivel: true,
-            },
-          },
-          empresa: {
-            select: {
-              id: true,
-              nome: true,
-              cnpj: true,
-              cidade: true,
-              estado: true,
-              logoUrl: true,
-            },
-          },
-        },
-      });
+      // Validate the refresh token
+      const usuario = await this.refreshTokensService.validateRefreshToken(oldRefreshToken);
       
       if (!usuario || !usuario.ativo) {
         throw new UnauthorizedException('Token inválido');
       }
 
-      return this.login(usuario);
+      // Rotate the refresh token
+      const newRefreshToken = await this.refreshTokensService.rotateRefreshToken(
+        oldRefreshToken,
+        ip,
+        userAgent
+      );
+
+      // Generate new access token
+      const payload = {
+        sub: usuario.id,
+        email: usuario.email,
+        nome: usuario.nome,
+        perfil: {
+          codigo: usuario.perfil?.codigo || usuario.perfil,
+          nivel: usuario.perfil?.nivel || 5,
+        },
+        empresaId: usuario.empresaId,
+      };
+
+      const accessToken = this.jwtService.sign(payload);
+
+      return {
+        accessToken,
+        refreshToken: newRefreshToken,
+        usuario: {
+          id: usuario.id,
+          email: usuario.email,
+          nome: usuario.nome,
+          cargo: usuario.cargo,
+          perfil: usuario.perfil,
+          empresaId: usuario.empresaId,
+          empresa: usuario.empresa,
+          fotoUrl: usuario.fotoUrl,
+        },
+      };
     } catch (error) {
       throw new UnauthorizedException('Token inválido ou expirado');
     }
+  }
+
+  async logout(refreshToken: string): Promise<void> {
+    await this.refreshTokensService.invalidateToken(refreshToken);
+  }
+
+  async logoutAllDevices(userId: string): Promise<void> {
+    await this.refreshTokensService.invalidateAllUserTokens(userId);
   }
 
   async hashPassword(senha: string): Promise<string> {

@@ -11,7 +11,7 @@ export class AuditService {
     usuarioEmail?: string | null;
     entidade: string;
     entidadeId: string;
-    acao: 'CREATE' | 'UPDATE' | 'DELETE';
+    acao: 'CREATE' | 'UPDATE' | 'DELETE' | 'CROSS_TENANT_ACCESS';
     dadosAntes?: any;
     dadosDepois?: any;
   }) {

@@ -1,7 +1,14 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { ThrottlerModule } from '@nestjs/throttler';
+import { ScheduleModule } from '@nestjs/schedule';
+import { APP_INTERCEPTOR, APP_PIPE, APP_GUARD } from '@nestjs/core';
+import { ThrottlerGuard } from '@nestjs/throttler';
 import { PrismaModule } from './common/prisma/prisma.module';
+import { SecurityInterceptor } from './common/interceptors/security.interceptor';
+import { RateLimitingInterceptor } from './common/interceptors/rate-limiting.interceptor';
+import { SanitizationPipe } from './common/pipes/sanitization.pipe';
+import { RateLimitService } from './common/services/rate-limit.service';
 import { AuthModule } from './modules/auth/auth.module';
 import { UsuariosModule } from './modules/usuarios/usuarios.module';
 import { EmpresasModule } from './modules/empresas/empresas.module';
@@ -21,10 +28,11 @@ import { PeriodosMentoriaModule } from './modules/periodos-mentoria/periodos-men
       isGlobal: true,
       envFilePath: '.env',
     }),
+    ScheduleModule.forRoot(),
     ThrottlerModule.forRoot([
       {
-        ttl: 60000,
-        limit: 10,
+        ttl: 60000, // 1 minuto
+        limit: 100, // DEV: 100 requisições/minuto (PROD: ajustar para 30)
       },
     ]),
     PrismaModule,
@@ -40,6 +48,30 @@ import { PeriodosMentoriaModule } from './modules/periodos-mentoria/periodos-men
     PeriodosAvaliacaoModule,
     CockpitPilaresModule,
     PeriodosMentoriaModule,
+  ],
+  providers: [
+    // Core services
+    RateLimitService,
+    // Security headers interceptor
+    {
+      provide: APP_INTERCEPTOR,
+      useClass: SecurityInterceptor,
+    },
+    // Rate limiting interceptor (global + custom limits)
+    {
+      provide: APP_INTERCEPTOR,
+      useClass: RateLimitingInterceptor,
+    },
+    // Rate limiting via ThrottlerGuard (endpoints específicos)
+    {
+      provide: APP_GUARD,
+      useClass: ThrottlerGuard,
+    },
+    // Input sanitization
+    {
+      provide: APP_PIPE,
+      useClass: SanitizationPipe,
+    },
   ],
 })
 export class AppModule {}

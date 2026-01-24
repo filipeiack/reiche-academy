@@ -1,6 +1,6 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { Observable, BehaviorSubject, tap, interval } from 'rxjs';
+import { Observable, BehaviorSubject, tap, interval, throwError, catchError } from 'rxjs';
 import { environment } from '../../../environments/environment';
 import { LoginRequest, LoginResponse, Usuario } from '../models/auth.model';
 
@@ -24,8 +24,13 @@ export class AuthService {
   }
 
   login(credentials: LoginRequest, remember = false): Observable<LoginResponse> {
+    console.log('[AuthService] Tentando login para:', credentials.email);
+    console.log('[AuthService] URL da requisição:', `${this.API_URL}/login`);
+    console.log('[AuthService] Ambiente:', environment.production ? 'produção' : 'desenvolvimento');
+    
     return this.http.post<LoginResponse>(`${this.API_URL}/login`, credentials).pipe(
       tap(response => {
+        console.log('[AuthService] Login response:', response);
         const storage = remember ? localStorage : sessionStorage;
         this.setSession(response, storage);
         this.initializeTokenRefresh();
@@ -33,7 +38,10 @@ export class AuthService {
     );
   }
 
-  logout(): void {
+  logout(invalidateServer = true): void {
+    console.log('[AuthService] Fazendo logout, invalidateServer:', invalidateServer);
+    const refreshToken = this.getRefreshToken();
+    
     // Clear from both storages to be safe
     try {
       localStorage.removeItem(this.TOKEN_KEY);
@@ -47,15 +55,44 @@ export class AuthService {
       sessionStorage.removeItem(this.REFRESH_TOKEN_KEY);
       sessionStorage.removeItem(this.USER_KEY);
     } catch {}
+    
     this.currentUserSubject.next(null);
     this.clearTokenRefreshInterval();
+    
+    console.log('[AuthService] Sessão local limpa');
+
+    // Invalidate token on server if requested
+    if (invalidateServer && refreshToken) {
+      console.log('[AuthService] Invalidando token no servidor');
+      this.http.post(`${this.API_URL}/logout`, { refreshToken }).subscribe({
+        next: () => console.log('[AuthService] Token invalidado no servidor'),
+        error: (err) => console.warn('[AuthService] Erro ao invalidar token no servidor:', err)
+      });
+    }
+  }
+
+  logoutAllDevices(): Observable<any> {
+    return this.http.post(`${this.API_URL}/logout-all`, {});
   }
 
   refreshToken(): Observable<LoginResponse> {
     const refreshToken = this.getRefreshToken();
+    
+    // Se não houver refresh token, retornar erro imediatamente
+    if (!refreshToken) {
+      console.error('[AuthService] Refresh token não encontrado no storage');
+      return throwError(() => new Error('Refresh token not found'));
+    }
+    
+    console.log('[AuthService] Tentando renovar token com refresh token');
     return this.http.post<LoginResponse>(`${this.API_URL}/refresh`, { refreshToken }).pipe(
       tap(response => {
+        console.log('[AuthService] Token renovado com sucesso');
         this.setSession(response);
+      }),
+      catchError(error => {
+        console.error('[AuthService] Erro ao renovar token:', error);
+        return throwError(() => error);
       })
     );
   }
@@ -87,10 +124,21 @@ export class AuthService {
   }
 
   private setSession(authResult: LoginResponse, storage: Storage = this.getActiveStorage()): void {
+    console.log('[AuthService] Salvando sessão:', {
+      hasAccessToken: !!authResult.accessToken,
+      hasRefreshToken: !!authResult.refreshToken,
+      storageType: storage === localStorage ? 'localStorage' : 'sessionStorage'
+    });
+    
     storage.setItem(this.TOKEN_KEY, authResult.accessToken);
     storage.setItem(this.REFRESH_TOKEN_KEY, authResult.refreshToken);
     storage.setItem(this.USER_KEY, JSON.stringify(authResult.usuario));
     this.currentUserSubject.next(authResult.usuario as unknown as Usuario);
+    
+    console.log('[AuthService] Sessão salva. Verificando:', {
+      accessToken: storage.getItem(this.TOKEN_KEY)?.substring(0, 20) + '...',
+      refreshToken: storage.getItem(this.REFRESH_TOKEN_KEY)?.substring(0, 20) + '...',
+    });
   }
 
   private loadStoredUser(): void {
@@ -112,23 +160,34 @@ export class AuthService {
   private initializeTokenRefresh(): void {
     this.clearTokenRefreshInterval();
 
+    // Só inicializar intervalo se houver usuário logado
+    if (!this.isLoggedIn() || !this.getRefreshToken()) {
+      console.log('[AuthService] Não há sessão ativa, não inicializando renovação automática');
+      return;
+    }
+
+    console.log('[AuthService] Inicializando renovação automática de token (a cada 110 minutos)');
+
     // Renovar token a cada 1 hora 50 minutos (110 minutos)
     // Access token expira em 2 horas, então renovamos 10 minutos antes
     const refreshInterval = 110 * 60 * 1000; // 110 minutos em milissegundos
 
     this.tokenRefreshInterval = setInterval(() => {
       if (this.isLoggedIn() && this.getRefreshToken()) {
-        console.log('Renovando token automaticamente...');
+        console.log('[AuthService] Renovando token automaticamente...');
         this.refreshToken().subscribe({
           next: () => {
-            console.log('Token renovado com sucesso');
+            console.log('[AuthService] Token renovado automaticamente com sucesso');
           },
           error: (err) => {
-            console.warn('Erro ao renovar token automaticamente', err);
+            console.warn('[AuthService] Erro ao renovar token automaticamente, fazendo logout', err);
             // Se falhar, fazer logout
             this.logout();
           }
         });
+      } else {
+        console.log('[AuthService] Sessão expirada, limpando intervalo de renovação');
+        this.clearTokenRefreshInterval();
       }
     }, refreshInterval);
   }

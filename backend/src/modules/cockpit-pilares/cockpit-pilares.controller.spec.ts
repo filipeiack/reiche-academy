@@ -1,6 +1,7 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { CockpitPilaresController } from './cockpit-pilares.controller';
 import { CockpitPilaresService } from './cockpit-pilares.service';
+import { UsuariosService } from '../usuarios/usuarios.service';
 import { CreateCockpitPilarDto } from './dto/create-cockpit-pilar.dto';
 import { UpdateCockpitPilarDto } from './dto/update-cockpit-pilar.dto';
 import { CreateIndicadorCockpitDto } from './dto/create-indicador-cockpit.dto';
@@ -9,6 +10,7 @@ import { UpdateValoresMensaisDto } from './dto/update-valores-mensais.dto';
 import { UpdateProcessoPrioritarioDto } from './dto/update-processo-prioritario.dto';
 import { NotFoundException, ForbiddenException, ConflictException } from '@nestjs/common';
 import { Request } from 'express';
+import { JwtModule } from '@nestjs/jwt';
 
 describe('CockpitPilaresController', () => {
   let controller: CockpitPilaresController;
@@ -48,17 +50,28 @@ describe('CockpitPilaresController', () => {
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
+      imports: [
+        JwtModule.register({
+          secret: 'test-secret',
+          signOptions: { expiresIn: '1h' },
+        }),
+      ],
       controllers: [CockpitPilaresController],
       providers: [
         {
           provide: CockpitPilaresService,
           useValue: mockService,
         },
+        {
+          provide: UsuariosService,
+          useValue: {
+            validateToken: jest.fn().mockResolvedValue(mockUser),
+          },
+        },
       ],
     }).compile();
 
     controller = module.get<CockpitPilaresController>(CockpitPilaresController);
-    service = module.get<CockpitPilaresService>(CockpitPilaresService);
   });
 
   afterEach(() => {
@@ -84,7 +97,7 @@ describe('CockpitPilaresController', () => {
 
       const result = await controller.createCockpit('pilar-1', dto, mockRequest);
 
-      expect(service.createCockpit).toHaveBeenCalledWith(
+      expect(mockService.createCockpit).toHaveBeenCalledWith(
         { ...dto, pilarEmpresaId: 'pilar-1' },
         mockUser
       );
@@ -144,7 +157,7 @@ describe('CockpitPilaresController', () => {
 
       const result = await controller.getCockpitsByEmpresa('empresa-1', mockRequest);
 
-      expect(service.getCockpitsByEmpresa).toHaveBeenCalledWith('empresa-1', mockUser);
+      expect(mockService.getCockpitsByEmpresa).toHaveBeenCalledWith('empresa-1', mockUser);
       expect(result).toBe(cockpits);
     });
 
@@ -165,7 +178,7 @@ describe('CockpitPilaresController', () => {
 
       const result = await controller.getCockpitById('cockpit-1', mockRequest);
 
-      expect(service.getCockpitById).toHaveBeenCalledWith('cockpit-1', mockUser);
+      expect(mockService.getCockpitById).toHaveBeenCalledWith('cockpit-1', mockUser);
       expect(result).toBe(mockCockpit);
     });
 
@@ -201,7 +214,7 @@ describe('CockpitPilaresController', () => {
 
       const result = await controller.updateCockpit('cockpit-1', dto, mockRequest);
 
-      expect(service.updateCockpit).toHaveBeenCalledWith('cockpit-1', dto, mockUser);
+      expect(mockService.updateCockpit).toHaveBeenCalledWith('cockpit-1', dto, mockUser);
       expect(result).toBe(updatedCockpit);
     });
 
@@ -225,7 +238,7 @@ describe('CockpitPilaresController', () => {
 
       const result = await controller.deleteCockpit('cockpit-1', mockRequest);
 
-      expect(service.deleteCockpit).toHaveBeenCalledWith('cockpit-1', mockUser);
+      expect(mockService.deleteCockpit).toHaveBeenCalledWith('cockpit-1', mockUser);
       expect(result).toBe(deactivatedCockpit);
     });
 
@@ -263,7 +276,7 @@ describe('CockpitPilaresController', () => {
 
       const result = await controller.createIndicador('cockpit-1', dto, mockRequest);
 
-      expect(service.createIndicador).toHaveBeenCalledWith('cockpit-1', dto, mockUser);
+      expect(mockService.createIndicador).toHaveBeenCalledWith('cockpit-1', dto, mockUser);
       expect(result).toBe(mockIndicador);
     });
 
@@ -301,7 +314,7 @@ describe('CockpitPilaresController', () => {
 
       const result = await controller.updateIndicador('indicador-1', dto, mockRequest);
 
-      expect(service.updateIndicador).toHaveBeenCalledWith('indicador-1', dto, mockUser);
+      expect(mockService.updateIndicador).toHaveBeenCalledWith('indicador-1', dto, mockUser);
       expect(result).toBe(updatedIndicador);
     });
 
@@ -329,7 +342,7 @@ describe('CockpitPilaresController', () => {
 
       const result = await controller.deleteIndicador('indicador-1', mockRequest);
 
-      expect(service.deleteIndicador).toHaveBeenCalledWith('indicador-1', mockUser);
+      expect(mockService.deleteIndicador).toHaveBeenCalledWith('indicador-1', mockUser);
       expect(result).toBe(deactivatedIndicador);
     });
 
@@ -363,7 +376,7 @@ describe('CockpitPilaresController', () => {
 
       const result = await controller.updateValoresMensais('indicador-1', dto, mockRequest);
 
-      expect(service.updateValoresMensais).toHaveBeenCalledWith('indicador-1', dto, mockUser);
+      expect(mockService.updateValoresMensais).toHaveBeenCalledWith('indicador-1', dto, mockUser);
       expect(result).toBe(updatedValores);
     });
 
@@ -391,7 +404,7 @@ describe('CockpitPilaresController', () => {
 
       const result = await controller.getMesesIndicador('indicador-1', 2024, mockRequest);
 
-      expect(service.getMesesIndicador).toHaveBeenCalledWith('indicador-1', 2024, mockUser);
+      expect(mockService.getMesesIndicador).toHaveBeenCalledWith('indicador-1', 2024, mockUser);
       expect(result).toBe(mockMeses);
     });
 
@@ -425,7 +438,7 @@ describe('CockpitPilaresController', () => {
 
       const result = await controller.getProcessosPrioritarios('cockpit-1', mockRequest);
 
-      expect(service.getProcessosPrioritarios).toHaveBeenCalledWith('cockpit-1', mockUser);
+      expect(mockService.getProcessosPrioritarios).toHaveBeenCalledWith('cockpit-1', mockUser);
       expect(result).toBe(mockProcessos);
     });
 
@@ -457,7 +470,7 @@ describe('CockpitPilaresController', () => {
 
       const result = await controller.updateProcessoPrioritario('processo-1', dto, mockRequest);
 
-      expect(service.updateProcessoPrioritario).toHaveBeenCalledWith('processo-1', dto, mockUser);
+      expect(mockService.updateProcessoPrioritario).toHaveBeenCalledWith('processo-1', dto, mockUser);
       expect(result).toBe(updatedProcesso);
     });
 
@@ -503,7 +516,7 @@ describe('CockpitPilaresController', () => {
         mockRequest
       );
 
-      expect(service.getDadosGraficos).toHaveBeenCalledWith(
+      expect(mockService.getDadosGraficos).toHaveBeenCalledWith(
         'cockpit-1',
         2024,
         mockUser,
@@ -518,7 +531,7 @@ describe('CockpitPilaresController', () => {
 
       await controller.getDadosGraficos('cockpit-1', undefined as any, undefined, mockRequest);
 
-      expect(service.getDadosGraficos).toHaveBeenCalledWith(
+      expect(mockService.getDadosGraficos).toHaveBeenCalledWith(
         'cockpit-1',
         currentYear,
         mockUser,
