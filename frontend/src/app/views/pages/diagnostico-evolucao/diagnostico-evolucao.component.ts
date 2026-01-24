@@ -55,6 +55,7 @@ export class DiagnosticoEvolucaoComponent implements OnInit, OnDestroy {
   historico: any[] = []; // Agora armazena histórico de todos os pilares
   barChart: Chart<'bar', any[], any> | null = null;
   periodoAtual: PeriodoAvaliacao | null = null;
+  periodoCongelado: PeriodoAvaliacao | null = null; // Último período congelado (para recongelamento)
   anoFiltro: number | undefined = undefined;
   anosDisponiveis: number[] = [];
 
@@ -164,8 +165,10 @@ export class DiagnosticoEvolucaoComponent implements OnInit, OnDestroy {
   congelarMedias(): void {
     if (!this.selectedEmpresaId || !this.canCongelar) return;
 
-    if (!this.periodoAtual) {
-      this.showToast('Não há período de avaliação ativo. Inicie um período primeiro.', 'warning', 4000);
+    // Verificar se há período aberto ou congelado
+    const periodo = this.periodoAtual || this.periodoCongelado;
+    if (!periodo) {
+      this.showToast('Não há período de avaliação. Inicie um período primeiro.', 'warning', 4000);
       return;
     }
 
@@ -174,40 +177,76 @@ export class DiagnosticoEvolucaoComponent implements OnInit, OnDestroy {
       return;
     }
 
+    // Determinar se é congelamento ou recongelamento
+    const isRecongelamento = !periodo.aberto;
+    const titulo = isRecongelamento ? 'Recongelar Médias do Período' : 'Congelar Médias do Período';
+    const textoAcao = isRecongelamento 
+      ? `Deseja atualizar os snapshots do período ${this.getPeriodoMesAno()} com as médias atuais de ${this.medias.length} pilar(es)? Os snapshots anteriores serão substituídos.`
+      : `Deseja congelar as médias de ${this.medias.length} pilar(es) e encerrar o período ${this.getPeriodoMesAno()}?`;
+    const botaoTexto = isRecongelamento ? 'Sim, recongelar' : 'Sim, congelar';
+
     Swal.fire({
-      title: 'Congelar Médias do Período',
-      text: `Deseja congelar as médias de ${this.medias.length} pilar(es) e encerrar o período ${this.getPeriodoMesAno()}?`,
+      title: titulo,
+      text: textoAcao,
       showCancelButton: true,
-      confirmButtonText: 'Sim, congelar',
+      confirmButtonText: botaoTexto,
       cancelButtonText: 'Cancelar',
       confirmButtonColor: '#3085d6'
     }).then((result) => {
-      if (result.isConfirmed && this.periodoAtual) {
+      if (result.isConfirmed && periodo) {
         this.loading = true;
-        this.periodosService.congelar(this.periodoAtual.id).subscribe({
-          next: (response) => {
-            const dataRef = new Date(response.periodo.dataReferencia);
-            const mes = (dataRef.getMonth() + 1).toString().padStart(2, '0');
-            const ano = dataRef.getFullYear();
-            this.showToast(
-              `Período ${mes}/${ano} congelado com sucesso! ${response.snapshots?.length || 0} snapshots criados.`,
-              'success',
-              4000
-            );
-            this.loading = false;
-            this.periodoAtual = null;
-            // Recarregar histórico
-            this.loadAllHistorico();
-          },
-          error: (err: any) => {
-            this.loading = false;
-            this.showToast(
-              err?.error?.message || 'Erro ao congelar médias',
-              'error',
-              4000
-            );
-          }
-        });
+        
+        // Chamar endpoint apropriado
+        if (isRecongelamento) {
+          this.periodosService.recongelar(periodo.id).subscribe({
+            next: (response) => {
+              const dataRef = new Date(response.periodo.dataReferencia);
+              const mes = (dataRef.getMonth() + 1).toString().padStart(2, '0');
+              const ano = dataRef.getFullYear();
+              this.showToast(
+                `Período ${mes}/${ano} recongelado com sucesso! ${response.resumo.totalSnapshots} snapshots atualizados.`,
+                'success',
+                4000
+              );
+              this.loading = false;
+              // Recarregar histórico
+              this.loadAllHistorico();
+            },
+            error: (err: any) => {
+              this.loading = false;
+              this.showToast(
+                err?.error?.message || 'Erro ao recongelar médias',
+                'error',
+                4000
+              );
+            }
+          });
+        } else {
+          this.periodosService.congelar(periodo.id).subscribe({
+            next: (response) => {
+              const dataRef = new Date(response.periodo.dataReferencia);
+              const mes = (dataRef.getMonth() + 1).toString().padStart(2, '0');
+              const ano = dataRef.getFullYear();
+              this.showToast(
+                `Período ${mes}/${ano} congelado com sucesso! ${response.snapshots.length} snapshots criados.`,
+                'success',
+                4000
+              );
+              this.periodoAtual = null;
+              this.loading = false;
+              // Recarregar histórico
+              this.loadAllHistorico();
+            },
+            error: (err: any) => {
+              this.loading = false;
+              this.showToast(
+                err?.error?.message || 'Erro ao congelar médias',
+                'error',
+                4000
+              );
+            }
+          });
+        }
       }
     });
   }
@@ -561,10 +600,42 @@ renderBarChart(): void {
     this.periodosService.getAtual(this.selectedEmpresaId).subscribe({
       next: (periodo) => {
         this.periodoAtual = periodo;
+        
+        // Se não há período aberto, carregar o último período congelado para permitir recongelamento
+        if (!periodo) {
+          this.loadUltimoPeriodoCongelado();
+        } else {
+          this.periodoCongelado = null;
+        }
       },
       error: (err) => {
         console.error('Erro ao carregar período atual:', err);
         this.periodoAtual = null;
+        // Tentar carregar último período congelado
+        this.loadUltimoPeriodoCongelado();
+      }
+    });
+  }
+
+  private loadUltimoPeriodoCongelado(): void {
+    if (!this.selectedEmpresaId) return;
+
+    this.periodosService.getHistorico(this.selectedEmpresaId).subscribe({
+      next: (periodos) => {
+        // Pegar o último período congelado (mais recente)
+        if (periodos && periodos.length > 0) {
+          // Ordenar por data de referência decrescente
+          const periodosOrdenados = periodos.sort((a, b) => {
+            return new Date(b.dataReferencia).getTime() - new Date(a.dataReferencia).getTime();
+          });
+          this.periodoCongelado = periodosOrdenados[0];
+        } else {
+          this.periodoCongelado = null;
+        }
+      },
+      error: (err) => {
+        console.error('Erro ao carregar último período congelado:', err);
+        this.periodoCongelado = null;
       }
     });
   }
@@ -591,8 +662,9 @@ renderBarChart(): void {
    * Retorna texto formatado do período atual (mês/ano) para exibição no botão
    */
   getPeriodoMesAno(): string {
-    if (!this.periodoAtual) return '';
-    const dataRef = new Date(this.periodoAtual.dataReferencia);
+    const periodo = this.periodoAtual || this.periodoCongelado;
+    if (!periodo) return '';
+    const dataRef = new Date(periodo.dataReferencia);
     const mes = (dataRef.getMonth() + 1).toString().padStart(2, '0');
     const ano = dataRef.getFullYear();
     return `${mes}/${ano}`;

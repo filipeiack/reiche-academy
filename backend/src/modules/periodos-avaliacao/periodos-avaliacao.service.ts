@@ -283,6 +283,145 @@ export class PeriodosAvaliacaoService {
     });
   }
 
+  async recongelar(periodoId: string, user: RequestUser) {
+    // 1. Buscar período com empresa e pilares
+    const periodo = await this.prisma.periodoAvaliacao.findUnique({
+      where: { id: periodoId },
+      include: {
+        empresa: {
+          include: {
+            pilares: {
+              where: { ativo: true },
+              include: {
+                rotinasEmpresa: {
+                  where: { ativo: true },
+                  include: {
+                    notas: {
+                      orderBy: { createdAt: 'desc' },
+                      take: 1,
+                    },
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
+    });
+
+    if (!periodo) {
+      throw new NotFoundException('Período de avaliação não encontrado');
+    }
+
+    // 2. Validar se período está congelado
+    if (periodo.aberto) {
+      throw new BadRequestException(
+        'Período está aberto - use congelar() ao invés de recongelar()',
+      );
+    }
+
+    // 3. Validar multi-tenant
+    if (
+      user.perfil?.codigo !== 'ADMINISTRADOR' &&
+      user.empresaId !== periodo.empresaId
+    ) {
+      throw new ForbiddenException(
+        'Você não pode acessar dados de outra empresa',
+      );
+    }
+
+    // 4. Validar permissões RBAC
+    const perfisAutorizados = ['ADMINISTRADOR', 'CONSULTOR', 'GESTOR'];
+    if (!perfisAutorizados.includes(user.perfil?.codigo)) {
+      throw new ForbiddenException(
+        'Perfil não autorizado para recongelar períodos',
+      );
+    }
+
+    // 5. Transação atômica
+    return this.prisma.$transaction(async (tx: any) => {
+      // Coletar snapshots antigos para auditoria
+      const snapshotsAntigos = await tx.pilarEvolucao.findMany({
+        where: { periodoAvaliacaoId: periodoId },
+        include: {
+          pilarEmpresa: {
+            select: { id: true, nome: true },
+          },
+        },
+      });
+
+      // Deletar snapshots existentes
+      await tx.pilarEvolucao.deleteMany({
+        where: { periodoAvaliacaoId: periodoId },
+      });
+
+      // Criar novos snapshots com médias atuais
+      const snapshotsNovos = await Promise.all(
+        periodo.empresa.pilares.map((pilar: any) => {
+          const media = this.calcularMediaPilar(pilar);
+
+          return tx.pilarEvolucao.create({
+            data: {
+              pilarEmpresaId: pilar.id,
+              periodoAvaliacaoId: periodo.id,
+              mediaNotas: media,
+              createdBy: user.id,
+            },
+          });
+        }),
+      );
+
+      // Atualizar timestamp do período (mantém aberto: false)
+      const periodoAtualizado = await tx.periodoAvaliacao.update({
+        where: { id: periodoId },
+        data: {
+          updatedAt: new Date(),
+          updatedBy: user.id,
+        },
+        select: {
+          id: true,
+          empresaId: true,
+          trimestre: true,
+          ano: true,
+          dataReferencia: true,
+          aberto: true,
+          dataCongelamento: true,
+          createdAt: true,
+          updatedAt: true,
+          createdBy: true,
+          updatedBy: true,
+        },
+      });
+
+      // Auditar operação completa
+      await this.auditService.log({
+        usuarioId: user.id,
+        usuarioNome: user.nome,
+        usuarioEmail: user.email || undefined,
+        entidade: 'PeriodoAvaliacao',
+        entidadeId: periodoId,
+        acao: 'UPDATE',
+        dadosAntes: {
+          snapshots: snapshotsAntigos.map((s) => ({
+            pilarNome: s.pilarEmpresa.nome,
+            mediaAntiga: s.mediaNotas,
+          })),
+        },
+        dadosDepois: {
+          snapshotsCriados: snapshotsNovos.length,
+          snapshotsSubstituidos: snapshotsAntigos.length,
+          operacao: 'RECONGELAMENTO',
+        },
+      });
+
+      return {
+        periodo: periodoAtualizado,
+        snapshotsNovos,
+        snapshotsAntigos,
+      };
+    });
+  }
+
   private calcularMediaPilar(pilar: any): number {
     const rotinasComNota = pilar.rotinasEmpresa.filter(
       (rotina: any) => rotina.notas.length > 0 && rotina.notas[0].nota !== null,

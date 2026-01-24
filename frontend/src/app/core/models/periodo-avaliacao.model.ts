@@ -20,6 +20,17 @@ export interface CongelarPeriodoResponse {
   snapshots: PilarSnapshot[];
 }
 
+export interface RecongelarPeriodoResponse {
+  message: string;
+  operacao: string;
+  periodo: PeriodoAvaliacao;
+  snapshotsNovos: PilarSnapshot[];
+  resumo: {
+    totalSnapshots: number;
+    snapshotsSubstituidos: number;
+  };
+}
+
 export interface PilarSnapshot {
   id: string;
   pilarEmpresaId: string;

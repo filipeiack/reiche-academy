@@ -51,6 +51,27 @@ export class PeriodosAvaliacaoController {
     };
   }
 
+  @Post('periodos-avaliacao/:id/recongelar')
+  @Roles('ADMINISTRADOR', 'CONSULTOR', 'GESTOR')
+  @ApiOperation({ summary: 'Recongelar período já encerrado (atualizar snapshots)' })
+  async recongelar(
+    @Param('id') periodoId: string,
+    @Request() req: { user: RequestUser },
+  ) {
+    const user = req.user;
+    const result = await this.service.recongelar(periodoId, user);
+    return {
+      message: 'Período recongelado com sucesso',
+      operacao: 'recongelamento',
+      periodo: result.periodo,
+      snapshotsNovos: result.snapshotsNovos,
+      resumo: {
+        totalSnapshots: result.snapshotsNovos.length,
+        snapshotsSubstituidos: result.snapshotsAntigos.length,
+      },
+    };
+  }
+
   @Get('empresas/:empresaId/periodos-avaliacao/atual')
   @ApiOperation({ summary: 'Buscar período aberto (se existir)' })
   async findAtual(

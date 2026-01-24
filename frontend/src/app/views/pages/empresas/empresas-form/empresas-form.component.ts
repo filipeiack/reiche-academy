@@ -74,6 +74,7 @@ export class EmpresasFormComponent implements OnInit {
   // Período de Mentoria
   dataInicioMentoria: Date | null = null;
   periodoAtivo: any = null;
+  periodosMentoria: any[] = [];
 
   get isPerfilCliente(): boolean {
     if (!this.currentLoggedUser?.perfil) return false;
@@ -104,6 +105,7 @@ export class EmpresasFormComponent implements OnInit {
       this.loadUsuariosAssociados(this.empresaId);
       this.loadPilaresAssociados(this.empresaId);
       this.loadPeriodoAtivo(this.empresaId);
+      this.loadPeriodosMentoria(this.empresaId);
     }
   }
 
@@ -119,12 +121,30 @@ export class EmpresasFormComponent implements OnInit {
     });
   }
 
+  loadPeriodosMentoria(empresaId: string): void {
+    this.periodosMentoriaService.listarPorEmpresa(empresaId).subscribe({
+      next: (periodos) => {
+        this.periodosMentoria = periodos.sort((a, b) => b.numero - a.numero);
+      },
+      error: (err) => console.error('Erro ao carregar períodos de mentoria:', err)
+    });
+  }
+
   calcularDataFim(): Date | null {
     if (!this.dataInicioMentoria) return null;
     const dataFim = new Date(this.dataInicioMentoria);
     dataFim.setFullYear(dataFim.getFullYear() + 1);
     dataFim.setDate(dataFim.getDate() - 1);
     return dataFim;
+  }
+
+  onDataInicioChange(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    if (input.value) {
+      this.dataInicioMentoria = new Date(input.value);
+    } else {
+      this.dataInicioMentoria = null;
+    }
   }
 
   formatarDataPeriodo(data: Date | string): string {
@@ -141,6 +161,7 @@ export class EmpresasFormComponent implements OnInit {
     this.periodosMentoriaService.create(this.empresaId, { dataInicio: this.dataInicioMentoria }).subscribe({
       next: (periodo) => {
         this.periodoAtivo = periodo;
+        this.loadPeriodosMentoria(this.empresaId!);
         this.showToast('Período de mentoria criado com sucesso!', 'success');
       },
       error: (err) => this.showToast(err?.error?.message || 'Erro ao criar período', 'error')
@@ -153,7 +174,7 @@ export class EmpresasFormComponent implements OnInit {
     Swal.fire({
       title: 'Renovar Mentoria?',
       html: `<p>O período atual <strong>Período ${this.periodoAtivo.numero}</strong> será encerrado.</p>
-             <p>Um novo período <strong>Período ${this.periodoAtivo.numero + 1}</strong> será criado automaticamente.</p>`,
+             <p>Um novo período <strong>Período ${this.periodoAtivo.numero + 1}</strong> será criado a partir de hoje com duração de 1 ano.</p>`,
       icon: 'question',
       showCancelButton: true,
       confirmButtonText: 'Sim, renovar',
@@ -161,14 +182,13 @@ export class EmpresasFormComponent implements OnInit {
       confirmButtonColor: '#3085d6',
     }).then((result) => {
       if (result.isConfirmed && this.periodoAtivo && this.empresaId) {
-        const dataFim = new Date(this.periodoAtivo.dataFim);
-        const novaDataInicio = new Date(dataFim);
-        novaDataInicio.setDate(novaDataInicio.getDate() + 1);
+        const novaDataInicio = new Date(); // Usar data de hoje
 
         this.periodosMentoriaService.renovar(this.empresaId, this.periodoAtivo.id, novaDataInicio).subscribe({
           next: (novoPeriodo) => {
             this.periodoAtivo = novoPeriodo;
             this.dataInicioMentoria = new Date(novoPeriodo.dataInicio);
+            this.loadPeriodosMentoria(this.empresaId!);
             this.showToast('Mentoria renovada com sucesso!', 'success');
           },
           error: (err) => this.showToast(err?.error?.message || 'Erro ao renovar período', 'error')

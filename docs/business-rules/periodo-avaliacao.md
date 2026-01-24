@@ -842,4 +842,137 @@ const rotinasComNota = pilar.rotinasEmpresa.filter(
 **Versão:** 1.1.0  
 **Última Atualização:** 2026-01-14  
 **Agente:** Dev Agent (implementação) + Business Rules Extractor (documentação)  
-**Status:** ✅ Implementado com flexibilização de data de referência
+### R-PEVOL-006: Recongelar Período Congelado
+
+**Descrição:** Permite reabrir período já congelado para atualizar médias com pilares esquecidos ou reavaliados, substituindo snapshots anteriores.
+
+**Implementação:**
+- **Endpoint:** `POST /periodos-avaliacao/:id/recongelar` (ADMINISTRADOR, CONSULTOR, GESTOR)
+- **Método:** `PeriodosAvaliacaoService.recongelar()`
+
+**Validações:**
+
+1. **Período Existe e Está Congelado:**
+```typescript
+const periodo = await prisma.periodoAvaliacao.findUnique({
+  where: { id: periodoId },
+  include: { empresa: { include: { pilares: { where: { ativo: true } } } } }
+});
+if (!periodo) throw new NotFoundException('Período não encontrado');
+if (periodo.aberto) {
+  throw new BadRequestException('Período está aberto - use congelar()');
+}
+```
+
+2. **Multi-Tenant:**
+```typescript
+if (user.perfil?.codigo !== 'ADMINISTRADOR' && user.empresaId !== periodo.empresaId) {
+  throw new ForbiddenException('Você não pode acessar dados de outra empresa');
+}
+```
+
+3. **Permissões RBAC:**
+```typescript
+const perfisAutorizados = ['ADMINISTRADOR', 'CONSULTOR', 'GESTOR'];
+if (!perfisAutorizados.includes(user.perfil?.codigo)) {
+  throw new ForbiddenException('Perfil não autorizado para recongelar períodos');
+}
+```
+
+**Lógica de Recongelamento (Transação Atômica):**
+```typescript
+return prisma.$transaction(async (tx) => {
+  // 1. Coletar snapshots antigos para auditoria
+  const snapshotsAntigos = await tx.pilarEvolucao.findMany({
+    where: { periodoAvaliacaoId: periodoId },
+    include: { pilarEmpresa: { select: { nome: true } } }
+  });
+
+  // 2. Deletar snapshots existentes
+  await tx.pilarEvolucao.deleteMany({
+    where: { periodoAvaliacaoId: periodoId }
+  });
+
+  // 3. Criar novos snapshots com médias atuais
+  const snapshotsNovos = await Promise.all(
+    periodo.empresa.pilares.map(pilar => {
+      const media = this.calcularMediaPilar(pilar);
+      
+      return tx.pilarEvolucao.create({
+        data: {
+          pilarEmpresaId: pilar.id,
+          periodoAvaliacaoId: periodo.id,
+          mediaNotas: media,
+          createdBy: userId,
+        },
+      });
+    })
+  );
+
+  // 4. Atualizar timestamp do período (mantém aberto: false)
+  const periodoAtualizado = await tx.periodoAvaliacao.update({
+    where: { id: periodoId },
+    data: {
+      updatedAt: new Date(),
+      updatedBy: userId,
+    },
+  });
+
+  return { 
+    periodo: periodoAtualizado, 
+    snapshotsNovos,
+    snapshotsAntigos // Para auditoria
+  };
+});
+```
+
+**Auditoria Completa:**
+```typescript
+await auditService.log({
+  entidade: 'PeriodoAvaliacao',
+  entidadeId: periodoId,
+  acao: 'UPDATE', // RECONGELAR é um tipo de UPDATE
+  dadosAntes: { 
+    snapshots: snapshotsAntigos.map(s => ({
+      pilarNome: s.pilarEmpresa.nome,
+      mediaAntiga: s.mediaNotas
+    }))
+  },
+  dadosDepois: { 
+    snapshotsCriados: snapshotsNovos.length,
+    snapshotsSubstituidos: snapshotsAntigos.length,
+    operacao: 'RECONGELAMENTO'
+  }
+});
+```
+
+**Retorno:**
+```json
+{
+  "message": "Período recongelado com sucesso",
+  "operacao": "recongelamento",
+  "periodo": {
+    "id": "uuid",
+    "trimestre": 2,
+    "ano": 2026,
+    "aberto": false,
+    "updatedAt": "2026-01-24T15:30:00Z"
+  },
+  "snapshotsNovos": [
+    { "id": "uuid", "pilarEmpresaId": "uuid", "mediaNotas": 7.8 },
+    { "id": "uuid", "pilarEmpresaId": "uuid", "mediaNotas": 8.1 }
+  ],
+  "resumo": {
+    "totalSnapshots": 5,
+    "snapshotsSubstituidos": 5
+  }
+}
+```
+
+**Perfis autorizados:** ADMINISTRADOR, CONSULTOR, GESTOR
+
+**Arquivo:** `backend/src/modules/periodos-avaliacao/periodos-avaliacao.service.ts` (método `recongelar`)
+
+---
+
+**Status:** ✅ Implementado com flexibilização de data de referência + recongelamento

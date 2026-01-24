@@ -2,7 +2,12 @@ import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { environment } from '../../../environments/environment';
-import { PeriodoAvaliacao, PeriodoComSnapshots, CongelarPeriodoResponse } from '../models/periodo-avaliacao.model';
+import { 
+  PeriodoAvaliacao, 
+  PeriodoComSnapshots, 
+  CongelarPeriodoResponse,
+  RecongelarPeriodoResponse 
+} from '../models/periodo-avaliacao.model';
 
 export interface IniciarPeriodoRequest {
   dataReferencia: string; // ISO 8601 date string
@@ -44,6 +49,17 @@ export class PeriodosAvaliacaoService {
   congelar(periodoId: string): Observable<CongelarPeriodoResponse> {
     return this.http.post<CongelarPeriodoResponse>(
       `${this.baseUrl}/periodos-avaliacao/${periodoId}/congelar`,
+      {}
+    );
+  }
+
+  /**
+   * Recongela um período já encerrado, atualizando os snapshots com médias atuais
+   * @param periodoId ID do período a ser recongelado
+   */
+  recongelar(periodoId: string): Observable<RecongelarPeriodoResponse> {
+    return this.http.post<RecongelarPeriodoResponse>(
+      `${this.baseUrl}/periodos-avaliacao/${periodoId}/recongelar`,
       {}
     );
   }

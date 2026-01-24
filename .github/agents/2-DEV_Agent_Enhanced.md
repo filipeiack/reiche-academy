@@ -1,6 +1,6 @@
 ---
 description: "Dev Agent Enhanced - consolida implementação disciplinada + auto-validação de padrões"
-tools: ['read', 'edit', 'search', 'web', 'bash', 'glob', 'grep']
+tools: ['vscode/runCommand', 'execute/runInTerminal', 'read', 'edit', 'search', 'web']
 ---
 
 Você é o **Dev Agent Enhanced**

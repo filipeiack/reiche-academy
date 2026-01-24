@@ -11,13 +11,17 @@
             </ol>
         </nav>
 
-        <!-- Botão Congelar -->
+        <!-- Botão Congelar/Recongelar -->
         @if (canCongelar) {
-        <button type="button" class="btn btn-outline-primary btn-sm"
-            ngbTooltip="Congelar médias do período de avaliação atual e criar snapshots de todos os pilares"
-            (click)="congelarMedias()" [disabled]="!periodoAtual || medias.length === 0">
-            <i class="feather icon-archive"></i>
-            Atualizar Histórico {{ getPeriodoMesAno() }}
+        <button type="button" 
+            [class]="periodoAtual ? 'btn btn-outline-primary btn-sm' : 'btn btn-outline-warning btn-sm'"
+            [ngbTooltip]="periodoAtual 
+              ? 'Congelar médias do período de avaliação atual e criar snapshots de todos os pilares' 
+              : 'Recongelar período encerrado para atualizar médias com pilares esquecidos ou reavaliados'"
+            (click)="congelarMedias()" 
+            [disabled]="(!periodoAtual && !periodoCongelado) || medias.length === 0">
+            <i [class]="periodoAtual ? 'feather icon-archive' : 'feather icon-refresh-cw'"></i>
+            {{ periodoAtual ? 'Atualizar Histórico' : 'Recongelar' }} {{ getPeriodoMesAno() }}
         </button>
         }
     </div>

@@ -255,7 +255,9 @@
                         <span class="text-danger">*</span>
                         }
                     </label>
-                    <input type="date" class="form-control" [(ngModel)]="dataInicioMentoria" 
+                    <input type="date" class="form-control" 
+                           [value]="dataInicioMentoria ? (dataInicioMentoria | date:'yyyy-MM-dd') : ''"
+                           (change)="onDataInicioChange($event)"
                            [disabled]="!!periodoAtivo" />
                     <small class="text-muted">Defina quando a consultoria iniciará</small>
                 </div>
@@ -289,6 +291,47 @@
                         <i class="feather icon-plus me-1"></i>
                         Criar Período
                     </button>
+                </div>
+            </div>
+            }
+
+            <!-- Lista de Períodos de Mentoria -->
+            @if (periodosMentoria.length > 0) {
+            <div class="mt-3">
+                <h6 class="mb-2">Histórico de Períodos</h6>
+                <div class="table-responsive">
+                    <table class="table table-sm table-hover">
+                        <thead class="table-light">
+                            <tr>
+                                <th style="width: 10%;">Período</th>
+                                <th style="width: 20%;">Início</th>
+                                <th style="width: 20%;">Fim</th>
+                                <th style="width: 25%;">Contratação</th>
+                                <th style="width: 25%;">Encerramento</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @for (periodo of periodosMentoria; track periodo.id) {
+                            <tr [class.table-success]="periodo.ativo">
+                                <td class="text-center">
+                                    <span class="badge" [class.bg-success]="periodo.ativo" [class.bg-secondary]="!periodo.ativo">
+                                        {{ periodo.numero }}
+                                    </span>
+                                </td>
+                                <td>{{ periodo.dataInicio | date:'dd/MM/yyyy' }}</td>
+                                <td>{{ periodo.dataFim | date:'dd/MM/yyyy' }}</td>
+                                <td>{{ periodo.dataContratacao | date:'dd/MM/yyyy HH:mm' }}</td>
+                                <td>
+                                    @if (periodo.dataEncerramento) {
+                                    {{ periodo.dataEncerramento | date:'dd/MM/yyyy HH:mm' }}
+                                    } @else {
+                                    <span class="text-muted">—</span>
+                                    }
+                                </td>
+                            </tr>
+                            }
+                        </tbody>
+                    </table>
                 </div>
             </div>
             }

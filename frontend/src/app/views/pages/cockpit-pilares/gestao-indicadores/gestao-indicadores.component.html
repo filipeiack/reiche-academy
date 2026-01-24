@@ -68,7 +68,7 @@
           </td>
 
           <!-- Tipo de Medida -->
-          <td>
+          <td class="small">
             @if (indicador.isEditing) {
             <select class="form-select form-select-sm" [(ngModel)]="indicador.tipoMedida"
               (change)="onCellBlur(indicador, 'tipoMedida')"
@@ -98,7 +98,7 @@
           </td>
 
           <!-- Status de Medição -->
-          <td>
+          <td class="small">
             @if (indicador.isEditing) {
             <select class="form-select form-select-sm" [(ngModel)]="indicador.statusMedicao"
               (change)="onCellBlur(indicador, 'statusMedicao')"
@@ -124,7 +124,7 @@
           </td>
 
           <!-- Responsável (ng-select) -->
-          <td>
+          <td class="small">
             @if (indicador.isEditing) {
             <ng-select [(ngModel)]="indicador.responsavelMedicaoId" 
               (change)="onCellBlur(indicador, 'responsavel')"
