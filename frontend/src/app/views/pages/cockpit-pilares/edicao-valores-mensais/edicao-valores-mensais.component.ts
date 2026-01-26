@@ -5,7 +5,9 @@ import { Subject } from 'rxjs';
 import { debounceTime, distinctUntilChanged } from 'rxjs/operators';
 import { environment } from '@environments/environment';
 import { CockpitPilaresService } from '@core/services/cockpit-pilares.service';
+import { PeriodosMentoriaService } from '@core/services/periodos-mentoria.service';
 import { SaveFeedbackService } from '@core/services/save-feedback.service';
+import Swal from 'sweetalert2';
 import {
   CockpitPilar,
   IndicadorCockpit,
@@ -25,6 +27,7 @@ export class EdicaoValoresMensaisComponent implements OnInit, OnChanges, OnDestr
   @Input() cockpitId!: string;
 
   private cockpitService = inject(CockpitPilaresService);
+  private periodosMentoriaService = inject(PeriodosMentoriaService);
   private saveFeedbackService = inject(SaveFeedbackService);
   private autoSaveSubject = new Subject<{
     indicadorMensalId: string;
@@ -35,6 +38,12 @@ export class EdicaoValoresMensaisComponent implements OnInit, OnChanges, OnDestr
   indicadores: IndicadorCockpit[] = [];
   loading = false;
   private savingCount = 0;
+
+  // Controle de novo ciclo
+  podeCriarNovoCiclo = false;
+  mensagemBotaoCiclo = 'Carregando...';
+  criandoNovoCiclo = false;
+  private empresaId: string | null = null;
 
   // Cache de valores em edição
   private valoresCache = new Map<string, { meta?: number; realizado?: number; historico?: number }>();
@@ -75,8 +84,14 @@ export class EdicaoValoresMensaisComponent implements OnInit, OnChanges, OnDestr
 
     this.cockpitService.getCockpitById(this.cockpitId).subscribe({
       next: (cockpit: CockpitPilar) => {
+        this.empresaId = cockpit.pilarEmpresa?.empresa?.id || null;
         this.indicadores = cockpit.indicadores || [];
         this.loading = false;
+        
+        // Verificar se pode criar novo ciclo
+        if (this.empresaId) {
+          this.verificarPodeCriarNovoCiclo();
+        }
       },
       error: (err: unknown) => {
         console.error('Erro ao carregar indicadores:', err);
@@ -304,14 +319,109 @@ export class EdicaoValoresMensaisComponent implements OnInit, OnChanges, OnDestr
 
   getMesesOrdenados(indicador: IndicadorCockpit): IndicadorMensal[] {
     if (!indicador.mesesIndicador) return [];
-    return indicador.mesesIndicador
+    
+    // Ordenar por ano DESC, mes DESC e retornar apenas últimos 13 meses
+    const mesesOrdenados = indicador.mesesIndicador
       .filter((m: IndicadorMensal) => m.mes !== null)
-      .sort((a: IndicadorMensal, b: IndicadorMensal) => (a.mes! - b.mes!));
+      .sort((a: IndicadorMensal, b: IndicadorMensal) => {
+        if (a.ano !== b.ano) {
+          return b.ano - a.ano;
+        }
+        return b.mes! - a.mes!;
+      });
+    
+    // Retornar apenas os últimos 13 meses
+    return mesesOrdenados.slice(0, 13).reverse();
   }
 
-  getNomeMes(mes: number): string {
+  private verificarPodeCriarNovoCiclo(): void {
+    if (!this.empresaId) {
+      this.podeCriarNovoCiclo = false;
+      this.mensagemBotaoCiclo = 'Empresa não identificada';
+      return;
+    }
+
+    this.periodosMentoriaService.getPeriodoAtivo(this.empresaId).subscribe({
+      next: (periodo) => {
+        if (!periodo) {
+          this.podeCriarNovoCiclo = false;
+          this.mensagemBotaoCiclo = 'Empresa não possui período de mentoria ativo';
+          return;
+        }
+
+        // Verificar se mês atual >= último mês do período
+        const agora = new Date();
+        const mesAtual = agora.getMonth() + 1;
+        const anoAtual = agora.getFullYear();
+        const anoMesAtual = anoAtual * 100 + mesAtual;
+
+        const dataFim = new Date(periodo.dataFim);
+        const mesFim = dataFim.getMonth() + 1;
+        const anoFim = dataFim.getFullYear();
+        const anoMesFim = anoFim * 100 + mesFim;
+
+        if (anoMesAtual >= anoMesFim) {
+          this.podeCriarNovoCiclo = true;
+          this.mensagemBotaoCiclo = '';
+        } else {
+          this.podeCriarNovoCiclo = false;
+          this.mensagemBotaoCiclo = `Período de mentoria atual ainda não encerrou (término: ${mesFim.toString().padStart(2, '0')}/${anoFim})`;
+        }
+      },
+      error: (err) => {
+        console.error('Erro ao verificar período de mentoria:', err);
+        this.podeCriarNovoCiclo = false;
+        this.mensagemBotaoCiclo = 'Erro ao verificar período de mentoria';
+      },
+    });
+  }
+
+  criarNovoCicloMeses(): void {
+    if (!this.podeCriarNovoCiclo || this.criandoNovoCiclo) return;
+
+    Swal.fire({
+      title: 'Criar novo ciclo de 12 meses?',
+      text: 'Serão criados 12 novos meses para todos os indicadores do cockpit, a partir do último mês registrado.',
+      icon: 'question',
+      showCancelButton: true,
+      confirmButtonText: 'Sim, criar',
+      cancelButtonText: 'Cancelar',
+    }).then((result) => {
+      if (result.isConfirmed) {
+        this.criandoNovoCiclo = true;
+        
+        this.cockpitService.criarNovoCicloMeses(this.cockpitId).subscribe({
+          next: (response) => {
+            this.criandoNovoCiclo = false;
+            Swal.fire({
+              icon: 'success',
+              title: 'Ciclo criado!',
+              text: `${response.mesesCriados} meses criados para ${response.indicadores} indicadores.`,
+              timer: 3000,
+            });
+            this.loadIndicadores(); // Recarregar para exibir novos meses
+          },
+          error: (err) => {
+            this.criandoNovoCiclo = false;
+            Swal.fire({
+              icon: 'error',
+              title: 'Erro ao criar ciclo',
+              text: err?.error?.message || 'Erro desconhecido',
+            });
+          },
+        });
+      }
+    });
+  }
+
+  getNomeMes(mes: number, ano?: number): string {
     const meses = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'];
-    return meses[mes - 1].toUpperCase() || '';
+    const nomeMes = meses[mes - 1] || '';
+    if (ano) {
+      const anoAbreviado = ano.toString().slice(-2);
+      return `${nomeMes}/${anoAbreviado}`;
+    }
+    return nomeMes.toUpperCase();
   }
 
   getLabelTipoMedida(tipo: string): string {

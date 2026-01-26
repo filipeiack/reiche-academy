@@ -244,6 +244,26 @@ export class CockpitPilaresController {
     );
   }
 
+  @Post('cockpits/:cockpitId/meses/ciclo')
+  @Roles('ADMINISTRADOR', 'GESTOR')
+  @ApiOperation({ 
+    summary: 'Criar novo ciclo de 12 meses para todos os indicadores do cockpit',
+    description: 'Validação: só pode criar se mês atual >= último mês do período de mentoria ativo'
+  })
+  @ApiResponse({
+    status: 201,
+    description: 'Novo ciclo criado com sucesso',
+  })
+  @ApiResponse({ status: 400, description: 'Período de mentoria ainda não encerrou ou não existe' })
+  @ApiResponse({ status: 403, description: 'Acesso negado (multi-tenant)' })
+  @ApiResponse({ status: 404, description: 'Cockpit não encontrado' })
+  criarNovoCicloMeses(
+    @Param('cockpitId') cockpitId: string,
+    @Request() req: ExpressRequest & { user: any },
+  ) {
+    return this.cockpitPilaresService.criarNovoCicloMeses(cockpitId, req.user);
+  }
+
   // ==================== PROCESSOS PRIORITÁRIOS ====================
 
   @Get('cockpits/:cockpitId/processos')
@@ -296,6 +316,27 @@ export class CockpitPilaresController {
 
   // ==================== GRÁFICOS ====================
 
+  @Get('cockpits/:cockpitId/anos-disponiveis')
+  @Roles('ADMINISTRADOR', 'CONSULTOR', 'GESTOR', 'COLABORADOR', 'LEITURA')
+  @ApiOperation({
+    summary: 'Buscar anos disponíveis (com meses criados) para um cockpit',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Lista de anos disponíveis',
+    schema: {
+      example: [2025, 2026, 2027],
+    },
+  })
+  @ApiResponse({ status: 403, description: 'Acesso negado (multi-tenant)' })
+  @ApiResponse({ status: 404, description: 'Cockpit não encontrado' })
+  getAnosDisponiveis(
+    @Param('cockpitId') cockpitId: string,
+    @Request() req: ExpressRequest & { user: any },
+  ) {
+    return this.cockpitPilaresService.getAnosDisponiveis(cockpitId, req.user);
+  }
+
   @Get('cockpits/:cockpitId/graficos/dados')
   @Roles('ADMINISTRADOR', 'CONSULTOR', 'GESTOR', 'COLABORADOR', 'LEITURA')
   @ApiOperation({
@@ -309,16 +350,13 @@ export class CockpitPilaresController {
   @ApiResponse({ status: 404, description: 'Cockpit não encontrado' })
   getDadosGraficos(
     @Param('cockpitId') cockpitId: string,
-    @Query('ano', ParseIntPipe) ano: number,
-    @Query('periodoMentoriaId') periodoMentoriaId: string | undefined,
+    @Query('filtro') filtro: string,
     @Request() req: ExpressRequest & { user: any },
   ) {
-    const anoAtual = ano || new Date().getFullYear();
     return this.cockpitPilaresService.getDadosGraficos(
       cockpitId,
-      anoAtual,
+      filtro,
       req.user,
-      periodoMentoriaId,
     );
   }
 }

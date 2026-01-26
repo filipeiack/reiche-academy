@@ -510,10 +510,7 @@ model IndicadorMensal {
   indicadorCockpitId String
   indicadorCockpit   IndicadorCockpit @relation(fields: [indicadorCockpitId], references: [id], onDelete: Cascade)
 
-  periodoMentoriaId String?
-  periodoMentoria   PeriodoMentoria? @relation(fields: [periodoMentoriaId], references: [id], onDelete: Cascade)
-
-  mes Int? // 1-12 (null para resumo anual)
+  mes Int? // 1-12 (null para resumo anual se necessário)
   ano Int
 
   meta       Float?
@@ -525,8 +522,9 @@ model IndicadorMensal {
   createdBy String?
   updatedBy String?
 
+  @@unique([indicadorCockpitId, ano, mes])
   @@index([indicadorCockpitId])
-  @@index([periodoMentoriaId])
+  @@index([ano, mes])
   @@map("indicadores_mensais")
 }
 
@@ -665,8 +663,7 @@ model PeriodoMentoria {
   updatedBy String?
 
   // Relations
-  periodosAvaliacao  PeriodoAvaliacao[]
-  indicadoresMensais IndicadorMensal[]
+  periodosAvaliacao PeriodoAvaliacao[]
 
   @@unique([empresaId, numero]) // Evita duplicatas
   @@index([empresaId, ativo]) // Buscar período ativo rapidamente

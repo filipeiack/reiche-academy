@@ -1,4 +1,34 @@
+<div class="card mb-1">
+  <div class="card-body p-2 px-4">
+    <!-- Cabeçalho -->
+    <div class="d-flex justify-content-between align-items-center">
+      <h6 class="section-title">
+        <i class="bi bi-calendar-range me-2"></i>
+        Metas e Valores Mensais
+      </h6>
+
+      <!-- Botao Novo Ciclo -->
+      @if (!loading && indicadores.length > 0) {
+
+        <button type="button" data-testid="btn-novo-ciclo-mensal" class="btn btn-outline-primary btn-sm"
+          [disabled]="!podeCriarNovoCiclo || criandoNovoCiclo" (click)="criarNovoCicloMeses()"
+          [title]="!podeCriarNovoCiclo ? mensagemBotaoCiclo : 'Criar próximos 12 meses para todos os indicadores'">
+          @if (criandoNovoCiclo) {
+          <span class="spinner-border spinner-border-sm me-2" role="status"></span>
+          Criando...
+          } @else {
+          <i class="bi bi-plus-circle me-2"></i>
+          Novo ciclo de 12 meses
+          }
+        </button>
+
+      }
+    </div>
+  </div>
+</div>
+
 <div class="edicao-valores-wrapper" data-testid="valores-section">
+
   <!-- Loading -->
   @if (loading) {
   <div class="text-center py-4">
@@ -39,13 +69,13 @@
             <div class="fw-bold text-dark">
               @switch (indicador.statusMedicao) {
               @case ('MEDIDO_CONFIAVEL') {
-              <span class="badge bg-success">Medido e confiável</span>
+              <span class="badge bg-success w-100">Medido e confiável</span>
               }
               @case ('MEDIDO_NAO_CONFIAVEL') {
-              <span class="badge bg-warning">Medido, mas não é confiável.</span>
+              <span class="badge bg-warning w-100">Medido, mas não confiável</span>
               }
               @case ('NAO_MEDIDO') {
-              <span class="badge bg-danger">Não é medido</span>
+              <span class="badge bg-danger w-100">Não é medido ainda</span>
               }
               }
             </div>
@@ -93,7 +123,7 @@
             <col style="width: 100px;">
             <col style="width: 80px;">
           </colgroup>
-          <thead class="table-light">
+          <thead class="table-light small">
             <tr>
               <th>Mês</th>
               <th>Histórico</th>
@@ -122,7 +152,7 @@
           <tbody>
             @for (mes of getMesesOrdenados(indicador); track mes.id) {
             <tr>
-              <td class="fw-bold">{{ getNomeMes(mes.mes!) }}</td>
+              <td class="fw-bold">{{ getNomeMes(mes.mes!, mes.ano) }}</td>
               <td>
                 <input type="number" class="form-control form-control-sm" [value]="mes.historico"
                   (input)="onValorChange(mes, 'historico', $event)" step="1" />
@@ -135,19 +165,19 @@
                 <input type="number" class="form-control form-control-sm" [value]="mes.realizado"
                   (input)="onValorChange(mes, 'realizado', $event)" step="1" />
               </td>
-              <td class="text-center">
+              <td class="text-center bg-gray-100">
                 @if (mes.meta && mes.realizado) {
-                <span [class]="'badge input bg-' + calcularStatus(indicador, mes)">
-                  {{ calcularDesvioAbsoluto(indicador, mes) | number: '1.2-2' }}
+                <span [class]="'badge badge-desvio w-100 d-inline-block py-2 bg-' + calcularStatus(indicador, mes)">
+                  {{ calcularDesvioAbsoluto(indicador, mes) | number: '1.0-0' }}
                 </span>
                 } @else {
                 <span class="text-muted">-</span>
                 }
               </td>
-              <td class="text-center">
+              <td class="text-center bg-gray-100">
                 @if (mes.meta && mes.realizado) {
 
-                <span [class]="'badge input bg-' + calcularStatus(indicador, mes)">
+                <span [class]="'badge badge-desvio w-100 d-inline-block py-2 bg-' + calcularStatus(indicador, mes)">
                   {{ calcularDesvio(indicador, mes) | number: '1.1-1' }}%
                 </span>
 
@@ -155,7 +185,7 @@
                 <span class="text-muted">-</span>
                 }
               </td>
-              <td class="text-center" style="font-size: 1.5rem;">
+              <td class="text-center bg-gray-100" style="font-size: 1.5rem;">
                 @if (calcularStatus(indicador, mes); as status) {
                 @switch (status) {
                 @case ('success') {
@@ -192,7 +222,7 @@
             </tr>
           </tfoot>
         </table>
-        </div>
+      </div>
     </div>
   </div>
   }

@@ -25,8 +25,7 @@ import {
   IndicadorCockpit,
   DirecaoIndicador,
 } from '@core/interfaces/cockpit-pilares.interface';
-import { PeriodosMentoriaService, PeriodoMentoria } from '@core/services/periodos-mentoria.service';
-import { format, addMonths } from 'date-fns';
+import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 
 // Registrar componentes do Chart.js
@@ -55,21 +54,18 @@ Chart.register(
 export class GraficoIndicadoresComponent implements OnInit, OnChanges {
   @Input() cockpitId!: string;
   @Input() indicadores: IndicadorCockpit[] = [];
-  @Input() empresaId!: string; // Necessário para buscar períodos de mentoria
+  @Input() empresaId!: string;
 
   private cockpitService = inject(CockpitPilaresService);
-  private periodosMentoriaService = inject(PeriodosMentoriaService);
 
   selectedIndicadorId: string | null = null;
   indicador: IndicadorCockpit | null = null;
-  anoAtual = new Date().getFullYear();
   loading = false;
   error: string | null = null;
 
-  // R-MENT-008: Propriedades para seleção de período
-  periodosMentoria: PeriodoMentoria[] = [];
-  selectedPeriodoId: string | null = null;
-  mesesPeriodo: { mes: number; ano: number; label: string }[] = [];
+  // R-GRAF-001: Propriedades para seleção de filtro (anos + últimos 12 meses)
+  opcoesAnos: { value: string; label: string }[] = [];
+  selectedFiltro: string = 'ultimos-12-meses'; // Padrão: Últimos 12 meses
 
   // ng2-charts configuration
   public lineChartData: ChartConfiguration['data'] = {
@@ -91,25 +87,23 @@ export class GraficoIndicadoresComponent implements OnInit, OnChanges {
           original.pop();
           // Adicionar labels customizados
           original.push({
-            text: 'Realizado abaixo da meta',
+            text: 'Meta não alcançada',
             fillStyle: 'rgba(220, 53, 69, 0.7)',
             strokeStyle: '#dc3545',
             lineWidth: 1,
             hidden: false,
-            pointStyle: 'circle',
-            // Opcional: index para controlar ordem
-            datasetIndex: -1
+            datasetIndex: -1,
+            pointStyle: 'rect',
           });
 
           original.push({
-            text: 'Realizado acima da meta',
+            text: 'Meta alcançada',
             fillStyle: 'rgba(25, 135, 84, 0.7)',
             strokeStyle: '#198754',
             lineWidth: 1,
             hidden: false,
-            pointStyle: 'circle',
-            // Opcional: index para controlar ordem
-            datasetIndex: -1
+            datasetIndex: -1,
+            pointStyle: 'rect',
           });
 
           
@@ -120,6 +114,7 @@ export class GraficoIndicadoresComponent implements OnInit, OnChanges {
             size: 12,
           },
           usePointStyle: true,
+          pointStyleWidth: 35,
         },
       },
       tooltip: {
@@ -166,11 +161,11 @@ export class GraficoIndicadoresComponent implements OnInit, OnChanges {
         },
         anchor: (context) => {
           // Centro para barras, end para linha
-          return context.dataset.type === 'bar' ? 'center' : 'end';
+          return context.dataset.type === 'bar' ? 'start' : 'end';
         },
         align: (context) => {
           // Centro para barras, top para linha
-          return context.dataset.type === 'bar' ? 'center' : 'top';
+          return context.dataset.type === 'bar' ? 'end' : 'top';
         },
       },
     },
@@ -201,7 +196,7 @@ export class GraficoIndicadoresComponent implements OnInit, OnChanges {
   public lineChartType: ChartType = 'bar';
 
   ngOnInit(): void {
-    this.loadPeriodos();
+    this.loadAnosDisponiveis();
     this.loadIndicadores();
   }
 
@@ -250,18 +245,17 @@ export class GraficoIndicadoresComponent implements OnInit, OnChanges {
   }
 
   loadGrafico(): void {
-    if (!this.selectedIndicadorId) {
+    if (!this.selectedIndicadorId || !this.selectedFiltro) {
       return;
     }
 
     this.loading = true;
     this.error = null;
 
-    // R-MENT-008: Passar periodoMentoriaId se selecionado
+    // R-GRAF-001: Passar filtro (ano ou 'ultimos-12-meses')
     this.cockpitService.getDadosGraficos(
-      this.cockpitId, 
-      this.anoAtual,
-      this.selectedPeriodoId || undefined
+      this.cockpitId,
+      this.selectedFiltro
     ).subscribe({
       next: (dados: DadosGraficos) => {
         // Encontra o indicador selecionado
@@ -283,9 +277,15 @@ export class GraficoIndicadoresComponent implements OnInit, OnChanges {
   }
 
   private buildChart(indicador: IndicadorCockpit): void {
-    const mesesData = indicador.mesesIndicador || [];
+    // Ordenar meses por ano e mês
+    const mesesData = (indicador.mesesIndicador || []).sort((a, b) => {
+      if (a.ano !== b.ano) {
+        return a.ano - b.ano;
+      }
+      return (a.mes || 0) - (b.mes || 0);
+    });
     
-    // R-MENT-009: Usar labels dinâmicos com mês + ano (ex: Mai/26)
+    // R-GRAF-001: Usar labels dinâmicos com mês + ano (ex: Jan/25, Fev/25...)
     const meses = mesesData.map((m) => {
       if (m.mes && m.ano) {
         const date = new Date(m.ano, m.mes - 1, 1);
@@ -324,6 +324,7 @@ export class GraficoIndicadoresComponent implements OnInit, OnChanges {
           borderColor: 'rgba(150, 150, 150, 0.8)',
           borderWidth: 1,
           order: 2,
+          pointStyle: 'rect',
         },
         {
           type: 'line',
@@ -422,100 +423,67 @@ export class GraficoIndicadoresComponent implements OnInit, OnChanges {
   }
 
   /**
-   * R-MENT-008: Carregar períodos de mentoria da empresa
+   * R-GRAF-001: Carregar anos disponíveis para filtro do gráfico
    */
-  private loadPeriodos(): void {
-    if (!this.empresaId) {
-      console.warn('empresaId não fornecido para carregar períodos');
+  private loadAnosDisponiveis(): void {
+    if (!this.cockpitId) {
+      console.warn('cockpitId não fornecido para carregar anos disponíveis');
       return;
     }
 
-    this.periodosMentoriaService.listarPorEmpresa(this.empresaId).subscribe({
-      next: (periodos) => {
-        this.periodosMentoria = periodos;
+    this.cockpitService.getAnosDisponiveis(this.cockpitId).subscribe({
+      next: (anos: number[]) => {
+        // Adicionar opção "Últimos 12 meses" + anos disponíveis
+        this.opcoesAnos = [
+          { value: 'ultimos-12-meses', label: 'Últimos 12 meses' },
+          ...anos.map(ano => ({ value: ano.toString(), label: ano.toString() }))
+        ];
         
-        // Verificar se há período selecionado no localStorage
-        const periodoSalvo = localStorage.getItem(`periodoSelecionado_${this.empresaId}`);
+        // Verificar se há filtro salvo no localStorage
+        const filtroSalvo = localStorage.getItem(`filtroGrafico_${this.cockpitId}`);
         
-        if (periodoSalvo && periodos.find(p => p.id === periodoSalvo)) {
-          this.selectedPeriodoId = periodoSalvo;
-        } else if (periodos.length > 0) {
-          // Selecionar período ativo por padrão
-          const periodoAtivo = periodos.find(p => p.ativo);
-          this.selectedPeriodoId = periodoAtivo?.id || periodos[0].id;
-        }
-
-        // Calcular meses do período selecionado
-        if (this.selectedPeriodoId) {
-          const periodo = periodos.find(p => p.id === this.selectedPeriodoId);
-          if (periodo) {
-            this.mesesPeriodo = this.calcularMesesPeriodo(periodo);
-          }
+        if (filtroSalvo && this.opcoesAnos.find(o => o.value === filtroSalvo)) {
+          this.selectedFiltro = filtroSalvo;
+        } else {
+          // Padrão: Últimos 12 meses
+          this.selectedFiltro = 'ultimos-12-meses';
         }
       },
       error: (err) => {
-        console.error('Erro ao carregar períodos de mentoria:', err);
+        console.error('Erro ao carregar anos disponíveis:', err);
+        // Fallback: Apenas "Últimos 12 meses"
+        this.opcoesAnos = [
+          { value: 'ultimos-12-meses', label: 'Últimos 12 meses' }
+        ];
+        this.selectedFiltro = 'ultimos-12-meses';
       }
     });
   }
 
   /**
-   * R-MENT-008: Formatar label do período para dropdown
-   * Formato: "Período 1 (Mai/26 - Abr/27)"
+   * R-GRAF-001: Callback quando filtro é alterado no dropdown
    */
-  getPeriodoLabel(periodo: PeriodoMentoria): string {
-    const inicio = format(new Date(periodo.dataInicio), 'MMM/yy', { locale: ptBR });
-    const fim = format(new Date(periodo.dataFim), 'MMM/yy', { locale: ptBR });
-    return `Período ${periodo.numero} (${inicio} - ${fim})`;
-  }
-
-  /**
-   * R-MENT-008: Callback quando período é alterado no dropdown
-   */
-  onPeriodoChange(periodoId: string | null): void {
-    if (!periodoId) {
-      this.selectedPeriodoId = null;
-      this.mesesPeriodo = [];
+  onFiltroChange(filtro: string | null): void {
+    if (!filtro) {
+      this.selectedFiltro = 'ultimos-12-meses';
       return;
     }
 
-    this.selectedPeriodoId = periodoId;
+    this.selectedFiltro = filtro;
 
     // Persistir seleção no localStorage
-    if (this.empresaId) {
-      localStorage.setItem(`periodoSelecionado_${this.empresaId}`, periodoId);
+    if (this.cockpitId) {
+      localStorage.setItem(`filtroGrafico_${this.cockpitId}`, filtro);
     }
 
-    // Calcular meses do período selecionado
-    const periodo = this.periodosMentoria.find(p => p.id === periodoId);
-    if (periodo) {
-      this.mesesPeriodo = this.calcularMesesPeriodo(periodo);
-    }
-
-    // Recarregar gráfico com novo período
+    // Recarregar gráfico com novo filtro
     this.loadGrafico();
   }
 
   /**
-   * R-MENT-009: Calcular meses do período dinamicamente
-   * Gera array de objetos { mes, ano, label } de dataInicio até dataFim
+   * Formatar label do filtro para display
    */
-  calcularMesesPeriodo(periodo: PeriodoMentoria): { mes: number; ano: number; label: string }[] {
-    const meses: { mes: number; ano: number; label: string }[] = [];
-    
-    let dataAtual = new Date(periodo.dataInicio);
-    const dataFinal = new Date(periodo.dataFim);
-    
-    while (dataAtual <= dataFinal) {
-      const mes = dataAtual.getMonth() + 1; // 1-12
-      const ano = dataAtual.getFullYear();
-      const label = format(dataAtual, 'MMM/yy', { locale: ptBR }); // "Mai/26"
-      
-      meses.push({ mes, ano, label });
-      
-      dataAtual = addMonths(dataAtual, 1);
-    }
-    
-    return meses;
+  getFiltroLabel(opcao: { value: string; label: string }): string {
+    return opcao.label;
   }
 }

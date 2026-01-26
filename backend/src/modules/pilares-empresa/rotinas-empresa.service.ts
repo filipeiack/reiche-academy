@@ -86,7 +86,7 @@ export class RotinasEmpresaService {
     });
 
     if (existingRotinas.length !== idsToUpdate.length) {
-      const foundIds = existingRotinas.map(r => r.id);
+      const foundIds = existingRotinas.map((r: any) => r.id);
       const missingIds = idsToUpdate.filter(id => !foundIds.includes(id));
       throw new NotFoundException(
         `Rotinas não encontradas neste pilar: ${missingIds.join(', ')}`,

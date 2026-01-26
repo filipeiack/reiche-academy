@@ -184,7 +184,7 @@ export class RotinasService {
         },
       });
 
-      const empresasAfetadas = rotinaEmpresasEmUso.map((re) => ({
+      const empresasAfetadas = rotinaEmpresasEmUso.map((re: any) => ({
         id: re.pilarEmpresa.empresa.id,
         nome: re.pilarEmpresa.empresa.nome,
       }));

@@ -7,15 +7,15 @@
         Gráfico de Indicadores
       </h5>
 
-      <!-- R-MENT-008: Seletor de Período de Mentoria -->
-      <ng-select id="periodoSelect" style="width: 200px; font-size: 0.875rem;" [(ngModel)]="selectedPeriodoId"
-        (ngModelChange)="onPeriodoChange($event)" [items]="periodosMentoria" bindValue="id" placeholder="Período"
+      <!-- R-GRAF-001: Seletor de Filtro (Últimos 12 meses + Anos) -->
+      <ng-select id="filtroSelect" style="width: 200px; font-size: 0.875rem;" [(ngModel)]="selectedFiltro"
+        (ngModelChange)="onFiltroChange($event)" [items]="opcoesAnos" bindValue="value" placeholder="Filtro"
         [clearable]="false">
         <ng-template ng-label-tmp let-item="item">
-          <small>{{ getPeriodoLabel(item) }}</small>
+          <small>{{ getFiltroLabel(item) }}</small>
         </ng-template>
         <ng-template ng-option-tmp let-item="item">
-          <small>{{ getPeriodoLabel(item) }}</small>
+          <small>{{ getFiltroLabel(item) }}</small>
         </ng-template>
       </ng-select>
     </div>
@@ -45,10 +45,10 @@
               <span class="badge bg-success">Medido e confiável</span>
               }
               @case ('MEDIDO_NAO_CONFIAVEL') {
-              <span class="badge bg-warning">Medido, mas não é confiável.</span>
+              <span class="badge bg-warning">Medido, mas não confiável</span>
               }
               @case ('NAO_MEDIDO') {
-              <span class="badge bg-danger">Não é medido</span>
+              <span class="badge bg-danger">Não é medido ainda</span>
               }
               }
             </div>

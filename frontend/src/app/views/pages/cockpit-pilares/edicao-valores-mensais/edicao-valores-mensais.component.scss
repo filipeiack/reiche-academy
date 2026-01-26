@@ -40,3 +40,11 @@ span.bg-success {
   border: 1px solid;
   color: var(--bs-body-color);
 }
+
+/* Badge de desvio com altura similar aos inputs */
+.badge-desvio {
+  min-height: 35px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}

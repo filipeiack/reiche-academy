@@ -119,7 +119,7 @@ export class EmpresasService {
     });
 
     // Mapear para incluir periodoMentoriaAtivo
-    return empresas.map((empresa) => ({
+    return empresas.map((empresa: any) => ({
       ...empresa,
       periodoMentoriaAtivo: empresa.periodosMentoria[0] || null,
       periodosMentoria: undefined, // Remover array original
@@ -319,8 +319,8 @@ export class EmpresasService {
     });
 
     return result
-      .map(r => r.tipoNegocio)
-      .filter((tipo): tipo is string => tipo !== null);
+      .map((r: any) => r.tipoNegocio)
+      .filter((tipo: any): tipo is string => tipo !== null);
   }
 
   async updateLogo(id: string, logoUrl: string, userId: string, requestUser: RequestUser) {

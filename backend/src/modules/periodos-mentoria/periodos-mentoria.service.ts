@@ -83,6 +83,9 @@ export class PeriodosMentoriaService {
       },
     });
 
+    // Nota: Criação de meses dos indicadores agora é responsabilidade do Cockpit
+    // (botão "Criar Cockpit" ou "Novo ciclo de 12 meses")
+
     return periodo;
   }
 
@@ -168,6 +171,9 @@ export class PeriodosMentoriaService {
         },
       }),
     ]);
+
+    // Nota: Criação de novos meses dos indicadores agora é responsabilidade do Cockpit
+    // (botão "Novo ciclo de 12 meses" na tela de edição de valores mensais)
 
     return novoPeriodo;
   }

@@ -80,7 +80,7 @@ export class PilaresEmpresaService {
     });
 
     if (existingPilaresEmpresa.length !== idsToUpdate.length) {
-      const foundIds = existingPilaresEmpresa.map(p => p.id);
+      const foundIds = existingPilaresEmpresa.map((p: any) => p.id);
       const missingIds = idsToUpdate.filter(id => !foundIds.includes(id));
       throw new NotFoundException(
         `Pilares não encontrados nesta empresa: ${missingIds.join(', ')}`,
@@ -315,12 +315,12 @@ export class PilaresEmpresaService {
     });
 
     const templateIdsExistentes = pilaresExistentes
-      .map(p => p.pilarTemplateId)
-      .filter((id): id is string => id !== null);
+      .map((p: any) => p.pilarTemplateId)
+      .filter((id: any): id is string => id !== null);
 
     // Filtrar templates a serem criados (evitar duplicatas)
     const templatesParaCriar = templates.filter(
-      t => !templateIdsExistentes.includes(t.id),
+      (t: any) => !templateIdsExistentes.includes(t.id),
     );
 
     // Calcular próxima ordem para pilares
@@ -520,11 +520,11 @@ export class PilaresEmpresaService {
     }
 
     // Coletar dados para auditoria ANTES da deleção
-    const rotinasParaAuditoria = pilarEmpresa.rotinasEmpresa.map(rotina => ({
+    const rotinasParaAuditoria = pilarEmpresa.rotinasEmpresa.map((rotina: any) => ({
       id: rotina.id,
       nome: rotina.nome,
       notasCount: rotina.notas.length,
-      notas: rotina.notas.map(nota => ({
+      notas: rotina.notas.map((nota: any) => ({
         id: nota.id,
         nota: nota.nota,
         criticidade: nota.criticidade,
@@ -552,7 +552,7 @@ export class PilaresEmpresaService {
         empresaId: pilarEmpresa.empresaId,
         pilarTemplateId: pilarEmpresa.pilarTemplateId,
         rotinasDeletadas: rotinasParaAuditoria.length,
-        notasDeletadas: rotinasParaAuditoria.reduce((sum, r) => sum + r.notasCount, 0),
+        notasDeletadas: rotinasParaAuditoria.reduce((sum: any, r: any) => sum + r.notasCount, 0),
       },
       dadosDepois: null,
     });
@@ -596,7 +596,7 @@ export class PilaresEmpresaService {
     }
 
     const totalRotinas = rotinasParaAuditoria.length;
-    const totalNotas = rotinasParaAuditoria.reduce((sum, r) => sum + r.notasCount, 0);
+    const totalNotas = rotinasParaAuditoria.reduce((sum: any, r: any) => sum + r.notasCount, 0);
 
     let message = 'Pilar removido com sucesso';
     if (totalRotinas > 0 || totalNotas > 0) {

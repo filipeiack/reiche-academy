@@ -233,6 +233,50 @@ const periodo = await this.prisma.periodoMentoria.create({
     createdBy: user.id,
   },
 });
+
+// ✅ CRIAR MESES PARA TODOS OS INDICADORES EXISTENTES
+const indicadoresExistentes = await this.prisma.indicadorCockpit.findMany({
+  where: {
+    cockpitPilar: {
+      pilarEmpresa: {
+        empresaId,
+      },
+    },
+    ativo: true,
+  },
+});
+
+const anoInicio = dataInicio.getUTCFullYear();
+const mesesParaCriar = [];
+
+for (const indicador of indicadoresExistentes) {
+  // Criar 12 meses + resumo anual
+  for (let mes = 1; mes <= 12; mes++) {
+    mesesParaCriar.push({
+      indicadorCockpitId: indicador.id,
+      mes,
+      ano: anoInicio,
+      periodoMentoriaId: periodo.id,
+      createdBy: user.id,
+      updatedBy: user.id,
+    });
+  }
+  // Resumo anual
+  mesesParaCriar.push({
+    indicadorCockpitId: indicador.id,
+    mes: null,
+    ano: anoInicio,
+    periodoMentoriaId: periodo.id,
+    createdBy: user.id,
+    updatedBy: user.id,
+  });
+}
+
+if (mesesParaCriar.length > 0) {
+  await this.prisma.indicadorMensal.createMany({
+    data: mesesParaCriar,
+  });
+}
 ```
 
 **Auditoria:**
@@ -405,7 +449,86 @@ await this.auditService.log({
 
 ---
 
-### R-MENT-004: Validação de Trimestres
+### R-MENT-006: Criação Automática de Meses para Indicadores
+
+**Descrição:** Ao criar ou renovar período de mentoria, sistema cria automaticamente 13 meses (jan-dez + resumo anual) para todos os indicadores existentes da empresa.
+
+**Implementação:**
+- **Método:** `PeriodosMentoriaService.create()` e `renovar()`
+- **Trigger:** Após criação do `PeriodoMentoria`
+
+**Comportamento:**
+
+1. **Buscar indicadores ativos da empresa:**
+```typescript
+const indicadoresExistentes = await this.prisma.indicadorCockpit.findMany({
+  where: {
+    cockpitPilar: {
+      pilarEmpresa: {
+        empresaId,
+      },
+    },
+    ativo: true,
+  },
+});
+```
+
+2. **Criar 13 meses por indicador:**
+```typescript
+const anoInicio = dataInicio.getUTCFullYear();
+const mesesParaCriar = [];
+
+for (const indicador of indicadoresExistentes) {
+  // 12 meses (janeiro a dezembro)
+  for (let mes = 1; mes <= 12; mes++) {
+    mesesParaCriar.push({
+      indicadorCockpitId: indicador.id,
+      mes,
+      ano: anoInicio,
+      periodoMentoriaId: periodo.id,
+      createdBy: user.id,
+      updatedBy: user.id,
+    });
+  }
+  
+  // Resumo anual (mes = null)
+  mesesParaCriar.push({
+    indicadorCockpitId: indicador.id,
+    mes: null,
+    ano: anoInicio,
+    periodoMentoriaId: periodo.id,
+    createdBy: user.id,
+    updatedBy: user.id,
+  });
+}
+```
+
+3. **Inserir em lote:**
+```typescript
+if (mesesParaCriar.length > 0) {
+  await this.prisma.indicadorMensal.createMany({
+    data: mesesParaCriar,
+  });
+}
+```
+
+**Casos:**
+- ✅ Empresa com 5 indicadores → cria 65 meses (5 × 13)
+- ✅ Empresa sem indicadores → não cria nada (skip)
+- ✅ Renovação → cria meses para novo período com ano do novo período
+
+**Justificativa:**
+- Usuário não precisa esperar criação manual de meses
+- Tela de edição de valores mensais sempre exibe estrutura completa
+- Evita inconsistências (meses faltando)
+
+**Perfis autorizados:** ADMINISTRADOR (implícito, pois só ADMINISTRADOR cria períodos)
+
+**Arquivo:** `backend/src/modules/periodos-mentoria/periodos-mentoria.service.ts` (métodos `create` e `renovar`)
+
+---
+
+### R-MENT-007: Validação de Trimestres
 
 **Descrição:** Ao criar `PeriodoAvaliacao`, validar que `dataReferencia` está dentro do período de mentoria ativo.
 
@@ -465,7 +588,7 @@ const periodo = await this.prisma.periodoAvaliacao.create({
 
 ---
 
-### R-MENT-005: Validação de Valores Mensais
+### R-MENT-008: Validação de Valores Mensais
 
 **Descrição:** Ao criar/editar `IndicadorMensal`, validar que `mes/ano` está dentro do período de mentoria ativo.
 
@@ -563,7 +686,7 @@ await this.prisma.indicadorMensal.upsert({
 
 ---
 
-### R-MENT-006: Gestão de Período no Wizard de Empresas
+### R-MENT-009: Gestão de Período no Wizard de Empresas
 
 **Descrição:** Etapa 2 do wizard de empresas permite criar/editar período de mentoria.
 
@@ -654,7 +777,7 @@ ngOnInit() {
 
 ---
 
-### R-MENT-007: Exibição de Status na Lista de Empresas
+### R-MENT-010: Exibição de Status na Lista de Empresas
 
 **Descrição:** Lista de empresas exibe coluna com status do período de mentoria ativo.
 
@@ -729,7 +852,7 @@ const empresas = await this.prisma.empresa.findMany({
 
 ---
 
-### R-MENT-008: Filtro de Período em Gráfico de Indicadores
+### R-MENT-011: Filtro de Período em Gráfico de Indicadores
 
 **Descrição:** Frontend exibe dropdown de seleção de período de mentoria no componente de gráfico de indicadores, permitindo visualizar histórico de diferentes períodos.
 
@@ -797,7 +920,7 @@ localStorage.setItem(
 
 ---
 
-### R-MENT-009: Cálculo Dinâmico de Meses
+### R-MENT-012: Cálculo Dinâmico de Meses
 
 **Descrição:** Frontend calcula quais meses exibir baseado em `periodoMentoria.dataInicio` e `dataFim`.
 

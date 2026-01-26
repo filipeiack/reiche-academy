@@ -1,18 +1,21 @@
 <div class="gestao-indicadores-wrapper">
-  <!-- Botão adicionar nova linha -->
-  <div class="mb-2 d-flex justify-content-between align-items-center gap-3">
-    <h5 class="card-title">
+  <!-- Cabeçalho -->
+  <div class="mb-3 d-flex justify-content-between align-items-center">
+    <h5 class="card-title mb-0">
       <i class="bi bi-bar-chart me-2"></i>
       Matriz de Indicadores
     </h5>
 
-    <button class="btn btn-outline-primary btn-sm" data-testid="btn-novo-indicador" (click)="addNewRow()" [disabled]="editingRowId !== null">
+    <button 
+      class="btn btn-outline-primary btn-sm" 
+      data-testid="btn-novo-indicador" 
+      (click)="abrirDrawerNovo()">
       <i class="bi bi-plus-circle me-1"></i>
       Novo Indicador
     </button>
   </div>
 
-  <!-- Desktop: Grid estilo Excel -->
+  <!-- Desktop: Tabela de visualização -->
   <div class="table-responsive d-none d-lg-block">
     @if (loading) {
     <div class="text-center py-4">
@@ -24,183 +27,85 @@
     <table class="table table-hover table-sm" data-testid="indicadores-table">
       <thead class="table-light small">
         <tr>
-          <!-- <th style="width: 40px;"></th> -->
-          <!-- Drag handle -->
-          <th class="w-100">Nome</th>
-          <th style="min-width: 90px;">Medida</th>
+          <th>Nome</th>
+          <th style="max-width: 80px;">Medida</th>
           <th style="max-width: 90px;">Status</th>
           <th>Responsável</th>
-          <th class="text-center">Melhor</th>
-          <!-- <th style="width: 80px;">Descrição</th> -->
-          <th style="width: 100px;">Ações</th>
+          <th class="text-center" style="width: 60px;">Melhor</th>
+          <th class="text-center" style="width: 100px;">Ações</th>
         </tr>
       </thead>
       <tbody cdkDropList (cdkDropListDropped)="onDrop($event)">
-        @for (indicador of indicadores; track indicador.id || $index) {
-        <tr cdkDragHandle cdkDrag [cdkDragDisabled]="indicador.isEditing || false"
-          [class.row-editing]="indicador.isEditing" [class.row-new]="indicador.isNew"
-          [class.row-saved]="indicador.saveStatus === 'saved'" [class.row-error]="indicador.saveStatus === 'error'">
+        @for (indicador of indicadores; track indicador.id) {
+        <tr cdkDrag>
           <!-- Drag Handle -->
-          <!-- <td class="text-center">
-           
-          </td> -->
-
           <!-- Nome -->
-          <td>
-            @if (!indicador.isEditing) {
-
+            <td cdkDragHandle style="overflow-wrap: break-word; overflow: hidden; text-overflow: ellipsis; white-space: normal; cursor: move;">
             <i class="bi bi-grip-vertical text-muted"></i>
-
+            <strong class="text-break">{{ indicador.nome.toUpperCase() }}</strong>
+            @if (indicador.descricao) {
+            <br>
+            <small class="text-muted fs-7 text-break">{{ indicador.descricao }}</small>
             }
-
-            @if (indicador.isEditing) {
-            <input type="text" class="form-control form-control-sm" [(ngModel)]="indicador.nome"
-              (blur)="onCellBlur(indicador, 'nome')" (keydown)="onKeyDown($event, indicador.ordem!, 'nome')"
-              [id]="'nome-' + indicador.ordem" placeholder="Nome do indicador"
-              [class.is-invalid]="!indicador.nome.trim()" />
-            } @else {
-            <button type="button" class="btn btn-link p-0 me-2" (click)="openDescricaoModal(indicador)"
-              title="Editar descrição" aria-label="Editar descrição do indicador">
-              <i class="bi bi-file-text"></i>
-            </button>
-            {{ indicador.nome }}
-            }
-          </td>
+            </td>
 
           <!-- Tipo de Medida -->
           <td class="small">
-            @if (indicador.isEditing) {
-            <select class="form-select form-select-sm" [(ngModel)]="indicador.tipoMedida"
-              (change)="onCellBlur(indicador, 'tipoMedida')"
-              (keydown)="onKeyDown($event, indicador.ordem!, 'tipoMedida')" [id]="'tipoMedida-' + indicador.ordem"
-              [class.is-invalid]="!indicador.tipoMedida">
-              <option [value]="null">Selecione...</option>
-              @for (tipo of tiposMedida; track tipo.value) {
-              <option [value]="tipo.value">{{ tipo.label }}</option>
-              }
-            </select>
-            } @else {
-            @switch (indicador.tipoMedida) {
-            @case ('REAL') {
-            R$
-            }
-            @case ('QUANTIDADE') {
-            Qtde
-            }
-            @case ('TEMPO') {
-            Tempo
-            }
-            @case ('PERCENTUAL') {
-            %
-            }
-            }
-            }
+            {{ getTipoMedidaLabel(indicador.tipoMedida) }}
           </td>
 
           <!-- Status de Medição -->
           <td class="small">
-            @if (indicador.isEditing) {
-            <select class="form-select form-select-sm" [(ngModel)]="indicador.statusMedicao"
-              (change)="onCellBlur(indicador, 'statusMedicao')"
-              (keydown)="onKeyDown($event, indicador.ordem!, 'statusMedicao')"
-              [id]="'statusMedicao-' + indicador.ordem">
-              @for (status of statusMedicao; track status.value) {
-              <option [value]="status.value">{{ status.label }}</option>
-              }
-            </select>
-            } @else {
-            @switch (indicador.statusMedicao) {
-            @case ('MEDIDO_CONFIAVEL') {
-            <span class="badge bg-success">Medido e confiável</span>
-            }
-            @case ('MEDIDO_NAO_CONFIAVEL') {
-            <span class="badge bg-warning">Medido, mas não é confiável.</span>
-            }
-            @case ('NAO_MEDIDO') {
-            <span class="badge bg-danger">Não é medido</span>
-            }
-            }
+            @if (indicador.statusMedicao) {
+            <span 
+              class="badge w-100" 
+              [ngClass]="getStatusMedicaoBadge(indicador.statusMedicao).class">
+              {{ getStatusMedicaoBadge(indicador.statusMedicao).label }}
+            </span>
             }
           </td>
 
-          <!-- Responsável (ng-select) -->
+          <!-- Responsável -->
           <td class="small">
-            @if (indicador.isEditing) {
-            <ng-select [(ngModel)]="indicador.responsavelMedicaoId" 
-              (change)="onCellBlur(indicador, 'responsavel')"
-              [items]="usuarios" bindLabel="nome" bindValue="id" placeholder="Selecione..." 
-              [searchable]="true"
-              [addTag]="addUsuarioTag"
-              [clearable]="true" 
-              [id]="'responsavel-' + indicador.ordem" appendTo="body">
-            </ng-select>
-            } @else {
             {{ getResponsavelNome(indicador.responsavelMedicaoId) }}
-            }
           </td>
 
-          <!-- Melhor (Toggle) -->
+          <!-- Melhor (Direção) -->
           <td class="text-center">
-            @if (indicador.isEditing) {
-            <button class="btn btn-sm btn-info" (click)="toggleMelhor(indicador)"
-              [id]="'melhor-' + indicador.ordem">
-              @if (indicador.melhor === 'MAIOR') {
-              <i class="bi bi-arrow-up"></i>
-              } @else {
-              <i class="bi bi-arrow-down"></i>
-              }
-            </button>
-            } @else {
             @if (indicador.melhor === 'MAIOR') {
-            <i class="bi bi-arrow-up text-black" style="font-size: 1.25rem;"></i>
+            <i class="bi bi-arrow-up text-black" style="font-size: 1.25rem;" title="Maior é melhor"></i>
             } @else {
-            <i class="bi bi-arrow-down text-black" style="font-size: 1.25rem;"></i>
-            }
+            <i class="bi bi-arrow-down text-black" style="font-size: 1.25rem;" title="Menor é melhor"></i>
             }
           </td>
-
-          <!-- Descrição (Modal) -->
-          <!-- <td class="text-center">
-                <button
-                  class="btn btn-sm btn-outline-secondary"
-                  (click)="openDescricaoModal(indicador)"
-                  title="Editar descrição"
-                >
-                  <i class="bi bi-file-text"></i>
-                </button>
-              </td> -->
 
           <!-- Ações -->
           <td>
-            @if (indicador.isEditing) {
             <div class="d-flex gap-1">
-              <button type="button" class="btn btn-sm btn-success" (click)="disableEdit(indicador)" title="Salvar edição">
-                <i class="feather icon-check"></i>
-              </button>
-              <button type="button" class="btn btn-sm btn-secondary" (click)="cancelarEdicao(indicador)" title="Cancelar">
-                <i class="feather icon-x"></i>
-              </button>
-            </div>
-            } @else {
-            <div class="d-flex gap-1">
-              <button data-testid="edit-indicador-button" class="btn btn-icon text-secondary"
-                (click)="enableEdit(indicador)" [title]="'BUTTONS.EDIT' | translate">
+              <button 
+                data-testid="edit-indicador-button" 
+                class="btn btn-icon text-secondary"
+                (click)="editarIndicador(indicador)" 
+                [title]="'BUTTONS.EDIT' | translate">
                 <i class="feather icon-edit"></i>
               </button>
-              <button data-testid="delete-indicador-button" class="btn btn-icon text-danger"
-                (click)="deleteIndicador(indicador)" [title]="'BUTTONS.DELETE' | translate">
+              <button 
+                data-testid="delete-indicador-button" 
+                class="btn btn-icon text-danger"
+                (click)="deleteIndicador(indicador)" 
+                [title]="'BUTTONS.DELETE' | translate">
                 <i class="feather icon-trash-2"></i>
               </button>
             </div>
-            }
           </td>
         </tr>
         }
 
         @if (indicadores.length === 0) {
         <tr>
-          <td colspan="8" class="text-center text-muted py-4">
-            Nenhum indicador criado. Clique em "Nova Linha" para começar.
+          <td colspan="7" class="text-center text-muted py-4">
+            <i class="bi bi-inbox me-2"></i>
+            Nenhum indicador criado. Clique em "Novo Indicador" para começar.
           </td>
         </tr>
         }
@@ -209,14 +114,7 @@
     }
   </div>
 
-  <!-- @if (editingRowId) {
-  <small class="text-muted">
-    <i class="bi bi-info-circle me-1"></i>
-    Use Tab para navegar entre campos. Enter para próximo indicador.
-  </small>
-  } -->
-
-  <!-- Mobile: Cards (TODO: implementar) -->
+  <!-- Mobile: Cards -->
   <div class="d-block d-lg-none">
     <div class="alert alert-info">
       <i class="bi bi-phone me-2"></i>
@@ -224,6 +122,3 @@
     </div>
   </div>
 </div>
-
-<!-- Modal Component -->
-<app-descricao-indicador-modal></app-descricao-indicador-modal>

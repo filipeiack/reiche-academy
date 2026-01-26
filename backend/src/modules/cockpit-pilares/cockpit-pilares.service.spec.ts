@@ -87,6 +87,7 @@ describe('CockpitPilaresService', () => {
             indicadorCockpit: {
               findFirst: jest.fn(),
               findUnique: jest.fn(),
+              findMany: jest.fn(),
               create: jest.fn(),
               update: jest.fn(),
             },
@@ -1056,4 +1057,167 @@ describe('CockpitPilaresService', () => {
       ).rejects.toThrow(NotFoundException);
     });
   });
-});
+
+  // ==================== TESTES DE GRÁFICOS ====================
+
+  describe('Gráficos - R-GRAF-001', () => {
+    describe('getAnosDisponiveis', () => {
+      it('deve retornar anos distintos em ordem decrescente', async () => {
+        const cockpit = {
+          id: 'cockpit-1',
+          pilarEmpresa: {
+            empresaId: 'empresa-a',
+            empresa: { id: 'empresa-a' },
+          },
+        };
+
+        jest.spyOn(service as any, 'validateCockpitAccess').mockResolvedValue(cockpit);
+        jest.spyOn(prisma.indicadorMensal, 'findMany').mockResolvedValue([
+          { ano: 2027 },
+          { ano: 2026 },
+          { ano: 2025 },
+        ] as any);
+
+        const result = await service.getAnosDisponiveis('cockpit-1', mockGestorEmpresaA);
+
+        expect(result).toEqual([2027, 2026, 2025]);
+        expect(prisma.indicadorMensal.findMany).toHaveBeenCalledWith({
+          where: {
+            indicadorCockpit: {
+              cockpitPilarId: 'cockpit-1',
+              ativo: true,
+            },
+          },
+          select: { ano: true },
+          distinct: ['ano'],
+          orderBy: { ano: 'desc' },
+        });
+      });
+
+      it('deve retornar array vazio se não houver meses criados', async () => {
+        jest.spyOn(service as any, 'validateCockpitAccess').mockResolvedValue({});
+        jest.spyOn(prisma.indicadorMensal, 'findMany').mockResolvedValue([]);
+
+        const result = await service.getAnosDisponiveis('cockpit-1', mockGestorEmpresaA);
+
+        expect(result).toEqual([]);
+      });
+
+      it('deve validar acesso ao cockpit (multi-tenant)', async () => {
+        jest.spyOn(service as any, 'validateCockpitAccess').mockRejectedValue(
+          new ForbiddenException('Acesso negado'),
+        );
+
+        await expect(
+          service.getAnosDisponiveis('cockpit-1', mockGestorEmpresaB),
+        ).rejects.toThrow(ForbiddenException);
+      });
+    });
+
+    describe('getDadosGraficos', () => {
+      const mockIndicadores = [
+        {
+          id: 'ind-1',
+          nome: 'Indicador 1',
+          tipoMedida: 'PERCENTUAL',
+          statusMedicao: 'MEDIDO_CONFIAVEL',
+          melhor: 'MAIOR',
+          ordem: 1,
+          mesesIndicador: [
+            { mes: 1, ano: 2026, meta: 100, realizado: 95, historico: 90 },
+            { mes: 2, ano: 2026, meta: 100, realizado: 105, historico: 92 },
+          ],
+          responsavelMedicao: { id: 'user-1', nome: 'Responsável', email: 'resp@test.com' },
+        },
+      ];
+
+      it('deve filtrar por ano específico', async () => {
+        jest.spyOn(service as any, 'validateCockpitAccess').mockResolvedValue({});
+        jest.spyOn(prisma.indicadorCockpit, 'findMany').mockResolvedValue(mockIndicadores as any);
+
+        const result = await service.getDadosGraficos('cockpit-1', '2026', mockGestorEmpresaA);
+
+        expect(result.filtro).toBe('2026');
+        expect(result.tipoFiltro).toBe('ano');
+        expect(result.indicadores).toEqual(mockIndicadores);
+        expect(prisma.indicadorCockpit.findMany).toHaveBeenCalledWith({
+          where: {
+            cockpitPilarId: 'cockpit-1',
+            ativo: true,
+          },
+          include: {
+            mesesIndicador: {
+              where: { ano: 2026 },
+              orderBy: [{ ano: 'asc' }, { mes: 'asc' }],
+            },
+            responsavelMedicao: {
+              select: {
+                id: true,
+                nome: true,
+                email: true,
+              },
+            },
+          },
+          orderBy: { ordem: 'asc' },
+        });
+      });
+
+      it('deve filtrar por ultimos-12-meses', async () => {
+        jest.spyOn(service as any, 'validateCockpitAccess').mockResolvedValue({});
+        jest.spyOn(prisma.indicadorCockpit, 'findMany').mockResolvedValue(mockIndicadores as any);
+
+        const result = await service.getDadosGraficos(
+          'cockpit-1',
+          'ultimos-12-meses',
+          mockGestorEmpresaA,
+        );
+
+        expect(result.filtro).toBe('ultimos-12-meses');
+        expect(result.tipoFiltro).toBe('ultimos-12-meses');
+        expect(result.indicadores).toEqual(mockIndicadores);
+
+        // Verifica que whereClause contém lógica de data
+        const call = (prisma.indicadorCockpit.findMany as jest.Mock).mock.calls[0][0];
+        expect(call.include.mesesIndicador.where).toBeDefined();
+        expect(call.include.mesesIndicador.where.OR).toBeDefined();
+        expect(call.include.mesesIndicador.where.AND).toBeDefined();
+      });
+
+      it('deve lançar BadRequestException se filtro for inválido', async () => {
+        jest.spyOn(service as any, 'validateCockpitAccess').mockResolvedValue({});
+
+        await expect(
+          service.getDadosGraficos('cockpit-1', 'invalido', mockGestorEmpresaA),
+        ).rejects.toThrow('Filtro inválido. Use "ultimos-12-meses" ou um ano válido (ex: 2025)');
+      });
+
+      it('deve validar acesso ao cockpit (multi-tenant)', async () => {
+        jest.spyOn(service as any, 'validateCockpitAccess').mockRejectedValue(
+          new ForbiddenException('Acesso negado'),
+        );
+
+        await expect(
+          service.getDadosGraficos('cockpit-1', '2026', mockGestorEmpresaB),
+        ).rejects.toThrow(ForbiddenException);
+      });
+
+      it('deve retornar indicadores ordenados por ordem', async () => {
+        const indicadoresDesordenados = [
+          { ...mockIndicadores[0], ordem: 3 },
+          { ...mockIndicadores[0], id: 'ind-2', ordem: 1 },
+          { ...mockIndicadores[0], id: 'ind-3', ordem: 2 },
+        ];
+
+        jest.spyOn(service as any, 'validateCockpitAccess').mockResolvedValue({});
+        jest.spyOn(prisma.indicadorCockpit, 'findMany').mockResolvedValue(indicadoresDesordenados as any);
+
+        await service.getDadosGraficos('cockpit-1', '2026', mockGestorEmpresaA);
+
+        expect(prisma.indicadorCockpit.findMany).toHaveBeenCalledWith(
+          expect.objectContaining({
+            orderBy: { ordem: 'asc' },
+          }),
+        );
+      });
+    });
+  });});

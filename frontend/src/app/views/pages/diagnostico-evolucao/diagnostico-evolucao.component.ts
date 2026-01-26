@@ -380,7 +380,7 @@ renderBarChart(): void {
         label: periodo.mesAno,
         data: data,
         backgroundColor: grayColor,
-        borderColor: grayColor,
+        borderColor: 'rgba(150, 150, 150)',
         borderWidth: 1,
         barPercentage: 1.05,
         categoryPercentage: 0.75

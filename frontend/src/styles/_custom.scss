@@ -80,9 +80,15 @@
 
 	.table th,
 	.table td {
-		border-color: #2A2A2A;
+		border-color: #2a2a2aee;
+
+	}
+	
+	.bg-gray-100 {
+		background-color: #1a1a1a !important;
 	}
 
+	.bg-light,
 	.table-light {
 		--bs-table-bg: #1a1a1a;
 		--bs-table-color: #FFFFFF;
@@ -94,6 +100,8 @@
 		color: #000000 !important;
 	}
 
+	.text-dark,
+	.text-black,
 	.text-muted {
 		color: #FFFFFF !important;
 	}

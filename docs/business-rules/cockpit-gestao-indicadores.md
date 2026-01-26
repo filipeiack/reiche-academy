@@ -5,6 +5,8 @@ Módulo Cockpit de Pilares - CRUD completo de Indicadores
 Frontend: Gestão Indicadores Component
 Backend: CockpitPilaresService
 
+> ⚙️ Regras recentes sobre ciclos e exibição dos meses mensais estão centralizadas em [cockpit-indicadores-mensais](cockpit-indicadores-mensais.md).
+
 ## Descrição
 Implementa criação, edição, exclusão e reordenação de indicadores customizados com validações de unicidade, auto-criação de estrutura mensal e persistência automática.
 
@@ -432,3 +434,174 @@ addUsuarioTag = (nome: string): Usuario | Promise<Usuario> => {
 - Frontend implementa UX Excel-like com auto-save
 - Criação de usuário on-the-fly facilita fluxo sem interrupções
 - Ordem mantida automaticamente via drag-and-drop
+---
+
+## 7. Filtro de Gráficos por Ano e Últimos 12 Meses (R-GRAF-001)
+
+**Arquivo:** `frontend/src/app/views/pages/cockpit-pilares/grafico-indicadores/grafico-indicadores.component.ts`
+**Backend:** `backend/src/modules/cockpit-pilares/cockpit-pilares.service.ts`
+
+**Contexto:**
+- Componente de gráfico de indicadores
+- Filtro para visualização temporal dos dados
+
+**Regra:**
+O usuário pode filtrar os gráficos de indicadores por:
+1. **Últimos 12 meses** (padrão) - Exibe os últimos 12 meses a partir do mês atual
+2. **Ano específico** - Exibe todos os meses de um ano específico
+
+**Comportamento:**
+
+### Backend
+
+**Endpoint 1: Buscar anos disponíveis**
+- **Rota:** `GET /cockpits/:cockpitId/anos-disponiveis`
+- **Descrição:** Retorna lista de anos em que existem meses criados (IndicadorMensal) para indicadores do cockpit
+- **Query:** Busca anos distintos ordenados decrescente (mais recente primeiro)
+- **Retorno:** Array de números `[2027, 2026, 2025]`
+
+**Endpoint 2: Buscar dados para gráfico**
+- **Rota:** `GET /cockpits/:cockpitId/graficos/dados?filtro={filtro}`
+- **Parâmetro filtro:**
+  - `'ultimos-12-meses'` - Últimos 12 meses a partir de hoje
+  - `'{ano}'` - Ano específico (ex: `'2025'`)
+
+**Lógica de filtro "Últimos 12 meses":**
+```typescript
+const hoje = new Date();
+const mesAtual = hoje.getMonth() + 1; // 1-12
+const anoAtual = hoje.getFullYear();
+
+// Calcular mês/ano inicial (12 meses atrás)
+let mesInicial = mesAtual - 11;
+let anoInicial = anoAtual;
+
+if (mesInicial <= 0) {
+  mesInicial += 12;
+  anoInicial -= 1;
+}
+
+// Exemplo: Se hoje é Jan/2026
+// mesInicial = 1 - 11 = -10 → +12 = 2
+// anoInicial = 2026 - 1 = 2025
+// Resultado: Fev/2025 até Jan/2026
+```
+
+**Filtro Prisma aplicado:**
+```typescript
+{
+  OR: [
+    { ano: { gt: anoInicial } },
+    { AND: [{ ano: anoInicial }, { mes: { gte: mesInicial } }] }
+  ],
+  AND: [
+    { ano: { lte: anoAtual } },
+    { OR: [{ ano: { lt: anoAtual } }, { mes: { lte: mesAtual } }] }
+  ]
+}
+```
+
+**Validação:**
+- Se filtro não for `'ultimos-12-meses'` nem número válido: `BadRequestException`
+
+### Frontend
+
+**Inicialização:**
+1. Ao carregar componente, busca anos disponíveis via `getAnosDisponiveis()`
+2. Monta array de opções: `[{ value: 'ultimos-12-meses', label: 'Últimos 12 meses' }, ...]`
+3. Verifica localStorage por filtro salvo: `filtroGrafico_{cockpitId}`
+4. Se não houver, define padrão: `'ultimos-12-meses'`
+
+**Interação do usuário:**
+- Dropdown (ng-select) exibe opções: "Últimos 12 meses", "2027", "2026", "2025"...
+- Ao selecionar: `onFiltroChange(filtro)`
+- Salva no localStorage: `localStorage.setItem('filtroGrafico_{cockpitId}', filtro)`
+- Recarrega gráfico com novo filtro via `getDadosGraficos(cockpitId, filtro)`
+
+**Labels do gráfico:**
+- Formato: `MMM/yy` (Jan/25, Fev/25, Mar/25...)
+- Sempre exibe mês + ano para evitar ambiguidade em filtro de 12 meses
+
+**Persistência:**
+- Filtro selecionado é salvo por cockpit no localStorage
+- Na próxima abertura, restaura último filtro usado
+
+**Fallback:**
+- Se erro ao buscar anos: Exibe apenas "Últimos 12 meses"
+- Garante que usuário sempre tenha uma opção funcional
+
+### Código implementado
+
+**Backend:**
+```typescript
+// cockpit-pilares.service.ts
+async getAnosDisponiveis(cockpitId: string, user: RequestUser) {
+  await this.validateCockpitAccess(cockpitId, user);
+
+  const anos = await this.prisma.indicadorMensal.findMany({
+    where: {
+      indicadorCockpit: {
+        cockpitPilarId: cockpitId,
+        ativo: true,
+      },
+    },
+    select: { ano: true },
+    distinct: ['ano'],
+    orderBy: { ano: 'desc' },
+  });
+
+  return anos.map((item) => item.ano);
+}
+
+async getDadosGraficos(cockpitId: string, filtro: string, user: RequestUser) {
+  // ... (ver código completo no arquivo)
+}
+```
+
+**Frontend:**
+```typescript
+// grafico-indicadores.component.ts
+private loadAnosDisponiveis(): void {
+  this.cockpitService.getAnosDisponiveis(this.cockpitId).subscribe({
+    next: (anos: number[]) => {
+      this.opcoesAnos = [
+        { value: 'ultimos-12-meses', label: 'Últimos 12 meses' },
+        ...anos.map(ano => ({ value: ano.toString(), label: ano.toString() }))
+      ];
+      
+      const filtroSalvo = localStorage.getItem(`filtroGrafico_${this.cockpitId}`);
+      this.selectedFiltro = filtroSalvo || 'ultimos-12-meses';
+    }
+  });
+}
+
+onFiltroChange(filtro: string | null): void {
+  this.selectedFiltro = filtro || 'ultimos-12-meses';
+  localStorage.setItem(`filtroGrafico_${this.cockpitId}`, this.selectedFiltro);
+  this.loadGrafico();
+}
+```
+
+### Restrições
+
+1. **Padrão sempre "Últimos 12 meses"**
+2. **Anos listados em ordem decrescente** (mais recente primeiro)
+3. **Filtro persistido por cockpit** (não global)
+4. **Validação de filtro inválido** retorna BadRequestException
+5. **Fallback resiliente** se não houver anos disponíveis
+
+### Fonte no Código
+
+- **Backend Controller:** `backend/src/modules/cockpit-pilares/cockpit-pilares.controller.ts` (linhas ~297-325)
+- **Backend Service:** `backend/src/modules/cockpit-pilares/cockpit-pilares.service.ts` (linhas ~850-950)
+- **Frontend Component:** `frontend/src/app/views/pages/cockpit-pilares/grafico-indicadores/grafico-indicadores.component.ts`
+- **Frontend Service:** `frontend/src/app/core/services/cockpit-pilares.service.ts` (linhas ~137-146)
+- **Frontend Template:** `frontend/src/app/views/pages/cockpit-pilares/grafico-indicadores/grafico-indicadores.component.html` (linhas ~4-19)
+
+### Observações
+
+-  **Regra implementada para substituir filtro de Períodos de Mentoria**
+- Independente de período de mentoria - baseado apenas em meses existentes
+- UX simplificada: 1 dropdown ao invés de lógica complexa de períodos
+- Performance otimizada: Query distinct em anos
+- Compatível com múltiplos anos de histórico

@@ -109,6 +109,16 @@ export class CockpitPilaresService {
     );
   }
 
+  /**
+   * Criar novo ciclo de 12 meses para todos os indicadores do cockpit
+   */
+  criarNovoCicloMeses(cockpitId: string): Observable<{ sucesso: boolean; indicadores: number; mesesCriados: number }> {
+    return this.http.post<{ sucesso: boolean; indicadores: number; mesesCriados: number }>(
+      `${this.API}/cockpits/${cockpitId}/meses/ciclo`,
+      {}
+    );
+  }
+
   // ==================== PROCESSOS PRIORITÁRIOS ====================
 
   getProcessosPrioritarios(
@@ -131,15 +141,25 @@ export class CockpitPilaresService {
 
   // ==================== GRÁFICOS ====================
 
+  /**
+   * R-GRAF-001: Buscar anos disponíveis (com meses criados) para um cockpit
+   */
+  getAnosDisponiveis(cockpitId: string): Observable<number[]> {
+    return this.http.get<number[]>(
+      `${this.API}/cockpits/${cockpitId}/anos-disponiveis`
+    );
+  }
+
+  /**
+   * R-GRAF-001: Buscar dados agregados para gráficos
+   * @param filtro - 'ultimos-12-meses' ou ano específico (ex: '2025')
+   */
   getDadosGraficos(
-    cockpitId: string, 
-    ano: number,
-    periodoMentoriaId?: string
+    cockpitId: string,
+    filtro: string
   ): Observable<DadosGraficos> {
-    let url = `${this.API}/cockpits/${cockpitId}/graficos/dados?ano=${ano}`;
-    if (periodoMentoriaId) {
-      url += `&periodoMentoriaId=${periodoMentoriaId}`;
-    }
-    return this.http.get<DadosGraficos>(url);
+    return this.http.get<DadosGraficos>(
+      `${this.API}/cockpits/${cockpitId}/graficos/dados?filtro=${filtro}`
+    );
   }
 }

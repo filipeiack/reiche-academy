@@ -17,12 +17,12 @@ export class StatusMedicaoUtil {
       icon: 'bi-check-circle-fill'
     },
     [StatusMedicaoIndicador.MEDIDO_NAO_CONFIAVEL]: {
-      label: 'Medido, mas não é confiável.',
+      label: 'Medido, mas não confiável',
       badgeClass: 'bg-warning',
       icon: 'bi-exclamation-triangle-fill'
     },
     [StatusMedicaoIndicador.NAO_MEDIDO]: {
-      label: 'Não é medido',
+      label: 'Não é medido ainda',
       badgeClass: 'bg-danger',
       icon: 'bi-x-circle-fill'
     }

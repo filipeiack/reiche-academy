@@ -191,13 +191,14 @@
                                     <label [for]="'criticidade-' + rotina.id" class="form-label-xs">
                                         {{ 'DIAGNOSTICO.CRITICIDADE' | translate }} <span class="text-danger">*</span>
                                     </label>
-                                    <ng-select [id]="'criticidade-' + rotina.id" [items]="criticidadeOptions"
-                                        bindLabel="label" bindValue="value" [ngModel]="getCriticidadeAtual(rotina)"
-                                        (ngModelChange)="onNotaChange(rotina, getNotaAtual(rotina), $event)"
-                                        placeholder="{{ 'DIAGNOSTICO.SELECT_CRITICIDADE' | translate }}"
-                                        [clearable]="false"
+                                    <select [id]="'criticidade-' + rotina.id" class="form-control" 
+                                        [value]="getCriticidadeAtual(rotina)"
+                                        (change)="onNotaChange(rotina, getNotaAtual(rotina), $any($event.target).value)"
                                         [ngClass]="getCriticidadeClass(getCriticidadeAtual(rotina))">
-                                    </ng-select>
+                                        <option *ngFor="let option of criticidadeOptions" [value]="option.value">
+                                            {{ option.label }}
+                                        </option>
+                                    </select>
                                 </div>
 
                                 <!-- Campo Nota -->

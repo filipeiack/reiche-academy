@@ -38,7 +38,7 @@ export class PilaresService {
     const created = await this.prisma.pilar.create({
       data: {
         ...createPilarDto,
-        ordem,
+        ordem: ordem as number,
         createdBy: requestUser.id,
       },
     });

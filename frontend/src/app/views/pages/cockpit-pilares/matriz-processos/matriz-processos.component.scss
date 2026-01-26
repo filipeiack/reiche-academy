@@ -41,3 +41,13 @@ span.bg-success {
   border: 1px solid;
   color: var(--bs-body-color);
 }
+
+/* Badge com altura similar aos inputs */
+.badge-altura-input {
+  min-height: 38px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  border-radius: 0;
+}

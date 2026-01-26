@@ -13,35 +13,35 @@
     </div>
     } @else {
     <div class="table-responsive">
-      <table class="table table-hover table-sm" style="table-layout: fixed;" data-testid="processos-table">
+      <table class="table table-hover table-sm" style="table-layout: fixed; width: 100%;" data-testid="processos-table">
         <thead class="table-light small">
           <tr>
-            <th style="width: 45%;">Nome da Rotina</th>
+            <th style="width: 45%;">Rotina</th>
             <th class="text-center" style="width: 10%;">Criticidade</th>
             <th class="text-center" style="width: 5%;">Nota</th>
             <th class="text-center" style="width: 20%;" title="STATUS DO MAPEAMENTO">Status Mapeamento</th>
             <th class="text-center" style="width: 20%;" title="STATUS DO TREINAMENTO/EXECUÇÃO">Status Treinamento</th>
           </tr>
         </thead>
-        <tbody>
+        <tbody class="small">
           @for (processo of processos; track processo.id) {
           <tr>
 
-            <td style="white-space: normal; overflow-wrap: break-word;">
-              <span class="badge bg-secondary small">{{ processo.rotinaEmpresa?.ordem }}</span>
+            <td class="bg-gray-100" style="white-space: normal; overflow-wrap: break-word;">
+              <span class="badge bg-secondary">{{ processo.rotinaEmpresa?.ordem }}</span>
               {{ processo.rotinaEmpresa?.nome || 'Processo' }}
             </td>
-            <td class="text-center">
+            <td class="text-center bg-gray-100">
               @if (processo.rotinaEmpresa?.notas && processo.rotinaEmpresa.notas.length > 0) {
               @switch (processo.rotinaEmpresa.notas[0].criticidade) {
               @case ('ALTA') {
-              <span class="badge bg-danger">Alta</span>
+              <span class="badge bg-danger badge-altura-input">ALTA</span>
               }
               @case ('MEDIA') {
-              <span class="badge bg-warning">Média</span>
+              <span class="badge bg-warning badge-altura-input">MÉDIA</span>
               }
               @case ('BAIXA') {
-              <span class="badge bg-success">Baixa</span>
+              <span class="badge bg-success badge-altura-input">BAIXA</span>
               }
               @default {
               <span class="text-muted">-</span>
@@ -51,10 +51,10 @@
               <span class="text-muted">-</span>
               }
             </td>
-            <td class="text-center">
+            <td class="text-center bg-gray-100">
               @if (processo.rotinaEmpresa?.notas && processo.rotinaEmpresa.notas.length > 0) {
-              <span class="badge" [class]="getNotaClass(processo.rotinaEmpresa.notas[0].nota)">
-                {{ processo.rotinaEmpresa.notas[0].nota?.toLocaleString('pt-BR', { minimumFractionDigits: 1, maximumFractionDigits: 1 }) || '-' }}
+              <span class="badge badge-altura-input" [class]="getNotaClass(processo.rotinaEmpresa.notas[0].nota)">
+                {{ processo.rotinaEmpresa.notas[0].nota?.toLocaleString('pt-BR', { minimumFractionDigits: 0, maximumFractionDigits: 0 }) || '-' }}
               </span>
               } @else {
               <span class="text-muted">-</span>

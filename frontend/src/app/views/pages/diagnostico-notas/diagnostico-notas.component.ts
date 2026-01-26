@@ -148,7 +148,7 @@ export class DiagnosticoNotasComponent implements OnInit, OnDestroy {
   // Opções de criticidade
   criticidadeOptions = [
     { value: 'BAIXA', label: 'BAIXA' },
-    { value: 'MEDIA', label: 'MEDIA' },
+    { value: 'MEDIA', label: 'MÉDIA' },
     { value: 'ALTA', label: 'ALTA' },
   ];
 

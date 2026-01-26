@@ -89,8 +89,8 @@ async function main() {
 
   const { addYears } = await import('date-fns');
 
-  // Data de início padrão: 01/06/2025
-  const dataInicioDefault = new Date(2025, 5, 1); // Junho de 2025
+  // Data de início padrão: 01/03/2025
+  const dataInicioDefault = new Date(2025, 2, 1); // Março de 2025
 
   // Criar período de mentoria retroativo para Empresa A
   const periodoMentoriaA = await prisma.periodoMentoria.upsert({
@@ -1071,20 +1071,20 @@ async function main() {
 
   console.log(`✅ ${processosAssociados} rotinas do Marketing associadas como processos prioritários`);
 
-  // Dados de 12 meses para cada indicador (jan-dez 2026)
+  // Dados de março/2025 a fevereiro/2026 (12 meses) para cada indicador
   const todosMesesData = [
-    { mes: 1, meta: 80, realizado: 75, historico: 65 },
-    { mes: 2, meta: 85, realizado: 90, historico: 70 },
-    { mes: 3, meta: 90, realizado: 88, historico: 72 },
-    { mes: 4, meta: 95, realizado: 92, historico: 75 },
-    { mes: 5, meta: 100, realizado: 105, historico: 80 },
-    { mes: 6, meta: 100, realizado: 98, historico: 82 },
-    { mes: 7, meta: 105, realizado: 110, historico: 85 },
-    { mes: 8, meta: 105, realizado: 102, historico: 87 },
-    { mes: 9, meta: 110, realizado: 115, historico: 90 },
-    { mes: 10, meta: 115, realizado: 118, historico: 92 },
-    { mes: 11, meta: 120, realizado: 122, historico: 95 },
-    { mes: 12, meta: 125, realizado: 130, historico: 98 },
+    { mes: 3, ano: 2025, meta: 80, realizado: 75, historico: 65 },
+    { mes: 4, ano: 2025, meta: 85, realizado: 90, historico: 70 },
+    { mes: 5, ano: 2025, meta: 90, realizado: 88, historico: 72 },
+    { mes: 6, ano: 2025, meta: 95, realizado: 92, historico: 75 },
+    { mes: 7, ano: 2025, meta: 100, realizado: 105, historico: 80 },
+    { mes: 8, ano: 2025, meta: 100, realizado: 98, historico: 82 },
+    { mes: 9, ano: 2025, meta: 105, realizado: 110, historico: 85 },
+    { mes: 10, ano: 2025, meta: 105, realizado: 102, historico: 87 },
+    { mes: 11, ano: 2025, meta: 110, realizado: 115, historico: 90 },
+    { mes: 12, ano: 2025, meta: 115, realizado: 118, historico: 92 },
+    { mes: 1, ano: 2026, meta: 120, realizado: 122, historico: 95 },
+    { mes: 2, ano: 2026, meta: 125, realizado: 130, historico: 98 },
   ];
 
   // Dados específicos por indicador (ajustados para a realidade de cada métrica)
@@ -1096,69 +1096,69 @@ async function main() {
     {
       nome: 'Taxa de Conversão',
       valores: [
-        { mes: 1, meta: 12.0, realizado: 11.5, historico: 10.0 },
-        { mes: 2, meta: 12.5, realizado: 13.0, historico: 10.5 },
-        { mes: 3, meta: 13.0, realizado: 12.8, historico: 11.0 },
-        { mes: 4, meta: 13.5, realizado: 13.2, historico: 11.5 },
-        { mes: 5, meta: 14.0, realizado: 14.5, historico: 12.0 },
-        { mes: 6, meta: 14.0, realizado: 13.8, historico: 12.5 },
-        { mes: 7, meta: 14.5, realizado: 14.2, historico: 13.0 },
-        { mes: 8, meta: 15.0, realizado: 15.5, historico: 13.5 },
-        { mes: 9, meta: 15.5, realizado: 15.8, historico: 14.0 },
-        { mes: 10, meta: 16.0, realizado: 16.2, historico: 14.5 },
-        { mes: 11, meta: 16.5, realizado: 16.8, historico: 15.0 },
-        { mes: 12, meta: 17.0, realizado: 17.3, historico: 15.5 },
+        { mes: 3, ano: 2025, meta: 12.0, realizado: 11.5, historico: 10.0 },
+        { mes: 4, ano: 2025, meta: 12.5, realizado: 13.0, historico: 10.5 },
+        { mes: 5, ano: 2025, meta: 13.0, realizado: 12.8, historico: 11.0 },
+        { mes: 6, ano: 2025, meta: 13.5, realizado: 13.2, historico: 11.5 },
+        { mes: 7, ano: 2025, meta: 14.0, realizado: 14.5, historico: 12.0 },
+        { mes: 8, ano: 2025, meta: 14.0, realizado: 13.8, historico: 12.5 },
+        { mes: 9, ano: 2025, meta: 14.5, realizado: 14.2, historico: 13.0 },
+        { mes: 10, ano: 2025, meta: 15.0, realizado: 15.5, historico: 13.5 },
+        { mes: 11, ano: 2025, meta: 15.5, realizado: 15.8, historico: 14.0 },
+        { mes: 12, ano: 2025, meta: 16.0, realizado: 16.2, historico: 14.5 },
+        { mes: 1, ano: 2026, meta: 16.5, realizado: 16.8, historico: 15.0 },
+        { mes: 2, ano: 2026, meta: 17.0, realizado: 17.3, historico: 15.5 },
       ], // Percentual
     },
     {
       nome: 'CAC (Custo de Aquisição de Cliente)',
       valores: [
-        { mes: 1, meta: 450, realizado: 480, historico: 500 },
-        { mes: 2, meta: 440, realizado: 420, historico: 490 },
-        { mes: 3, meta: 430, realizado: 450, historico: 480 },
-        { mes: 4, meta: 420, realizado: 410, historico: 470 },
-        { mes: 5, meta: 410, realizado: 390, historico: 460 },
-        { mes: 6, meta: 400, realizado: 405, historico: 450 },
-        { mes: 7, meta: 390, realizado: 380, historico: 440 },
-        { mes: 8, meta: 380, realizado: 385, historico: 430 },
-        { mes: 9, meta: 370, realizado: 360, historico: 420 },
-        { mes: 10, meta: 360, realizado: 350, historico: 410 },
-        { mes: 11, meta: 350, realizado: 340, historico: 400 },
-        { mes: 12, meta: 340, realizado: 330, historico: 390 },
+        { mes: 3, ano: 2025, meta: 450, realizado: 480, historico: 500 },
+        { mes: 4, ano: 2025, meta: 440, realizado: 420, historico: 490 },
+        { mes: 5, ano: 2025, meta: 430, realizado: 450, historico: 480 },
+        { mes: 6, ano: 2025, meta: 420, realizado: 410, historico: 470 },
+        { mes: 7, ano: 2025, meta: 410, realizado: 390, historico: 460 },
+        { mes: 8, ano: 2025, meta: 400, realizado: 405, historico: 450 },
+        { mes: 9, ano: 2025, meta: 390, realizado: 380, historico: 440 },
+        { mes: 10, ano: 2025, meta: 380, realizado: 385, historico: 430 },
+        { mes: 11, ano: 2025, meta: 370, realizado: 360, historico: 420 },
+        { mes: 12, ano: 2025, meta: 360, realizado: 350, historico: 410 },
+        { mes: 1, ano: 2026, meta: 350, realizado: 340, historico: 400 },
+        { mes: 2, ano: 2026, meta: 340, realizado: 330, historico: 390 },
       ], // Real (R$)
     },
     {
       nome: 'ROI de Campanhas',
       valores: [
-        { mes: 1, meta: 250, realizado: 240, historico: 200 },
-        { mes: 2, meta: 260, realizado: 280, historico: 210 },
-        { mes: 3, meta: 270, realizado: 265, historico: 220 },
-        { mes: 4, meta: 280, realizado: 290, historico: 230 },
-        { mes: 5, meta: 290, realizado: 310, historico: 240 },
-        { mes: 6, meta: 300, realizado: 295, historico: 250 },
-        { mes: 7, meta: 310, realizado: 320, historico: 260 },
-        { mes: 8, meta: 320, realizado: 315, historico: 270 },
-        { mes: 9, meta: 330, realizado: 340, historico: 280 },
-        { mes: 10, meta: 340, realizado: 350, historico: 290 },
-        { mes: 11, meta: 350, realizado: 360, historico: 300 },
-        { mes: 12, meta: 360, realizado: 370, historico: 310 },
+        { mes: 3, ano: 2025, meta: 250, realizado: 240, historico: 200 },
+        { mes: 4, ano: 2025, meta: 260, realizado: 280, historico: 210 },
+        { mes: 5, ano: 2025, meta: 270, realizado: 265, historico: 220 },
+        { mes: 6, ano: 2025, meta: 280, realizado: 290, historico: 230 },
+        { mes: 7, ano: 2025, meta: 290, realizado: 310, historico: 240 },
+        { mes: 8, ano: 2025, meta: 300, realizado: 295, historico: 250 },
+        { mes: 9, ano: 2025, meta: 310, realizado: 320, historico: 260 },
+        { mes: 10, ano: 2025, meta: 320, realizado: 315, historico: 270 },
+        { mes: 11, ano: 2025, meta: 330, realizado: 340, historico: 280 },
+        { mes: 12, ano: 2025, meta: 340, realizado: 350, historico: 290 },
+        { mes: 1, ano: 2026, meta: 350, realizado: 360, historico: 300 },
+        { mes: 2, ano: 2026, meta: 360, realizado: 370, historico: 310 },
       ], // Percentual
     },
     {
       nome: 'Engajamento nas Redes Sociais',
       valores: [
-        { mes: 1, meta: 1200, realizado: 1100, historico: 800 },
-        { mes: 2, meta: 1300, realizado: 1400, historico: 900 },
-        { mes: 3, meta: 1400, realizado: 1350, historico: 1000 },
-        { mes: 4, meta: 1500, realizado: 1550, historico: 1100 },
-        { mes: 5, meta: 1600, realizado: 1650, historico: 1200 },
-        { mes: 6, meta: 1600, realizado: 1580, historico: 1300 },
-        { mes: 7, meta: 1700, realizado: 1750, historico: 1400 },
-        { mes: 8, meta: 1700, realizado: 1680, historico: 1500 },
-        { mes: 9, meta: 1800, realizado: 1850, historico: 1600 },
-        { mes: 10, meta: 1900, realizado: 1920, historico: 1700 },
-        { mes: 11, meta: 2000, realizado: 2050, historico: 1800 },
-        { mes: 12, meta: 2100, realizado: 2150, historico: 1900 },
+        { mes: 3, ano: 2025, meta: 1200, realizado: 1100, historico: 800 },
+        { mes: 4, ano: 2025, meta: 1300, realizado: 1400, historico: 900 },
+        { mes: 5, ano: 2025, meta: 1400, realizado: 1350, historico: 1000 },
+        { mes: 6, ano: 2025, meta: 1500, realizado: 1550, historico: 1100 },
+        { mes: 7, ano: 2025, meta: 1600, realizado: 1650, historico: 1200 },
+        { mes: 8, ano: 2025, meta: 1600, realizado: 1580, historico: 1300 },
+        { mes: 9, ano: 2025, meta: 1700, realizado: 1750, historico: 1400 },
+        { mes: 10, ano: 2025, meta: 1700, realizado: 1680, historico: 1500 },
+        { mes: 11, ano: 2025, meta: 1800, realizado: 1850, historico: 1600 },
+        { mes: 12, ano: 2025, meta: 1900, realizado: 1920, historico: 1700 },
+        { mes: 1, ano: 2026, meta: 2000, realizado: 2050, historico: 1800 },
+        { mes: 2, ano: 2026, meta: 2100, realizado: 2150, historico: 1900 },
       ], // Quantidade
     },
   ];
@@ -1174,7 +1174,7 @@ async function main() {
       const existing = await prisma.indicadorMensal.findFirst({
         where: {
           indicadorCockpitId: indicador.id,
-          ano: 2026,
+          ano: mesData.ano,
           mes: mesData.mes,
           periodoMentoriaId: periodoMentoriaA.id,
         },
@@ -1185,7 +1185,7 @@ async function main() {
           data: {
             indicadorCockpitId: indicador.id,
             periodoMentoriaId: periodoMentoriaA.id,
-            ano: 2026,
+            ano: mesData.ano,
             mes: mesData.mes,
             meta: mesData.meta,
             realizado: mesData.realizado,
