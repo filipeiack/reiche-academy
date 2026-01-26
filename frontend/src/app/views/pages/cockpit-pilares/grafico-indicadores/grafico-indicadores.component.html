@@ -103,7 +103,7 @@
 
     <!-- Chart Container -->
     @if (!loading && !error && selectedIndicadorId) {
-    <div class="chart-container mb-4">
+    <div class="chart-container mb-4" data-testid="grafico-container">
       <canvas baseChart [data]="lineChartData" [options]="lineChartOptions" [type]="lineChartType"></canvas>
     </div>
     }

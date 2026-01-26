@@ -1,4 +1,4 @@
-<div id="headerDashboard" class="sticky-header-dashboard mb-1">
+<div id="headerDashboard" class="sticky-header-dashboard mb-1" data-testid="cockpit-header">
 
   <div class="mb-2 align-items-center d-flex justify-content-between flex-wrap">
     <!-- Breadcrumb -->
@@ -17,7 +17,7 @@
     </nav>
 
     <!-- Feedback de salvamento centralizado -->
-    <div id="feedbackSaveCockpit" class="d-flex justify-content-end align-items-center mb-2">
+    <div id="feedbackSaveCockpit" class="d-flex justify-content-end align-items-center mb-2" data-testid="feedback-save">
       @if (saveFeedback.saving) {
       <div class="text-warning small">
         <span class="spinner-border spinner-border-sm me-1"></span>
@@ -40,28 +40,28 @@
   <!-- Tabs -->
   <ul class="nav nav-tabs mb-2" role="tablist">
     <li class="nav-item" role="presentation">
-      <button class="nav-link" [class.active]="activeTab === 'contexto'" (click)="setActiveTab('contexto')"
+      <button class="nav-link" data-testid="tab-contexto" [class.active]="activeTab === 'contexto'" (click)="setActiveTab('contexto')"
         type="button">
         <i class="bi bi-info-circle me-1"></i>
         Contexto
       </button>
     </li>
     <li class="nav-item" role="presentation">
-      <button class="nav-link" [class.active]="activeTab === 'indicadores'" (click)="setActiveTab('indicadores')"
+      <button class="nav-link" data-testid="tab-indicadores" [class.active]="activeTab === 'indicadores'" (click)="setActiveTab('indicadores')"
         type="button">
         <i class="bi bi-bar-chart me-1"></i>
         Indicadores
       </button>
     </li>
     <li class="nav-item" role="presentation">
-      <button class="nav-link" [class.active]="activeTab === 'graficos'" (click)="setActiveTab('graficos')"
+      <button class="nav-link" data-testid="tab-graficos" [class.active]="activeTab === 'graficos'" (click)="setActiveTab('graficos')"
         type="button">
         <i class="bi bi-graph-up me-1"></i>
         Gráficos
       </button>
     </li>
     <li class="nav-item" role="presentation">
-      <button class="nav-link" [class.active]="activeTab === 'processos'" (click)="setActiveTab('processos')"
+      <button class="nav-link" data-testid="tab-processos" [class.active]="activeTab === 'processos'" (click)="setActiveTab('processos')"
         type="button">
         <i class="bi bi-list-check me-1"></i>
         Processos
@@ -83,19 +83,22 @@
         <div class="mb-3">
           <label class="form-label">ENTRADAS:</label>
           <textarea class="form-control" [(ngModel)]="entradas" (ngModelChange)="onContextoChange()" rows="3"
-            placeholder="Ex: Pedidos de clientes, solicitações de propostas comerciais, leads qualificados do marketing"></textarea>
+            placeholder="Ex: Pedidos de clientes, solicitações de propostas comerciais, leads qualificados do marketing"
+            data-testid="contexto-entradas"></textarea>
         </div>
 
         <div class="mb-3">
           <label class="form-label">SAÍDAS:</label>
           <textarea class="form-control" [(ngModel)]="saidas" (ngModelChange)="onContextoChange()" rows="3"
-            placeholder="Ex: Propostas comerciais enviadas, contratos assinados, relatórios de performance"></textarea>
+            placeholder="Ex: Propostas comerciais enviadas, contratos assinados, relatórios de performance"
+            data-testid="contexto-saidas"></textarea>
         </div>
 
         <div class="mb-3">
           <label class="form-label">MISSÃO DO PILAR:</label>
           <textarea class="form-control" [(ngModel)]="missao" (ngModelChange)="onContextoChange()" rows="3"
-            placeholder="Ex: Maximizar o faturamento via canal indireto, mantendo alta qualidade no atendimento e reduzindo inadimplência"></textarea>
+            placeholder="Ex: Maximizar o faturamento via canal indireto, mantendo alta qualidade no atendimento e reduzindo inadimplência"
+            data-testid="contexto-missao"></textarea>
         </div>
       </div>
     </div>
@@ -103,20 +106,21 @@
 
     <!-- Indicadores -->
     @if (activeTab === 'indicadores') {
-    <app-matriz-indicadores [cockpitId]="cockpit.id"></app-matriz-indicadores>
+    <app-matriz-indicadores [cockpitId]="cockpit.id" data-testid="indicadores-panel"></app-matriz-indicadores>
     }
 
     <!-- Gráficos -->
     @if (activeTab === 'graficos') {
     <app-grafico-indicadores 
       [cockpitId]="cockpit.id"
-      [empresaId]="cockpit.pilarEmpresa?.empresaId || ''">
+      [empresaId]="cockpit.pilarEmpresa?.empresaId || ''"
+      data-testid="grafico-panel">
     </app-grafico-indicadores>
     }
 
     <!-- Processos -->
     @if (activeTab === 'processos') {
-    <app-matriz-processos [cockpitId]="cockpit.id"></app-matriz-processos>
+    <app-matriz-processos [cockpitId]="cockpit.id" data-testid="processos-panel"></app-matriz-processos>
     }
   </div>
 </div>

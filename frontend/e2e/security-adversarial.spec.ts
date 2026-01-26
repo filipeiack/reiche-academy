@@ -52,8 +52,9 @@ test.describe('SEGURANÇA ADVERSARIAL - Isolamento Multi-Tenant', () => {
       }
     });
     
-    // Navegar para aba que dispara requisições
-    await page.click('button:has-text("Indicadores")');
+    // Navegar para aba que dispara requisições via data-testid
+    const indicadoresTab = page.locator('[data-testid="tab-indicadores"]');
+    await indicadoresTab.click();
     await page.waitForTimeout(2000);
     
     // Verificar se não consegue acessar dados de outra empresa

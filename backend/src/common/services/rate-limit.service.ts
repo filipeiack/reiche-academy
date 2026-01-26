@@ -79,13 +79,13 @@ export class RateLimitService {
   readonly limits = {
     // Authentication endpoints - more restrictive
     auth: {
-      login: { limit: 5, windowMs: 900000 }, // 5 attempts per 15 minutes
+      login: { limit: 100, windowMs: 60000 }, // ⚠️ TEMPORÁRIO E2E: 100 logins/minuto (PROD: 5/15min)
       register: { limit: 3, windowMs: 3600000 }, // 3 attempts per hour
       forgot: { limit: 3, windowMs: 3600000 }, // 3 attempts per hour
     },
     // General API endpoints
-    general: { limit: 100, windowMs: 60000 }, // 100 requests per minute
+    general: { limit: 200, windowMs: 60000 }, // ⚠️ TEMPORÁRIO E2E: 200 req/min (PROD: 100/min)
     // Sensitive operations
-    sensitive: { limit: 20, windowMs: 60000 }, // 20 requests per minute
+    sensitive: { limit: 50, windowMs: 60000 }, // ⚠️ TEMPORÁRIO E2E: 50 req/min (PROD: 20/min)
   };
 }

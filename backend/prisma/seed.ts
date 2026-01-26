@@ -89,8 +89,8 @@ async function main() {
 
   const { addYears } = await import('date-fns');
 
-  // Data de início padrão: 01/01/2026
-  const dataInicioDefault = new Date(2026, 0, 1); // Janeiro de 2026
+  // Data de início padrão: 01/06/2025
+  const dataInicioDefault = new Date(2025, 5, 1); // Junho de 2025
 
   // Criar período de mentoria retroativo para Empresa A
   const periodoMentoriaA = await prisma.periodoMentoria.upsert({

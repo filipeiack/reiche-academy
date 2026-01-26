@@ -402,7 +402,7 @@ export class PeriodosAvaliacaoService {
         entidadeId: periodoId,
         acao: 'UPDATE',
         dadosAntes: {
-          snapshots: snapshotsAntigos.map((s) => ({
+          snapshots: snapshotsAntigos.map((s: any) => ({
             pilarNome: s.pilarEmpresa.nome,
             mediaAntiga: s.mediaNotas,
           })),

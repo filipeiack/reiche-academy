@@ -8,7 +8,6 @@ import Swal from 'sweetalert2';
 import { DiagnosticoNotasService, RotinaEmpresa, PilarEmpresa } from '../../../../core/services/diagnostico-notas.service';
 import { RotinasService, Rotina } from '../../../../core/services/rotinas.service';
 import { RotinasEmpresaService } from '../../../../core/services/rotinas-empresa.service';
-import { HttpErrorResponse } from '@angular/common/http';
 import { NovaRotinaModalComponent } from '../nova-rotina-modal/nova-rotina-modal.component';
 import { TranslatePipe } from "../../../../core/pipes/translate.pipe";
 

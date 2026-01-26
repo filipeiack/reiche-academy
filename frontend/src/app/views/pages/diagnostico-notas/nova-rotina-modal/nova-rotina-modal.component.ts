@@ -51,6 +51,11 @@ import { PilarEmpresa } from '../../../../core/services/diagnostico-notas.servic
               rows="3"
               placeholder="Descreva os detalhes desta rotina (opcional)"></textarea>
           </div> -->
+
+          <span class="text-muted small mb-0">
+            <i class="feather icon-info me-1"></i>
+            Esta janela permanecerá aberta para que você possa adicionar várias rotinas rapidamente.
+          </span>
         </form>
         }
       </div>
@@ -118,7 +123,8 @@ export class NovaRotinaModalComponent {
         this.showToast(`Rotina "${rotina.nome}" criada com sucesso!`, 'success');
         this.rotinaCriada.emit();
         this.saving = false;
-        this.close();
+        this.form.reset(); // Limpa os dados
+        // Mantém a modal aberta para inserir novo registro
       },
       error: (err) => {
         this.showToast(err?.error?.message || 'Erro ao criar rotina', 'error');

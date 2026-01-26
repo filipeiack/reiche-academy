@@ -16,7 +16,7 @@ import { EmpresaBasic } from '@app/core/models/auth.model';
 import { PeriodosAvaliacaoService } from '../../../core/services/periodos-avaliacao.service';
 import { PeriodoAvaliacao } from '../../../core/models/periodo-avaliacao.model';
 import { NgbDropdownModule } from '@ng-bootstrap/ng-bootstrap';
-import { PilaresEmpresaModalComponent } from '../empresas/pilares-empresa-modal/pilares-empresa-modal.component';
+import { PilaresEmpresaModalComponent } from './pilares-empresa-modal/pilares-empresa-modal.component';
 import { ResponsavelPilarModalComponent } from './responsavel-pilar-modal/responsavel-pilar-modal.component';
 import { NovaRotinaModalComponent } from './nova-rotina-modal/nova-rotina-modal.component';
 import { RotinasPilarModalComponent } from './rotinas-pilar-modal/rotinas-pilar-modal.component';

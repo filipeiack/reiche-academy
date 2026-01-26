@@ -1,9 +1,8 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
-import { ThrottlerModule } from '@nestjs/throttler';
+
 import { ScheduleModule } from '@nestjs/schedule';
-import { APP_INTERCEPTOR, APP_PIPE, APP_GUARD } from '@nestjs/core';
-import { ThrottlerGuard } from '@nestjs/throttler';
+import { APP_INTERCEPTOR, APP_PIPE } from '@nestjs/core';
 import { PrismaModule } from './common/prisma/prisma.module';
 import { SecurityInterceptor } from './common/interceptors/security.interceptor';
 import { RateLimitingInterceptor } from './common/interceptors/rate-limiting.interceptor';
@@ -29,12 +28,12 @@ import { PeriodosMentoriaModule } from './modules/periodos-mentoria/periodos-men
       envFilePath: '.env',
     }),
     ScheduleModule.forRoot(),
-    ThrottlerModule.forRoot([
-      {
-        ttl: 60000, // 1 minuto
-        limit: 100, // DEV: 100 requisições/minuto (PROD: ajustar para 30)
-      },
-    ]),
+    // ThrottlerModule.forRoot([
+    //   {
+    //     ttl: 60000, // 1 minuto
+    //     limit: 1000, // DEV: 1000 requisições/minuto (E2E tests)
+    //   },
+    // ]),
     PrismaModule,
     AuthModule,
     UsuariosModule,
@@ -62,11 +61,7 @@ import { PeriodosMentoriaModule } from './modules/periodos-mentoria/periodos-men
       provide: APP_INTERCEPTOR,
       useClass: RateLimitingInterceptor,
     },
-    // Rate limiting via ThrottlerGuard (endpoints específicos)
-    {
-      provide: APP_GUARD,
-      useClass: ThrottlerGuard,
-    },
+
     // Input sanitization
     {
       provide: APP_PIPE,

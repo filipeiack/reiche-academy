@@ -6,28 +6,17 @@
 </div>
 } @else {
 
-<!-- Buscar e adicionar pilares existentes -->
+<!-- Botão para adicionar novo pilar -->
 @if (!isPerfilCliente) {
-<div class="mb-2">
-    <ng-select [items]="pilaresDisponiveis" bindLabel="nome" [searchable]="true" [clearable]="true"
-        [addTag]="addPilarTag" placeholder="Busque por nome de pilar ou digite para criar novo..."
-        (change)="onPilarSelected($event)">
-        <ng-template ng-option-tmp let-item="item">
-            <div class="d-flex align-items-center">
-                <i class="feather icon-layers me-2"></i>
-                <div>
-                    <div>{{ item.nome }}</div>
-                    @if (item.descricao) {
-                    <small class="text-muted">{{ item.descricao }}</small>
-                    }
-                </div>
-            </div>
-        </ng-template>
-    </ng-select>
-    <small class="text-muted">
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <small class="text-muted d-block mt-2">
         <i class="feather icon-info me-1"></i>
-        Arraste os pilares para reordenar. Nome do pilar: 2 a 60 caracteres.
+        Arraste os pilares para reordenar.
     </small>
+    <button type="button" class="btn btn-outline-primary btn-sm" (click)="abrirModalAdicionarPilar()">
+        <i class="feather icon-plus-circle me-2"></i>
+        Adicionar Pilar
+    </button>
 </div>
 }
 
@@ -85,3 +74,10 @@
 }
 
 }
+
+<!-- Modal para adicionar pilar -->
+<app-adicionar-pilar-modal
+  [empresaId]="empresaId"
+  [pilaresJaAssociados]="pilaresAssociadosIds"
+  (pilarAdicionado)="handlePilarAdicionado()">
+</app-adicionar-pilar-modal>

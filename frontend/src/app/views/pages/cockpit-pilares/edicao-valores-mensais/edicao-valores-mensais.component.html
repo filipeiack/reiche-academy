@@ -1,4 +1,4 @@
-<div class="edicao-valores-wrapper">
+<div class="edicao-valores-wrapper" data-testid="valores-section">
   <!-- Loading -->
   @if (loading) {
   <div class="text-center py-4">
@@ -109,7 +109,7 @@
 
       <!-- Corpo da tabela com scroll -->
       <div class="table-responsive">
-        <table class="table table-hover table-sm" style="table-layout: fixed; width: 100%;">
+        <table class="table table-hover table-sm" style="table-layout: fixed; width: 100%;" data-testid="valores-table">
           <colgroup>
             <col style="width: 80px;">
             <col style="width: 120px;">

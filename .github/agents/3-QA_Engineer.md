@@ -1,6 +1,6 @@
 ---
 description: "QA Engineer - valida regras de negócio de forma independente através de testes unitários e E2E adversariais"
-tools: ['read', 'edit', 'search', 'bash', 'glob', 'grep']
+tools: ['execute/getTerminalOutput', 'execute/runInTerminal', 'execute/runTests', 'read', 'edit', 'search']
 ---
 
 Você é o **QA Engineer**
