@@ -17,6 +17,13 @@ import { UpdateProcessoPrioritarioDto } from './dto/update-processo-prioritario.
 import { CreateProcessoFluxogramaDto } from './dto/create-processo-fluxograma.dto';
 import { UpdateProcessoFluxogramaDto } from './dto/update-processo-fluxograma.dto';
 import { ReordenarProcessoFluxogramaDto } from './dto/reordenar-processo-fluxograma.dto';
+import { CreateCargoCockpitDto } from './dto/create-cargo-cockpit.dto';
+import { UpdateCargoCockpitDto } from './dto/update-cargo-cockpit.dto';
+import { CreateFuncaoCargoDto } from './dto/create-funcao-cargo.dto';
+import { UpdateFuncaoCargoDto } from './dto/update-funcao-cargo.dto';
+import { CreateAcaoCockpitDto } from './dto/create-acao-cockpit.dto';
+import { UpdateAcaoCockpitDto } from './dto/update-acao-cockpit.dto';
+import { StatusAcao } from '@prisma/client';
 
 @Injectable()
 export class CockpitPilaresService {
@@ -104,6 +111,155 @@ export class CockpitPilaresService {
     }
 
     return processo;
+  }
+
+  /**
+   * Valida se o cargo pertence à empresa do usuário
+   */
+  private async validateCargoAccess(cargoId: string, user: RequestUser) {
+    const cargo = await this.prisma.cargoCockpit.findUnique({
+      where: { id: cargoId },
+      include: {
+        cockpitPilar: {
+          include: {
+            pilarEmpresa: {
+              include: { empresa: true },
+            },
+          },
+        },
+      },
+    });
+
+    if (!cargo) {
+      throw new NotFoundException('Cargo não encontrado');
+    }
+
+    if (user.perfil?.codigo !== 'ADMINISTRADOR') {
+      if (cargo.cockpitPilar.pilarEmpresa.empresa.id !== user.empresaId) {
+        throw new ForbiddenException(
+          'Você não pode acessar cargos de outra empresa',
+        );
+      }
+    }
+
+    return cargo;
+  }
+
+  /**
+   * Valida se a função pertence à empresa do usuário
+   */
+  private async validateFuncaoCargoAccess(funcaoId: string, user: RequestUser) {
+    const funcao = await this.prisma.funcaoCargo.findUnique({
+      where: { id: funcaoId },
+      include: {
+        cargoCockpit: {
+          include: {
+            cockpitPilar: {
+              include: {
+                pilarEmpresa: {
+                  include: { empresa: true },
+                },
+              },
+            },
+          },
+        },
+      },
+    });
+
+    if (!funcao) {
+      throw new NotFoundException('Função não encontrada');
+    }
+
+    if (user.perfil?.codigo !== 'ADMINISTRADOR') {
+      if (
+        funcao.cargoCockpit.cockpitPilar.pilarEmpresa.empresa.id !==
+        user.empresaId
+      ) {
+        throw new ForbiddenException(
+          'Você não pode acessar funções de outra empresa',
+        );
+      }
+    }
+
+    return funcao;
+  }
+
+  /**
+   * Valida se a ação pertence à empresa do usuário
+   */
+  private async validateAcaoCockpitAccess(acaoId: string, user: RequestUser) {
+    const acao = await this.prisma.acaoCockpit.findUnique({
+      where: { id: acaoId },
+      include: {
+        cockpitPilar: {
+          include: {
+            pilarEmpresa: {
+              include: { empresa: true },
+            },
+          },
+        },
+      },
+    });
+
+    if (!acao) {
+      throw new NotFoundException('Ação não encontrada');
+    }
+
+    if (user.perfil?.codigo !== 'ADMINISTRADOR') {
+      if (acao.cockpitPilar.pilarEmpresa.empresa.id !== user.empresaId) {
+        throw new ForbiddenException(
+          'Você não pode acessar ações de outra empresa',
+        );
+      }
+    }
+
+    return acao;
+  }
+
+  private async validateUsuariosEmpresa(
+    usuarioIds: string[],
+    empresaId: string,
+    user: RequestUser,
+  ) {
+    if (!usuarioIds?.length) return;
+
+    const usuarios = await this.prisma.usuario.findMany({
+      where: { id: { in: usuarioIds } },
+      select: { id: true, empresaId: true },
+    });
+
+    if (usuarios.length !== usuarioIds.length) {
+      throw new NotFoundException('Responsável não encontrado');
+    }
+
+    if (user.perfil?.codigo !== 'ADMINISTRADOR') {
+      const outraEmpresa = usuarios.find((u) => u.empresaId !== empresaId);
+      if (outraEmpresa) {
+        throw new ForbiddenException(
+          'Responsável deve ser da mesma empresa do cockpit',
+        );
+      }
+    }
+  }
+
+  private getStatusCalculado(status: StatusAcao, prazo?: Date | null): string {
+    const agora = new Date();
+    if (prazo && prazo.getTime() < agora.getTime() && status !== StatusAcao.CONCLUIDA) {
+      return 'ATRASADA';
+    }
+
+    switch (status) {
+      case StatusAcao.PENDENTE:
+        return 'A_INICIAR';
+      case StatusAcao.EM_ANDAMENTO:
+        return 'EM_ANDAMENTO';
+      case StatusAcao.CONCLUIDA:
+        return 'CONCLUIDA';
+      case StatusAcao.CANCELADA:
+        return 'CANCELADA';
+      default:
+        return 'A_INICIAR';
+    }
   }
 
   private sanitizeDescricao(value: string): string {
@@ -862,6 +1018,485 @@ export class CockpitPilaresService {
       indicadores: indicadores.length,
       mesesCriados: mesesParaCriar.length,
     };
+  }
+
+  // ==================== CARGOS E FUNÇÕES ====================
+
+  async getCargosByCockpit(cockpitId: string, user: RequestUser) {
+    await this.validateCockpitAccess(cockpitId, user);
+
+    return this.prisma.cargoCockpit.findMany({
+      where: { cockpitPilarId: cockpitId },
+      orderBy: { ordem: 'asc' },
+      include: {
+        responsaveis: {
+          include: {
+            usuario: {
+              select: { id: true, nome: true, email: true },
+            },
+          },
+        },
+        funcoes: {
+          orderBy: { ordem: 'asc' },
+        },
+      },
+    });
+  }
+
+  async createCargo(
+    cockpitId: string,
+    dto: CreateCargoCockpitDto,
+    user: RequestUser,
+  ) {
+    const cockpit = await this.validateCockpitAccess(cockpitId, user);
+
+    if (dto.responsavelIds?.length) {
+      await this.validateUsuariosEmpresa(
+        dto.responsavelIds,
+        cockpit.pilarEmpresa.empresa.id,
+        user,
+      );
+    }
+
+    const maxOrdem = await this.prisma.cargoCockpit.findFirst({
+      where: { cockpitPilarId: cockpitId },
+      orderBy: { ordem: 'desc' },
+      select: { ordem: true },
+    });
+
+    const ordem = dto.ordem ?? (maxOrdem ? maxOrdem.ordem + 1 : 1);
+
+    const cargo = await this.prisma.cargoCockpit.create({
+      data: {
+        cockpitPilarId: cockpitId,
+        cargo: dto.cargo,
+        ordem,
+        createdBy: user.id,
+        updatedBy: user.id,
+      },
+    });
+
+    if (dto.responsavelIds?.length) {
+      await this.prisma.cargoCockpitResponsavel.createMany({
+        data: dto.responsavelIds.map((usuarioId) => ({
+          cargoCockpitId: cargo.id,
+          usuarioId,
+        })),
+      });
+    }
+
+    await this.audit.log({
+      usuarioId: user.id,
+      usuarioNome: user.nome,
+      usuarioEmail: user.email ?? '',
+      entidade: 'CargoCockpit',
+      entidadeId: cargo.id,
+      acao: 'CREATE',
+      dadosDepois: { cargo: dto.cargo, cockpitId },
+    });
+
+    return this.prisma.cargoCockpit.findUnique({
+      where: { id: cargo.id },
+      include: {
+        responsaveis: {
+          include: {
+            usuario: { select: { id: true, nome: true, email: true } },
+          },
+        },
+        funcoes: { orderBy: { ordem: 'asc' } },
+      },
+    });
+  }
+
+  async updateCargo(
+    cargoId: string,
+    dto: UpdateCargoCockpitDto,
+    user: RequestUser,
+  ) {
+    const cargo = await this.validateCargoAccess(cargoId, user);
+
+    if (dto.responsavelIds) {
+      await this.validateUsuariosEmpresa(
+        dto.responsavelIds,
+        cargo.cockpitPilar.pilarEmpresa.empresa.id,
+        user,
+      );
+    }
+
+    await this.prisma.cargoCockpit.update({
+      where: { id: cargoId },
+      data: {
+        cargo: dto.cargo ?? undefined,
+        ordem: dto.ordem ?? undefined,
+        updatedBy: user.id,
+      },
+    });
+
+    if (dto.responsavelIds) {
+      await this.prisma.cargoCockpitResponsavel.deleteMany({
+        where: { cargoCockpitId: cargoId },
+      });
+
+      if (dto.responsavelIds.length) {
+        await this.prisma.cargoCockpitResponsavel.createMany({
+          data: dto.responsavelIds.map((usuarioId) => ({
+            cargoCockpitId: cargoId,
+            usuarioId,
+          })),
+        });
+      }
+    }
+
+    await this.audit.log({
+      usuarioId: user.id,
+      usuarioNome: user.nome,
+      usuarioEmail: user.email ?? '',
+      entidade: 'CargoCockpit',
+      entidadeId: cargoId,
+      acao: 'UPDATE',
+      dadosDepois: dto,
+    });
+
+    return this.prisma.cargoCockpit.findUnique({
+      where: { id: cargoId },
+      include: {
+        responsaveis: {
+          include: {
+            usuario: { select: { id: true, nome: true, email: true } },
+          },
+        },
+        funcoes: { orderBy: { ordem: 'asc' } },
+      },
+    });
+  }
+
+  async deleteCargo(cargoId: string, user: RequestUser) {
+    const cargo = await this.validateCargoAccess(cargoId, user);
+
+    await this.prisma.cargoCockpit.delete({
+      where: { id: cargoId },
+    });
+
+    await this.audit.log({
+      usuarioId: user.id,
+      usuarioNome: user.nome,
+      usuarioEmail: user.email ?? '',
+      entidade: 'CargoCockpit',
+      entidadeId: cargoId,
+      acao: 'DELETE',
+      dadosDepois: { cargo: cargo.cargo },
+    });
+
+    return { message: 'Cargo removido com sucesso' };
+  }
+
+  async createFuncaoCargo(
+    cargoId: string,
+    dto: CreateFuncaoCargoDto,
+    user: RequestUser,
+  ) {
+    await this.validateCargoAccess(cargoId, user);
+
+    const maxOrdem = await this.prisma.funcaoCargo.findFirst({
+      where: { cargoCockpitId: cargoId },
+      orderBy: { ordem: 'desc' },
+      select: { ordem: true },
+    });
+
+    const ordem = dto.ordem ?? (maxOrdem ? maxOrdem.ordem + 1 : 1);
+
+    const funcao = await this.prisma.funcaoCargo.create({
+      data: {
+        cargoCockpitId: cargoId,
+        descricao: this.sanitizeDescricao(dto.descricao),
+        nivelCritico: dto.nivelCritico,
+        autoAvaliacao: dto.autoAvaliacao,
+        avaliacaoLideranca: dto.avaliacaoLideranca,
+        ordem,
+        createdBy: user.id,
+        updatedBy: user.id,
+      },
+    });
+
+    await this.audit.log({
+      usuarioId: user.id,
+      usuarioNome: user.nome,
+      usuarioEmail: user.email ?? '',
+      entidade: 'FuncaoCargo',
+      entidadeId: funcao.id,
+      acao: 'CREATE',
+      dadosDepois: { descricao: dto.descricao, cargoId },
+    });
+
+    return funcao;
+  }
+
+  async updateFuncaoCargo(
+    funcaoId: string,
+    dto: UpdateFuncaoCargoDto,
+    user: RequestUser,
+  ) {
+    await this.validateFuncaoCargoAccess(funcaoId, user);
+
+    const updated = await this.prisma.funcaoCargo.update({
+      where: { id: funcaoId },
+      data: {
+        descricao: dto.descricao
+          ? this.sanitizeDescricao(dto.descricao)
+          : undefined,
+        nivelCritico: dto.nivelCritico,
+        autoAvaliacao: dto.autoAvaliacao,
+        avaliacaoLideranca: dto.avaliacaoLideranca,
+        ordem: dto.ordem,
+        updatedBy: user.id,
+      },
+    });
+
+    await this.audit.log({
+      usuarioId: user.id,
+      usuarioNome: user.nome,
+      usuarioEmail: user.email ?? '',
+      entidade: 'FuncaoCargo',
+      entidadeId: funcaoId,
+      acao: 'UPDATE',
+      dadosDepois: dto,
+    });
+
+    return updated;
+  }
+
+  async deleteFuncaoCargo(funcaoId: string, user: RequestUser) {
+    const funcao = await this.validateFuncaoCargoAccess(funcaoId, user);
+
+    await this.prisma.funcaoCargo.delete({
+      where: { id: funcaoId },
+    });
+
+    await this.audit.log({
+      usuarioId: user.id,
+      usuarioNome: user.nome,
+      usuarioEmail: user.email ?? '',
+      entidade: 'FuncaoCargo',
+      entidadeId: funcaoId,
+      acao: 'DELETE',
+      dadosDepois: { descricao: funcao.descricao },
+    });
+
+    return { message: 'Função removida com sucesso' };
+  }
+
+  // ==================== PLANO DE AÇÃO ESPECÍFICO ====================
+
+  async getAcoesCockpit(cockpitId: string, user: RequestUser) {
+    await this.validateCockpitAccess(cockpitId, user);
+
+    const acoes = await this.prisma.acaoCockpit.findMany({
+      where: { cockpitPilarId: cockpitId },
+      orderBy: { createdAt: 'desc' },
+      include: {
+        responsavel: { select: { id: true, nome: true, email: true } },
+        indicadorCockpit: { select: { id: true, nome: true } },
+        indicadorMensal: { select: { id: true, mes: true, ano: true } },
+      },
+    });
+
+    return acoes.map((acao) => ({
+      ...acao,
+      statusCalculado: this.getStatusCalculado(acao.status, acao.prazo),
+    }));
+  }
+
+  async createAcaoCockpit(
+    cockpitId: string,
+    dto: CreateAcaoCockpitDto,
+    user: RequestUser,
+  ) {
+    const cockpit = await this.validateCockpitAccess(cockpitId, user);
+
+    const indicadorMensal = await this.prisma.indicadorMensal.findUnique({
+      where: { id: dto.indicadorMensalId },
+      include: {
+        indicadorCockpit: {
+          include: {
+            cockpitPilar: true,
+          },
+        },
+      },
+    });
+
+    if (!indicadorMensal) {
+      throw new NotFoundException('Mês do indicador não encontrado');
+    }
+
+    if (indicadorMensal.indicadorCockpit.cockpitPilarId !== cockpitId) {
+      throw new ForbiddenException('Mês do indicador não pertence ao cockpit');
+    }
+
+    if (dto.responsavelId) {
+      await this.validateUsuariosEmpresa(
+        [dto.responsavelId],
+        cockpit.pilarEmpresa.empresa.id,
+        user,
+      );
+    }
+
+    const acao = await this.prisma.acaoCockpit.create({
+      data: {
+        cockpitPilarId: cockpitId,
+        indicadorCockpitId: indicadorMensal.indicadorCockpitId,
+        indicadorMensalId: indicadorMensal.id,
+        causa1: this.sanitizeDescricao(dto.causa1),
+        causa2: this.sanitizeDescricao(dto.causa2),
+        causa3: this.sanitizeDescricao(dto.causa3),
+        causa4: this.sanitizeDescricao(dto.causa4),
+        causa5: this.sanitizeDescricao(dto.causa5),
+        acaoProposta: this.sanitizeDescricao(dto.acaoProposta),
+        responsavelId: dto.responsavelId,
+        status: dto.status ?? StatusAcao.PENDENTE,
+        prazo: dto.prazo ? new Date(dto.prazo) : null,
+        createdBy: user.id,
+        updatedBy: user.id,
+      },
+    });
+
+    await this.audit.log({
+      usuarioId: user.id,
+      usuarioNome: user.nome,
+      usuarioEmail: user.email ?? '',
+      entidade: 'AcaoCockpit',
+      entidadeId: acao.id,
+      acao: 'CREATE',
+      dadosDepois: { indicadorMensalId: dto.indicadorMensalId, cockpitId },
+    });
+
+    const created = await this.prisma.acaoCockpit.findUnique({
+      where: { id: acao.id },
+      include: {
+        responsavel: { select: { id: true, nome: true, email: true } },
+        indicadorCockpit: { select: { id: true, nome: true } },
+        indicadorMensal: { select: { id: true, mes: true, ano: true } },
+      },
+    });
+
+    if (!created) {
+      throw new NotFoundException('Ação não encontrada');
+    }
+
+    return {
+      ...created,
+      statusCalculado: this.getStatusCalculado(created.status, created.prazo),
+    };
+  }
+
+  async updateAcaoCockpit(
+    acaoId: string,
+    dto: UpdateAcaoCockpitDto,
+    user: RequestUser,
+  ) {
+    const acao = await this.validateAcaoCockpitAccess(acaoId, user);
+
+    let indicadorMensalId: string | undefined;
+    let indicadorCockpitId: string | undefined;
+
+    if (dto.indicadorMensalId) {
+      const indicadorMensal = await this.prisma.indicadorMensal.findUnique({
+        where: { id: dto.indicadorMensalId },
+        include: {
+          indicadorCockpit: {
+            include: {
+              cockpitPilar: true,
+            },
+          },
+        },
+      });
+
+      if (!indicadorMensal) {
+        throw new NotFoundException('Mês do indicador não encontrado');
+      }
+
+      if (indicadorMensal.indicadorCockpit.cockpitPilarId !== acao.cockpitPilarId) {
+        throw new ForbiddenException('Mês do indicador não pertence ao cockpit');
+      }
+
+      indicadorMensalId = indicadorMensal.id;
+      indicadorCockpitId = indicadorMensal.indicadorCockpitId;
+    }
+
+    if (dto.responsavelId) {
+      await this.validateUsuariosEmpresa(
+        [dto.responsavelId],
+        acao.cockpitPilar.pilarEmpresa.empresa.id,
+        user,
+      );
+    }
+
+    await this.prisma.acaoCockpit.update({
+      where: { id: acaoId },
+      data: {
+        indicadorMensalId,
+        indicadorCockpitId,
+        causa1: dto.causa1 ? this.sanitizeDescricao(dto.causa1) : undefined,
+        causa2: dto.causa2 ? this.sanitizeDescricao(dto.causa2) : undefined,
+        causa3: dto.causa3 ? this.sanitizeDescricao(dto.causa3) : undefined,
+        causa4: dto.causa4 ? this.sanitizeDescricao(dto.causa4) : undefined,
+        causa5: dto.causa5 ? this.sanitizeDescricao(dto.causa5) : undefined,
+        acaoProposta: dto.acaoProposta
+          ? this.sanitizeDescricao(dto.acaoProposta)
+          : undefined,
+        responsavelId: dto.responsavelId,
+        status: dto.status,
+        prazo: dto.prazo ? new Date(dto.prazo) : undefined,
+        updatedBy: user.id,
+      },
+    });
+
+    await this.audit.log({
+      usuarioId: user.id,
+      usuarioNome: user.nome,
+      usuarioEmail: user.email ?? '',
+      entidade: 'AcaoCockpit',
+      entidadeId: acaoId,
+      acao: 'UPDATE',
+      dadosDepois: dto,
+    });
+
+    const result = await this.prisma.acaoCockpit.findUnique({
+      where: { id: acaoId },
+      include: {
+        responsavel: { select: { id: true, nome: true, email: true } },
+        indicadorCockpit: { select: { id: true, nome: true } },
+        indicadorMensal: { select: { id: true, mes: true, ano: true } },
+      },
+    });
+
+    if (!result) {
+      throw new NotFoundException('Ação não encontrada');
+    }
+
+    return {
+      ...result,
+      statusCalculado: this.getStatusCalculado(result.status, result.prazo),
+    };
+  }
+
+  async deleteAcaoCockpit(acaoId: string, user: RequestUser) {
+    const acao = await this.validateAcaoCockpitAccess(acaoId, user);
+
+    await this.prisma.acaoCockpit.delete({
+      where: { id: acaoId },
+    });
+
+    await this.audit.log({
+      usuarioId: user.id,
+      usuarioNome: user.nome,
+      usuarioEmail: user.email ?? '',
+      entidade: 'AcaoCockpit',
+      entidadeId: acaoId,
+      acao: 'DELETE',
+      dadosDepois: { acaoProposta: acao.acaoProposta },
+    });
+
+    return { message: 'Ação removida com sucesso' };
   }
 
   // ==================== PROCESSOS PRIORITÁRIOS ====================

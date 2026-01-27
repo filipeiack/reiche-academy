@@ -23,6 +23,19 @@ export enum StatusProcesso {
   CONCLUIDO = 'CONCLUIDO',
 }
 
+export enum Criticidade {
+  ALTA = 'ALTA',
+  MEDIA = 'MEDIA',
+  BAIXA = 'BAIXA',
+}
+
+export enum StatusAcao {
+  PENDENTE = 'PENDENTE',
+  EM_ANDAMENTO = 'EM_ANDAMENTO',
+  CONCLUIDA = 'CONCLUIDA',
+  CANCELADA = 'CANCELADA',
+}
+
 // Entidades
 export interface CockpitPilar {
   id: string;
@@ -109,6 +122,79 @@ export interface ProcessoFluxograma {
   updatedBy?: string;
 }
 
+export interface CargoCockpitResponsavel {
+  id: string;
+  cargoCockpitId: string;
+  usuarioId: string;
+  usuario?: {
+    id: string;
+    nome: string;
+    email?: string;
+  };
+}
+
+export interface CargoCockpit {
+  id: string;
+  cockpitPilarId: string;
+  cargo: string;
+  ordem: number;
+  createdAt: string;
+  updatedAt: string;
+  createdBy?: string;
+  updatedBy?: string;
+  responsaveis?: CargoCockpitResponsavel[];
+  funcoes?: FuncaoCargo[];
+}
+
+export interface FuncaoCargo {
+  id: string;
+  cargoCockpitId: string;
+  descricao: string;
+  nivelCritico: Criticidade;
+  autoAvaliacao?: number | null;
+  avaliacaoLideranca?: number | null;
+  ordem: number;
+  createdAt: string;
+  updatedAt: string;
+  createdBy?: string;
+  updatedBy?: string;
+}
+
+export interface AcaoCockpit {
+  id: string;
+  cockpitPilarId: string;
+  indicadorCockpitId?: string | null;
+  indicadorMensalId?: string | null;
+  indicadorCockpit?: {
+    id: string;
+    nome: string;
+  };
+  indicadorMensal?: {
+    id: string;
+    mes: number | null;
+    ano: number;
+  };
+  causa1?: string | null;
+  causa2?: string | null;
+  causa3?: string | null;
+  causa4?: string | null;
+  causa5?: string | null;
+  acaoProposta: string;
+  responsavelId?: string | null;
+  responsavel?: {
+    id: string;
+    nome: string;
+    email?: string;
+  };
+  status: StatusAcao;
+  prazo?: string | null;
+  statusCalculado?: string;
+  createdAt: string;
+  updatedAt: string;
+  createdBy?: string;
+  updatedBy?: string;
+}
+
 // DTOs
 export interface CreateCockpitPilarDto {
   pilarEmpresaId: string; // Obrigatório no backend
@@ -157,6 +243,60 @@ export interface UpdateValoresMensaisDto {
 export interface UpdateProcessoPrioritarioDto {
   statusMapeamento: StatusProcesso | null;
   statusTreinamento: StatusProcesso | null;
+}
+
+export interface CreateCargoCockpitDto {
+  cargo: string;
+  responsavelIds?: string[];
+  ordem?: number;
+}
+
+export interface UpdateCargoCockpitDto {
+  cargo?: string;
+  responsavelIds?: string[];
+  ordem?: number;
+}
+
+export interface CreateFuncaoCargoDto {
+  descricao: string;
+  nivelCritico: Criticidade;
+  autoAvaliacao?: number | null;
+  avaliacaoLideranca?: number | null;
+  ordem?: number;
+}
+
+export interface UpdateFuncaoCargoDto {
+  descricao?: string;
+  nivelCritico?: Criticidade;
+  autoAvaliacao?: number | null;
+  avaliacaoLideranca?: number | null;
+  ordem?: number;
+}
+
+export interface CreateAcaoCockpitDto {
+  indicadorMensalId: string;
+  causa1: string;
+  causa2: string;
+  causa3: string;
+  causa4: string;
+  causa5: string;
+  acaoProposta: string;
+  responsavelId?: string | null;
+  status?: StatusAcao;
+  prazo?: string | null;
+}
+
+export interface UpdateAcaoCockpitDto {
+  indicadorMensalId?: string;
+  causa1?: string;
+  causa2?: string;
+  causa3?: string;
+  causa4?: string;
+  causa5?: string;
+  acaoProposta?: string;
+  responsavelId?: string | null;
+  status?: StatusAcao;
+  prazo?: string | null;
 }
 
 export interface CreateProcessoFluxogramaDto {

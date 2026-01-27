@@ -67,6 +67,20 @@
         Processos
       </button>
     </li>
+    <li class="nav-item" role="presentation">
+      <button class="nav-link" data-testid="tab-cargos-funcoes" [class.active]="activeTab === 'cargos-funcoes'" (click)="setActiveTab('cargos-funcoes')"
+        type="button">
+        <i class="bi bi-people me-1"></i>
+        Cargos e Funções
+      </button>
+    </li>
+    <li class="nav-item" role="presentation">
+      <button class="nav-link" data-testid="tab-plano-acao" [class.active]="activeTab === 'plano-acao'" (click)="setActiveTab('plano-acao')"
+        type="button">
+        <i class="bi bi-clipboard-check me-1"></i>
+        Plano de Ação
+      </button>
+    </li>
   </ul>
 
   <!-- Tab Content -->
@@ -121,6 +135,16 @@
     <!-- Processos -->
     @if (activeTab === 'processos') {
     <app-matriz-processos [cockpitId]="cockpit.id" data-testid="processos-panel"></app-matriz-processos>
+    }
+
+    <!-- Cargos e Funções -->
+    @if (activeTab === 'cargos-funcoes') {
+    <app-matriz-cargos-funcoes [cockpitId]="cockpit.id" data-testid="cargos-funcoes-panel"></app-matriz-cargos-funcoes>
+    }
+
+    <!-- Plano de Ação -->
+    @if (activeTab === 'plano-acao') {
+    <app-plano-acao-especifico [cockpitId]="cockpit.id" data-testid="plano-acao-panel"></app-plano-acao-especifico>
     }
   </div>
 </div>

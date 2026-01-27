@@ -1,0 +1,157 @@
+@if (loading) {
+  <div class="text-center py-4">
+    <div class="spinner-border text-primary" role="status"></div>
+    <p class="mt-2 text-muted">Carregando plano de ação...</p>
+  </div>
+} @else {
+  <div class="card mb-3">
+    <div class="card-body">
+      <h5 class="card-title mb-3">
+        <i class="bi bi-clipboard-check me-2"></i>
+        Plano de Ação Específico
+      </h5>
+
+      <form [formGroup]="form" class="row g-3">
+        <div class="col-md-6">
+          <label class="form-label">Indicador</label>
+          <ng-select
+            formControlName="indicadorId"
+            [items]="indicadores"
+            bindLabel="nome"
+            bindValue="id"
+            placeholder="Selecione um indicador..."
+          ></ng-select>
+        </div>
+        <div class="col-md-6">
+          <label class="form-label">Mês de Análise</label>
+          <ng-select
+            formControlName="indicadorMensalId"
+            [items]="mesesDisponiveis"
+            bindLabel="id"
+            bindValue="id"
+            placeholder="Selecione o mês..."
+          >
+            <ng-template ng-option-tmp let-item="item">
+              {{ getMesLabel(item) }}
+            </ng-template>
+            <ng-template ng-label-tmp let-item="item">
+              {{ getMesLabel(item) }}
+            </ng-template>
+          </ng-select>
+        </div>
+
+        <div class="col-md-12">
+          <label class="form-label">5 Porquês</label>
+          <div class="row g-2">
+            <div class="col-md-6">
+              <input class="form-control" placeholder="1º porquê" formControlName="causa1" />
+            </div>
+            <div class="col-md-6">
+              <input class="form-control" placeholder="2º porquê" formControlName="causa2" />
+            </div>
+            <div class="col-md-6">
+              <input class="form-control" placeholder="3º porquê" formControlName="causa3" />
+            </div>
+            <div class="col-md-6">
+              <input class="form-control" placeholder="4º porquê" formControlName="causa4" />
+            </div>
+            <div class="col-md-12">
+              <input class="form-control" placeholder="5º porquê" formControlName="causa5" />
+            </div>
+          </div>
+        </div>
+
+        <div class="col-md-12">
+          <label class="form-label">Ação Proposta</label>
+          <textarea class="form-control" rows="3" formControlName="acaoProposta"></textarea>
+        </div>
+
+        <div class="col-md-4">
+          <label class="form-label">Responsável</label>
+          <ng-select
+            formControlName="responsavelId"
+            [items]="usuarios"
+            bindLabel="nome"
+            bindValue="id"
+            placeholder="Selecione um responsável..."
+            [addTag]="addUsuarioTag"
+            [clearable]="true"
+          ></ng-select>
+        </div>
+        <div class="col-md-4">
+          <label class="form-label">Status</label>
+          <select class="form-select" formControlName="status">
+            @for (status of statusOptions; track status.value) {
+              <option [value]="status.value">{{ status.label }}</option>
+            }
+          </select>
+        </div>
+        <div class="col-md-4">
+          <label class="form-label">Prazo</label>
+          <input type="date" class="form-control" formControlName="prazo" />
+        </div>
+
+        <div class="col-12 d-flex justify-content-end gap-2">
+          @if (editandoAcaoId) {
+            <button type="button" class="btn btn-outline-secondary" (click)="cancelarEdicao()">
+              Cancelar Edição
+            </button>
+          }
+          <button type="button" class="btn btn-primary" (click)="salvar()" [disabled]="form.invalid || saving">
+            @if (saving) {
+              <span class="spinner-border spinner-border-sm me-2" role="status"></span>
+            }
+            {{ editandoAcaoId ? 'Atualizar Ação' : 'Adicionar Ação' }}
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-body">
+      <h6 class="card-title mb-3">Ações Cadastradas</h6>
+      @if (getAcoesFiltradas().length === 0) {
+        <div class="text-muted">Nenhuma ação encontrada.</div>
+      } @else {
+        <div class="table-responsive">
+          <table class="table table-sm align-middle">
+            <thead>
+              <tr>
+                <th>Indicador</th>
+                <th>Mês</th>
+                <th>Ação</th>
+                <th>Status</th>
+                <th>Responsável</th>
+                <th class="text-end">Ações</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (acao of getAcoesFiltradas(); track acao.id) {
+                <tr>
+                  <td>{{ acao.indicadorCockpit?.nome || '-' }}</td>
+                  <td>{{ getMesLabel(acao.indicadorMensal) }}</td>
+                  <td>{{ acao.acaoProposta }}</td>
+                  <td>
+                    <span class="badge" [class]="getStatusClass(acao)">
+                      {{ getStatusLabel(acao) }}
+                    </span>
+                  </td>
+                  <td>{{ acao.responsavel?.nome || '-' }}</td>
+                  <td class="text-end">
+                    <button class="btn btn-outline-primary btn-sm me-2" (click)="editarAcao(acao)">
+                      <i class="bi bi-pencil"></i>
+                    </button>
+                    <button class="btn btn-outline-danger btn-sm" (click)="deleteAcao(acao)">
+                      <i class="bi bi-trash"></i>
+                    </button>
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      }
+    </div>
+  </div>
+}

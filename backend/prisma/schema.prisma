@@ -125,7 +125,7 @@ model Usuario {
   
   // Cockpit relations
   indicadoresResponsavel IndicadorCockpit[] @relation("ResponsavelMedicaoIndicador")
-  cargosCockpit          CargoCockpit[]     @relation("CargoCockpit")
+  cargosResponsavel      CargoCockpitResponsavel[]
   acoesCockpit           AcaoCockpit[]      @relation("ResponsavelAcaoCockpit")
 
   @@map("usuarios")
@@ -517,6 +517,8 @@ model IndicadorMensal {
   realizado  Float?
   historico  Float?
 
+  acoesCockpit AcaoCockpit[]
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
   createdBy String?
@@ -581,9 +583,6 @@ model CargoCockpit {
 
   cargo String
 
-  usuarioId String?
-  usuario   Usuario? @relation("CargoCockpit", fields: [usuarioId], references: [id], onDelete: SetNull)
-
   ordem Int
 
   createdAt DateTime @default(now())
@@ -592,11 +591,28 @@ model CargoCockpit {
   updatedBy String?
 
   // Relations
+  responsaveis CargoCockpitResponsavel[]
   funcoes FuncaoCargo[]
 
   @@index([cockpitPilarId])
-  @@index([usuarioId])
   @@map("cargos_cockpit")
+}
+
+model CargoCockpitResponsavel {
+  id String @id @default(uuid())
+
+  cargoCockpitId String
+  cargoCockpit   CargoCockpit @relation(fields: [cargoCockpitId], references: [id], onDelete: Cascade)
+
+  usuarioId String
+  usuario   Usuario @relation(fields: [usuarioId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+
+  @@unique([cargoCockpitId, usuarioId])
+  @@index([cargoCockpitId])
+  @@index([usuarioId])
+  @@map("cargos_cockpit_responsaveis")
 }
 
 model FuncaoCargo {
@@ -631,7 +647,8 @@ model AcaoCockpit {
   indicadorCockpitId String?
   indicadorCockpit   IndicadorCockpit? @relation(fields: [indicadorCockpitId], references: [id], onDelete: SetNull)
 
-  analiseMes String?
+  indicadorMensalId String?
+  indicadorMensal   IndicadorMensal? @relation(fields: [indicadorMensalId], references: [id], onDelete: SetNull)
 
   // 5 Porquês
   causa1 String?
@@ -655,6 +672,7 @@ model AcaoCockpit {
 
   @@index([cockpitPilarId])
   @@index([indicadorCockpitId])
+  @@index([indicadorMensalId])
   @@index([responsavelId])
   @@map("acoes_cockpit")
 }

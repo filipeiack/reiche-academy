@@ -12,6 +12,8 @@ import { CockpitPilar } from '@core/interfaces/cockpit-pilares.interface';
 import { MatrizIndicadoresComponent } from '../matriz-indicadores/matriz-indicadores.component';
 import { GraficoIndicadoresComponent } from '../grafico-indicadores/grafico-indicadores.component';
 import { MatrizProcessosComponent } from '../matriz-processos/matriz-processos.component';
+import { MatrizCargosFuncoesComponent } from '../matriz-cargos-funcoes/matriz-cargos-funcoes.component';
+import { PlanoAcaoEspecificoComponent } from '../plano-acao-especifico/plano-acao-especifico.component';
 
 @Component({
   selector: 'app-cockpit-dashboard',
@@ -22,6 +24,8 @@ import { MatrizProcessosComponent } from '../matriz-processos/matriz-processos.c
     MatrizIndicadoresComponent,
     GraficoIndicadoresComponent,
     MatrizProcessosComponent,
+    MatrizCargosFuncoesComponent,
+    PlanoAcaoEspecificoComponent,
   ],
   templateUrl: './cockpit-dashboard.component.html',
   styleUrl: './cockpit-dashboard.component.scss',
@@ -36,7 +40,13 @@ export class CockpitDashboardComponent implements OnInit, OnDestroy {
   cockpit: CockpitPilar | null = null;
   loading = false;
   error: string | null = null;
-  activeTab: 'contexto' | 'indicadores' | 'graficos' | 'processos' = 'indicadores';
+  activeTab:
+    | 'contexto'
+    | 'indicadores'
+    | 'graficos'
+    | 'processos'
+    | 'cargos-funcoes'
+    | 'plano-acao' = 'indicadores';
   
   // Contexto editável
   entradas: string = '';
@@ -134,7 +144,17 @@ export class CockpitDashboardComponent implements OnInit, OnDestroy {
     if (!this.currentCockpitId) return;
     try {
       const savedTab = sessionStorage.getItem(this.getSessionStorageKey());
-      if (savedTab && ['contexto', 'indicadores', 'graficos', 'processos'].includes(savedTab)) {
+      if (
+        savedTab &&
+        [
+          'contexto',
+          'indicadores',
+          'graficos',
+          'processos',
+          'cargos-funcoes',
+          'plano-acao',
+        ].includes(savedTab)
+      ) {
         this.activeTab = savedTab as typeof this.activeTab;
       }
     } catch (error) {
@@ -173,7 +193,15 @@ export class CockpitDashboardComponent implements OnInit, OnDestroy {
     this.router.navigate(['/diagnostico-notas']);
   }
 
-  setActiveTab(tab: 'contexto' | 'indicadores' | 'graficos' | 'processos'): void {
+  setActiveTab(
+    tab:
+      | 'contexto'
+      | 'indicadores'
+      | 'graficos'
+      | 'processos'
+      | 'cargos-funcoes'
+      | 'plano-acao'
+  ): void {
     this.activeTab = tab;
     this.saveActiveTab();
   }

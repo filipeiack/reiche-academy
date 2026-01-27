@@ -14,6 +14,15 @@ import {
   UpdateProcessoPrioritarioDto,
   DadosGraficos,
   IndicadorMensal,
+  CargoCockpit,
+  CreateCargoCockpitDto,
+  UpdateCargoCockpitDto,
+  FuncaoCargo,
+  CreateFuncaoCargoDto,
+  UpdateFuncaoCargoDto,
+  AcaoCockpit,
+  CreateAcaoCockpitDto,
+  UpdateAcaoCockpitDto,
 } from '../interfaces/cockpit-pilares.interface';
 
 @Injectable({
@@ -136,6 +145,100 @@ export class CockpitPilaresService {
     return this.http.patch<ProcessoPrioritario>(
       `${this.API}/processos-prioritarios/${processoId}`,
       dto
+    );
+  }
+
+  // ==================== CARGOS E FUNÇÕES ====================
+
+  getCargosByCockpit(cockpitId: string): Observable<CargoCockpit[]> {
+    return this.http.get<CargoCockpit[]>(
+      `${this.API}/cockpits/${cockpitId}/cargos`
+    );
+  }
+
+  createCargo(
+    cockpitId: string,
+    dto: CreateCargoCockpitDto
+  ): Observable<CargoCockpit> {
+    return this.http.post<CargoCockpit>(
+      `${this.API}/cockpits/${cockpitId}/cargos`,
+      dto
+    );
+  }
+
+  updateCargo(
+    cargoId: string,
+    dto: UpdateCargoCockpitDto
+  ): Observable<CargoCockpit> {
+    return this.http.patch<CargoCockpit>(
+      `${this.API}/cargos/${cargoId}`,
+      dto
+    );
+  }
+
+  deleteCargo(cargoId: string): Observable<{ message: string }> {
+    return this.http.delete<{ message: string }>(
+      `${this.API}/cargos/${cargoId}`
+    );
+  }
+
+  createFuncaoCargo(
+    cargoId: string,
+    dto: CreateFuncaoCargoDto
+  ): Observable<FuncaoCargo> {
+    return this.http.post<FuncaoCargo>(
+      `${this.API}/cargos/${cargoId}/funcoes`,
+      dto
+    );
+  }
+
+  updateFuncaoCargo(
+    funcaoId: string,
+    dto: UpdateFuncaoCargoDto
+  ): Observable<FuncaoCargo> {
+    return this.http.patch<FuncaoCargo>(
+      `${this.API}/funcoes/${funcaoId}`,
+      dto
+    );
+  }
+
+  deleteFuncaoCargo(funcaoId: string): Observable<{ message: string }> {
+    return this.http.delete<{ message: string }>(
+      `${this.API}/funcoes/${funcaoId}`
+    );
+  }
+
+  // ==================== PLANO DE AÇÃO ESPECÍFICO ====================
+
+  getAcoesCockpit(cockpitId: string): Observable<AcaoCockpit[]> {
+    return this.http.get<AcaoCockpit[]>(
+      `${this.API}/cockpits/${cockpitId}/acoes`
+    );
+  }
+
+  createAcaoCockpit(
+    cockpitId: string,
+    dto: CreateAcaoCockpitDto
+  ): Observable<AcaoCockpit> {
+    return this.http.post<AcaoCockpit>(
+      `${this.API}/cockpits/${cockpitId}/acoes`,
+      dto
+    );
+  }
+
+  updateAcaoCockpit(
+    acaoId: string,
+    dto: UpdateAcaoCockpitDto
+  ): Observable<AcaoCockpit> {
+    return this.http.patch<AcaoCockpit>(
+      `${this.API}/acoes-cockpit/${acaoId}`,
+      dto
+    );
+  }
+
+  deleteAcaoCockpit(acaoId: string): Observable<{ message: string }> {
+    return this.http.delete<{ message: string }>(
+      `${this.API}/acoes-cockpit/${acaoId}`
     );
   }
 

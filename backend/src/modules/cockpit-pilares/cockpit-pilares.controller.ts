@@ -28,6 +28,12 @@ import { UpdateProcessoPrioritarioDto } from './dto/update-processo-prioritario.
 import { CreateProcessoFluxogramaDto } from './dto/create-processo-fluxograma.dto';
 import { UpdateProcessoFluxogramaDto } from './dto/update-processo-fluxograma.dto';
 import { ReordenarProcessoFluxogramaDto } from './dto/reordenar-processo-fluxograma.dto';
+import { CreateCargoCockpitDto } from './dto/create-cargo-cockpit.dto';
+import { UpdateCargoCockpitDto } from './dto/update-cargo-cockpit.dto';
+import { CreateFuncaoCargoDto } from './dto/create-funcao-cargo.dto';
+import { UpdateFuncaoCargoDto } from './dto/update-funcao-cargo.dto';
+import { CreateAcaoCockpitDto } from './dto/create-acao-cockpit.dto';
+import { UpdateAcaoCockpitDto } from './dto/update-acao-cockpit.dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../auth/guards/roles.guard';
 import { Roles } from '../auth/decorators/roles.decorator';
@@ -315,6 +321,175 @@ export class CockpitPilaresController {
       dto,
       req.user,
     );
+  }
+
+  // ==================== CARGOS E FUNÇÕES ====================
+
+  @Get('cockpits/:cockpitId/cargos')
+  @Roles('ADMINISTRADOR', 'CONSULTOR', 'GESTOR', 'COLABORADOR', 'LEITURA')
+  @ApiOperation({ summary: 'Listar cargos e funções do cockpit' })
+  @ApiResponse({ status: 200, description: 'Lista de cargos do cockpit' })
+  @ApiResponse({ status: 403, description: 'Acesso negado (multi-tenant)' })
+  @ApiResponse({ status: 404, description: 'Cockpit não encontrado' })
+  getCargosByCockpit(
+    @Param('cockpitId') cockpitId: string,
+    @Request() req: ExpressRequest & { user: any },
+  ) {
+    return this.cockpitPilaresService.getCargosByCockpit(cockpitId, req.user);
+  }
+
+  @Post('cockpits/:cockpitId/cargos')
+  @Roles('ADMINISTRADOR', 'GESTOR')
+  @ApiOperation({ summary: 'Criar cargo no cockpit' })
+  @ApiResponse({ status: 201, description: 'Cargo criado com sucesso' })
+  @ApiResponse({ status: 403, description: 'Acesso negado (multi-tenant)' })
+  @ApiResponse({ status: 404, description: 'Cockpit não encontrado' })
+  createCargo(
+    @Param('cockpitId') cockpitId: string,
+    @Body() dto: CreateCargoCockpitDto,
+    @Request() req: ExpressRequest & { user: any },
+  ) {
+    return this.cockpitPilaresService.createCargo(cockpitId, dto, req.user);
+  }
+
+  @Patch('cargos/:cargoId')
+  @Roles('ADMINISTRADOR', 'GESTOR')
+  @ApiOperation({ summary: 'Atualizar cargo do cockpit' })
+  @ApiResponse({ status: 200, description: 'Cargo atualizado com sucesso' })
+  @ApiResponse({ status: 403, description: 'Acesso negado (multi-tenant)' })
+  @ApiResponse({ status: 404, description: 'Cargo não encontrado' })
+  updateCargo(
+    @Param('cargoId') cargoId: string,
+    @Body() dto: UpdateCargoCockpitDto,
+    @Request() req: ExpressRequest & { user: any },
+  ) {
+    return this.cockpitPilaresService.updateCargo(cargoId, dto, req.user);
+  }
+
+  @Delete('cargos/:cargoId')
+  @Roles('ADMINISTRADOR', 'GESTOR')
+  @ApiOperation({ summary: 'Excluir cargo do cockpit (hard delete)' })
+  @ApiResponse({ status: 200, description: 'Cargo removido com sucesso' })
+  @ApiResponse({ status: 403, description: 'Acesso negado (multi-tenant)' })
+  @ApiResponse({ status: 404, description: 'Cargo não encontrado' })
+  deleteCargo(
+    @Param('cargoId') cargoId: string,
+    @Request() req: ExpressRequest & { user: any },
+  ) {
+    return this.cockpitPilaresService.deleteCargo(cargoId, req.user);
+  }
+
+  @Post('cargos/:cargoId/funcoes')
+  @Roles('ADMINISTRADOR', 'GESTOR')
+  @ApiOperation({ summary: 'Criar função para um cargo' })
+  @ApiResponse({ status: 201, description: 'Função criada com sucesso' })
+  @ApiResponse({ status: 403, description: 'Acesso negado (multi-tenant)' })
+  @ApiResponse({ status: 404, description: 'Cargo não encontrado' })
+  createFuncao(
+    @Param('cargoId') cargoId: string,
+    @Body() dto: CreateFuncaoCargoDto,
+    @Request() req: ExpressRequest & { user: any },
+  ) {
+    return this.cockpitPilaresService.createFuncaoCargo(
+      cargoId,
+      dto,
+      req.user,
+    );
+  }
+
+  @Patch('funcoes/:funcaoId')
+  @Roles('ADMINISTRADOR', 'GESTOR')
+  @ApiOperation({ summary: 'Atualizar função do cargo' })
+  @ApiResponse({ status: 200, description: 'Função atualizada com sucesso' })
+  @ApiResponse({ status: 403, description: 'Acesso negado (multi-tenant)' })
+  @ApiResponse({ status: 404, description: 'Função não encontrada' })
+  updateFuncao(
+    @Param('funcaoId') funcaoId: string,
+    @Body() dto: UpdateFuncaoCargoDto,
+    @Request() req: ExpressRequest & { user: any },
+  ) {
+    return this.cockpitPilaresService.updateFuncaoCargo(
+      funcaoId,
+      dto,
+      req.user,
+    );
+  }
+
+  @Delete('funcoes/:funcaoId')
+  @Roles('ADMINISTRADOR', 'GESTOR')
+  @ApiOperation({ summary: 'Excluir função do cargo (hard delete)' })
+  @ApiResponse({ status: 200, description: 'Função removida com sucesso' })
+  @ApiResponse({ status: 403, description: 'Acesso negado (multi-tenant)' })
+  @ApiResponse({ status: 404, description: 'Função não encontrada' })
+  deleteFuncao(
+    @Param('funcaoId') funcaoId: string,
+    @Request() req: ExpressRequest & { user: any },
+  ) {
+    return this.cockpitPilaresService.deleteFuncaoCargo(funcaoId, req.user);
+  }
+
+  // ==================== PLANO DE AÇÃO ESPECÍFICO ====================
+
+  @Get('cockpits/:cockpitId/acoes')
+  @Roles('ADMINISTRADOR', 'CONSULTOR', 'GESTOR', 'COLABORADOR', 'LEITURA')
+  @ApiOperation({ summary: 'Listar ações do cockpit' })
+  @ApiResponse({ status: 200, description: 'Lista de ações do cockpit' })
+  @ApiResponse({ status: 403, description: 'Acesso negado (multi-tenant)' })
+  @ApiResponse({ status: 404, description: 'Cockpit não encontrado' })
+  getAcoesCockpit(
+    @Param('cockpitId') cockpitId: string,
+    @Request() req: ExpressRequest & { user: any },
+  ) {
+    return this.cockpitPilaresService.getAcoesCockpit(cockpitId, req.user);
+  }
+
+  @Post('cockpits/:cockpitId/acoes')
+  @Roles('ADMINISTRADOR', 'GESTOR')
+  @ApiOperation({ summary: 'Criar ação no cockpit' })
+  @ApiResponse({ status: 201, description: 'Ação criada com sucesso' })
+  @ApiResponse({ status: 403, description: 'Acesso negado (multi-tenant)' })
+  @ApiResponse({ status: 404, description: 'Cockpit ou indicador não encontrado' })
+  createAcaoCockpit(
+    @Param('cockpitId') cockpitId: string,
+    @Body() dto: CreateAcaoCockpitDto,
+    @Request() req: ExpressRequest & { user: any },
+  ) {
+    return this.cockpitPilaresService.createAcaoCockpit(
+      cockpitId,
+      dto,
+      req.user,
+    );
+  }
+
+  @Patch('acoes-cockpit/:acaoId')
+  @Roles('ADMINISTRADOR', 'GESTOR')
+  @ApiOperation({ summary: 'Atualizar ação do cockpit' })
+  @ApiResponse({ status: 200, description: 'Ação atualizada com sucesso' })
+  @ApiResponse({ status: 403, description: 'Acesso negado (multi-tenant)' })
+  @ApiResponse({ status: 404, description: 'Ação não encontrada' })
+  updateAcaoCockpit(
+    @Param('acaoId') acaoId: string,
+    @Body() dto: UpdateAcaoCockpitDto,
+    @Request() req: ExpressRequest & { user: any },
+  ) {
+    return this.cockpitPilaresService.updateAcaoCockpit(
+      acaoId,
+      dto,
+      req.user,
+    );
+  }
+
+  @Delete('acoes-cockpit/:acaoId')
+  @Roles('ADMINISTRADOR', 'GESTOR')
+  @ApiOperation({ summary: 'Excluir ação do cockpit (hard delete)' })
+  @ApiResponse({ status: 200, description: 'Ação removida com sucesso' })
+  @ApiResponse({ status: 403, description: 'Acesso negado (multi-tenant)' })
+  @ApiResponse({ status: 404, description: 'Ação não encontrada' })
+  deleteAcaoCockpit(
+    @Param('acaoId') acaoId: string,
+    @Request() req: ExpressRequest & { user: any },
+  ) {
+    return this.cockpitPilaresService.deleteAcaoCockpit(acaoId, req.user);
   }
 
   // ==================== FLUXOGRAMA DE PROCESSOS ====================
