@@ -48,35 +48,17 @@ export class AuthInterceptor implements HttpInterceptor {
 
     return next.handle(request).pipe(
       catchError((error: HttpErrorResponse) => {
-        // Log de todos os erros HTTP para debug
-        if (error.status >= 400) {
-          console.log('[INTERCEPTOR] Erro HTTP detectado:', {
-            url: request.url,
-            status: error.status,
-            statusText: error.statusText,
-            message: error.error?.message || error.message
-          });
-        }
-        
         // Se receber erro 401 (Unauthorized)
         if (error.status === 401) {
-          console.log('[INTERCEPTOR] Erro 401 detectado:', {
-            url: request.url,
-            status: error.status,
-            message: error.message
-          });
-          
           // ⚠️ NÃO tentar refresh em rotas de autenticação
           const url = request.url.toLowerCase();
           const skipRefreshUrls = ['/auth/login', '/auth/refresh', '/auth/forgot-password', '/auth/reset-password'];
           
           if (skipRefreshUrls.some(skipUrl => url.includes(skipUrl))) {
-            console.log('[INTERCEPTOR] Skipando refresh para URL de auth');
             // Apenas propagar o erro sem tentar refresh
             return throwError(() => error);
           }
           
-          console.log('[INTERCEPTOR] Tentando refresh token...');
           // Para outras rotas, tentar refresh token
           return this.handle401Error(request, next);
         }
@@ -102,7 +84,6 @@ export class AuthInterceptor implements HttpInterceptor {
 
       return this.authService.refreshToken().pipe(
         switchMap((response: any) => {
-          console.log('[INTERCEPTOR] Refresh token bem-sucedido');
           this.isRefreshing = false;
           this.refreshTokenSubject.next(response.accessToken);
 

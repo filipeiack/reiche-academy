@@ -144,8 +144,6 @@ export class DiagnosticoNotasComponent implements OnInit, OnDestroy {
   ];
 
   ngOnInit(): void {
-    console.log('[DIAGNOSTICO] ngOnInit chamado');
-    
     // Primeiro, verificar o perfil do usuário
     this.checkUserPerfil();
     
@@ -154,8 +152,6 @@ export class DiagnosticoNotasComponent implements OnInit, OnDestroy {
     
     // Subscrever às mudanças no contexto de empresa
     this.empresaContextSubscription = this.empresaContextService.selectedEmpresaId$.subscribe(empresaId => {
-      console.log('[DIAGNOSTICO] Contexto de empresa mudou:', { empresaId, selectedEmpresaId: this.selectedEmpresaId, isAdmin: this.isAdmin });
-      
       if (this.isAdmin && empresaId !== this.selectedEmpresaId) {
         // Limpar estado de expansão da empresa anterior
         if (this.selectedEmpresaId) {
@@ -166,10 +162,8 @@ export class DiagnosticoNotasComponent implements OnInit, OnDestroy {
         this.error = ''; // Limpar erro anterior
         
         if (empresaId) {
-          console.log('[DIAGNOSTICO] Carregando diagnóstico para empresa:', empresaId);
           this.loadDiagnostico();
         } else {
-          console.log('[DIAGNOSTICO] Nenhuma empresa selecionada');
           this.pilares = [];
           this.error = 'Selecione uma empresa para visualizar diagnósticos';
         }
@@ -218,11 +212,8 @@ export class DiagnosticoNotasComponent implements OnInit, OnDestroy {
 
   private loadDiagnostico(preserveScroll: boolean = false): void {
     if (!this.selectedEmpresaId) {
-      console.log('[DIAGNOSTICO] loadDiagnostico chamado sem selectedEmpresaId');
       return;
     }
-
-    console.log('[DIAGNOSTICO] loadDiagnostico iniciando para empresa:', this.selectedEmpresaId);
 
     // Salvar posição de scroll se solicitado
     if (preserveScroll) {
@@ -238,7 +229,6 @@ export class DiagnosticoNotasComponent implements OnInit, OnDestroy {
 
     this.diagnosticoService.getDiagnosticoByEmpresa(this.selectedEmpresaId).subscribe({
       next: (data) => {
-        console.log('[DIAGNOSTICO] Dados carregados com sucesso:', data.length, 'pilares');
         this.pilares = data;
         
         // Sincronizar empresa selecionada na navbar com a primeira empresa dos pilares
@@ -285,7 +275,6 @@ export class DiagnosticoNotasComponent implements OnInit, OnDestroy {
         
         // Se for erro de autenticação (401), deixar o interceptor lidar com logout
         if (err?.status === 401) {
-          console.log('[DIAGNOSTICO] Erro 401, deixando interceptor lidar');
           return;
         }
         
@@ -443,7 +432,6 @@ export class DiagnosticoNotasComponent implements OnInit, OnDestroy {
    * Configura o auto-save com debounce configurado
    */
   private setupAutoSave(): void {
-    console.log('🔧 Configurando auto-save subject...');
     this.autoSaveSubscription = this.autoSaveSubject
       .pipe(
         debounceTime(environment.debounceTime), // Aguarda após última alteração
@@ -454,20 +442,15 @@ export class DiagnosticoNotasComponent implements OnInit, OnDestroy {
         )
       )
       .subscribe((item) => {
-        console.log('⏰ Debounce completado, executando save...');
         this.executeSave(item);
       });
-    console.log('✅ Auto-save configurado com sucesso');
   }
 
   /**
    * Chamado quando nota ou criticidade é alterada
    */
   onNotaChange(rotinaEmpresa: RotinaEmpresa, nota: any, criticidade: string | null): void {
-    console.log('🔄 onNotaChange chamado:', { 
-      rotinaEmpresaId: rotinaEmpresa.id, 
-      nota, 
-      notaType: typeof nota,
+    // Atualizar cache local (para preservar valores durante edição)
       criticidade 
     });
     
@@ -491,11 +474,8 @@ export class DiagnosticoNotasComponent implements OnInit, OnDestroy {
     const notaFinal = cached.nota;
     const criticidadeFinal = cached.criticidade;
 
-    console.log('📊 Valores finais (com cache):', { notaFinal, criticidadeFinal, cached });
-
     // Validar campos obrigatórios (silenciosamente - aguarda usuário preencher ambos)
     if (notaFinal === null || notaFinal === undefined || !criticidadeFinal) {
-      console.log('⏸️ Aguardando campos completos');
       return;
     }
 
@@ -511,8 +491,6 @@ export class DiagnosticoNotasComponent implements OnInit, OnDestroy {
       criticidade: criticidadeFinal as 'ALTA' | 'MEDIA' | 'BAIXA',
     };
 
-    console.log('➕ Adicionando à fila de auto-save:', dto);
-
     // Adicionar à fila de auto-save
     this.autoSaveSubject.next({
       rotinaEmpresaId: rotinaEmpresa.id,
@@ -525,12 +503,10 @@ export class DiagnosticoNotasComponent implements OnInit, OnDestroy {
    * Executa o save no backend
    */
   private executeSave(item: AutoSaveQueueItem): void {
-    console.log('💾 Salvando nota:', item);
     this.savingCount++;
 
     this.diagnosticoService.upsertNotaRotina(item.rotinaEmpresaId, item.data).subscribe({
       next: (response) => {
-        console.log('✅ Nota salva com sucesso:', response);
         this.savingCount--;
         // Atualizar timestamp do último salvamento
         this.lastSaveTime = new Date();
@@ -613,7 +589,6 @@ export class DiagnosticoNotasComponent implements OnInit, OnDestroy {
         } else {
           rotina.notas = [nota];
         }
-        console.log('🔄 Dados locais atualizados:', { rotinaEmpresaId, nota });
         break;
       }
     }
@@ -742,8 +717,6 @@ export class DiagnosticoNotasComponent implements OnInit, OnDestroy {
       this.showToast('Não há alterações pendentes', 'info', 2000);
       return;
     }
-
-    console.log('💾 Forçando salvamento de todas as alterações pendentes...');
     
     // Coletar todos os itens do cache
     const itemsToSave: AutoSaveQueueItem[] = [];
