@@ -509,33 +509,21 @@ describe('CockpitPilaresController', () => {
 
       mockService.getDadosGraficos.mockResolvedValue(mockDados);
 
-      const result = await controller.getDadosGraficos(
-        'cockpit-1',
-        2024,
-        undefined,
-        mockRequest
-      );
+      const result = await controller.getDadosGraficos('cockpit-1', '2024', mockRequest);
 
-      expect(mockService.getDadosGraficos).toHaveBeenCalledWith(
-        'cockpit-1',
-        2024,
-        mockUser,
-        undefined
-      );
+      expect(mockService.getDadosGraficos).toHaveBeenCalledWith('cockpit-1', '2024', mockUser);
       expect(result).toBe(mockDados);
     });
 
-    it('should use current year when ano is not provided', async () => {
-      const currentYear = new Date().getFullYear();
+    it('should forward undefined filter when not provided', async () => {
       mockService.getDadosGraficos.mockResolvedValue({ indicadores: [] });
 
-      await controller.getDadosGraficos('cockpit-1', undefined as any, undefined, mockRequest);
+      await controller.getDadosGraficos('cockpit-1', undefined as any, mockRequest);
 
       expect(mockService.getDadosGraficos).toHaveBeenCalledWith(
         'cockpit-1',
-        currentYear,
-        mockUser,
-        undefined
+        undefined,
+        mockUser
       );
     });
 
@@ -545,7 +533,7 @@ describe('CockpitPilaresController', () => {
       );
 
       await expect(
-        controller.getDadosGraficos('invalid-cockpit', 2024, undefined, mockRequest)
+        controller.getDadosGraficos('invalid-cockpit', '2024', mockRequest)
       ).rejects.toThrow(NotFoundException);
     });
   });

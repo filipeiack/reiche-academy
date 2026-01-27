@@ -410,7 +410,7 @@ describe('CockpitPilaresService', () => {
   // =================================================================
 
   describe('[INDICADORES] createIndicador', () => {
-    it('deve criar indicador com 13 meses (12 mensais + 1 anual)', async () => {
+    it('deve criar indicador com 12 meses mensais', async () => {
       const cockpit = {
         id: 'cockpit-1',
         pilarEmpresa: {
@@ -443,9 +443,9 @@ describe('CockpitPilaresService', () => {
         mockGestorEmpresaA,
       );
 
-      // Verificar criação de 13 meses
+      // Verificar criação de 12 meses
       const createManyCall = (prisma.indicadorMensal.createMany as jest.Mock).mock.calls[0][0];
-      expect(createManyCall.data).toHaveLength(13);
+      expect(createManyCall.data).toHaveLength(12);
 
       // Verificar meses 1-12
       expect(createManyCall.data).toEqual(
@@ -453,7 +453,6 @@ describe('CockpitPilaresService', () => {
           expect.objectContaining({ mes: 1, ano: expect.any(Number) }),
           expect.objectContaining({ mes: 6, ano: expect.any(Number) }),
           expect.objectContaining({ mes: 12, ano: expect.any(Number) }),
-          expect.objectContaining({ mes: null, ano: expect.any(Number) }), // Anual
         ]),
       );
     });

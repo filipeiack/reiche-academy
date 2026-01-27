@@ -1,6 +1,8 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { ConflictException, NotFoundException, BadRequestException } from '@nestjs/common';
 import { Request } from 'express';
+import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import { RolesGuard } from '../auth/guards/roles.guard';
 import { PeriodosMentoriaController } from './periodos-mentoria.controller';
 import { PeriodosMentoriaService } from './periodos-mentoria.service';
 import { CreatePeriodoMentoriaDto } from './dto/create-periodo-mentoria.dto';
@@ -87,7 +89,12 @@ describe('PeriodosMentoriaController - Validação Completa', () => {
           useValue: mockService,
         },
       ],
-    }).compile();
+    })
+      .overrideGuard(JwtAuthGuard)
+      .useValue({ canActivate: jest.fn().mockReturnValue(true) })
+      .overrideGuard(RolesGuard)
+      .useValue({ canActivate: jest.fn().mockReturnValue(true) })
+      .compile();
 
     controller = module.get<PeriodosMentoriaController>(PeriodosMentoriaController);
     service = module.get<PeriodosMentoriaService>(PeriodosMentoriaService);

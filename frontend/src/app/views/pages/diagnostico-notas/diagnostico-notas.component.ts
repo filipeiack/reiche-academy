@@ -293,7 +293,6 @@ export class DiagnosticoNotasComponent implements OnInit, OnDestroy {
   }
 
   /**
-  /**
    * Callback quando pilares são modificados
    */
   onPilaresModificados(): void {
@@ -450,16 +449,15 @@ export class DiagnosticoNotasComponent implements OnInit, OnDestroy {
    * Chamado quando nota ou criticidade é alterada
    */
   onNotaChange(rotinaEmpresa: RotinaEmpresa, nota: any, criticidade: string | null): void {
-    // Atualizar cache local (para preservar valores durante edição)
-      criticidade 
-    });
-    
     // Converter nota para número se vier como string
     const notaConverted = nota === '' || nota === null || nota === undefined ? null : Number(nota);
-    
+
     // Buscar ou criar cache para esta rotina
-    const cached = this.notasCache.get(rotinaEmpresa.id) || { nota: this.getNotaAtual(rotinaEmpresa), criticidade: this.getCriticidadeAtual(rotinaEmpresa) };
-    
+    const cached = this.notasCache.get(rotinaEmpresa.id) ?? {
+      nota: this.getNotaAtual(rotinaEmpresa),
+      criticidade: this.getCriticidadeAtual(rotinaEmpresa)
+    };
+
     // Atualizar cache com novo valor
     if (notaConverted !== null && notaConverted !== undefined) {
       cached.nota = notaConverted;
@@ -467,10 +465,10 @@ export class DiagnosticoNotasComponent implements OnInit, OnDestroy {
     if (criticidade !== null && criticidade !== undefined) {
       cached.criticidade = criticidade;
     }
-    
+
     // Salvar no cache
     this.notasCache.set(rotinaEmpresa.id, cached);
-    
+
     const notaFinal = cached.nota;
     const criticidadeFinal = cached.criticidade;
 

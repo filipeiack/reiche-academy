@@ -114,13 +114,7 @@ describe('PilaresEmpresaService - Validação Completa', () => {
             $transaction: jest.fn((ops) => Promise.all(ops)),
           },
         },
-        {
-          provide: RotinasEmpresaService,
-          useValue: {
-            createRotinaEmpresa: jest.fn(),
-            deleteRotinaEmpresa: jest.fn(),
-          },
-        },
+        RotinasEmpresaService,
         {
           provide: AuditService,
           useValue: {
@@ -139,6 +133,7 @@ describe('PilaresEmpresaService - Validação Completa', () => {
 
   afterEach(() => {
     jest.clearAllMocks();
+    jest.restoreAllMocks();
   });
 
   // ============================================================
@@ -691,15 +686,6 @@ describe('PilaresEmpresaService - Validação Completa', () => {
         ordem: 3,
       } as any);
 
-      // Mock do rotinasService.createRotinaEmpresa
-      jest.spyOn(rotinasService, 'createRotinaEmpresa').mockResolvedValue({
-        id: 'new-rotina-id',
-        rotinaTemplateId: templateId,
-        nome: templateMock.nome,
-        descricao: templateMock.descricao,
-        pilarEmpresaId,
-        ordem: 3,
-      } as any);
       jest.spyOn(prisma.usuario, 'findUnique').mockResolvedValue(mockGestorEmpresaA as any);
       jest.spyOn(audit, 'log').mockResolvedValue(undefined);
 

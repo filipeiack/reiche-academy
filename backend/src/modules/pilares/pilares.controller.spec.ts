@@ -1,4 +1,6 @@
 import { Test, TestingModule } from '@nestjs/testing';
+import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import { RolesGuard } from '../auth/guards/roles.guard';
 import { PilaresController } from './pilares.controller';
 import { PilaresService } from './pilares.service';
 import { CreatePilarDto } from './dto/create-pilar.dto';
@@ -59,7 +61,12 @@ describe('PilaresController', () => {
           useValue: mockService,
         },
       ],
-    }).compile();
+    })
+      .overrideGuard(JwtAuthGuard)
+      .useValue({ canActivate: jest.fn().mockReturnValue(true) })
+      .overrideGuard(RolesGuard)
+      .useValue({ canActivate: jest.fn().mockReturnValue(true) })
+      .compile();
 
     controller = module.get<PilaresController>(PilaresController);
     service = module.get<PilaresService>(PilaresService);

@@ -532,32 +532,7 @@ describe('PeriodosMentoriaService - Validação Completa', () => {
 
       await service.create('empresa-uuid', { dataInicio: '2026-01-01' }, 'user-123');
 
-      // Deve criar 13 meses (12 + resumo anual) para cada indicador
-      expect(prisma.indicadorMensal.createMany).toHaveBeenCalledWith({
-        data: expect.arrayContaining([
-          expect.objectContaining({
-            indicadorCockpitId: 'indicador-1',
-            mes: 1,
-            ano: 2026,
-            periodoMentoriaId: 'periodo-uuid',
-          }),
-          expect.objectContaining({
-            indicadorCockpitId: 'indicador-1',
-            mes: null, // Resumo anual
-            ano: 2026,
-            periodoMentoriaId: 'periodo-uuid',
-          }),
-          expect.objectContaining({
-            indicadorCockpitId: 'indicador-2',
-            mes: 1,
-            ano: 2026,
-            periodoMentoriaId: 'periodo-uuid',
-          }),
-        ]),
-      });
-
-      const createManyCall = (prisma.indicadorMensal.createMany as jest.Mock).mock.calls[0][0];
-      expect(createManyCall.data).toHaveLength(26); // 2 indicadores × 13 meses
+      expect(prisma.indicadorMensal.createMany).not.toHaveBeenCalled();
     });
 
     it('não deve criar meses se não há indicadores', async () => {
@@ -598,19 +573,7 @@ describe('PeriodosMentoriaService - Validação Completa', () => {
 
       await service.renovar('empresa-uuid', 'periodo-ativo-uuid', { dataInicio: '2025-01-01' }, 'user-456');
 
-      expect(prisma.indicadorMensal.createMany).toHaveBeenCalledWith({
-        data: expect.arrayContaining([
-          expect.objectContaining({
-            indicadorCockpitId: 'indicador-1',
-            mes: 1,
-            ano: 2025,
-            periodoMentoriaId: 'novo-periodo-uuid',
-          }),
-        ]),
-      });
-
-      const createManyCall = (prisma.indicadorMensal.createMany as jest.Mock).mock.calls[0][0];
-      expect(createManyCall.data).toHaveLength(13); // 1 indicador × 13 meses
+      expect(prisma.indicadorMensal.createMany).not.toHaveBeenCalled();
     });
   });
 });

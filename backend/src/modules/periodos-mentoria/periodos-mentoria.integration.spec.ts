@@ -56,7 +56,6 @@ describe('PeriodosMentoriaService - Integração com Outros Módulos', () => {
     meta: 100,
     realizado: 85,
     historico: 'Antigo valor',
-    periodoMentoriaId: 'periodo-ativo-uuid',
     createdAt: new Date(),
     updatedAt: new Date(),
   };
@@ -375,13 +374,12 @@ describe('PeriodosMentoriaService - Integração com Outros Módulos', () => {
       
       // Cálculo de métricas dentro do período:
       const indicadoresNoPeriodo = indicadores.filter(ind => 
-        ind.periodoMentoriaId === periodo.id &&
         ind.ano >= periodo.dataInicio.getFullYear() &&
         ind.ano <= periodo.dataFim.getFullYear()
       );
 
       expect(indicadoresNoPeriodo).toHaveLength(1);
-      expect(indicadoresNoPeriodo[0].periodoMentoriaId).toBe(periodo.id);
+      expect(indicadoresNoPeriodo[0].ano).toBe(periodo.dataFim.getFullYear());
       
       // Frontend usaria para exibir resumo anual:
       const resumoAnual = {
@@ -451,20 +449,29 @@ describe('PeriodosMentoriaService - Integração com Outros Módulos', () => {
       // Simula histórico com múltiplas renovações
       const periodosMultiplasRenovacoes = [
         {
+          id: 'periodo-2',
+          numero: 2,
+          empresaId: 'empresa-integracao-uuid',
+          dataInicio: new Date('2023-01-01'),
+          dataFim: new Date('2023-12-31'),
+          ativo: false,
+        },
+        {
           id: 'periodo-1',
           numero: 1,
+          empresaId: 'empresa-integracao-uuid',
           dataInicio: new Date('2022-01-01'),
           dataFim: new Date('2022-12-31'),
           ativo: false,
         },
         {
-          id: 'periodo-2',
-          numero: 2,
-          dataInicio: new Date('2023-01-01'),
-          dataFim: new Date('2023-12-31'),
+          id: 'periodo-0',
+          numero: 0,
+          empresaId: 'empresa-integracao-uuid',
+          dataInicio: new Date('2021-01-01'),
+          dataFim: new Date('2021-12-31'),
           ativo: false,
         },
-        mockPeriodoAtivo,
       ];
 
       jest.spyOn(prisma.periodoMentoria, 'findMany').mockResolvedValue(periodosMultiplasRenovacoes as any);
