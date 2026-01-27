@@ -38,7 +38,6 @@ Este diretório contém a documentação completa de todas as regras de negócio
 - **[cockpit-gestao-indicadores.md](./cockpit-gestao-indicadores.md)** — CRUD de indicadores customizados
 - **[cockpit-valores-mensais.md](./cockpit-valores-mensais.md)** — Edição de valores mensais e cálculos de desempenho
 - **[cockpit-processos-prioritarios.md](./cockpit-processos-prioritarios.md)** — Auto-vinculação de rotinas e status de execução
-- **[cockpit-ux-excel-like.md](./cockpit-ux-excel-like.md)** — Comportamentos de interface Excel-like e UX
 - **[cockpit-pilares.md](./cockpit-pilares.md)** — Especificação original do módulo (referência)
 
 ---

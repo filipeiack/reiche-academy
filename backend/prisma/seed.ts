@@ -952,7 +952,7 @@ async function main() {
     },
   });
 
-  console.log('✅ Cockpit de Marketing criado');
+  console.log(`✅ Cockpit de Marketing criado - ID: ${cockpitMarketing.id}`);
 
   // Criar 5 indicadores para o cockpit de Marketing
   const indicadoresData = [
@@ -1170,13 +1170,12 @@ async function main() {
     if (!indicador) continue;
 
     for (const mesData of indicadorData.valores) {
-      // Verificar se já existe registro
+// Verificar se já existe registro
       const existing = await prisma.indicadorMensal.findFirst({
         where: {
           indicadorCockpitId: indicador.id,
           ano: mesData.ano,
           mes: mesData.mes,
-          periodoMentoriaId: periodoMentoriaA.id,
         },
       });
 
@@ -1184,7 +1183,6 @@ async function main() {
         await prisma.indicadorMensal.create({
           data: {
             indicadorCockpitId: indicador.id,
-            periodoMentoriaId: periodoMentoriaA.id,
             ano: mesData.ano,
             mes: mesData.mes,
             meta: mesData.meta,

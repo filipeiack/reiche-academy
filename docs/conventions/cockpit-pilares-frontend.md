@@ -4,7 +4,7 @@
 **Aplicável a:** Implementação do Cockpit de Pilares  
 **Agente:** System Engineer + Business Rules Extractor  
 **Data:** 2026-01-15  
-**Última atualização:** 2026-01-15 (ADR-005: UX Excel-like)  
+**Última atualização:** 2026-01-27 (Mudança para drawer/offcanvas)  
 **Status:** 📋 **NORMATIVO** (padrão obrigatório)
 
 ---
@@ -17,7 +17,7 @@ Este documento extrai padrões **comprovados e funcionais** do componente `diagn
 - Garantir consistência de UX entre módulos
 - Reutilizar soluções testadas (auto-save, feedback, RBAC)
 - Evitar reinvenção de padrões já validados
-- **Implementar UX Excel-like para Indicadores** (ADR-005)
+- **Implementar drawer/offcanvas para adição e edição**
 
 **Escopo:**
 - Estrutura de componentes
@@ -25,31 +25,9 @@ Este documento extrai padrões **comprovados e funcionais** do componente `diagn
 - Auto-save com debounce (1000ms)
 - Feedback visual (saving/saved/errors)
 - RBAC frontend
-- Modais
+- Drawer/offcanvas para adição e edição
 - Gestão de estado (cache local)
 - Controle de accordions/expansão
-- **Grid inline editável (Excel-like)**
-- **Drag & drop para reordenação**
-- **Navegação Tab/Enter**
-
----
-
-## 1.1. Decisão Arquitetural: UX Excel-like (ADR-005)
-
-**Contexto:** Usuários vêm de planilhas Excel e esperam experiência familiar de edição inline.
-
-**Decisão aprovada:**
-- **Desktop:** Grid editável com células inline (estilo Excel)
-- **Mobile:** Cards + Modal fullscreen
-- **Criação:** Botão "+ Nova Linha" adiciona linha em modo edição
-- **Edição:** Ícone ✏️ habilita edição inline
-- **Remoção:** Ícone 🗑️ deleta com confirmação
-- **Reordenação:** Drag & drop (desabilitado durante edição)
-- **Auto-save:** Debounce 1000ms ao perder foco
-- **Descrição:** Modal pequeno (campo longo)
-- **Responsável:** ng-select com search
-
-**Documentação completa:** `/docs/adr/ADR-005-ux-excel-like-indicadores.md`
 
 ---
 
@@ -87,15 +65,15 @@ cockpit-pilares/
 │   └── ...
 ├── matriz-processos/                   # Processos prioritários
 │   └── ...
-└── modals/
-    ├── criar-cockpit-modal/
-    ├── criar-indicador-modal/
+└── offcanvas/
+    ├── criar-cockpit-offcanvas/
+    ├── criar-indicador-offcanvas/
     └── ...
 ```
 
 **Regras:**
 - ✅ Componente principal + sub-componentes por responsabilidade
-- ✅ Modais em pasta separada (`modals/`)
+- ✅ Offcanvas em pasta separada (`offcanvas/`)
 - ✅ Um arquivo por componente (`.ts`, `.html`, `.scss`, `.spec.ts`)
 - ✅ Nomenclatura kebab-case
 
@@ -142,8 +120,8 @@ cockpit-pilares/
     MatrizIndicadoresComponent,
     GraficoIndicadoresComponent,
     MatrizProcessosComponent,
-    CriarCockpitModalComponent,
-    CriarIndicadorModalComponent
+    CriarCockpitOffcanvasComponent,
+    CriarIndicadorOffcanvasComponent
   ],
   templateUrl: './cockpit-dashboard.component.html',
   styleUrl: './cockpit-dashboard.component.scss'
@@ -154,7 +132,7 @@ cockpit-pilares/
 - ✅ `standalone: true` (padrão Angular 18+)
 - ✅ Imports explícitos (CommonModule, FormsModule sempre)
 - ✅ TranslatePipe para i18n
-- ✅ NgBootstrap (modals, dropdowns, alerts)
+- ✅ NgBootstrap (offcanvas, dropdowns, alerts)
 - ✅ NgSelectModule para selects customizados
 
 ---
@@ -192,28 +170,23 @@ export class CockpitDashboardComponent implements OnInit, OnDestroy {
 
 ---
 
-### 3.2. ViewChild para Modais
+### 3.3. Injeção de NgbOffcanvasService
 
-**Padrão extraído:**
+**Padrão aplicado:**
 ```typescript
-// diagnostico-notas.component.ts (linhas 54-57)
-@ViewChild(PilaresEmpresaModalComponent) pilaresModal!: PilaresEmpresaModalComponent;
-@ViewChild(ResponsavelPilarModalComponent) responsavelModal!: ResponsavelPilarModalComponent;
-@ViewChild(NovaRotinaModalComponent) novaRotinaModal!: NovaRotinaModalComponent;
-@ViewChild(RotinasPilarModalComponent) rotinasPilarModal!: RotinasPilarModalComponent;
-```
-
-**Aplicação ao Cockpit:**
-```typescript
-@ViewChild(CriarCockpitModalComponent) criarCockpitModal!: CriarCockpitModalComponent;
-@ViewChild(CriarIndicadorModalComponent) criarIndicadorModal!: CriarIndicadorModalComponent;
-@ViewChild(EditarProcessoModalComponent) editarProcessoModal!: EditarProcessoModalComponent;
+export class CockpitDashboardComponent implements OnInit, OnDestroy {
+  private cockpitService = inject(CockpitPilaresService);
+  private authService = inject(AuthService);
+  private empresaContextService = inject(EmpresaContextService);
+  private offcanvasService = inject(NgbOffcanvasService);
+  private router = inject(Router);
+  private activatedRoute = inject(ActivatedRoute);
 ```
 
 **Regras:**
-- ✅ `@ViewChild` para componentes filhos (modais)
-- ✅ `!` (non-null assertion) - será inicializado no template
-- ✅ Nome descritivo terminando em `Modal`
+- ✅ Injetar `NgbOffcanvasService` para abertura de drawers
+- ✅ Declarar como `private`
+- ✅ Usar para abrir componentes offcanvas
 
 ---
 
@@ -757,7 +730,7 @@ get isReadOnly(): boolean {
 **Aplicação ao Cockpit:**
 ```html
 @if (canEdit) {
-<button class="btn btn-primary" (click)="abrirModalCriarIndicador()">
+<button class="btn btn-primary" (click)="abrirOffcanvasCriarIndicador()">
     <i class="feather icon-plus"></i>
     Adicionar Indicador
 </button>
@@ -784,80 +757,136 @@ get isReadOnly(): boolean {
 
 ---
 
-## 7. Modais (NgBootstrap)
+## 7. Drawer/Offcanvas para Adição e Edição
 
-### 7.1. Abertura de Modal
+### 7.1. Abertura do Offcanvas
 
-**Padrão extraído:**
+**Padrão aplicado:**
 ```typescript
-// diagnostico-notas.component.ts (linhas 275-279)
-abrirModalPilares(): void {
-  if (this.pilaresModal && this.selectedEmpresaId) {
-    this.pilaresModal.open();
-  }
-}
-```
-
-**Aplicação ao Cockpit:**
-```typescript
-abrirModalCriarIndicador(): void {
-  if (this.criarIndicadorModal && this.cockpitId) {
-    this.criarIndicadorModal.open(this.cockpitId);
+// cockpit-dashboard.component.ts
+abrirOffcanvasCriarIndicador(): void {
+  if (this.cockpitId) {
+    const offcanvasRef = this.offcanvasService.open(CriarIndicadorOffcanvasComponent, {
+      position: 'end', // Drawer lateral direito
+      backdrop: true,
+      scroll: false
+    });
+    
+    // Passar dados via componentInstance
+    offcanvasRef.componentInstance.cockpitId = this.cockpitId;
+    
+    // Callback após fechamento
+    offcanvasRef.result.then(
+      (result) => {
+        if (result === 'saved') {
+          this.loadIndicadores(this.cockpitId);
+        }
+      },
+      (reason) => {
+        // Dismissed
+      }
+    );
   }
 }
 ```
 
 **Regras:**
-- ✅ Validar que modal foi inicializado (`@ViewChild`)
-- ✅ Validar contexto necessário (empresaId, cockpitId)
-- ✅ Chamar método `.open()` do modal
-- ✅ Passar dados via parâmetro (se necessário)
+- ✅ Usar `NgbOffcanvasService` (injetado)
+- ✅ Configurar `position: 'end'` para drawer lateral direito
+- ✅ `backdrop: true` para escurecer fundo
+- ✅ `scroll: false` para impedir scroll da página
+- ✅ Passar dados via `componentInstance`
+- ✅ Tratar resultado com `.then()` para callbacks
 
 ---
 
-### 7.2. Callback após Modificação
+### 7.2. Componente do Offcanvas
 
-**Padrão extraído:**
+**Estrutura do componente:**
 ```typescript
-// diagnostico-notas.component.ts (linhas 284-289)
-onPilaresModificados(): void {
-  // Recarregar diagnóstico para refletir mudanças nos pilares
-  if (this.selectedEmpresaId) {
-    this.loadDiagnostico(true); // true = preservar scroll
+// criar-indicador-offcanvas.component.ts
+@Component({
+  selector: 'app-criar-indicador-offcanvas',
+  standalone: true,
+  templateUrl: './criar-indicador-offcanvas.component.html',
+  styleUrl: './criar-indicador-offcanvas.component.scss'
+})
+export class CriarIndicadorOffcanvasComponent implements OnInit {
+  @Input() cockpitId!: string;
+  
+  constructor(
+    private activeOffcanvas: NgbActiveOffcanvas,
+    private cockpitService: CockpitPilaresService
+  ) {}
+
+  salvar(): void {
+    // Lógica de salvar
+    this.activeOffcanvas.close('saved');
+  }
+
+  cancelar(): void {
+    this.activeOffcanvas.dismiss('cancelled');
   }
 }
 ```
 
-**HTML:**
+**Template:**
 ```html
-<!-- diagnostico-notas.component.html -->
-<app-pilares-empresa-modal 
-  #pilaresModal 
-  (pilaresModificados)="onPilaresModificados()">
-</app-pilares-empresa-modal>
-```
+<!-- criar-indicador-offcanvas.component.html -->
+<div class="offcanvas-header">
+  <h5 class="offcanvas-title">Criar Indicador</h5>
+  <button type="button" class="btn-close" (click)="cancelar()"></button>
+</div>
 
-**Aplicação ao Cockpit:**
-```typescript
-onIndicadorCriado(): void {
-  if (this.cockpitId) {
-    this.loadIndicadores(this.cockpitId); // Recarregar lista
-  }
-}
-```
+<div class="offcanvas-body">
+  <!-- Formulário -->
+  <form [formGroup]="form">
+    <!-- Campos -->
+  </form>
+</div>
 
-```html
-<app-criar-indicador-modal 
-  #criarIndicadorModal 
-  (indicadorCriado)="onIndicadorCriado()">
-</app-criar-indicador-modal>
+<div class="offcanvas-footer">
+  <button class="btn btn-secondary" (click)="cancelar()">Cancelar</button>
+  <button class="btn btn-primary" (click)="salvar()">Salvar</button>
+</div>
 ```
 
 **Regras:**
-- ✅ Emitir evento `@Output()` no modal após sucesso
-- ✅ Método callback no componente pai
-- ✅ Recarregar dados afetados
-- ✅ Preservar scroll se aplicável (`loadDiagnostico(true)`)
+- ✅ Injetar `NgbActiveOffcanvas` para controle
+- ✅ Usar `@Input()` para receber dados
+- ✅ Fechar com `.close(result)` em sucesso
+- ✅ Dispensar com `.dismiss(reason)` em cancelamento
+- ✅ Estrutura: header, body, footer (Bootstrap offcanvas)
+- ✅ Formulário reativo com validações
+
+---
+
+### 7.3. Callback após Modificação
+
+**Padrão:**
+```typescript
+// cockpit-dashboard.component.ts
+abrirOffcanvasEditarIndicador(indicador: Indicador): void {
+  const offcanvasRef = this.offcanvasService.open(EditarIndicadorOffcanvasComponent, {
+    position: 'end'
+  });
+  
+  offcanvasRef.componentInstance.indicador = indicador;
+  
+  offcanvasRef.result.then(
+    (result) => {
+      if (result === 'updated') {
+        this.loadIndicadores(this.cockpitId);
+      }
+    }
+  );
+}
+```
+
+**Regras:**
+- ✅ Tratar resultado no `.then()` do offcanvas
+- ✅ Recarregar dados apenas se operação foi bem-sucedida
+- ✅ Usar `result` para identificar tipo de ação (saved, updated, etc.)
 
 ---
 

@@ -92,7 +92,7 @@
                 <div class="d-flex align-items-center gap-2">
                     <button class="btn btn-link p-0 d-flex align-items-center" type="button" (click)="togglePilar(i)">
                         <i [ngClass]="pilarExpandido[i] ? 'feather icon-chevron-up' : 'feather icon-chevron-down'"></i>
-                        <span class="fw-bold text-muted">
+                        <span class="fw-bold text-muted" data-testid="pilar-accordion-nome">
                             {{ ('PILARES.PILAR' | translate).toUpperCase() }}
                             {{ pilar.nome.toUpperCase() }}
                         </span>

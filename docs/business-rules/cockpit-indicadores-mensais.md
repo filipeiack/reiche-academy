@@ -8,14 +8,12 @@ A criação de registros na tabela `IndicadorMensal` deve ser disparada exclusiv
 
 ## Condição
 Aplicar-se quando:
-- Um cockpit é criado a partir do botão "Criar Cockpit" na tela de diagnóstico (`CriarCockpitModalComponent`).
 - Um novo indicador é adicionado na tela de edição de valores mensais (formulário do editor).
 - O usuário dispara o novo botão "Novo ciclo de 12 meses" dentro do editor de valores mensais.
 - Dados exibidos no editor são renderizados (todos os indicadores carregados em `CockpitPilaresService.getCockpitById`).
 
 ## Comportamento Esperado
 ### 1. Criação inicial de meses pelo botão de diagnóstico
-- O botão "Criar Cockpit" (via `CriarCockpitModalComponent`) continua acionando `cockpitService.createCockpit`, mas agora o backend deve garantir que, após o cockpit existir, os indicadores associados recebam exatamente 12 registros mensais.
 - Cada indicador recebe meses sequenciais a partir do mês corrente (`Date_NOW`), preenchendo `mes`/`ano` e deixando `meta`, `realizado` e `historico` em `null`.
 - Não há mais criação automática de mês anual (sem `mes`); o resumo anual passa a ser responsabilidade do frontend (já existente em `gestao-indicadores.component.ts`).
 - O backend não deve criar registros adicionais ao renovar o período de mentoria (`PeriodosMentoriaService.renovar`). A criação de novos meses fica a cargo do botão do editor.

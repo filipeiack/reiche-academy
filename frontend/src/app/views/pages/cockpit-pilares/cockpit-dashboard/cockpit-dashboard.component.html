@@ -129,7 +129,7 @@
 
 <!-- Loading -->
 @if (loading) {
-<div class="text-center py-5">
+<div class="text-center py-5" data-testid="cockpit-loading-indicator">
   <div class="spinner-border text-primary" role="status">
     <span class="visually-hidden">Carregando...</span>
   </div>
@@ -139,7 +139,7 @@
 
 <!-- Error -->
 @if (error && !loading) {
-<div class="alert alert-danger" role="alert">
+<div class="alert alert-danger" role="alert" data-testid="cockpit-error-message">
   <i data-feather="alert-triangle" class="me-2"></i>
   {{ error }}
 </div>

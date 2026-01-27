@@ -431,7 +431,6 @@ addUsuarioTag = (nome: string): Usuario | Promise<Usuario> => {
 
 -  **Regra extraída por engenharia reversa**
 - Validações no backend garantem integridade
-- Frontend implementa UX Excel-like com auto-save
 - Criação de usuário on-the-fly facilita fluxo sem interrupções
 - Ordem mantida automaticamente via drag-and-drop
 ---
