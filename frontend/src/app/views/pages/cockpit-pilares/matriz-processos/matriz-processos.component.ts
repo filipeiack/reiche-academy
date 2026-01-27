@@ -12,12 +12,15 @@ import {
   StatusProcesso,
   UpdateProcessoPrioritarioDto,
 } from '@core/interfaces/cockpit-pilares.interface';
-import { NgbTooltip } from "../../../../../../node_modules/@ng-bootstrap/ng-bootstrap/tooltip/tooltip";
+import { NgbOffcanvas, NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
+import { TranslatePipe } from '@core/pipes/translate.pipe';
+import { OFFCANVAS_SIZE } from '@core/constants/ui.constants';
+import { ProcessoFluxogramaDrawerComponent } from './processo-fluxograma-drawer/processo-fluxograma-drawer.component';
 
 @Component({
   selector: 'app-matriz-processos',
   standalone: true,
-  imports: [CommonModule, FormsModule, NgSelectModule],
+  imports: [CommonModule, FormsModule, NgSelectModule, NgbTooltipModule, TranslatePipe],
   templateUrl: './matriz-processos.component.html',
   styleUrl: './matriz-processos.component.scss',
 })
@@ -26,6 +29,7 @@ export class MatrizProcessosComponent implements OnInit, OnChanges, OnDestroy {
 
   private cockpitService = inject(CockpitPilaresService);
   private saveFeedbackService = inject(SaveFeedbackService);
+  private offcanvasService = inject(NgbOffcanvas);
 
   processos: ProcessoPrioritario[] = [];
 
@@ -210,5 +214,26 @@ export class MatrizProcessosComponent implements OnInit, OnChanges, OnDestroy {
     }
     
     return '';
+  }
+
+  abrirFluxograma(processo: ProcessoPrioritario): void {
+    const offcanvasRef = this.offcanvasService.open(
+      ProcessoFluxogramaDrawerComponent,
+      {
+        position: 'end',
+        backdrop: 'static',
+        panelClass: OFFCANVAS_SIZE.MEDIUM,
+      },
+    );
+
+    const component =
+      offcanvasRef.componentInstance as ProcessoFluxogramaDrawerComponent;
+    component.processo = processo;
+    component.fluxogramaAtualizado.subscribe((totalAcoes: number) => {
+      if (!processo._count) {
+        processo._count = { fluxogramaAcoes: 0 };
+      }
+      processo._count.fluxogramaAcoes = totalAcoes;
+    });
   }
 }

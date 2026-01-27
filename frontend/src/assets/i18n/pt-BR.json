@@ -285,6 +285,31 @@
       "PILAR": "Pilar",
       "ROTINA": "Rotina"
     }
+  },
+  "PROCESSOS_FLUXOGRAMA": {
+    "TITLE": "Fluxograma do Processo",
+    "PROCESS_LABEL": "Processo",
+    "DEFAULT_PROCESS": "Processo",
+    "ICON_HEADER": "Fluxo",
+    "TOOLTIP": "Gerenciar fluxograma do processo",
+    "EMPTY_STATE": "Nenhuma ação cadastrada. Adicione ações para documentar o fluxograma.",
+    "REORDER_TITLE": "Reordenar Ações",
+    "REORDER_HINT": "arraste para reordenar",
+    "NEW_ACTION_LABEL": "Descreva a Ação",
+    "NEW_ACTION_PLACEHOLDER": "Descreva a ação (mínimo 10 caracteres)",
+    "VALIDATION_ERROR": "A descrição deve ter entre 10 e 300 caracteres",
+    "ADD_ACTION": "Adicionar Ação",
+    "ACTION_CREATED": "Ação criada com sucesso!",
+    "ACTION_UPDATED": "Ação atualizada com sucesso!",
+    "ACTION_REMOVED": "Ação removida com sucesso!",
+    "ORDER_UPDATED": "Ordem atualizada com sucesso!",
+    "ERROR_LOAD": "Erro ao carregar fluxograma",
+    "ERROR_CREATE": "Erro ao criar ação",
+    "ERROR_UPDATE": "Erro ao atualizar ação",
+    "ERROR_DELETE": "Erro ao remover ação",
+    "ERROR_REORDER": "Erro ao reordenar ações",
+    "CONFIRM_DELETE_TITLE": "Remover Ação",
+    "CONFIRM_DELETE_TEXT": "Deseja remover esta ação do fluxograma?"
   }
 }
 

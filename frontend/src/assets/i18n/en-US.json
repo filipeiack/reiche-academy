@@ -138,6 +138,31 @@
       "SECURITY_DESC": "Each user accesses only their own company's data. Passwords are encrypted and cannot be recovered."
     }
   },
+  "PROCESSOS_FLUXOGRAMA": {
+    "TITLE": "Process Flow",
+    "PROCESS_LABEL": "Process",
+    "DEFAULT_PROCESS": "Process",
+    "ICON_HEADER": "Flow",
+    "TOOLTIP": "Manage process flow",
+    "EMPTY_STATE": "No actions yet. Add actions to document the flow.",
+    "REORDER_TITLE": "Reorder Actions",
+    "REORDER_HINT": "drag to reorder",
+    "NEW_ACTION_LABEL": "New Action",
+    "NEW_ACTION_PLACEHOLDER": "Describe the action (minimum 10 characters)",
+    "VALIDATION_ERROR": "Description must be between 10 and 300 characters",
+    "ADD_ACTION": "Add Action",
+    "ACTION_CREATED": "Action created successfully!",
+    "ACTION_UPDATED": "Action updated successfully!",
+    "ACTION_REMOVED": "Action removed successfully!",
+    "ORDER_UPDATED": "Order updated successfully!",
+    "ERROR_LOAD": "Error loading flow",
+    "ERROR_CREATE": "Error creating action",
+    "ERROR_UPDATE": "Error updating action",
+    "ERROR_DELETE": "Error removing action",
+    "ERROR_REORDER": "Error reordering actions",
+    "CONFIRM_DELETE_TITLE": "Remove Action",
+    "CONFIRM_DELETE_TEXT": "Do you want to remove this action from the flow?"
+  },
   "COMPANIES": {
     "NAME": "Company Name",
     "CNPJ": "CNPJ",

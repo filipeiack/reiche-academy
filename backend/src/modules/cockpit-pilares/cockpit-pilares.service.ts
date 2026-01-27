@@ -14,6 +14,9 @@ import { CreateIndicadorCockpitDto } from './dto/create-indicador-cockpit.dto';
 import { UpdateIndicadorCockpitDto } from './dto/update-indicador-cockpit.dto';
 import { UpdateValoresMensaisDto } from './dto/update-valores-mensais.dto';
 import { UpdateProcessoPrioritarioDto } from './dto/update-processo-prioritario.dto';
+import { CreateProcessoFluxogramaDto } from './dto/create-processo-fluxograma.dto';
+import { UpdateProcessoFluxogramaDto } from './dto/update-processo-fluxograma.dto';
+import { ReordenarProcessoFluxogramaDto } from './dto/reordenar-processo-fluxograma.dto';
 
 @Injectable()
 export class CockpitPilaresService {
@@ -67,6 +70,49 @@ export class CockpitPilaresService {
     }
 
     return cockpit;
+  }
+
+  /**
+   * Valida se o processo prioritário pertence à empresa do usuário
+   */
+  private async validateProcessoPrioritarioAccess(
+    processoId: string,
+    user: RequestUser,
+  ) {
+    const processo = await this.prisma.processoPrioritario.findUnique({
+      where: { id: processoId },
+      include: {
+        cockpitPilar: {
+          include: {
+            pilarEmpresa: true,
+          },
+        },
+        rotinaEmpresa: true,
+      },
+    });
+
+    if (!processo) {
+      throw new NotFoundException('Processo prioritário não encontrado');
+    }
+
+    if (user.perfil?.codigo !== 'ADMINISTRADOR') {
+      if (processo.cockpitPilar.pilarEmpresa.empresaId !== user.empresaId) {
+        throw new ForbiddenException(
+          'Você não pode acessar processos de outra empresa',
+        );
+      }
+    }
+
+    return processo;
+  }
+
+  private sanitizeDescricao(value: string): string {
+    return value
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#39;');
   }
 
   /**
@@ -839,6 +885,11 @@ export class CockpitPilaresService {
             },
           },
         },
+        _count: {
+          select: {
+            fluxogramaAcoes: true,
+          },
+        },
       },
       orderBy: { ordem: 'asc' },
     });
@@ -852,18 +903,10 @@ export class CockpitPilaresService {
     dto: UpdateProcessoPrioritarioDto,
     user: RequestUser,
   ) {
-    const processo = await this.prisma.processoPrioritario.findUnique({
-      where: { id: processoId },
-      include: {
-        rotinaEmpresa: true,
-      },
-    });
-
-    if (!processo) {
-      throw new NotFoundException('Processo prioritário não encontrado');
-    }
-
-    await this.validateCockpitAccess(processo.cockpitPilarId, user);
+    const processo = await this.validateProcessoPrioritarioAccess(
+      processoId,
+      user,
+    );
 
     const updated = await this.prisma.processoPrioritario.update({
       where: { id: processoId },
@@ -885,10 +928,269 @@ export class CockpitPilaresService {
       entidade: 'ProcessoPrioritario',
       entidadeId: processoId,
       acao: 'UPDATE',
+      dadosAntes: {
+        statusMapeamento: processo.statusMapeamento,
+        statusTreinamento: processo.statusTreinamento,
+      },
       dadosDepois: dto,
     });
 
     return updated;
+  }
+
+  // ==================== FLUXOGRAMA DE PROCESSOS ====================
+
+  async getProcessoFluxograma(processoId: string, user: RequestUser) {
+    await this.validateProcessoPrioritarioAccess(processoId, user);
+
+    return this.prisma.processoFluxograma.findMany({
+      where: {
+        processoPrioritarioId: processoId,
+      },
+      orderBy: { ordem: 'asc' },
+      select: {
+        id: true,
+        processoPrioritarioId: true,
+        descricao: true,
+        ordem: true,
+        createdAt: true,
+        updatedAt: true,
+      },
+    });
+  }
+
+  async createProcessoFluxograma(
+    processoId: string,
+    dto: CreateProcessoFluxogramaDto,
+    user: RequestUser,
+  ) {
+    await this.validateProcessoPrioritarioAccess(processoId, user);
+
+    const descricao = this.sanitizeDescricao(dto.descricao.trim());
+
+    if (descricao.length < 10 || descricao.length > 300) {
+      throw new BadRequestException(
+        'A descrição deve ter entre 10 e 300 caracteres',
+      );
+    }
+
+    const maxOrdem = await this.prisma.processoFluxograma.findFirst({
+      where: {
+        processoPrioritarioId: processoId,
+      },
+      orderBy: { ordem: 'desc' },
+      select: { ordem: true },
+    });
+
+    const ordem = maxOrdem ? maxOrdem.ordem + 1 : 1;
+
+    const created = await this.prisma.processoFluxograma.create({
+      data: {
+        processoPrioritarioId: processoId,
+        descricao,
+        ordem,
+        createdBy: user.id,
+        updatedBy: user.id,
+      },
+      select: {
+        id: true,
+        processoPrioritarioId: true,
+        descricao: true,
+        ordem: true,
+        createdAt: true,
+        updatedAt: true,
+      },
+    });
+
+    await this.audit.log({
+      usuarioId: user.id,
+      usuarioNome: user.nome,
+      usuarioEmail: user.email ?? '',
+      entidade: 'ProcessoFluxograma',
+      entidadeId: created.id,
+      acao: 'CREATE',
+      dadosDepois: created,
+    });
+
+    return created;
+  }
+
+  async updateProcessoFluxograma(
+    processoId: string,
+    acaoId: string,
+    dto: UpdateProcessoFluxogramaDto,
+    user: RequestUser,
+  ) {
+    await this.validateProcessoPrioritarioAccess(processoId, user);
+
+    const acao = await this.prisma.processoFluxograma.findFirst({
+      where: {
+        id: acaoId,
+        processoPrioritarioId: processoId,
+      },
+    });
+
+    if (!acao) {
+      throw new NotFoundException('Ação do fluxograma não encontrada');
+    }
+
+    const descricaoRaw = dto.descricao?.trim();
+
+    if (!descricaoRaw || descricaoRaw.length < 10 || descricaoRaw.length > 300) {
+      throw new BadRequestException(
+        'A descrição deve ter entre 10 e 300 caracteres',
+      );
+    }
+
+    const descricao = this.sanitizeDescricao(descricaoRaw);
+
+    const updated = await this.prisma.processoFluxograma.update({
+      where: { id: acaoId },
+      data: {
+        descricao,
+        updatedBy: user.id,
+      },
+      select: {
+        id: true,
+        processoPrioritarioId: true,
+        descricao: true,
+        ordem: true,
+        createdAt: true,
+        updatedAt: true,
+      },
+    });
+
+    await this.audit.log({
+      usuarioId: user.id,
+      usuarioNome: user.nome,
+      usuarioEmail: user.email ?? '',
+      entidade: 'ProcessoFluxograma',
+      entidadeId: acaoId,
+      acao: 'UPDATE',
+      dadosAntes: {
+        descricao: acao.descricao,
+        ordem: acao.ordem,
+      },
+      dadosDepois: {
+        descricao: updated.descricao,
+        ordem: updated.ordem,
+      },
+    });
+
+    return updated;
+  }
+
+  async deleteProcessoFluxograma(
+    processoId: string,
+    acaoId: string,
+    user: RequestUser,
+  ) {
+    await this.validateProcessoPrioritarioAccess(processoId, user);
+
+    const acao = await this.prisma.processoFluxograma.findFirst({
+      where: {
+        id: acaoId,
+        processoPrioritarioId: processoId,
+      },
+    });
+
+    if (!acao) {
+      throw new NotFoundException('Ação do fluxograma não encontrada');
+    }
+
+    await this.prisma.processoFluxograma.delete({
+      where: { id: acaoId },
+    });
+
+    await this.audit.log({
+      usuarioId: user.id,
+      usuarioNome: user.nome,
+      usuarioEmail: user.email ?? '',
+      entidade: 'ProcessoFluxograma',
+      entidadeId: acaoId,
+      acao: 'DELETE',
+      dadosAntes: {
+        descricao: acao.descricao,
+        ordem: acao.ordem,
+      },
+    });
+
+    return { message: 'Ação removida com sucesso' };
+  }
+
+  async reordenarProcessoFluxograma(
+    processoId: string,
+    dto: ReordenarProcessoFluxogramaDto,
+    user: RequestUser,
+  ) {
+    await this.validateProcessoPrioritarioAccess(processoId, user);
+
+    const acoes = await this.prisma.processoFluxograma.findMany({
+      where: {
+        processoPrioritarioId: processoId,
+      },
+      select: {
+        id: true,
+        ordem: true,
+      },
+      orderBy: { ordem: 'asc' },
+    });
+
+    const idsExistentes = new Set(acoes.map((acao) => acao.id));
+    const idsAtualizacao = new Set(dto.ordens.map((ordem) => ordem.id));
+
+    if (idsExistentes.size !== idsAtualizacao.size) {
+      throw new BadRequestException(
+        'Lista de ações inválida para reordenação',
+      );
+    }
+
+    for (const ordem of dto.ordens) {
+      if (!idsExistentes.has(ordem.id)) {
+        throw new BadRequestException(
+          'Lista de ações inválida para reordenação',
+        );
+      }
+    }
+
+    const ordensOrdenadas = [...dto.ordens]
+      .map((ordem) => ordem.ordem)
+      .sort((a, b) => a - b);
+
+    const ordensValidas = ordensOrdenadas.every(
+      (ordem, index) => ordem === index + 1,
+    );
+
+    if (!ordensValidas) {
+      throw new BadRequestException(
+        'A ordem das ações deve ser sequencial (1, 2, 3, ...)',
+      );
+    }
+
+    await this.prisma.$transaction(
+      dto.ordens.map((ordem) =>
+        this.prisma.processoFluxograma.update({
+          where: { id: ordem.id },
+          data: {
+            ordem: ordem.ordem,
+            updatedBy: user.id,
+          },
+        }),
+      ),
+    );
+
+    await this.audit.log({
+      usuarioId: user.id,
+      usuarioNome: user.nome,
+      usuarioEmail: user.email ?? '',
+      entidade: 'ProcessoFluxograma',
+      entidadeId: processoId,
+      acao: 'UPDATE',
+      dadosAntes: acoes,
+      dadosDepois: dto.ordens,
+    });
+
+    return { message: 'Ordem atualizada com sucesso' };
   }
 
   // ==================== GRÁFICOS ====================

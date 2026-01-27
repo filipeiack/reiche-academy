@@ -537,6 +537,8 @@ model ProcessoPrioritario {
   rotinaEmpresaId String
   rotinaEmpresa   RotinaEmpresa @relation(fields: [rotinaEmpresaId], references: [id], onDelete: Cascade)
 
+  fluxogramaAcoes ProcessoFluxograma[]
+
   statusMapeamento  StatusProcesso?
   statusTreinamento StatusProcesso?
 
@@ -551,6 +553,24 @@ model ProcessoPrioritario {
   @@index([cockpitPilarId])
   @@index([rotinaEmpresaId])
   @@map("processos_prioritarios")
+}
+
+model ProcessoFluxograma {
+  id String @id @default(uuid())
+
+  processoPrioritarioId String
+  processoPrioritario   ProcessoPrioritario @relation(fields: [processoPrioritarioId], references: [id], onDelete: Cascade)
+
+  descricao String
+  ordem     Int
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  createdBy String?
+  updatedBy String?
+
+  @@index([processoPrioritarioId])
+  @@map("processos_fluxograma")
 }
 
 model CargoCockpit {

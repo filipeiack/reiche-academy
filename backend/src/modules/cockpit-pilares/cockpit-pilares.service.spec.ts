@@ -3,6 +3,7 @@ import {
   ForbiddenException,
   NotFoundException,
   ConflictException,
+  BadRequestException,
 } from '@nestjs/common';
 import { CockpitPilaresService } from './cockpit-pilares.service';
 import { PrismaService } from '../../common/prisma/prisma.service';
@@ -84,6 +85,13 @@ describe('CockpitPilaresService', () => {
               findUnique: jest.fn(),
               update: jest.fn(),
             },
+            processoFluxograma: {
+              findMany: jest.fn(),
+              findFirst: jest.fn(),
+              create: jest.fn(),
+              update: jest.fn(),
+              delete: jest.fn(),
+            },
             indicadorCockpit: {
               findFirst: jest.fn(),
               findUnique: jest.fn(),
@@ -101,6 +109,7 @@ describe('CockpitPilaresService', () => {
             usuario: {
               findUnique: jest.fn(),
             },
+            $transaction: jest.fn(),
           },
         },
         {
@@ -975,11 +984,15 @@ describe('CockpitPilaresService', () => {
       const processo = {
         id: 'proc-1',
         cockpitPilarId: 'cockpit-1',
+        cockpitPilar: {
+          pilarEmpresa: {
+            empresaId: 'empresa-a',
+          },
+        },
         rotinaEmpresa: {},
       };
 
       jest.spyOn(prisma.processoPrioritario, 'findUnique').mockResolvedValue(processo as any);
-      jest.spyOn(service as any, 'validateCockpitAccess').mockResolvedValue({});
       jest.spyOn(prisma.processoPrioritario, 'update').mockResolvedValue({
         ...processo,
         statusMapeamento: 'CONCLUIDO',
@@ -1013,11 +1026,15 @@ describe('CockpitPilaresService', () => {
         id: 'proc-1',
         cockpitPilarId: 'cockpit-1',
         statusMapeamento: 'CONCLUIDO',
+        cockpitPilar: {
+          pilarEmpresa: {
+            empresaId: 'empresa-a',
+          },
+        },
         rotinaEmpresa: {},
       };
 
       jest.spyOn(prisma.processoPrioritario, 'findUnique').mockResolvedValue(processo as any);
-      jest.spyOn(service as any, 'validateCockpitAccess').mockResolvedValue({});
       jest.spyOn(prisma.processoPrioritario, 'update').mockResolvedValue({
         ...processo,
         statusMapeamento: null,
@@ -1219,4 +1236,308 @@ describe('CockpitPilaresService', () => {
         );
       });
     });
-  });});
+  });
+
+  // =================================================================
+  // REGRA: Fluxograma de Processos Prioritários
+  // Fonte: /docs/business-rules/processo-fluxograma.md
+  // =================================================================
+
+  describe('[FLUXOGRAMA] processos prioritários', () => {
+    const processoEmpresaA = {
+      id: 'proc-1',
+      cockpitPilar: {
+        pilarEmpresa: {
+          empresaId: 'empresa-a',
+        },
+      },
+      rotinaEmpresa: {
+        id: 'rot-1',
+        nome: 'Rotina A',
+      },
+      statusMapeamento: null,
+      statusTreinamento: null,
+    };
+
+    it('deve bloquear acesso a processo inexistente (NotFound)', async () => {
+      jest
+        .spyOn(prisma.processoPrioritario, 'findUnique')
+        .mockResolvedValue(null);
+
+      await expect(
+        service.getProcessoFluxograma('proc-invalido', mockGestorEmpresaA),
+      ).rejects.toThrow(NotFoundException);
+    });
+
+    it('deve bloquear acesso cross-tenant para GESTOR', async () => {
+      jest
+        .spyOn(prisma.processoPrioritario, 'findUnique')
+        .mockResolvedValue({
+          ...processoEmpresaA,
+          cockpitPilar: { pilarEmpresa: { empresaId: 'empresa-b' } },
+        } as any);
+
+      await expect(
+        service.getProcessoFluxograma('proc-1', mockGestorEmpresaA),
+      ).rejects.toThrow('Você não pode acessar processos de outra empresa');
+    });
+
+    it('deve listar ações ordenadas por ordem', async () => {
+      jest
+        .spyOn(prisma.processoPrioritario, 'findUnique')
+        .mockResolvedValue(processoEmpresaA as any);
+
+      jest.spyOn(prisma.processoFluxograma, 'findMany').mockResolvedValue([
+        { id: 'acao-1', ordem: 1 },
+        { id: 'acao-2', ordem: 2 },
+      ] as any);
+
+      await service.getProcessoFluxograma('proc-1', mockGestorEmpresaA);
+
+      expect(prisma.processoFluxograma.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({ orderBy: { ordem: 'asc' } }),
+      );
+    });
+
+    it('deve rejeitar descrição curta ao criar ação', async () => {
+      jest
+        .spyOn(prisma.processoPrioritario, 'findUnique')
+        .mockResolvedValue(processoEmpresaA as any);
+
+      await expect(
+        service.createProcessoFluxograma(
+          'proc-1',
+          { descricao: 'curta' },
+          mockGestorEmpresaA,
+        ),
+      ).rejects.toThrow(BadRequestException);
+    });
+
+    it('deve criar ação com ordem incremental, sanitizar descrição e auditar', async () => {
+      jest
+        .spyOn(prisma.processoPrioritario, 'findUnique')
+        .mockResolvedValue(processoEmpresaA as any);
+
+      jest
+        .spyOn(prisma.processoFluxograma, 'findFirst')
+        .mockResolvedValue({ ordem: 2 } as any);
+
+      jest
+        .spyOn(prisma.processoFluxograma, 'create')
+        .mockResolvedValue({
+          id: 'acao-3',
+          processoPrioritarioId: 'proc-1',
+          descricao: '&lt;script&gt;alert(1)&lt;/script&gt; ação válida',
+          ordem: 3,
+        } as any);
+
+      await service.createProcessoFluxograma(
+        'proc-1',
+        { descricao: '<script>alert(1)</script> ação válida' },
+        mockGestorEmpresaA,
+      );
+
+      expect(prisma.processoFluxograma.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({
+            ordem: 3,
+            descricao: '&lt;script&gt;alert(1)&lt;/script&gt; ação válida',
+          }),
+        }),
+      );
+
+      expect(audit.log).toHaveBeenCalledWith(
+        expect.objectContaining({
+          entidade: 'ProcessoFluxograma',
+          acao: 'CREATE',
+        }),
+      );
+    });
+
+    it('deve rejeitar atualização se ação não existir', async () => {
+      jest
+        .spyOn(prisma.processoPrioritario, 'findUnique')
+        .mockResolvedValue(processoEmpresaA as any);
+
+      jest
+        .spyOn(prisma.processoFluxograma, 'findFirst')
+        .mockResolvedValue(null);
+
+      await expect(
+        service.updateProcessoFluxograma(
+          'proc-1',
+          'acao-invalida',
+          { descricao: 'Descrição válida para update' },
+          mockGestorEmpresaA,
+        ),
+      ).rejects.toThrow(NotFoundException);
+    });
+
+    it('deve rejeitar atualização com descrição curta', async () => {
+      jest
+        .spyOn(prisma.processoPrioritario, 'findUnique')
+        .mockResolvedValue(processoEmpresaA as any);
+
+      jest
+        .spyOn(prisma.processoFluxograma, 'findFirst')
+        .mockResolvedValue({ id: 'acao-1', descricao: 'Antiga', ordem: 1 } as any);
+
+      await expect(
+        service.updateProcessoFluxograma(
+          'proc-1',
+          'acao-1',
+          { descricao: 'curta' },
+          mockGestorEmpresaA,
+        ),
+      ).rejects.toThrow(BadRequestException);
+    });
+
+    it('deve atualizar ação com sanitização e auditar', async () => {
+      jest
+        .spyOn(prisma.processoPrioritario, 'findUnique')
+        .mockResolvedValue(processoEmpresaA as any);
+
+      jest
+        .spyOn(prisma.processoFluxograma, 'findFirst')
+        .mockResolvedValue({ id: 'acao-1', descricao: 'Antiga', ordem: 1 } as any);
+
+      jest
+        .spyOn(prisma.processoFluxograma, 'update')
+        .mockResolvedValue({
+          id: 'acao-1',
+          descricao: '&lt;b&gt;Nova ação&lt;/b&gt; válida',
+          ordem: 1,
+        } as any);
+
+      await service.updateProcessoFluxograma(
+        'proc-1',
+        'acao-1',
+        { descricao: '<b>Nova ação</b> válida' },
+        mockGestorEmpresaA,
+      );
+
+      expect(prisma.processoFluxograma.update).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({
+            descricao: '&lt;b&gt;Nova ação&lt;/b&gt; válida',
+          }),
+        }),
+      );
+
+      expect(audit.log).toHaveBeenCalledWith(
+        expect.objectContaining({
+          entidade: 'ProcessoFluxograma',
+          acao: 'UPDATE',
+        }),
+      );
+    });
+
+    it('deve remover ação e auditar', async () => {
+      jest
+        .spyOn(prisma.processoPrioritario, 'findUnique')
+        .mockResolvedValue(processoEmpresaA as any);
+
+      jest
+        .spyOn(prisma.processoFluxograma, 'findFirst')
+        .mockResolvedValue({ id: 'acao-1', descricao: 'Ação', ordem: 1 } as any);
+
+      jest
+        .spyOn(prisma.processoFluxograma, 'delete')
+        .mockResolvedValue({ id: 'acao-1' } as any);
+
+      await service.deleteProcessoFluxograma(
+        'proc-1',
+        'acao-1',
+        mockGestorEmpresaA,
+      );
+
+      expect(audit.log).toHaveBeenCalledWith(
+        expect.objectContaining({
+          entidade: 'ProcessoFluxograma',
+          acao: 'DELETE',
+        }),
+      );
+    });
+
+    it('deve rejeitar reordenação com ids incompletos', async () => {
+      jest
+        .spyOn(prisma.processoPrioritario, 'findUnique')
+        .mockResolvedValue(processoEmpresaA as any);
+
+      jest
+        .spyOn(prisma.processoFluxograma, 'findMany')
+        .mockResolvedValue([
+          { id: 'acao-1', ordem: 1 },
+          { id: 'acao-2', ordem: 2 },
+        ] as any);
+
+      await expect(
+        service.reordenarProcessoFluxograma(
+          'proc-1',
+          { ordens: [{ id: 'acao-1', ordem: 1 }] },
+          mockGestorEmpresaA,
+        ),
+      ).rejects.toThrow(BadRequestException);
+    });
+
+    it('deve rejeitar reordenação com ordem não sequencial', async () => {
+      jest
+        .spyOn(prisma.processoPrioritario, 'findUnique')
+        .mockResolvedValue(processoEmpresaA as any);
+
+      jest
+        .spyOn(prisma.processoFluxograma, 'findMany')
+        .mockResolvedValue([
+          { id: 'acao-1', ordem: 1 },
+          { id: 'acao-2', ordem: 2 },
+        ] as any);
+
+      await expect(
+        service.reordenarProcessoFluxograma(
+          'proc-1',
+          {
+            ordens: [
+              { id: 'acao-1', ordem: 1 },
+              { id: 'acao-2', ordem: 3 },
+            ],
+          },
+          mockGestorEmpresaA,
+        ),
+      ).rejects.toThrow(BadRequestException);
+    });
+
+    it('deve reordenar ações e auditar', async () => {
+      jest
+        .spyOn(prisma.processoPrioritario, 'findUnique')
+        .mockResolvedValue(processoEmpresaA as any);
+
+      jest
+        .spyOn(prisma.processoFluxograma, 'findMany')
+        .mockResolvedValue([
+          { id: 'acao-1', ordem: 1 },
+          { id: 'acao-2', ordem: 2 },
+        ] as any);
+
+      jest.spyOn(prisma, '$transaction').mockResolvedValue([] as any);
+
+      await service.reordenarProcessoFluxograma(
+        'proc-1',
+        {
+          ordens: [
+            { id: 'acao-1', ordem: 2 },
+            { id: 'acao-2', ordem: 1 },
+          ],
+        },
+        mockGestorEmpresaA,
+      );
+
+      expect(prisma.$transaction).toHaveBeenCalled();
+      expect(audit.log).toHaveBeenCalledWith(
+        expect.objectContaining({
+          entidade: 'ProcessoFluxograma',
+          acao: 'UPDATE',
+        }),
+      );
+    });
+  });
+});

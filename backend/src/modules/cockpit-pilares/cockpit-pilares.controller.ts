@@ -25,6 +25,9 @@ import { CreateIndicadorCockpitDto } from './dto/create-indicador-cockpit.dto';
 import { UpdateIndicadorCockpitDto } from './dto/update-indicador-cockpit.dto';
 import { UpdateValoresMensaisDto } from './dto/update-valores-mensais.dto';
 import { UpdateProcessoPrioritarioDto } from './dto/update-processo-prioritario.dto';
+import { CreateProcessoFluxogramaDto } from './dto/create-processo-fluxograma.dto';
+import { UpdateProcessoFluxogramaDto } from './dto/update-processo-fluxograma.dto';
+import { ReordenarProcessoFluxogramaDto } from './dto/reordenar-processo-fluxograma.dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../auth/guards/roles.guard';
 import { Roles } from '../auth/decorators/roles.decorator';
@@ -310,6 +313,98 @@ export class CockpitPilaresController {
     return this.cockpitPilaresService.updateProcessoPrioritario(
       processoId,
       dto,
+      req.user,
+    );
+  }
+
+  // ==================== FLUXOGRAMA DE PROCESSOS ====================
+
+  @Get('processos-prioritarios/:processoId/fluxograma')
+  @Roles('ADMINISTRADOR', 'CONSULTOR', 'GESTOR', 'COLABORADOR', 'LEITURA')
+  @ApiOperation({ summary: 'Listar ações do fluxograma de um processo prioritário' })
+  @ApiResponse({ status: 200, description: 'Lista de ações do fluxograma' })
+  @ApiResponse({ status: 403, description: 'Acesso negado (multi-tenant)' })
+  @ApiResponse({ status: 404, description: 'Processo prioritário não encontrado' })
+  getProcessoFluxograma(
+    @Param('processoId') processoId: string,
+    @Request() req: ExpressRequest & { user: any },
+  ) {
+    return this.cockpitPilaresService.getProcessoFluxograma(
+      processoId,
+      req.user,
+    );
+  }
+
+  @Post('processos-prioritarios/:processoId/fluxograma')
+  @Roles('ADMINISTRADOR', 'GESTOR', 'COLABORADOR')
+  @ApiOperation({ summary: 'Criar ação no fluxograma de um processo prioritário' })
+  @ApiResponse({ status: 201, description: 'Ação criada com sucesso' })
+  @ApiResponse({ status: 403, description: 'Acesso negado (multi-tenant)' })
+  @ApiResponse({ status: 404, description: 'Processo prioritário não encontrado' })
+  createProcessoFluxograma(
+    @Param('processoId') processoId: string,
+    @Body() dto: CreateProcessoFluxogramaDto,
+    @Request() req: ExpressRequest & { user: any },
+  ) {
+    return this.cockpitPilaresService.createProcessoFluxograma(
+      processoId,
+      dto,
+      req.user,
+    );
+  }
+
+  @Patch('processos-prioritarios/:processoId/fluxograma/reordenar')
+  @Roles('ADMINISTRADOR', 'GESTOR', 'COLABORADOR')
+  @ApiOperation({ summary: 'Reordenar ações do fluxograma de um processo prioritário' })
+  @ApiResponse({ status: 200, description: 'Ações reordenadas com sucesso' })
+  @ApiResponse({ status: 403, description: 'Acesso negado (multi-tenant)' })
+  @ApiResponse({ status: 404, description: 'Processo prioritário não encontrado' })
+  reordenarProcessoFluxograma(
+    @Param('processoId') processoId: string,
+    @Body() dto: ReordenarProcessoFluxogramaDto,
+    @Request() req: ExpressRequest & { user: any },
+  ) {
+    return this.cockpitPilaresService.reordenarProcessoFluxograma(
+      processoId,
+      dto,
+      req.user,
+    );
+  }
+
+  @Patch('processos-prioritarios/:processoId/fluxograma/:acaoId')
+  @Roles('ADMINISTRADOR', 'GESTOR', 'COLABORADOR')
+  @ApiOperation({ summary: 'Atualizar ação do fluxograma de um processo prioritário' })
+  @ApiResponse({ status: 200, description: 'Ação atualizada com sucesso' })
+  @ApiResponse({ status: 403, description: 'Acesso negado (multi-tenant)' })
+  @ApiResponse({ status: 404, description: 'Ação não encontrada' })
+  updateProcessoFluxograma(
+    @Param('processoId') processoId: string,
+    @Param('acaoId') acaoId: string,
+    @Body() dto: UpdateProcessoFluxogramaDto,
+    @Request() req: ExpressRequest & { user: any },
+  ) {
+    return this.cockpitPilaresService.updateProcessoFluxograma(
+      processoId,
+      acaoId,
+      dto,
+      req.user,
+    );
+  }
+
+  @Delete('processos-prioritarios/:processoId/fluxograma/:acaoId')
+  @Roles('ADMINISTRADOR', 'GESTOR', 'COLABORADOR')
+  @ApiOperation({ summary: 'Remover ação do fluxograma de um processo prioritário' })
+  @ApiResponse({ status: 200, description: 'Ação removida com sucesso' })
+  @ApiResponse({ status: 403, description: 'Acesso negado (multi-tenant)' })
+  @ApiResponse({ status: 404, description: 'Ação não encontrada' })
+  deleteProcessoFluxograma(
+    @Param('processoId') processoId: string,
+    @Param('acaoId') acaoId: string,
+    @Request() req: ExpressRequest & { user: any },
+  ) {
+    return this.cockpitPilaresService.deleteProcessoFluxograma(
+      processoId,
+      acaoId,
       req.user,
     );
   }

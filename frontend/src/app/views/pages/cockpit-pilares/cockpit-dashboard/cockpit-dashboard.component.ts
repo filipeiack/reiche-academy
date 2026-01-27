@@ -54,13 +54,16 @@ export class CockpitDashboardComponent implements OnInit, OnDestroy {
   private autoSaveSubject = new Subject<void>();
   private routeParamsSubscription?: Subscription;
   private feedbackSubscription?: Subscription;
+  private currentCockpitId: string | null = null;
 
   ngOnInit(): void {
     // Subscrever aos parâmetros da rota para detectar mudanças
     this.routeParamsSubscription = this.route.paramMap.subscribe(params => {
       const cockpitId = params.get('id');
       if (cockpitId) {
+        this.currentCockpitId = cockpitId;
         this.loadCockpit(cockpitId);
+        this.restoreActiveTab();
       }
     });
 
@@ -114,6 +117,31 @@ export class CockpitDashboardComponent implements OnInit, OnDestroy {
     });
   }
 
+  private getSessionStorageKey(): string {
+    return `cockpit_tabs_${this.currentCockpitId}`;
+  }
+
+  private saveActiveTab(): void {
+    if (!this.currentCockpitId) return;
+    try {
+      sessionStorage.setItem(this.getSessionStorageKey(), this.activeTab);
+    } catch (error) {
+      console.warn('Erro ao salvar aba ativa do cockpit:', error);
+    }
+  }
+
+  private restoreActiveTab(): void {
+    if (!this.currentCockpitId) return;
+    try {
+      const savedTab = sessionStorage.getItem(this.getSessionStorageKey());
+      if (savedTab && ['contexto', 'indicadores', 'graficos', 'processos'].includes(savedTab)) {
+        this.activeTab = savedTab as typeof this.activeTab;
+      }
+    } catch (error) {
+      console.warn('Erro ao restaurar aba ativa do cockpit:', error);
+    }
+  }
+
   onContextoChange(): void {
     this.autoSaveSubject.next();
   }
@@ -147,5 +175,6 @@ export class CockpitDashboardComponent implements OnInit, OnDestroy {
 
   setActiveTab(tab: 'contexto' | 'indicadores' | 'graficos' | 'processos'): void {
     this.activeTab = tab;
+    this.saveActiveTab();
   }
 }

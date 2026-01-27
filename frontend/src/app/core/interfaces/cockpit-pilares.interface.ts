@@ -93,6 +93,20 @@ export interface ProcessoPrioritario {
   updatedAt: string;
   createdBy?: string;
   updatedBy?: string;
+  _count?: {
+    fluxogramaAcoes: number;
+  };
+}
+
+export interface ProcessoFluxograma {
+  id: string;
+  processoPrioritarioId: string;
+  descricao: string;
+  ordem: number;
+  createdAt: string;
+  updatedAt: string;
+  createdBy?: string;
+  updatedBy?: string;
 }
 
 // DTOs
@@ -143,6 +157,18 @@ export interface UpdateValoresMensaisDto {
 export interface UpdateProcessoPrioritarioDto {
   statusMapeamento: StatusProcesso | null;
   statusTreinamento: StatusProcesso | null;
+}
+
+export interface CreateProcessoFluxogramaDto {
+  descricao: string;
+}
+
+export interface UpdateProcessoFluxogramaDto {
+  descricao?: string;
+}
+
+export interface ReordenarProcessoFluxogramaDto {
+  ordens: { id: string; ordem: number }[];
 }
 
 export interface DadosGraficos {
