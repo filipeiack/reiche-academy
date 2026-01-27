@@ -11,21 +11,21 @@
             </ol>
         </nav>
 
-        @if (selectedEmpresaId) {
-        <div id="savingBar" class="d-flex align-items-center gap-3">
+         @if (selectedEmpresaId) {
+         <div id="savingBar" class="d-flex align-items-center gap-3" data-testid="saving-bar">
 
             @if (savingCount > 0) {
-            <div class="saving-indicator">
-                <div class="spinner-border spinner-border-sm" role="status">
-                    <span class="visually-hidden">{{ 'COMMON.SAVING' | translate }}...</span>
-                </div>
-                <span>{{ 'DIAGNOSTICO.SAVING_CHANGES' | translate }}</span>
-            </div>
+                 <div class="saving-indicator" data-testid="saving-indicator">
+                 <div class="spinner-border spinner-border-sm" role="status">
+                     <span class="visually-hidden">{{ 'COMMON.SAVING' | translate }}...</span>
+                 </div>
+                 <span>{{ 'DIAGNOSTICO.SAVING_CHANGES' | translate }}</span>
+             </div>
             } @else if (lastSaveTime) {
-            <div class="last-save-info">
-                <i class="feather icon-check-circle text-success icon-sm"></i>
-                <span class="text-muted small">Salvo por último às: {{ getLastSaveTimeFormatted() }}</span>
-            </div>
+             <div class="last-save-info" data-testid="last-save-info">
+                 <i class="feather icon-check-circle text-success icon-sm"></i>
+                 <span class="text-muted small">Salvo por último às: {{ getLastSaveTimeFormatted() }}</span>
+             </div>
             }
 
             <!-- Badge indicador de período de avaliação ativo -->
@@ -56,8 +56,16 @@
                             <i class="feather icon-save icon-sm"></i>
                             <span class="">Salvar Tudo</span>
                         </a>
+
+                        <div class="dropdown-divider"></div>
+                        
                         <a ngbDropdownItem class="d-flex align-items-center gap-1"
-                            (click)="abrirModalPilares(); $event.preventDefault()">
+                            (click)="abrirDrawerAdicionarPilar(); $event.preventDefault()">
+                            <i class="feather icon-plus icon-sm"></i>
+                            <span class="">Adicionar Pilar</span>
+                        </a>
+                        <a ngbDropdownItem class="d-flex align-items-center gap-1"
+                            (click)="abrirDrawerEditarPilares(); $event.preventDefault()">
                             <i class="feather icon-edit icon-sm"></i>
                             <span class="">Editar Pilares</span>
                         </a>
@@ -118,35 +126,38 @@
                                 <i class="feather icon-more-horizontal"></i>
                             </a>
                             <div ngbDropdownMenu aria-labelledby="dropdownMenuButton">
-                                <a ngbDropdownItem class="d-flex align-items-center gap-1"
-                                    (click)="abrirModalResponsavel(pilar); $event.preventDefault()">
-                                    <i class="feather icon-user icon-sm"></i>
-                                    <span class="">Definir Responsável</span>
-                                </a>
-                                <!-- <a ngbDropdownItem class="d-flex align-items-center gap-1"
-                                    (click)="abrirModalNovaRotina(pilar); $event.preventDefault()">
-                                    <i class="bi bi-plus-circle icon-sm"></i>
-                                    <span class="">Adicionar Rotina</span>
-                                </a> -->
-                                <a ngbDropdownItem class="d-flex align-items-center gap-1"
-                                    (click)="abrirModalEditarRotinas(pilar); $event.preventDefault()">
-                                    <i class="feather icon-edit icon-sm"></i>
-                                    <span class="">Editar Rotinas</span>
-                                </a>
+                                 <a ngbDropdownItem class="d-flex align-items-center gap-1" data-testid="btn-definir-responsavel"
+                                     (click)="abrirModalResponsavel(pilar); $event.preventDefault()">
+                                     <i class="feather icon-user icon-sm"></i>
+                                     <span class="">Definir Responsável</span>
+                                 </a>
+
+                                 <div class="dropdown-divider"></div>
+
+                                 <a ngbDropdownItem class="d-flex align-items-center gap-1" data-testid="btn-adicionar-rotina"
+                                     (click)="abrirDrawerAdicionarRotina(pilar); $event.preventDefault()">
+                                     <i class="feather icon-plus icon-sm"></i>
+                                     <span class="">Adicionar Rotina</span>
+                                 </a>
+                                 <a ngbDropdownItem class="d-flex align-items-center gap-1" data-testid="btn-editar-rotinas"
+                                     (click)="abrirDrawerEditarRotinas(pilar); $event.preventDefault()">
+                                     <i class="feather icon-edit icon-sm"></i>
+                                     <span class="">Editar Rotinas</span>
+                                 </a>
 
                                 <div class="dropdown-divider"></div>
 
                                 <!-- Botão Cockpit -->
-                                <a ngbDropdownItem class="d-flex align-items-center gap-1"
-                                    (click)="navegarParaCockpit(pilar); $event.preventDefault()">
-                                    @if (pilar.cockpit) {
-                                    <i class="feather icon-target icon-sm text-success"></i>
-                                    <span class="">Abrir Cockpit</span>
-                                    } @else {
-                                    <i class="bi bi-plus-circle icon-sm text-primary"></i>
-                                    <span class="">Criar Cockpit</span>
-                                    }
-                                </a>
+                                 <a ngbDropdownItem class="d-flex align-items-center gap-1" data-testid="btn-navegar-cockpit"
+                                     (click)="navegarParaCockpit(pilar); $event.preventDefault()">
+                                     @if (pilar.cockpit) {
+                                     <i class="feather icon-target icon-sm text-success"></i>
+                                     <span class="">Abrir Cockpit</span>
+                                     } @else {
+                                     <i class="feather icon-plus icon-sm text-warning"></i>
+                                     <span class="">Criar Cockpit</span>
+                                     }
+                                 </a>
 
                             </div>
                         </div>
@@ -191,14 +202,13 @@
                                     <label [for]="'criticidade-' + rotina.id" class="form-label-xs">
                                         {{ 'DIAGNOSTICO.CRITICIDADE' | translate }} <span class="text-danger">*</span>
                                     </label>
-                                    <select [id]="'criticidade-' + rotina.id" class="form-control" 
-                                        [value]="getCriticidadeAtual(rotina)"
-                                        (change)="onNotaChange(rotina, getNotaAtual(rotina), $any($event.target).value)"
+                                    <ng-select [id]="'criticidade-' + rotina.id" [items]="criticidadeOptions"
+                                        bindLabel="label" bindValue="value" [ngModel]="getCriticidadeAtual(rotina)"
+                                        (ngModelChange)="onNotaChange(rotina, getNotaAtual(rotina), $event)"
+                                        placeholder="{{ 'DIAGNOSTICO.SELECT_CRITICIDADE' | translate }}"
+                                        [clearable]="false"
                                         [ngClass]="getCriticidadeClass(getCriticidadeAtual(rotina))">
-                                        <option *ngFor="let option of criticidadeOptions" [value]="option.value">
-                                            {{ option.label }}
-                                        </option>
-                                    </select>
+                                    </ng-select>
                                 </div>
 
                                 <!-- Campo Nota -->
@@ -273,23 +283,6 @@
     <span>{{ 'DIAGNOSTICO.SELECT_EMPRESA_PLACEHOLDER' | translate }}</span>
 </div>
 }
-
-<!-- Modal para editar pilares -->
-<app-pilares-empresa-modal [empresaId]="selectedEmpresaId || ''" [isPerfilCliente]="isReadOnlyPerfil"
-    (pilaresModificados)="onPilaresModificados()">
-</app-pilares-empresa-modal>
-
-<!-- Modal para definir responsável -->
-<app-responsavel-pilar-modal [empresaId]="selectedEmpresaId || ''" (responsavelAtualizado)="onResponsavelAtualizado()">
-</app-responsavel-pilar-modal>
-
-<!-- Modal para criar nova rotina -->
-<app-nova-rotina-modal [empresaId]="selectedEmpresaId || ''" (rotinaCriada)="onRotinaCriada()">
-</app-nova-rotina-modal>
-
-<!-- Modal para editar rotinas do pilar -->
-<app-rotinas-pilar-modal (rotinasModificadas)="onRotinasModificadas()">
-</app-rotinas-pilar-modal>
 
 <!-- Modal para iniciar período de avaliação -->
 @if (showIniciarPeriodoModal) {

@@ -7,6 +7,7 @@ import { debounceTime, distinctUntilChanged } from 'rxjs/operators';
 import { environment } from '@environments/environment';
 import { CockpitPilaresService } from '@core/services/cockpit-pilares.service';
 import { SaveFeedbackService, SaveFeedback } from '@core/services/save-feedback.service';
+import { EmpresaContextService } from '@core/services/empresa-context.service';
 import { CockpitPilar } from '@core/interfaces/cockpit-pilares.interface';
 import { MatrizIndicadoresComponent } from '../matriz-indicadores/matriz-indicadores.component';
 import { GraficoIndicadoresComponent } from '../grafico-indicadores/grafico-indicadores.component';
@@ -28,6 +29,7 @@ import { MatrizProcessosComponent } from '../matriz-processos/matriz-processos.c
 export class CockpitDashboardComponent implements OnInit, OnDestroy {
   private cockpitService = inject(CockpitPilaresService);
   private saveFeedbackService = inject(SaveFeedbackService);
+  private empresaContextService = inject(EmpresaContextService);
   private route = inject(ActivatedRoute);
   private router = inject(Router);
 
@@ -96,6 +98,12 @@ export class CockpitDashboardComponent implements OnInit, OnDestroy {
         this.entradas = cockpit.entradas || '';
         this.saidas = cockpit.saidas || '';
         this.missao = cockpit.missao || '';
+        
+        // Sincronizar empresa selecionada na navbar com a empresa do cockpit
+        if (cockpit.pilarEmpresa?.empresaId) {
+          this.empresaContextService.syncEmpresaFromResource(cockpit.pilarEmpresa.empresaId);
+        }
+        
         this.loading = false;
       },
       error: (err: unknown) => {

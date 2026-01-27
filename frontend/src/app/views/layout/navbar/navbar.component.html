@@ -31,16 +31,16 @@
           {{ getEmpresaNomeUsuario() }}
         </span>
       </div>
+      }
 
       <div class="d-flex flex-column gap-1 justify-content-center">
-          @if (getEmpresaCnpj()) {
-          <span class="text-muted fs-12px">{{ getEmpresaCnpj() | cnpj }}</span>
-          }
-          @if (getEmpresaLocalizacao()) {
-          <span class="text-muted fs-12px">{{ getEmpresaLocalizacao() }}</span>
-          }
-        </div>
-      }
+        @if (getEmpresaCnpj()) {
+        <span class="text-muted fs-12px">{{ getEmpresaCnpj() | cnpj }}</span>
+        }
+        @if (getEmpresaLocalizacao()) {
+        <span class="text-muted fs-12px">{{ getEmpresaLocalizacao() }}</span>
+        }
+      </div>
     </div>
 
     <ul class="navbar-nav">

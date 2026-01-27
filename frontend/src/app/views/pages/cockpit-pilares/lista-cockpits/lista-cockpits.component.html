@@ -22,14 +22,14 @@
 
   <div class="row">
     <!-- Loading -->
-    @if (loading) {
-    <div class="text-center py-5">
-      <div class="spinner-border text-primary" role="status">
-        <span class="visually-hidden">Carregando...</span>
-      </div>
-      <p class="mt-3 text-muted">Carregando cockpits...</p>
-    </div>
-    }
+     @if (loading) {
+     <div class="text-center py-5" data-testid="loading-indicator">
+       <div class="spinner-border text-primary" role="status">
+         <span class="visually-hidden">Carregando...</span>
+       </div>
+       <p class="mt-3 text-muted">Carregando cockpits...</p>
+     </div>
+     }
 
     <!-- Error -->
     @if (error && !loading) {
@@ -41,12 +41,12 @@
 
     <!-- Cockpits Grid -->
     @if (!loading && !error) {
-    @if (cockpits.length === 0) {
-    <div class="alert alert-info" role="alert">
-      <i class="bi bi-info-circle me-2"></i>
-      Nenhum cockpit criado ainda. Vá para o dashboard da empresa e crie um cockpit para começar.
-    </div>
-    } @else {
+     @if (cockpits.length === 0) {
+     <div class="alert alert-info" role="alert" data-testid="no-cockpits-message">
+       <i class="bi bi-info-circle me-2"></i>
+       Nenhum cockpit criado ainda. Vá para o dashboard da empresa e crie um cockpit para começar.
+     </div>
+     } @else {
     <div class="row g-4">
       @for (cockpit of cockpits; track cockpit.id) {
       <div class="col-12 col-md-6 col-lg-4">
@@ -67,23 +67,23 @@
               <div class="col-6">
                 <div class="small">
                   <i class="bi bi-bar-chart me-1 text-success"></i>
-                  <strong>{{ cockpit._count?.indicadores || 0 }}</strong>
-                  <span class="text-muted ms-1">Indicadores</span>
-                </div>
+               <strong data-testid="cockpit-indicadores-count">{{ cockpit._count?.indicadores || 0 }}</strong>
+                   <span class="text-muted ms-1">Indicadores</span>
+                 </div>
               </div>
               <div class="col-6">
                 <div class="small">
                   <i class="bi bi-list-check me-1 text-info"></i>
-                  <strong>{{ cockpit._count?.processosPrioritarios || 0 }}</strong>
-                  <span class="text-muted ms-1">Processos</span>
-                </div>
+               <strong data-testid="cockpit-processos-count">{{ cockpit._count?.processosPrioritarios || 0 }}</strong>
+                   <span class="text-muted ms-1">Processos</span>
+                 </div>
               </div>
             </div>
 
-            <button class="btn btn-primary w-100" (click)="abrirDashboard(cockpit)">
-              <i class="bi bi-box-arrow-in-right me-1"></i>
-              Abrir Dashboard
-            </button>
+             <button class="btn btn-primary w-100" data-testid="btn-abrir-dashboard" (click)="abrirDashboard(cockpit)">
+               <i class="bi bi-box-arrow-in-right me-1"></i>
+               Abrir Dashboard
+             </button>
           </div>
 
           <div class="card-footer bg-light text-muted small">

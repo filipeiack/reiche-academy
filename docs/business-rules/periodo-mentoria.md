@@ -451,80 +451,26 @@ await this.auditService.log({
 
 ### R-MENT-006: Criação Automática de Meses para Indicadores
 
-**Descrição:** Ao criar ou renovar período de mentoria, sistema cria automaticamente 13 meses (jan-dez + resumo anual) para todos os indicadores existentes da empresa.
+**🔄 STATUS:** **TRANSFERIDO** - Esta funcionalidade foi movida para o módulo Cockpit
 
-**Implementação:**
-- **Método:** `PeriodosMentoriaService.create()` e `renovar()`
-- **Trigger:** Após criação do `PeriodoMentoria`
+**Descrição Original:** Ao criar ou renovar período de mentoria, sistema criaria automaticamente 13 meses (jan-dez + resumo anual) para todos os indicadores existentes da empresa.
 
-**Comportamento:**
+**Implementação Atual:**
+- **📍 Localização:** `CockpitPilaresService.createIndicador()` e `criarNovoCicloMeses()`
+- **🔄 Responsabilidade:** Módulo Cockpit agora controla criação de meses
+- **⚙️ Trigger:** Ao criar indicador ou clicar em "Novo ciclo de 12 meses"
 
-1. **Buscar indicadores ativos da empresa:**
-```typescript
-const indicadoresExistentes = await this.prisma.indicadorCockpit.findMany({
-  where: {
-    cockpitPilar: {
-      pilarEmpresa: {
-        empresaId,
-      },
-    },
-    ativo: true,
-  },
-});
-```
+**Motivo da Transferência:**
+- Maior flexibilidade para o usuário controlar quando criar novos ciclos
+- Elimina criação automática desnecessária
+- Alinhamento com fluxo de trabalho real das empresas
 
-2. **Criar 13 meses por indicador:**
-```typescript
-const anoInicio = dataInicio.getUTCFullYear();
-const mesesParaCriar = [];
+**Referência:**
+- ✅ **Novo Sistema:** [cockpit-indicadores-mensais.md](./cockpit-indicadores-mensais.md)
+- ✅ **Handoff:** `docs/handoffs/cockpit-indicadores-mensais/dev-v1.md`
+- ❌ **Removido:** `PeriodosMentoriaService.create()` e `renovar()`
 
-for (const indicador of indicadoresExistentes) {
-  // 12 meses (janeiro a dezembro)
-  for (let mes = 1; mes <= 12; mes++) {
-    mesesParaCriar.push({
-      indicadorCockpitId: indicador.id,
-      mes,
-      ano: anoInicio,
-      periodoMentoriaId: periodo.id,
-      createdBy: user.id,
-      updatedBy: user.id,
-    });
-  }
-  
-  // Resumo anual (mes = null)
-  mesesParaCriar.push({
-    indicadorCockpitId: indicador.id,
-    mes: null,
-    ano: anoInicio,
-    periodoMentoriaId: periodo.id,
-    createdBy: user.id,
-    updatedBy: user.id,
-  });
-}
-```
-
-3. **Inserir em lote:**
-```typescript
-if (mesesParaCriar.length > 0) {
-  await this.prisma.indicadorMensal.createMany({
-    data: mesesParaCriar,
-  });
-}
-```
-
-**Casos:**
-- ✅ Empresa com 5 indicadores → cria 65 meses (5 × 13)
-- ✅ Empresa sem indicadores → não cria nada (skip)
-- ✅ Renovação → cria meses para novo período com ano do novo período
-
-**Justificativa:**
-- Usuário não precisa esperar criação manual de meses
-- Tela de edição de valores mensais sempre exibe estrutura completa
-- Evita inconsistências (meses faltando)
-
-**Perfis autorizados:** ADMINISTRADOR (implícito, pois só ADMINISTRADOR cria períodos)
-
-**Arquivo:** `backend/src/modules/periodos-mentoria/periodos-mentoria.service.ts` (métodos `create` e `renovar`)
+> ⚠️ **IMPORTANTE:** Esta regra está documentada aqui para histórico, mas a implementação real foi transferida. Para detalhes da nova implementação, consultar `cockpit-indicadores-mensais.md`.
 
 ---
 
@@ -590,383 +536,131 @@ const periodo = await this.prisma.periodoAvaliacao.create({
 
 ### R-MENT-008: Validação de Valores Mensais
 
-**Descrição:** Ao criar/editar `IndicadorMensal`, validar que `mes/ano` está dentro do período de mentoria ativo.
+**🔄 STATUS:** **REMOVIDO** - Funcionalidade não implementada
 
-**Implementação:**
-- **Endpoint:** `PATCH /indicadores/:id/valores-mensais`
-- **Método:** `CockpitPilaresService.updateValoresMensais()`
+**Descrição Original:** Ao criar/editar `IndicadorMensal`, validar que `mes/ano` está dentro do período de mentoria ativo.
 
-**Exceção:** Campo `historico` pode conter dados anteriores ao período.
+**Situação Atual:**
+- ❌ **NÃO IMPLEMENTADO** - Validação foi removida do código
+- ❌ **Frontend não tem dropdown** de seleção de período
+- ❌ **Schema não tem campo** `periodoMentoriaId` em `IndicadorMensal`
+- ✅ **Novo sistema:** Criação controlada por ciclos manuais conforme [cockpit-indicadores-mensais.md](./cockpit-indicadores-mensais.md)
 
-**Validações adicionais:**
+**Motivo da Remoção:**
+- Transferência de responsabilidade para controle manual de ciclos
+- Maior flexibilidade para usuários gerenciarem períodos
+- Simplificação do schema e validações
 
-```typescript
-// 1. Buscar indicador com empresa e período ativo
-const indicador = await this.prisma.indicadorCockpit.findUnique({
-  where: { id: indicadorId },
-  include: {
-    cockpitPilar: {
-      include: {
-        pilarEmpresa: {
-          include: {
-            empresa: {
-              include: {
-                periodosMentoria: {
-                  where: { ativo: true },
-                },
-              },
-            },
-          },
-        },
-      },
-    },
-  },
-});
-
-const periodoMentoria = indicador.cockpitPilar.pilarEmpresa.empresa.periodosMentoria[0];
-
-if (!periodoMentoria) {
-  throw new BadRequestException(
-    'Empresa não possui período de mentoria ativo'
-  );
-}
-
-// 2. Validar cada valor mensal
-for (const valorDto of dto.valores) {
-  if (valorDto.mes === null) continue; // Resumo anual não valida
-
-  const dataValor = new Date(valorDto.ano, valorDto.mes - 1, 1);
-
-  // Validar meta e realizado (historico é exceção)
-  if (
-    (valorDto.meta !== undefined || valorDto.realizado !== undefined) &&
-    (dataValor < periodoMentoria.dataInicio ||
-      dataValor > periodoMentoria.dataFim)
-  ) {
-    throw new BadRequestException(
-      `Mês ${valorDto.mes}/${valorDto.ano} está fora do período de mentoria ativo (${format(periodoMentoria.dataInicio, 'MM/yyyy')} - ${format(periodoMentoria.dataFim, 'MM/yyyy')})`
-    );
-  }
-}
-
-// 3. Vincular ao período de mentoria ao criar/atualizar
-await this.prisma.indicadorMensal.upsert({
-  where: {
-    indicadorCockpitId_ano_mes_periodoMentoriaId: {
-      indicadorCockpitId: indicadorId,
-      ano: valorDto.ano,
-      mes: valorDto.mes,
-      periodoMentoriaId: periodoMentoria.id,
-    },
-  },
-  update: {
-    meta: valorDto.meta,
-    realizado: valorDto.realizado,
-    historico: valorDto.historico, // ✅ Não valida
-    updatedBy: user.id,
-  },
-  create: {
-    indicadorCockpitId: indicadorId,
-    ano: valorDto.ano,
-    mes: valorDto.mes,
-    meta: valorDto.meta,
-    realizado: valorDto.realizado,
-    historico: valorDto.historico,
-    periodoMentoriaId: periodoMentoria.id, // ✅ VÍNCULO
-    createdBy: user.id,
-  },
-});
-```
-
-**Arquivos afetados:**
-- `backend/src/modules/cockpit-pilares/cockpit-pilares.service.ts`
-- `backend/prisma/schema.prisma` (campo `periodoMentoriaId`)
-
-**Ref:** Seção 3 em [cockpit-valores-mensais.md](cockpit-valores-mensais.md)
+**Referência:**
+- ✅ **Implementado:** Botão "Novo ciclo de 12 meses" no cockpit
+- ✅ **Documentado:** [cockpit-indicadores-mensais.md](./cockpit-indicadores-mensais.md)
+- ❌ **Removido:** Validação automática de período em `updateValoresMensais()`
 
 ---
 
 ### R-MENT-009: Gestão de Período no Wizard de Empresas
 
+**🔄 STATUS:** **IMPLEMENTADO PARCIALMENTE**
+
 **Descrição:** Etapa 2 do wizard de empresas permite criar/editar período de mentoria.
 
-**Implementação:**
+**Implementação Atual:**
 - **Componente:** `empresas-form.component.ts` (wizardStep = 2)
 - **Service:** `PeriodosMentoriaService.create()`, `PeriodosMentoriaService.renovar()`
+- **Funcionalidade:** ✅ **Criar períodos** está implementado e funcionando
+- **Limitação:** ❌ **Sem criação automática de meses** (transferido para Cockpit)
 
-**Comportamento:**
+**Comportamento Implementado:**
 
-**Modo Criação (Nova Empresa):**
+1. **Criação de empresa com período:** ✅ Funcional
+2. **Edição de período existente:** ✅ Funcional  
+3. **Renovação de período:** ✅ Funcional
+4. **Validação de período único:** ✅ Funcional
 
-1. **Etapa 2 do wizard exibe:**
-```html
-<div class="periodo-mentoria-section">
-  <h4>Período de Mentoria</h4>
-  <div class="form-group">
-    <label>Data de Início da Mentoria *</label>
-    <input type="date" [(ngModel)]="dataInicioMentoria" class="form-control">
-  </div>
-  <div class="form-group">
-    <label>Data de Fim (calculado automaticamente)</label>
-    <input type="date" [ngModel]="calcularDataFim(dataInicioMentoria)" disabled class="form-control">
-    <small class="text-muted">1 ano após o início</small>
-  </div>
-</div>
-```
+**O que NÃO está implementado:**
+- Criação automática de meses (removida em R-MENT-006)
 
-2. **Ao salvar empresa (finalizar wizard):**
-```typescript
-finalizarCadastro() {
-  // 1. Criar empresa
-  this.empresasService.create(empresaData).subscribe(empresa => {
-    // 2. Criar período de mentoria automaticamente
-    this.periodosMentoriaService.create(empresa.id, {
-      dataInicio: this.dataInicioMentoria
-    }).subscribe(() => {
-      this.router.navigate(['/empresas']);
-    });
-  });
-}
-```
+**Motivo:** Sistema de ciclos manuais no cockpit oferece mais flexibilidade
 
-**Modo Edição (Empresa Existente):**
-
-1. **Carregar período ativo:**
-```typescript
-ngOnInit() {
-  if (this.isEditMode && this.empresaId) {
-    this.periodosMentoriaService.getPeriodoAtivo(this.empresaId).subscribe(periodo => {
-      if (periodo) {
-        this.periodoAtivo = periodo;
-        this.dataInicioMentoria = periodo.dataInicio;
-      }
-    });
-  }
-}
-```
-
-2. **Exibir status e permitir renovação:**
-```html
-<div *ngIf="periodoAtivo" class="alert alert-info">
-  <strong>Período Ativo:</strong> Período {{periodoAtivo.numero}}<br>
-  <small>{{periodoAtivo.dataInicio | date:'dd/MM/yyyy'}} - {{periodoAtivo.dataFim | date:'dd/MM/yyyy'}}</small>
-  <button (click)="renovarPeriodo()" class="btn btn-sm btn-warning mt-2">
-    Renovar Mentoria
-  </button>
-</div>
-
-<div *ngIf="!periodoAtivo" class="alert alert-warning">
-  Nenhum período de mentoria ativo.
-  <button (click)="criarPeriodo()" class="btn btn-sm btn-primary">
-    Criar Período
-  </button>
-</div>
-```
-
-**Validações:**
-- Data de início é obrigatória ao criar empresa
-- Não permitir período ativo duplicado
-- Ao renovar, encerrar período anterior automaticamente
-
-**Arquivos afetados:**
-- frontend/src/app/views/pages/empresas/empresas-form/empresas-form.component.ts
-- frontend/src/app/views/pages/empresas/empresas-form/empresas-form.component.html
-- frontend/src/app/core/services/periodos-mentoria.service.ts
-
-**Ref:** ADR-007 (Período de Mentoria de 1 Ano)
+**Status:** ✅ **Funcionalidade principal implementada**
 
 ---
 
 ### R-MENT-010: Exibição de Status na Lista de Empresas
+
+**🔄 STATUS:** **IMPLEMENTADO E FUNCIONAL**
 
 **Descrição:** Lista de empresas exibe coluna com status do período de mentoria ativo.
 
 **Implementação:**
 - **Componente:** `empresas-list.component.ts`
 - **Service:** `EmpresasService.getAll()` (retorna empresa com periodoMentoriaAtivo)
+- **Status:** ✅ **TOTALMENTE IMPLEMENTADO**
+
+**Funcionalidades Disponíveis:**
+1. ✅ **Backend inclui período ativo** no response
+2. ✅ **Frontend exibe coluna "Mentoria"** com badges
+3. ✅ **Visualização do número do período** (Período 1, Período 2...)
+4. ✅ **Exibição das datas** (Mai/26 - Abr/27)
+5. ✅ **Distinção visual** (ativo vs sem mentoria)
 
 **Comportamento:**
+- **Com período ativo:** Badge verde com número e datas
+- **Sem período:** Badge cinza "Sem mentoria ativa"
 
-1. **Backend incluir período ativo no response:**
-```typescript
-// EmpresasService.findAll()
-const empresas = await this.prisma.empresa.findMany({
-  include: {
-    periodosMentoria: {
-      where: { ativo: true },
-      take: 1,
-    },
-  },
-});
-
-// Response
-{
-  id: "uuid",
-  nome: "Empresa Teste",
-  periodoMentoriaAtivo: {
-    numero: 1,
-    dataInicio: "2026-05-01",
-    dataFim: "2027-04-30",
-    ativo: true
-  }
-}
-```
-
-2. **Frontend exibir coluna:**
-```html
-<table>
-  <thead>
-    <tr>
-      <th>Nome</th>
-      <th>CNPJ</th>
-      <th>Mentoria</th> <!-- Nova coluna -->
-      <th>Ações</th>
-    </tr>
-  </thead>
-  <tbody>
-    <tr *ngFor="let empresa of empresas">
-      <td>{{ empresa.nome }}</td>
-      <td>{{ empresa.cnpj | cnpj }}</td>
-      <td>
-        <span *ngIf="empresa.periodoMentoriaAtivo" class="badge bg-success">
-          Período {{ empresa.periodoMentoriaAtivo.numero }}<br>
-          <small>{{ empresa.periodoMentoriaAtivo.dataInicio | date:'MMM/yy' }} - {{ empresa.periodoMentoriaAtivo.dataFim | date:'MMM/yy' }}</small>
-        </span>
-        <span *ngIf="!empresa.periodoMentoriaAtivo" class="badge bg-secondary">
-          Sem mentoria ativa
-        </span>
-      </td>
-      <td>
-        <!-- Botões de ação existentes -->
-      </td>
-    </tr>
-  </tbody>
-</table>
-```
-
-**Arquivos afetados:**
-- frontend/src/app/views/pages/empresas/empresas-list/empresas-list.component.html
-- backend/src/modules/empresas/empresas.service.ts
-
-**Ref:** ADR-007 (Período de Mentoria de 1 Ano)
+**Status:** ✅ **IMPLEMENTADO CORRETAMENTE**
 
 ---
 
 ### R-MENT-011: Filtro de Período em Gráfico de Indicadores
 
-**Descrição:** Frontend exibe dropdown de seleção de período de mentoria no componente de gráfico de indicadores, permitindo visualizar histórico de diferentes períodos.
+**🔄 STATUS:** **NÃO IMPLEMENTADO**
 
-**Implementação:**
-- **Componente:** `grafico-indicadores.component.ts`
-- **Service:** `periodos-mentoria.service.ts`
+**Descrição Original:** Frontend exibiria dropdown de seleção de período de mentoria no componente de gráfico de indicadores, permitindo visualizar histórico de diferentes períodos.
 
-**Observação:** O componente `edicao-valores-mensais` sempre exibe valores do **último período de mentoria** (teoricamente o vigente), sem necessidade de seleção manual.
+**Situação Atual:**
+- ❌ **NÃO IMPLEMENTADO** - Componente `grafico-indicadores` não tem dropdown de período
+- ❌ **Frontend não importa** `PeriodosMentoriaService`
+- ❌ **Filtro atual** é apenas por anos (`opcoesAnos`), não por períodos
+- ✅ **Alternativa:** Usuário pode filtrar por anos específicos
 
-**Funcionalidades:**
+**Comportamento Atual:**
+- **Filtro disponível:** Dropdown com anos (ex: 2027, 2026, 2025...)
+- **Filtro ausente:** Seleção por períodos de mentoria
+- **Justificativa:** Sistema usa filtro temporal por anos em vez de períodos
 
-1. **Dropdown de Seleção:**
-```typescript
-// Buscar períodos da empresa
-this.periodosMentoria = await this.periodosMentoriaService
-  .listarPorEmpresa(this.empresaId)
-  .toPromise();
+**Motivo da Não Implementação:**
+- Complexidade adicional pode não agregar valor ao usuário
+- Filtro por anos é mais simples e eficaz para análise histórica
+- Períodos de mentoria podem ter sobreposição complicando UX
 
-// Exibir no formato: "Período 1 (Mai/26 - Abr/27)"
-getPeriodoLabel(periodo: PeriodoMentoria): string {
-  const inicio = format(periodo.dataInicio, 'MMM/yy', { locale: ptBR });
-  const fim = format(periodo.dataFim, 'MMM/yy', { locale: ptBR });
-  return `Período ${periodo.numero} (${inicio} - ${fim})`;
-}
-```
-
-2. **Filtro de Indicadores:**
-```typescript
-// Ao trocar período no dropdown
-onPeriodoChange(periodoId: string): void {
-  this.periodoSelecionado = periodoId;
-  this.carregarIndicadores();
-}
-
-carregarIndicadores(): void {
-  this.cockpitService
-    .listarIndicadores(this.cockpitPilarId, {
-      periodoMentoriaId: this.periodoSelecionado,
-    })
-    .subscribe((indicadores) => {
-      this.indicadores = indicadores;
-    });
-}
-```
-
-3. **Persistir Seleção:**
-```typescript
-// LocalStorage para manter período selecionado entre navegações
-localStorage.setItem(
-  `periodoSelecionado_${this.empresaId}`,
-  periodoId
-);
-```
-
-**Template HTML:**
-```html
-<select [(ngModel)]="periodoSelecionado" (change)="onPeriodoChange($event)">
-  <option *ngFor="let periodo of periodosMentoria" [value]="periodo.id">
-    {{ getPeriodoLabel(periodo) }}
-  </option>
-</select>
-```
-
-**Arquivo:** `frontend/src/app/views/pages/cockpit-pilares/edicao-valores-mensais/edicao-valores-mensais.component.ts
+**Status:** ❌ **FUNCIONALIDADE NÃO IMPLEMENTADA**
 
 ---
 
 ### R-MENT-012: Cálculo Dinâmico de Meses
 
-**Descrição:** Frontend calcula quais meses exibir baseado em `periodoMentoria.dataInicio` e `dataFim`.
+**🔄 STATUS:** **NÃO IMPLEMENTADO**
 
-**Implementação:**
-- **Componente:** `grafico-indicadores.component.ts`
+**Descrição Original:** Frontend calcularia quais meses exibir baseado em `periodoMentoria.dataInicio` e `dataFim`.
 
-**Observação:** Este cálculo é usado no gráfico de indicadores para exibir headers dinâmicos baseados no período selecionado. Em `edicao-valores-mensais`, sempre usa o último período (vigente).
+**Situação Atual:**
+- ❌ **NÃO IMPLEMENTADO** - Cálculo dinâmico por período não existe
+- ✅ **Alternativa implementada:** Filtro por anos nos gráficos
+- ✅ **Filtro funcional:** Usuário seleciona ano específico (ex: 2027)
+- ❌ **Cálculo por período:** Não existe pois dropdown de período não foi implementado
 
-**Lógica:**
+**Comportamento Atual:**
+- **Gráfico de indicadores:** Usa filtro por anos (não por períodos)
+- **Edição de valores:** Exibe últimos 13 meses disponíveis (independente de período)
+- **Justificativa:** Simplificação da UX e redução de complexidade
 
-```typescript
-calcularMesesPeriodo(periodo: PeriodoMentoria): { mes: number; ano: number; label: string }[] {
-  const meses: { mes: number; ano: number; label: string }[] = [];
-  
-  let dataAtual = new Date(periodo.dataInicio);
-  const dataFinal = new Date(periodo.dataFim);
-  
-  while (dataAtual <= dataFinal) {
-    const mes = dataAtual.getMonth() + 1; // 1-12
-    const ano = dataAtual.getFullYear();
-    const label = format(dataAtual, 'MMM/yy', { locale: ptBR }); // "Mai/26"
-    
-    meses.push({ mes, ano, label });
-    
-    dataAtual = addMonths(dataAtual, 1);
-  }
-  
-  return meses;
-}
-```
+**Motivo da Não Implementação:**
+- Dependência de R-MENT-011 (dropdown de período) que não foi implementado
+- Filtro por anos atende necessidades básicas de análise temporal
+- Reduz complexidade sem perder funcionalidade essencial
 
-**Exemplo:**
-- Período: 01/05/2026 - 30/04/2027
-- Meses gerados:
-  - Mai/26 (mes: 5, ano: 2026)
-  - Jun/26 (mes: 6, ano: 2026)
-  - Jul/26 (mes: 7, ano: 2026)
-  - ...
-  - Abr/27 (mes: 4, ano: 2027)
-
-**Headers Dinâmicos:**
-```html
-<th *ngFor="let mes of mesesPeriodo">{{ mes.label }}</th>
-```
-
-**Arquivo:** `frontend/src/app/views/pages/cockpit-pilares/grafico-indicadores/grafico-indicadores.component.ts`
+**Status:** ❌ **FUNCIONALIDADE NÃO IMPLEMENTADA** (depende de R-MENT-011)
 
 ---
 

@@ -8,9 +8,9 @@
       </h5>
 
       <!-- R-GRAF-001: Seletor de Filtro (Últimos 12 meses + Anos) -->
-      <ng-select id="filtroSelect" style="width: 200px; font-size: 0.875rem;" [(ngModel)]="selectedFiltro"
-        (ngModelChange)="onFiltroChange($event)" [items]="opcoesAnos" bindValue="value" placeholder="Filtro"
-        [clearable]="false">
+       <ng-select id="filtroSelect" style="width: 200px; font-size: 0.875rem;" [(ngModel)]="selectedFiltro"
+         (ngModelChange)="onFiltroChange($event)" [items]="opcoesAnos" bindValue="value" placeholder="Filtro"
+         [clearable]="false" data-testid="filtro-select">
         <ng-template ng-label-tmp let-item="item">
           <small>{{ getFiltroLabel(item) }}</small>
         </ng-template>
@@ -26,9 +26,9 @@
       <!-- Seletor de Indicador -->
       <div class="flex-fill">
 
-        <ng-select id="indicadorSelect" style="min-width: 300px;" [(ngModel)]="selectedIndicadorId"
-          (ngModelChange)="onIndicadorChange($event)" [items]="indicadores" bindLabel="nome" bindValue="id"
-          placeholder="Selecione um indicador" [clearable]="true">
+         <ng-select id="indicadorSelect" style="min-width: 300px;" [(ngModel)]="selectedIndicadorId"
+           (ngModelChange)="onIndicadorChange($event)" [items]="indicadores" bindLabel="nome" bindValue="id"
+           placeholder="Selecione um indicador" [clearable]="true" data-testid="indicador-select">
         </ng-select>
       </div>
 
@@ -85,21 +85,21 @@
     </div>
 
     <!-- Loading -->
-    @if (loading) {
-    <div class="text-center py-5">
-      <div class="spinner-border text-primary" role="status">
-        <span class="visually-hidden">Carregando...</span>
-      </div>
-    </div>
-    }
+     @if (loading) {
+     <div class="text-center py-5" data-testid="loading-indicator">
+       <div class="spinner-border text-primary" role="status">
+         <span class="visually-hidden">Carregando...</span>
+       </div>
+     </div>
+     }
 
     <!-- Error -->
-    @if (error) {
-    <div class="alert alert-danger">
-      <i class="bi bi-exclamation-triangle me-2"></i>
-      {{ error }}
-    </div>
-    }
+     @if (error) {
+     <div class="alert alert-danger" data-testid="error-message">
+       <i class="bi bi-exclamation-triangle me-2"></i>
+       {{ error }}
+     </div>
+     }
 
     <!-- Chart Container -->
     @if (!loading && !error && selectedIndicadorId) {
@@ -108,11 +108,11 @@
     </div>
     }
 
-    @if (indicadores.length === 0) {
-    <div class="alert alert-info">
-      <i class="bi bi-info-circle me-2"></i>
-      Nenhum indicador criado ainda. Adicione indicadores para visualizar os gráficos.
-    </div>
-    }
+     @if (indicadores.length === 0) {
+     <div class="alert alert-info" data-testid="no-indicators-message">
+       <i class="bi bi-info-circle me-2"></i>
+       Nenhum indicador criado ainda. Adicione indicadores para visualizar os gráficos.
+     </div>
+     }
   </div>
 </div>

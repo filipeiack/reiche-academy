@@ -13,15 +13,12 @@
 
         <!-- Botão Congelar/Recongelar -->
         @if (canCongelar) {
-        <button type="button" 
+        <button type="button"
             [class]="periodoAtual ? 'btn btn-outline-primary btn-sm' : 'btn btn-outline-warning btn-sm'"
-            [ngbTooltip]="periodoAtual 
-              ? 'Congelar médias do período de avaliação atual e criar snapshots de todos os pilares' 
-              : 'Recongelar período encerrado para atualizar médias com pilares esquecidos ou reavaliados'"
-            (click)="congelarMedias()" 
-            [disabled]="(!periodoAtual && !periodoCongelado) || medias.length === 0">
-            <i [class]="periodoAtual ? 'feather icon-archive' : 'feather icon-refresh-cw'"></i>
-            {{ periodoAtual ? 'Atualizar Histórico' : 'Recongelar' }} {{ getPeriodoMesAno() }}
+            (click)="congelarMedias()" [disabled]="!periodoAtual && medias.length === 0"
+            data-testid="btn-congelar-medias">
+            <i class="feather icon-download"></i>
+            <span class="ms-1">Congelar Médias</span>
         </button>
         }
     </div>
@@ -32,7 +29,7 @@
 <!-- Tabela de Pilares com Médias -->
 <div class="card mb-2">
     <div class="card-body py-2">
-        <div class="table-responsive" style="max-width: 90%; margin: 0 auto;">
+        <div class="table-responsive" style="max-width: 90%; margin: 0 auto;" data-testid="medias-table">
             <table class="table table-sm mb-0">
                 <thead class="table-light">
                     <tr>
@@ -79,15 +76,9 @@
                 <h5 class="card-title mb-0">{{ 'EVOLUCAO.GRAFICO_TITLE' | translate }}</h5>
             </div>
             <!-- Filtro de Ano -->
-            <ng-select 
-                [(ngModel)]="anoFiltro"
-                (ngModelChange)="onAnoChange()"
-                [items]="anosDisponiveis"
-                [clearable]="true"
-                [searchable]="false"
-                placeholder="Filtrar por ano"
-                class="ng-select-sm"
-                style="width: 150px;">
+            <ng-select [(ngModel)]="anoFiltro" (ngModelChange)="onAnoChange()" [items]="anosDisponiveis"
+                [clearable]="true" [searchable]="false" placeholder="Filtrar por ano" class="ng-select-sm"
+                style="width: 150px;" data-testid="ano-filtro-select">
             </ng-select>
 
 
@@ -97,14 +88,16 @@
             Cada pilar exibe suas médias congeladas por período (mês/ano do trimestre)
         </p>
 
-        <div style="overflow-x: auto; overflow-y: hidden;">
-            <div id="chartContainer" style="min-width: 100%; position: relative;">
+        <div style="overflow-x: auto; overflow-y: hidden;" data-testid="chart-container">
+            <div id="chartContainer" style="min-width: 100%; position: relative;"
+                data-testid="evolucao-chart-container">
                 <canvas id="evolucaoBarChart"></canvas>
             </div>
         </div>
 
         @if (historico.length === 0) {
-        <div class="empty-state" style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);">
+        <div class="empty-state" style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);"
+            data-testid="no-historico-message">
             <i class="feather icon-bar-chart-2"></i>
             <p>{{ 'EVOLUCAO.NO_HISTORICO' | translate }}</p>
         </div>
@@ -115,7 +108,7 @@
 
 <!-- Loading -->
 @else if (loading) {
-<div class="text-center py-5">
+<div class="text-center py-5" data-testid="loading-indicator">
     <div class="spinner-border text-primary" role="status">
         <span class="visually-hidden">{{ 'COMMON.LOADING' | translate }}...</span>
     </div>
@@ -124,7 +117,7 @@
 
 <!-- Error -->
 @else if (error && !loading) {
-<div class="alert alert-danger" role="alert">
+<div class="alert alert-danger" role="alert" data-testid="error-message">
     <i data-feather="alert-triangle" class="me-2"></i>
     {{ error }}
 </div>
@@ -139,15 +132,15 @@
 }
 
 @else if (!loading && !error && !selectedEmpresaId && !isAdmin) {
-<div class="alert alert-danger" role="alert">
+<div class="alert alert-danger" role="alert" data-testid="no-empresa-message">
     <i data-feather="alert-triangle" class="me-2"></i>
-    <span>{{ 'EVOLUCAO.NO_EMPRESA_ASSOCIATED' | translate }}</span>
+    {{ 'EVOLUCAO.NO_EMPRESA_ASSOCIATED' | translate }}
 </div>
 }
 
 @else if (!selectedEmpresaId && isAdmin) {
-<div class="alert alert-danger" role="alert">
+<div class="alert alert-danger" role="alert" data-testid="select-empresa-message">
     <i data-feather="alert-triangle" class="me-2"></i>
-    <span>{{ 'EVOLUCAO.SELECT_EMPRESA_PLACEHOLDER' | translate }}</span>
+    {{ 'EVOLUCAO.SELECT_EMPRESA_PLACEHOLDER' | translate }}
 </div>
 }

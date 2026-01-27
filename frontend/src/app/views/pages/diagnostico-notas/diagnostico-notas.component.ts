@@ -1,8 +1,8 @@
-import { Component, OnInit, OnDestroy, ViewChild, inject } from '@angular/core';
+import { Component, OnInit, OnDestroy, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
-import { NgbAlertModule, NgbProgressbar, NgbModal } from '@ng-bootstrap/ng-bootstrap';
+import { NgbAlertModule, NgbOffcanvas } from '@ng-bootstrap/ng-bootstrap';
 import { NgSelectModule } from '@ng-select/ng-select';
 import Swal from 'sweetalert2';
 import { Subject, Subscription, debounceTime, distinctUntilChanged } from 'rxjs';
@@ -16,12 +16,14 @@ import { EmpresaBasic } from '@app/core/models/auth.model';
 import { PeriodosAvaliacaoService } from '../../../core/services/periodos-avaliacao.service';
 import { PeriodoAvaliacao } from '../../../core/models/periodo-avaliacao.model';
 import { NgbDropdownModule } from '@ng-bootstrap/ng-bootstrap';
-import { PilaresEmpresaModalComponent } from './pilares-empresa-modal/pilares-empresa-modal.component';
-import { ResponsavelPilarModalComponent } from './responsavel-pilar-modal/responsavel-pilar-modal.component';
-import { NovaRotinaModalComponent } from './nova-rotina-modal/nova-rotina-modal.component';
-import { RotinasPilarModalComponent } from './rotinas-pilar-modal/rotinas-pilar-modal.component';
+import { ResponsavelDrawerComponent } from './responsavel-drawer/responsavel-drawer.component';
 import { MediaBadgeComponent } from '../../../shared/components/media-badge/media-badge.component';
-import { CriarCockpitModalComponent } from '../cockpit-pilares/criar-cockpit-modal/criar-cockpit-modal.component';
+import { PilarAddDrawerComponent } from './pilar-add-drawer/pilar-add-drawer.component';
+import { PilarEditDrawerComponent } from './pilar-edit-drawer/pilar-edit-drawer.component';
+import { RotinaAddDrawerComponent } from './rotina-add-drawer/rotina-add-drawer.component';
+import { RotinaEditDrawerComponent } from './rotina-edit-drawer/rotina-edit-drawer.component';
+import { CriarCockpitDrawerComponent } from './criar-cockpit-drawer/criar-cockpit-drawer.component';
+import { OFFCANVAS_SIZE } from '@core/constants/ui.constants';
 
 interface AutoSaveQueueItem {
   rotinaEmpresaId: string;
@@ -39,13 +41,7 @@ interface AutoSaveQueueItem {
     NgbDropdownModule,
     NgSelectModule,
     TranslatePipe,
-    //NgbProgressbar,
-    PilaresEmpresaModalComponent,
-    ResponsavelPilarModalComponent,
-    NovaRotinaModalComponent,
-    RotinasPilarModalComponent,
-    MediaBadgeComponent,
-    // CriarCockpitModalComponent (não usado no template)
+    MediaBadgeComponent
 ],
   templateUrl: './diagnostico-notas.component.html',
   styleUrl: './diagnostico-notas.component.scss'
@@ -57,12 +53,7 @@ export class DiagnosticoNotasComponent implements OnInit, OnDestroy {
   private empresaContextService = inject(EmpresaContextService);
   private periodosService = inject(PeriodosAvaliacaoService);
   private router = inject(Router);
-  private modalService = inject(NgbModal);
-
-  @ViewChild(PilaresEmpresaModalComponent) pilaresModal!: PilaresEmpresaModalComponent;
-  @ViewChild(ResponsavelPilarModalComponent) responsavelModal!: ResponsavelPilarModalComponent;
-  @ViewChild(NovaRotinaModalComponent) novaRotinaModal!: NovaRotinaModalComponent;
-  @ViewChild(RotinasPilarModalComponent) rotinasPilarModal!: RotinasPilarModalComponent;
+  private offcanvasService = inject(NgbOffcanvas);
 
   pilares: PilarEmpresa[] = [];
   empresaLogada: EmpresaBasic | null = null;
@@ -153,11 +144,18 @@ export class DiagnosticoNotasComponent implements OnInit, OnDestroy {
   ];
 
   ngOnInit(): void {
+    console.log('[DIAGNOSTICO] ngOnInit chamado');
+    
+    // Primeiro, verificar o perfil do usuário
     this.checkUserPerfil();
+    
+    // Depois, configurar auto-save
     this.setupAutoSave();
     
     // Subscrever às mudanças no contexto de empresa
     this.empresaContextSubscription = this.empresaContextService.selectedEmpresaId$.subscribe(empresaId => {
+      console.log('[DIAGNOSTICO] Contexto de empresa mudou:', { empresaId, selectedEmpresaId: this.selectedEmpresaId, isAdmin: this.isAdmin });
+      
       if (this.isAdmin && empresaId !== this.selectedEmpresaId) {
         // Limpar estado de expansão da empresa anterior
         if (this.selectedEmpresaId) {
@@ -165,11 +163,15 @@ export class DiagnosticoNotasComponent implements OnInit, OnDestroy {
         }
         
         this.selectedEmpresaId = empresaId;
+        this.error = ''; // Limpar erro anterior
         
         if (empresaId) {
+          console.log('[DIAGNOSTICO] Carregando diagnóstico para empresa:', empresaId);
           this.loadDiagnostico();
         } else {
+          console.log('[DIAGNOSTICO] Nenhuma empresa selecionada');
           this.pilares = [];
+          this.error = 'Selecione uma empresa para visualizar diagnósticos';
         }
       }
     });
@@ -194,9 +196,14 @@ export class DiagnosticoNotasComponent implements OnInit, OnDestroy {
 
     if (this.isAdmin) {
       // Admin: usar empresa do contexto global (selecionada no navbar)
-      this.selectedEmpresaId = this.empresaContextService.getEmpresaId();
+      const contextEmpresaId = this.empresaContextService.getEmpresaId();
+      this.selectedEmpresaId = contextEmpresaId || null;
+      
       if (this.selectedEmpresaId) {
         this.loadDiagnostico();
+      } else {
+        // Sem empresa selecionada no contexto, aguardar seleção na navbar
+        this.error = 'Selecione uma empresa para visualizar diagnósticos';
       }
     } else if (user.empresaId) {
       // Perfil cliente: usar empresa do usuário logado
@@ -210,7 +217,12 @@ export class DiagnosticoNotasComponent implements OnInit, OnDestroy {
   }
 
   private loadDiagnostico(preserveScroll: boolean = false): void {
-    if (!this.selectedEmpresaId) return;
+    if (!this.selectedEmpresaId) {
+      console.log('[DIAGNOSTICO] loadDiagnostico chamado sem selectedEmpresaId');
+      return;
+    }
+
+    console.log('[DIAGNOSTICO] loadDiagnostico iniciando para empresa:', this.selectedEmpresaId);
 
     // Salvar posição de scroll se solicitado
     if (preserveScroll) {
@@ -226,7 +238,13 @@ export class DiagnosticoNotasComponent implements OnInit, OnDestroy {
 
     this.diagnosticoService.getDiagnosticoByEmpresa(this.selectedEmpresaId).subscribe({
       next: (data) => {
+        console.log('[DIAGNOSTICO] Dados carregados com sucesso:', data.length, 'pilares');
         this.pilares = data;
+        
+        // Sincronizar empresa selecionada na navbar com a primeira empresa dos pilares
+        if (data.length > 0 && data[0].empresaId) {
+          this.empresaContextService.syncEmpresaFromResource(data[0].empresaId);
+        }
         
         // Restaurar estado de expansão salvo ou inicializar todos como encolhidos
         const savedState = this.pilarExpandido;
@@ -257,8 +275,22 @@ export class DiagnosticoNotasComponent implements OnInit, OnDestroy {
         }
       },
       error: (err: any) => {
-        this.error = err?.error?.message || 'Erro ao carregar dashboard da empresa';
+        console.error('[DIAGNOSTICO] Erro ao carregar diagnóstico:', {
+          status: err?.status,
+          message: err?.error?.message,
+          error: err
+        });
+        
         this.loading = false;
+        
+        // Se for erro de autenticação (401), deixar o interceptor lidar com logout
+        if (err?.status === 401) {
+          console.log('[DIAGNOSTICO] Erro 401, deixando interceptor lidar');
+          return;
+        }
+        
+        // Outros erros
+        this.error = err?.error?.message || 'Erro ao carregar dashboard da empresa';
       }
     });
   }
@@ -272,71 +304,126 @@ export class DiagnosticoNotasComponent implements OnInit, OnDestroy {
   }
 
   /**
-   * Abre o modal de gerenciamento de pilares
-   */
-  abrirModalPilares(): void {
-    if (this.pilaresModal && this.selectedEmpresaId) {
-      this.pilaresModal.open();
-    }
-  }
-
   /**
-   * Callback quando pilares são modificados no modal
+   * Callback quando pilares são modificados
    */
   onPilaresModificados(): void {
-    // Recarregar dashboard da empresa para refletir mudanças nos pilares
     if (this.selectedEmpresaId) {
       this.loadDiagnostico(true);
     }
   }
 
   /**
-   * Abre o modal de definição de responsável
+   * Abrir drawer para adicionar novo pilar customizado
+   */
+  abrirDrawerAdicionarPilar(): void {
+    if (!this.selectedEmpresaId) return;
+
+    const offcanvasRef = this.offcanvasService.open(PilarAddDrawerComponent, {
+      position: 'end',
+      backdrop: 'static',
+      panelClass: OFFCANVAS_SIZE.MEDIUM
+    });
+
+    const component = offcanvasRef.componentInstance as PilarAddDrawerComponent;
+    component.empresaId = this.selectedEmpresaId;
+    component.pilarAdicionado.subscribe(() => {
+      this.loadDiagnostico(true);
+    });
+  }
+
+  /**
+   * Abrir drawer para editar pilares (nome + reordenação)
+   */
+  abrirDrawerEditarPilares(): void {
+    if (!this.selectedEmpresaId) return;
+
+    const offcanvasRef = this.offcanvasService.open(PilarEditDrawerComponent, {
+      position: 'end',
+      backdrop: 'static',
+      panelClass: OFFCANVAS_SIZE.MEDIUM
+    });
+
+    const component = offcanvasRef.componentInstance as PilarEditDrawerComponent;
+    component.empresaId = this.selectedEmpresaId;
+    component.pilaresModificados.subscribe(() => {
+      this.loadDiagnostico(true);
+    });
+  }
+
+  /**
+   * Abre o drawer de definição de responsável
    */
   abrirModalResponsavel(pilarEmpresa: PilarEmpresa): void {
-    if (this.responsavelModal) {
-      this.responsavelModal.open(pilarEmpresa);
-    }
+    if (!this.selectedEmpresaId) return;
+
+    const offcanvasRef = this.offcanvasService.open(ResponsavelDrawerComponent, {
+      position: 'end',
+      backdrop: 'static',
+      panelClass: OFFCANVAS_SIZE.DEFAULT
+    });
+
+    const component = offcanvasRef.componentInstance as ResponsavelDrawerComponent;
+    component.empresaId = this.selectedEmpresaId;
+    component.pilarEmpresa = pilarEmpresa;
+    component.responsavelAtualizado.subscribe(() => {
+      this.loadDiagnostico(true);
+    });
   }
 
   /**
    * Callback quando responsável é atualizado
    */
   onResponsavelAtualizado(): void {
-    // Recarregar dashboard da empresa para refletir mudanças no responsável
     if (this.selectedEmpresaId) {
       this.loadDiagnostico(true);
     }
   }
 
   /**
-   * Abre o modal de nova rotina customizada
+   * Abrir drawer para adicionar nova rotina
    */
-  abrirModalNovaRotina(pilarEmpresa: PilarEmpresa): void {
-    if (this.novaRotinaModal) {
-      this.novaRotinaModal.open(pilarEmpresa);
-    }
+  abrirDrawerAdicionarRotina(pilarEmpresa: PilarEmpresa): void {
+    if (!this.selectedEmpresaId) return;
+
+    const offcanvasRef = this.offcanvasService.open(RotinaAddDrawerComponent, {
+      position: 'end',
+      backdrop: 'static',
+      panelClass: OFFCANVAS_SIZE.MEDIUM
+    });
+
+    const component = offcanvasRef.componentInstance as RotinaAddDrawerComponent;
+    component.empresaId = this.selectedEmpresaId;
+    component.pilarEmpresa = pilarEmpresa as any;
+    component.rotinaCriada.subscribe(() => {
+      this.loadDiagnostico(true);
+    });
   }
 
   /**
-   * Abre o modal de gerenciamento de rotinas do pilar
+   * Abrir drawer para editar rotinas (nome + reordenação)
    */
-  abrirModalEditarRotinas(pilarEmpresa: PilarEmpresa): void {
-    if (this.rotinasPilarModal && this.selectedEmpresaId) {
-      this.rotinasPilarModal.empresaId = this.selectedEmpresaId;
-      this.rotinasPilarModal.pilarEmpresaId = pilarEmpresa.id;
-      this.rotinasPilarModal.pilarNome = pilarEmpresa.nome;
-      this.rotinasPilarModal.pilarId = pilarEmpresa.pilarTemplateId ?? '';
-      this.rotinasPilarModal.rotinasEmpresa = [...pilarEmpresa.rotinasEmpresa];
-      this.rotinasPilarModal.open();
-    }
+  abrirDrawerEditarRotinas(pilarEmpresa: PilarEmpresa): void {
+    if (!this.selectedEmpresaId) return;
+
+    const offcanvasRef = this.offcanvasService.open(RotinaEditDrawerComponent, {
+      position: 'end',
+      backdrop: 'static',
+      panelClass: OFFCANVAS_SIZE.MEDIUM
+    });
+
+    const component = offcanvasRef.componentInstance as RotinaEditDrawerComponent;
+    component.empresaId = this.selectedEmpresaId;
+    component.pilarEmpresa = pilarEmpresa as any;
+    component.rotinasModificadas.subscribe(() => {
+      this.loadDiagnostico(true);
+    });
   }
 
   /**
    * Callback quando rotina é criada
    */
   onRotinaCriada(): void {
-    // Recarregar dashboard da empresa para refletir nova rotina
     if (this.selectedEmpresaId) {
       this.loadDiagnostico(true);
     }
@@ -786,26 +873,20 @@ export class DiagnosticoNotasComponent implements OnInit, OnDestroy {
       // Se existe, redirecionar para dashboard
       this.router.navigate(['/cockpits', pilar.cockpit.id, 'dashboard']);
     } else {
-      // Se não existe, abrir modal de criação
-      const modalRef = this.modalService.open(CriarCockpitModalComponent, {
-        size: 'lg',
+      // Se não existe, abrir drawer para criar
+      if (!this.selectedEmpresaId) return;
+
+      const offcanvasRef = this.offcanvasService.open(CriarCockpitDrawerComponent, {
+        position: 'end',
         backdrop: 'static',
-        centered: true,
+        panelClass: OFFCANVAS_SIZE.MEDIUM
       });
 
-      modalRef.componentInstance.pilar = pilar;
-
-      try {
-        const result = await modalRef.result;
-        if (result) {
-          // Após criar, redirecionar para dashboard
-          this.showToast('Cockpit criado com sucesso!', 'success');
-          this.router.navigate(['/cockpits', result.id, 'dashboard']);
-        }
-      } catch (error) {
-        // Modal foi fechado/cancelado
-        console.log('Modal de criar cockpit cancelado');
-      }
+      const component = offcanvasRef.componentInstance as CriarCockpitDrawerComponent;
+      component.pilar = pilar;
+      component.cockpitCriado.subscribe(() => {
+        this.loadDiagnostico(true);
+      });
     }
   }
 }

@@ -20,6 +20,7 @@ import {
 import { Usuario } from '@core/models/auth.model';
 import { TranslatePipe } from '@core/pipes/translate.pipe';
 import { IndicadorFormDrawerComponent } from './indicador-form-drawer/indicador-form-drawer.component';
+import { OFFCANVAS_SIZE } from '@core/constants/ui.constants';
 
 @Component({
   selector: 'app-gestao-indicadores',
@@ -135,7 +136,7 @@ export class GestaoIndicadoresComponent implements OnInit {
     const offcanvasRef = this.offcanvasService.open(IndicadorFormDrawerComponent, {
       position: 'end',
       backdrop: 'static',
-      panelClass: 'w-40'
+      panelClass: OFFCANVAS_SIZE.MEDIUM
     });
 
     const component = offcanvasRef.componentInstance as IndicadorFormDrawerComponent;
@@ -155,7 +156,7 @@ export class GestaoIndicadoresComponent implements OnInit {
     const offcanvasRef = this.offcanvasService.open(IndicadorFormDrawerComponent, {
       position: 'end',
       backdrop: 'static',
-      panelClass: 'w-40'
+      panelClass: OFFCANVAS_SIZE.MEDIUM
     });
 
     const component = offcanvasRef.componentInstance as IndicadorFormDrawerComponent;

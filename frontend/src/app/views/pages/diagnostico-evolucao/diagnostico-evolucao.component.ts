@@ -2,7 +2,7 @@ import { Component, OnInit, OnDestroy, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { NgSelectModule } from '@ng-select/ng-select';
-import { NgbAlertModule, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
+import { NgbAlertModule } from '@ng-bootstrap/ng-bootstrap';
 import { TranslatePipe } from '../../../core/pipes/translate.pipe';
 import Swal from 'sweetalert2';
 import { firstValueFrom, Subscription } from 'rxjs';
@@ -29,7 +29,6 @@ Chart.register(...registerables, annotationPlugin);
     NgSelectModule,
     NgbAlertModule,
     TranslatePipe,
-    NgbTooltip,
     MediaBadgeComponent,
     SortableDirective
 ],

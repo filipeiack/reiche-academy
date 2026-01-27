@@ -382,7 +382,6 @@ export class EdicaoValoresMensaisComponent implements OnInit, OnChanges, OnDestr
     Swal.fire({
       title: 'Criar novo ciclo de 12 meses?',
       text: 'Serão criados 12 novos meses para todos os indicadores do cockpit, a partir do último mês registrado.',
-      icon: 'question',
       showCancelButton: true,
       confirmButtonText: 'Sim, criar',
       cancelButtonText: 'Cancelar',
@@ -394,7 +393,6 @@ export class EdicaoValoresMensaisComponent implements OnInit, OnChanges, OnDestr
           next: (response) => {
             this.criandoNovoCiclo = false;
             Swal.fire({
-              icon: 'success',
               title: 'Ciclo criado!',
               text: `${response.mesesCriados} meses criados para ${response.indicadores} indicadores.`,
               timer: 3000,
@@ -404,7 +402,6 @@ export class EdicaoValoresMensaisComponent implements OnInit, OnChanges, OnDestr
           error: (err) => {
             this.criandoNovoCiclo = false;
             Swal.fire({
-              icon: 'error',
               title: 'Erro ao criar ciclo',
               text: err?.error?.message || 'Erro desconhecido',
             });

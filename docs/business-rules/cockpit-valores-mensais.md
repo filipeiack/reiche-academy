@@ -171,18 +171,20 @@ private replicarMetaParaMesesSeguintes(
 
 ---
 
-### 3. Validação com Período de Mentoria
+### 3. Atualização Simplificada de Valores Mensais
 
 **Arquivo:** `backend/src/modules/cockpit-pilares/cockpit-pilares.service.ts`
 
 **Método:** `updateValoresMensais()`
 
-**Regra:**
-- Valores mensais (meta, realizado) devem estar dentro do período de mentoria ativo
-- Campo **historico** é EXCEÇÃO (pode conter dados anteriores)
-- Frontend filtra indicadores por período de mentoria selecionado
+**Regra Atualizada:**
+- **Valores mensais (meta, realizado)** podem ser atualizados sem validação de período de mentoria
+- **Campo historico** aceita qualquer valor (inclusive dados anteriores)
+- **Frontend exibe valores dos últimos 13 meses** independente de período
 
-**Implementação:**
+> ⚠️ **IMPORTANTE:** Esta seção foi atualizada para refletir a implementação real. A validação com período de mentoria (R-MENT-008) foi removida conforme documentado em [cockpit-indicadores-mensais.md](./cockpit-indicadores-mensais.md). O controle de períodos agora é feito através do botão "Novo ciclo de 12 meses".
+
+**Implementação Atual:**
 
 ```typescript
 async updateValoresMensais(
@@ -190,100 +192,77 @@ async updateValoresMensais(
   dto: UpdateValoresMensaisDto,
   user: RequestUser,
 ): Promise<IndicadorCockpit> {
-  // 1. Buscar indicador com empresa
+  // 1. Validar indicador e acesso
   const indicador = await this.prisma.indicadorCockpit.findUnique({
     where: { id: indicadorId },
-    include: {
-      cockpitPilar: {
-        include: {
-          pilarEmpresa: {
-            include: {
-              empresa: {
-                include: {
-                  periodosMentoria: {
-                    where: { ativo: true }
-                  }
-                }
-              }
-            }
-          }
-        }
-      }
-    }
   });
 
-  const periodoMentoria = indicador.cockpitPilar.pilarEmpresa.empresa.periodosMentoria[0];
-
-  if (!periodoMentoria) {
-    throw new BadRequestException('Empresa não possui período de mentoria ativo');
+  if (!indicador) {
+    throw new NotFoundException('Indicador não encontrado');
   }
 
-  // 2. Validar cada valor mensal
-  for (const valorDto of dto.valores) {
-    if (valorDto.mes === null) continue; // Resumo anual não valida
-    
-    const dataValor = new Date(valorDto.ano, valorDto.mes - 1, 1);
-    
-    // Validar meta e realizado (historico é exceção)
-    if (
-      (valorDto.meta !== undefined || valorDto.realizado !== undefined) &&
-      (dataValor < periodoMentoria.dataInicio || dataValor > periodoMentoria.dataFim)
-    ) {
-      throw new BadRequestException(
-        `Mês ${valorDto.mes}/${valorDto.ano} está fora do período de mentoria ativo (${format(periodoMentoria.dataInicio, 'MM/yyyy')} - ${format(periodoMentoria.dataFim, 'MM/yyyy')})`
-      );
-    }
-  }
+  await this.validateCockpitAccess(indicador.cockpitPilarId, user);
 
-  // 3. Vincular ao período de mentoria ao criar IndicadorMensal
-  const updates = dto.valores.map(async (valorDto) => {
-    return this.prisma.indicadorMensal.upsert({
+  // 2. Atualizar cada valor mensal (sem validação de período)
+  const updates = dto.valores.map(async (valor) => {
+    // Buscar ou criar mês
+    const mes = await this.prisma.indicadorMensal.findFirst({
       where: {
-        indicadorCockpitId_ano_mes_periodoMentoriaId: {
-          indicadorCockpitId: indicadorId,
-          ano: valorDto.ano,
-          mes: valorDto.mes,
-          periodoMentoriaId: periodoMentoria.id,
-        },
-      },
-      update: {
-        meta: valorDto.meta,
-        realizado: valorDto.realizado,
-        historico: valorDto.historico, // ✅ Não valida
-        updatedBy: user.id,
-      },
-      create: {
         indicadorCockpitId: indicadorId,
-        ano: valorDto.ano,
-        mes: valorDto.mes,
-        meta: valorDto.meta,
-        realizado: valorDto.realizado,
-        historico: valorDto.historico,
-        periodoMentoriaId: periodoMentoria.id, // ✅ VÍNCULO
-        createdBy: user.id,
-        updatedBy: user.id,
+        ano: valor.ano,
+        mes: valor.mes,
       },
     });
+
+    if (mes) {
+      // Atualizar existente
+      return this.prisma.indicadorMensal.update({
+        where: { id: mes.id },
+        data: {
+          meta: valor.meta,
+          realizado: valor.realizado,
+          historico: valor.historico,
+          updatedBy: user.id,
+        },
+      });
+    } else {
+      // Criar novo
+      return this.prisma.indicadorMensal.create({
+        data: {
+          indicadorCockpitId: indicadorId,
+          ano: valor.ano,
+          mes: valor.mes,
+          meta: valor.meta,
+          realizado: valor.realizado,
+          historico: valor.historico,
+          createdBy: user.id,
+          updatedBy: user.id,
+        },
+      });
+    }
   });
 
   await Promise.all(updates);
-  
-  return indicadorAtualizado;
+
+  // Retornar meses atualizados
+  return this.prisma.indicadorCockpit.findMany({
+    where: {
+      indicadorCockpitId: indicadorId,
+    },
+    orderBy: [{ ano: 'desc' }, { mes: 'asc' }],
+  });
 }
 ```
 
-**Frontend - Filtro de Período:**
+**Frontend - Exibição de Meses:**
+- Componente `edicao-valores-mensais` exibe **últimos 13 meses** disponíveis
+- Não há dropdown de seleção de período
+- Controle de períodos feito através do botão "Novo ciclo de 12 meses"
 
-Componente `edicao-valores-mensais.component.ts` deve:
-1. Exibir dropdown de seleção de período de mentoria
-2. Calcular meses dinamicamente baseado em dataInicio/dataFim
-3. Filtrar indicadores por periodoMentoriaId selecionado
-
-**Exibição de meses:**
-- Se período inicia em maio/2026 → exibir: Mai/26, Jun/26, Jul/26... Abr/27
-- Headers dinâmicos (formato compacto)
-
-**Ref:** ADR-007 (Período de Mentoria de 1 Ano) | [periodo-mentoria.md](periodo-mentoria.md)
+**Referências:**
+- ✅ **Removido:** Validação R-MENT-008 (período de mentoria)
+- ✅ **Novo Sistema:** [cockpit-indicadores-mensais.md](./cockpit-indicadores-mensais.md)
+- ✅ **Implementado:** Botão "Novo ciclo de 12 meses"
 
 ---
 
@@ -526,3 +505,4 @@ async updateValoresMensais(
 - Status visual binário (verde/vermelho) - NÃO há amarelo implementado no cálculo
 - Cache local garante recálculo imediato sem esperar backend
 - Backend usa upsert (update se existe, create se não existe)
+- **🔄 ATUALIZAÇÃO IMPORTANTE (2026-01-27):** Validação com período de mentoria (R-MENT-008) foi removida. Controle de períodos agora através de ciclos manuais conforme [cockpit-indicadores-mensais.md](./cockpit-indicadores-mensais.md)

@@ -185,13 +185,35 @@ export class NavbarComponent implements OnInit {
   onEmpresaChange(event: any): void {
     const empresaId = typeof event === 'string' ? event : event?.id || this.selectedEmpresaId;
     
+    console.log('[NAVBAR] onEmpresaChange chamado:', { event, empresaId, selectedEmpresaId: this.selectedEmpresaId });
+    
     // Se empresaId for null/undefined, limpar contexto
     if (!empresaId) {
+      console.log('[NAVBAR] Limpando empresa selecionada');
       this.empresaContextService.clearSelectedEmpresa();
       return;
     }
     
+    // Atualizar contexto de empresa
+    console.log('[NAVBAR] Setando empresa no contexto:', empresaId);
     this.empresaContextService.setSelectedEmpresa(empresaId);
+    
+    // Se já está na página de diagnósticos, NÃO navegar
+    // O componente reage automaticamente ao contexto via selectedEmpresaId$
+    const currentUrl = this.router.url;
+    console.log('[NAVBAR] URL atual:', currentUrl);
+    
+    if (!currentUrl.includes('/diagnostico-notas')) {
+      // Navegar para a página de diagnósticos
+      console.log('[NAVBAR] Navegando para /diagnostico-notas');
+      setTimeout(() => {
+        this.router.navigate(['/diagnostico-notas']).catch(err => {
+          console.error('[NAVBAR] Erro ao navegar para diagnósticos:', err);
+        });
+      }, 100);
+    } else {
+      console.log('[NAVBAR] Já está em /diagnostico-notas, componente vai reagir ao contexto');
+    }
   }
 
   /**

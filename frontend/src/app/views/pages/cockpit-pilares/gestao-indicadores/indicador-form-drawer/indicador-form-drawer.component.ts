@@ -91,6 +91,7 @@ import { StatusMedicaoUtil } from '@core/utils/status-medicao.util';
             [searchable]="true"
             [addTag]="addUsuarioTag"
             [clearable]="true"
+            appendTo="body"
           >
           </ng-select>
         </div>

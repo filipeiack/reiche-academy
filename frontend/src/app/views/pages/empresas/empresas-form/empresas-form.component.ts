@@ -175,7 +175,6 @@ export class EmpresasFormComponent implements OnInit {
       title: 'Renovar Mentoria?',
       html: `<p>O período atual <strong>Período ${this.periodoAtivo.numero}</strong> será encerrado.</p>
              <p>Um novo período <strong>Período ${this.periodoAtivo.numero + 1}</strong> será criado a partir de hoje com duração de 1 ano.</p>`,
-      icon: 'question',
       showCancelButton: true,
       confirmButtonText: 'Sim, renovar',
       cancelButtonText: 'Cancelar',

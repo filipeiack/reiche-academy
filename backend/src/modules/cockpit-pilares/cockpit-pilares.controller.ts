@@ -140,11 +140,11 @@ export class CockpitPilaresController {
   @Post('cockpits/:cockpitId/indicadores')
   @Roles('ADMINISTRADOR', 'GESTOR', 'COLABORADOR')
   @ApiOperation({
-    summary: 'Criar indicador (auto-cria 13 meses jan-dez + anual)',
+    summary: 'Criar indicador (auto-cria 12 meses consecutivos)',
   })
   @ApiResponse({
     status: 201,
-    description: 'Indicador criado com 13 meses vazios',
+    description: 'Indicador criado com 12 meses vazios',
   })
   @ApiResponse({ status: 403, description: 'Acesso negado (multi-tenant)' })
   @ApiResponse({ status: 404, description: 'Cockpit não encontrado' })

@@ -17,13 +17,13 @@
 
   <!-- Desktop: Tabela de visualização -->
   <div class="table-responsive d-none d-lg-block">
-    @if (loading) {
-    <div class="text-center py-4">
-      <div class="spinner-border text-primary" role="status">
-        <span class="visually-hidden">Carregando...</span>
-      </div>
-    </div>
-    } @else {
+     @if (loading) {
+     <div class="text-center py-4" data-testid="loading-indicator">
+       <div class="spinner-border text-primary" role="status">
+         <span class="visually-hidden">Carregando...</span>
+       </div>
+     </div>
+     } @else {
     <table class="table table-hover table-sm" data-testid="indicadores-table">
       <thead class="table-light small">
         <tr>
@@ -38,16 +38,15 @@
       <tbody cdkDropList (cdkDropListDropped)="onDrop($event)">
         @for (indicador of indicadores; track indicador.id) {
         <tr cdkDrag>
-          <!-- Drag Handle -->
-          <!-- Nome -->
-            <td cdkDragHandle style="overflow-wrap: break-word; overflow: hidden; text-overflow: ellipsis; white-space: normal; cursor: move;">
+          <!-- Drag Handle + Nome -->
+          <td cdkDragHandle style="overflow-wrap: break-word; overflow: hidden; text-overflow: ellipsis; white-space: normal; cursor: move;">
             <i class="bi bi-grip-vertical text-muted"></i>
             <strong class="text-break">{{ indicador.nome.toUpperCase() }}</strong>
             @if (indicador.descricao) {
             <br>
             <small class="text-muted fs-7 text-break">{{ indicador.descricao }}</small>
             }
-            </td>
+          </td>
 
           <!-- Tipo de Medida -->
           <td class="small">
@@ -102,12 +101,12 @@
         }
 
         @if (indicadores.length === 0) {
-        <tr>
-          <td colspan="7" class="text-center text-muted py-4">
-            <i class="bi bi-inbox me-2"></i>
-            Nenhum indicador criado. Clique em "Novo Indicador" para começar.
-          </td>
-        </tr>
+         <tr>
+           <td colspan="7" class="text-center text-muted py-4" data-testid="no-indicators-message">
+             <i class="bi bi-inbox me-2"></i>
+             Nenhum indicador criado. Clique em "Novo Indicador" para começar.
+           </td>
+         </tr>
         }
       </tbody>
     </table>

@@ -616,9 +616,11 @@ forceSaveAll(): void {
 - `criticidade`: @IsEnum(Criticidade), @IsNotEmpty()
 
 **Validações implementadas:**
-- Nota obrigatória, entre 1 e 10
-- Criticidade obrigatória (ALTO, MEDIO, BAIXO)
+- Nota obrigatória, entre 0 e 10
+- Criticidade obrigatória (ALTO, MEDIA, BAIXO)
 - Mensagens de erro customizadas
+
+> ⚠️ **NOTA:** Range atual é 0-10 (conforme código real), enum usa "MEDIA" (sem acento)
 
 **Arquivo:** [update-nota-rotina.dto.ts](../../backend/src/modules/diagnosticos/dto/update-nota-rotina.dto.ts)
 
