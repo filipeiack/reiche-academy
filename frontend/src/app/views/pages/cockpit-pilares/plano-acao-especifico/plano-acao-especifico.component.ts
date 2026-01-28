@@ -11,11 +11,12 @@ import {
 } from '@core/interfaces/cockpit-pilares.interface';
 import { OFFCANVAS_SIZE } from '@core/constants/ui.constants';
 import { AcaoFormDrawerComponent } from '@app/views/pages/cockpit-pilares/plano-acao-especifico/acao-form-drawer/acao-form-drawer.component';
+import { TranslatePipe } from "../../../../core/pipes/translate.pipe";
 
 @Component({
   selector: 'app-plano-acao-especifico',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, TranslatePipe],
   templateUrl: './plano-acao-especifico.component.html',
   styleUrl: './plano-acao-especifico.component.scss',
 })
@@ -73,7 +74,7 @@ export class PlanoAcaoEspecificoComponent implements OnInit {
     const offcanvasRef = this.offcanvasService.open(AcaoFormDrawerComponent, {
       position: 'end',
       backdrop: 'static',
-      panelClass: OFFCANVAS_SIZE.MEDIUM,
+      panelClass: `${OFFCANVAS_SIZE.MEDIUM} offcanvas-full-mobile`,
     });
 
     const component = offcanvasRef.componentInstance as AcaoFormDrawerComponent;
@@ -94,7 +95,7 @@ export class PlanoAcaoEspecificoComponent implements OnInit {
     const offcanvasRef = this.offcanvasService.open(AcaoFormDrawerComponent, {
       position: 'end',
       backdrop: 'static',
-      panelClass: OFFCANVAS_SIZE.MEDIUM,
+      panelClass: `${OFFCANVAS_SIZE.MEDIUM} offcanvas-full-mobile`,
     });
 
     const component = offcanvasRef.componentInstance as AcaoFormDrawerComponent;

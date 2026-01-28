@@ -20,7 +20,7 @@ import { Usuario } from '@core/models/auth.model';
   standalone: true,
   imports: [CommonModule, ReactiveFormsModule, NgSelectModule],
   template: `
-    <div class="d-flex flex-column h-100">
+    <form [formGroup]="form" class="d-flex flex-column h-100">
       <div class="offcanvas-header border-bottom flex-shrink-0">
         <h5 class="offcanvas-title">
           <i class="bi bi-clipboard-check me-2"></i>
@@ -29,8 +29,12 @@ import { Usuario } from '@core/models/auth.model';
         <button type="button" class="btn-close" (click)="fechar()"></button>
       </div>
 
-      <div class="offcanvas-body flex-grow-1 overflow-auto small">
-        <form [formGroup]="form" class="row g-3">
+      <div class="offcanvas-body flex-grow-1 overflow-auto">
+        <div class="alert alert-info mb-3">
+          <i class="bi bi-bar-chart me-1"></i>
+          <strong>Plano de Ação do Indicador:</strong>
+        </div>
+        <div class="row g-2">
           <div class="col-md-6">
             <label class="form-label">Indicador</label>
             <ng-select
@@ -58,11 +62,11 @@ import { Usuario } from '@core/models/auth.model';
               </ng-template>
             </ng-select>
           </div>
-
+          
           <div class="col-md-12">
             <label class="form-label">Causas (5 Porquês)</label>
             <div class="row g-2">
-              <div class="col-md-6">
+              <div class="col-md-12">
                 <input class="form-control" placeholder="1º porquê" formControlName="causa1" />
               </div>
               <div class="col-md-6">
@@ -74,18 +78,13 @@ import { Usuario } from '@core/models/auth.model';
               <div class="col-md-6">
                 <input class="form-control" placeholder="4º porquê" formControlName="causa4" />
               </div>
-              <div class="col-md-12">
+              <div class="col-md-6">
                 <input class="form-control" placeholder="5º porquê" formControlName="causa5" />
               </div>
             </div>
           </div>
 
-          <div class="col-md-12">
-            <label class="form-label">Ação Proposta</label>
-            <textarea class="form-control" rows="2" formControlName="acaoProposta"></textarea>
-          </div>
-
-          <div class="col-md-4">
+          <div class="col-md-6">
             <label class="form-label">Responsável</label>
             <ng-select
               formControlName="responsavelId"
@@ -97,7 +96,7 @@ import { Usuario } from '@core/models/auth.model';
               [clearable]="true"
             ></ng-select>
           </div>
-          <div class="col-md-4">
+          <div class="col-md-6">
             <label class="form-label">Status</label>
             <select class="form-select" formControlName="status">
               @for (status of statusOptions; track status.value) {
@@ -105,11 +104,19 @@ import { Usuario } from '@core/models/auth.model';
               }
             </select>
           </div>
-          <div class="col-md-4">
+          <div class="col-md-6">
             <label class="form-label">Prazo</label>
             <input type="date" class="form-control" formControlName="prazo" />
           </div>
-        </form>
+
+          <div class="col-md-12">
+            <label class="form-label">Ação Proposta</label>
+            <textarea class="form-control" rows="2" formControlName="acaoProposta"></textarea>
+          </div>
+
+          
+          
+        </div>
       </div>
 
       <div class="offcanvas-footer border-top p-3 flex-shrink-0 bg-light">
@@ -130,7 +137,7 @@ import { Usuario } from '@core/models/auth.model';
           </button>
         </div>
       </div>
-    </div>
+    </form>
   `,
   styles: [
     `

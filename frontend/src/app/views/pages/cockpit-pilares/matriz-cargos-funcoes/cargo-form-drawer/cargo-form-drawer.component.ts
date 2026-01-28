@@ -15,7 +15,7 @@ import { Usuario } from '@core/models/auth.model';
   standalone: true,
   imports: [CommonModule, ReactiveFormsModule, NgSelectModule],
   template: `
-    <div class="d-flex flex-column h-100">
+    <form [formGroup]="form" class="d-flex flex-column h-100">
       <div class="offcanvas-header border-bottom flex-shrink-0">
         <h5 class="offcanvas-title">
           <i class="bi bi-people me-2"></i>
@@ -24,43 +24,45 @@ import { Usuario } from '@core/models/auth.model';
         <button type="button" class="btn-close" (click)="fechar()"></button>
       </div>
 
-      <div class="offcanvas-body flex-grow-1 overflow-auto small">
-        <form [formGroup]="form">
-          <div class="mb-3">
-            <label class="form-label">
-              Nome do Cargo <span class="text-danger">*</span>
-            </label>
-            <input
-              type="text"
-              class="form-control"
-              formControlName="cargo"
-              placeholder="Ex: Coordenador Comercial"
-              [class.is-invalid]="form.get('cargo')?.invalid && form.get('cargo')?.touched"
-            />
-            @if (form.get('cargo')?.invalid && form.get('cargo')?.touched) {
-              <div class="invalid-feedback d-block">Nome é obrigatório</div>
-            }
-          </div>
+      <div class="offcanvas-body flex-grow-1 overflow-auto">
+        <div class="alert alert-info mb-3">
+          <i class="bi bi-people me-1"></i>
+          Cargos e Responsáveis
+        </div>
+        <div class="mb-3">
+          <label class="form-label">
+            Nome do Cargo <span class="text-danger">*</span>
+          </label>
+          <input
+            type="text"
+            class="form-control"
+            formControlName="cargo"
+            placeholder="Ex: Coordenador Comercial"
+            [class.is-invalid]="form.get('cargo')?.invalid && form.get('cargo')?.touched"
+          />
+          @if (form.get('cargo')?.invalid && form.get('cargo')?.touched) {
+            <div class="invalid-feedback d-block">Nome é obrigatório</div>
+          }
+        </div>
 
-          <div class="mb-3">
-            <label class="form-label">Responsáveis</label>
-            <ng-select
-              formControlName="responsavelIds"
-              [items]="usuarios"
-              bindLabel="nome"
-              bindValue="id"
-              [multiple]="true"
-              placeholder="Selecione responsáveis..."
-              [addTag]="addUsuarioTag"
-              [clearable]="true"
-              appendTo="body"
-            >
-            </ng-select>
-          </div>
-        </form>
+        <div class="mb-3">
+          <label class="form-label">Responsáveis</label>
+          <ng-select
+            formControlName="responsavelIds"
+            [items]="usuarios"
+            bindLabel="nome"
+            bindValue="id"
+            [multiple]="true"
+            placeholder="Selecione responsáveis..."
+            [addTag]="addUsuarioTag"
+            [clearable]="true"
+            appendTo="body"
+          >
+          </ng-select>
+        </div>
       </div>
 
-      <div class="offcanvas-footer border-top p-3 flex-shrink-0 bg-light">
+      <div class="offcanvas-footer border-top p-3 flex-shrink-0 bg-light mt-auto">
         <div class="d-flex gap-2 justify-content-end">
           <button type="button" class="btn btn-secondary" (click)="fechar()">
             Cancelar
@@ -74,11 +76,11 @@ import { Usuario } from '@core/models/auth.model';
             @if (saving) {
               <span class="spinner-border spinner-border-sm me-2" role="status"></span>
             }
-            {{ isEditMode ? 'Atualizar' : 'Criar Cargo' }}
+            {{ isEditMode ? 'Atualizar Cargo' : 'Adicionar Cargo' }}
           </button>
         </div>
       </div>
-    </div>
+    </form>
   `,
   styles: [
     `
@@ -87,8 +89,17 @@ import { Usuario } from '@core/models/auth.model';
         flex-direction: column;
         height: 100%;
       }
+      .offcanvas-body {
+        min-height: 0;
+        flex: 1 1 auto;
+        overflow: auto;
+      }
       .offcanvas-footer {
         background-color: #f8f9fa;
+        margin-top: auto;
+        position: sticky;
+        bottom: 0;
+        z-index: 1;
       }
     `,
   ],

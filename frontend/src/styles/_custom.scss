@@ -47,9 +47,17 @@
 }
 
 /* Offcanvas customizado */
-:host ::ng-deep .offcanvas-large {
-  width: 450px !important;
-  max-width: 90vw;
+.offcanvas-large {
+	width: 450px !important;
+	max-width: 90vw;
+}
+
+/* Offcanvas maior em mobile (global) */
+@media (max-width: 768px) {
+	.offcanvas {
+		width: 100vw !important;
+		max-width: 100vw !important;
+	}
 }
 
 // ========================================

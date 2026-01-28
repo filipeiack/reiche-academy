@@ -8,6 +8,7 @@ import {
 import { CockpitPilaresService } from './cockpit-pilares.service';
 import { PrismaService } from '../../common/prisma/prisma.service';
 import { AuditService } from '../audit/audit.service';
+import { StatusAcao } from '@prisma/client';
 
 /**
  * Testes Unitários - Cockpit de Pilares
@@ -105,9 +106,37 @@ describe('CockpitPilaresService', () => {
               findFirst: jest.fn(),
               update: jest.fn(),
               create: jest.fn(),
+              findUnique: jest.fn(),
             },
             usuario: {
               findUnique: jest.fn(),
+              findMany: jest.fn(),
+            },
+            cargoCockpit: {
+              findMany: jest.fn(),
+              findFirst: jest.fn(),
+              findUnique: jest.fn(),
+              create: jest.fn(),
+              update: jest.fn(),
+              delete: jest.fn(),
+            },
+            cargoCockpitResponsavel: {
+              createMany: jest.fn(),
+              deleteMany: jest.fn(),
+            },
+            funcaoCargo: {
+              findFirst: jest.fn(),
+              findUnique: jest.fn(),
+              create: jest.fn(),
+              update: jest.fn(),
+              delete: jest.fn(),
+            },
+            acaoCockpit: {
+              findMany: jest.fn(),
+              findUnique: jest.fn(),
+              create: jest.fn(),
+              update: jest.fn(),
+              delete: jest.fn(),
             },
             $transaction: jest.fn(),
           },

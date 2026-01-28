@@ -2,6 +2,22 @@
   vertical-align: middle;
 }
 
-ngb-accordion .btn {
-  white-space: nowrap;
+.cargo-toggle {
+  text-decoration: none;
+  color: inherit;
+}
+
+.cargo-toggle:hover {
+  text-decoration: none;
+}
+
+.cargo-responsaveis .badge {
+  font-weight: 600;
+}
+
+// Mobile: manter apenas nome e ação na tabela
+@media (max-width: 768px) {
+  .col-mobile-hide {
+    display: none;
+  }
 }

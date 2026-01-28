@@ -26,3 +26,8 @@ span.bg-success {
   border: 1px solid;
   color: var(--bs-body-color);
 }
+
+/* Borda primary para ng-select */
+::ng-deep ng-select.ng-select-primary-border .ng-select-container {
+  border-color: var(--bs-primary) !important;
+}

@@ -16,7 +16,7 @@
   </div>
 
   <!-- Desktop: Tabela de visualização -->
-  <div class="table-responsive d-none d-lg-block">
+  <div class="table-responsive">
      @if (loading) {
      <div class="text-center py-4" data-testid="loading-indicator">
        <div class="spinner-border text-primary" role="status">
@@ -111,13 +111,5 @@
       </tbody>
     </table>
     }
-  </div>
-
-  <!-- Mobile: Cards -->
-  <div class="d-block d-lg-none">
-    <div class="alert alert-info">
-      <i class="bi bi-phone me-2"></i>
-      Visualização mobile em desenvolvimento. Use desktop para gerenciar indicadores.
-    </div>
   </div>
 </div>

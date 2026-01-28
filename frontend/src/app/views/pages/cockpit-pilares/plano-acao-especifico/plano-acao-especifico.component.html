@@ -26,10 +26,10 @@
             <thead>
               <tr>
                 <th>Indicador</th>
-                <th>Causas e Ação</th>
-                <th>Status</th>
-                <th>Responsável</th>
-                <th class="text-end">Ações</th>
+                <th class="col-mobile-hide">Causas e Ação</th>
+                <th class="col-mobile-hide">Status</th>
+                <th class="col-mobile-hide">Responsável</th>
+                <th class="text-center">Ações</th>
               </tr>
             </thead>
             <tbody>
@@ -37,23 +37,26 @@
                 <tr>
                   <td>{{ acao.indicadorCockpit?.nome || '-' }} <br>
                     <small>{{ getMesLabel(acao.indicadorMensal) }}</small></td>
-                  <td style="white-space: normal; overflow-wrap: break-word;">
-                    {{ acao.causa1 }} > {{ acao.causa2 }} > {{ acao.causa3 }} > {{ acao.causa4 }} > {{ acao.causa5 }}<br />
+                  <td class="col-mobile-hide" style="white-space: normal; overflow-wrap: break-word;">
+                    <small>causas: </small>{{ acao.causa1 }} > {{ acao.causa2 }} > {{ acao.causa3 }} > {{ acao.causa4 }} > {{ acao.causa5 }}<br />
                     <small>ação: </small>{{ acao.acaoProposta }}
                   </td>
-                  <td>
+                  <td class="col-mobile-hide">
                     <span class="badge" [class]="getStatusClass(acao)">
                       {{ getStatusLabel(acao) }}
                     </span>
                   </td>
-                  <td>{{ acao.responsavel?.nome || '-' }}</td>
-                  <td class="text-end">
-                    <button class="btn btn-outline-primary btn-sm me-2" (click)="editarAcao(acao)">
-                      <i class="bi bi-pencil"></i>
-                    </button>
-                    <button class="btn btn-outline-danger btn-sm" (click)="deleteAcao(acao)">
-                      <i class="bi bi-trash"></i>
-                    </button>
+                  <td class="col-mobile-hide">{{ acao.responsavel?.nome || '-' }}</td>
+                  <td class="text-center">
+                    <button data-testid="edit-acao-button" class="btn btn-icon text-secondary" 
+                    (click)="editarAcao(acao)"
+                [title]="'BUTTONS.EDIT' | translate">
+                <i class="feather icon-edit"></i>
+              </button>
+              <button data-testid="delete-acao-button" class="btn btn-icon text-danger" (click)="deleteAcao(acao)"
+                [title]="'BUTTONS.DELETE' | translate">
+                <i class="feather icon-trash-2"></i>
+              </button>
                   </td>
                 </tr>
               }

@@ -18,6 +18,45 @@
   }
 }
 
+// Ajustes responsivos para o header do indicador em mobile
+@media (max-width: 768px) {
+  .indicador-header {
+    flex-direction: column;
+    align-items: flex-start !important;
+  }
+
+  .detalhes-indicador {
+    flex-wrap: wrap;
+    width: 100%;
+    gap: 0.5rem !important;
+  }
+
+  .detalhes-indicador .badge {
+    flex: 1 1 48%;
+    min-width: 140px;
+    padding: 0.4rem 0.5rem !important;
+  }
+
+  .detalhes-indicador .form-label {
+    font-size: 0.7rem;
+    margin-bottom: 0.25rem !important;
+  }
+
+  .detalhes-indicador .fw-bold,
+  .detalhes-indicador .badge {
+    font-size: 0.8rem;
+  }
+}
+
+// Em mobile, evitar sticky para não quebrar o layout
+@media (max-width: 768px) {
+  .indicador-header,
+  .table-header-wrapper {
+    position: static;
+    top: auto;
+  }
+}
+
 
 /* Classes badges para span */
 span.bg-danger {

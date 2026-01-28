@@ -11,7 +11,7 @@ import { Criticidade, FuncaoCargo } from '@core/interfaces/cockpit-pilares.inter
   standalone: true,
   imports: [CommonModule, ReactiveFormsModule],
   template: `
-    <div class="d-flex flex-column h-100">
+    <form [formGroup]="form" class="d-flex flex-column h-100">
       <div class="offcanvas-header border-bottom flex-shrink-0">
         <h5 class="offcanvas-title">
           <i class="bi bi-list-task me-2"></i>
@@ -20,46 +20,50 @@ import { Criticidade, FuncaoCargo } from '@core/interfaces/cockpit-pilares.inter
         <button type="button" class="btn-close" (click)="fechar()"></button>
       </div>
 
-      <div class="offcanvas-body flex-grow-1 overflow-auto small">
-        <form [formGroup]="form">
-          <div class="mb-3">
-            <label class="form-label">
-              Descrição <span class="text-danger">*</span>
-            </label>
-            <textarea
-              class="form-control"
-              rows="3"
-              formControlName="descricao"
-              [class.is-invalid]="form.get('descricao')?.invalid && form.get('descricao')?.touched"
-            ></textarea>
-            @if (form.get('descricao')?.invalid && form.get('descricao')?.touched) {
-              <div class="invalid-feedback d-block">Descrição é obrigatória</div>
+      <div class="offcanvas-body flex-grow-1 overflow-auto">
+        @if (cargoNome) {
+        <div class="alert alert-info mb-3">
+          <i class="bi bi-people me-1"></i>
+          Cargo: <strong>{{ cargoNome }}</strong>
+        </div>
+        }
+        <div class="mb-3">
+          <label class="form-label">
+            Descrição <span class="text-danger">*</span>
+          </label>
+          <textarea
+            class="form-control"
+            rows="3"
+            formControlName="descricao"
+            [class.is-invalid]="form.get('descricao')?.invalid && form.get('descricao')?.touched"
+          ></textarea>
+          @if (form.get('descricao')?.invalid && form.get('descricao')?.touched) {
+            <div class="invalid-feedback d-block">Descrição é obrigatória</div>
+          }
+        </div>
+
+        <div class="mb-3">
+          <label class="form-label">Criticidade</label>
+          <select class="form-select" formControlName="nivelCritico">
+            @for (nivel of criticidadeOptions; track nivel.value) {
+              <option [value]="nivel.value">{{ nivel.label }}</option>
             }
-          </div>
+          </select>
+        </div>
 
-          <div class="mb-3">
-            <label class="form-label">Criticidade</label>
-            <select class="form-select" formControlName="nivelCritico">
-              @for (nivel of criticidadeOptions; track nivel.value) {
-                <option [value]="nivel.value">{{ nivel.label }}</option>
-              }
-            </select>
+        <div class="row">
+          <div class="col-md-6 mb-3">
+            <label class="form-label">Auto-avaliação</label>
+            <input type="number" class="form-control" formControlName="autoAvaliacao" min="0" max="10" />
           </div>
-
-          <div class="row">
-            <div class="col-md-6 mb-3">
-              <label class="form-label">Auto-avaliação</label>
-              <input type="number" class="form-control" formControlName="autoAvaliacao" min="0" max="10" />
-            </div>
-            <div class="col-md-6 mb-3">
-              <label class="form-label">Avaliação liderança</label>
-              <input type="number" class="form-control" formControlName="avaliacaoLideranca" min="0" max="10" />
-            </div>
+          <div class="col-md-6 mb-3">
+            <label class="form-label">Avaliação liderança</label>
+            <input type="number" class="form-control" formControlName="avaliacaoLideranca" min="0" max="10" />
           </div>
-        </form>
+        </div>
       </div>
 
-      <div class="offcanvas-footer border-top p-3 flex-shrink-0 bg-light">
+      <div class="offcanvas-footer border-top p-3 flex-shrink-0 bg-light mt-auto">
         <div class="d-flex gap-2 justify-content-end">
           <button type="button" class="btn btn-secondary" (click)="fechar()">
             Cancelar
@@ -73,11 +77,11 @@ import { Criticidade, FuncaoCargo } from '@core/interfaces/cockpit-pilares.inter
             @if (saving) {
               <span class="spinner-border spinner-border-sm me-2" role="status"></span>
             }
-            {{ isEditMode ? 'Atualizar' : 'Criar Função' }}
+            {{ isEditMode ? 'Atualizar Função' : 'Adicionar Função' }}
           </button>
         </div>
       </div>
-    </div>
+    </form>
   `,
   styles: [
     `
@@ -86,8 +90,17 @@ import { Criticidade, FuncaoCargo } from '@core/interfaces/cockpit-pilares.inter
         flex-direction: column;
         height: 100%;
       }
+      .offcanvas-body {
+        min-height: 0;
+        flex: 1 1 auto;
+        overflow: auto;
+      }
       .offcanvas-footer {
         background-color: #f8f9fa;
+        margin-top: auto;
+        position: sticky;
+        bottom: 0;
+        z-index: 1;
       }
     `,
   ],
@@ -98,6 +111,7 @@ export class FuncaoFormDrawerComponent {
   private cockpitService = inject(CockpitPilaresService);
 
   @Input() cargoId!: string;
+  @Input() cargoNome?: string;
   @Input() set funcaoParaEditar(value: FuncaoCargo | undefined) {
     if (value) {
       this.isEditMode = true;

@@ -1,7 +1,7 @@
 import { Component, Input, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { CdkDragDrop, DragDropModule, moveItemInArray } from '@angular/cdk/drag-drop';
-import { NgbAccordionModule, NgbOffcanvas } from '@ng-bootstrap/ng-bootstrap';
+import { NgbOffcanvas } from '@ng-bootstrap/ng-bootstrap';
 import Swal from 'sweetalert2';
 import { CockpitPilaresService } from '@core/services/cockpit-pilares.service';
 import {
@@ -12,11 +12,12 @@ import {
 import { OFFCANVAS_SIZE } from '@core/constants/ui.constants';
 import { CargoFormDrawerComponent } from './cargo-form-drawer/cargo-form-drawer.component';
 import { FuncaoFormDrawerComponent } from './funcao-form-drawer/funcao-form-drawer.component';
+import { TranslatePipe } from "../../../../core/pipes/translate.pipe";
 
 @Component({
   selector: 'app-matriz-cargos-funcoes',
   standalone: true,
-  imports: [CommonModule, DragDropModule, NgbAccordionModule],
+  imports: [CommonModule, DragDropModule, TranslatePipe],
   templateUrl: './matriz-cargos-funcoes.component.html',
   styleUrl: './matriz-cargos-funcoes.component.scss',
 })
@@ -29,6 +30,7 @@ export class MatrizCargosFuncoesComponent implements OnInit {
   cargos: CargoCockpit[] = [];
   loading = false;
   empresaId: string | null = null;
+  cargoExpandido: Record<string, boolean> = {};
 
   ngOnInit(): void {
     this.loadCargos();
@@ -44,6 +46,7 @@ export class MatrizCargosFuncoesComponent implements OnInit {
         this.cockpitService.getCargosByCockpit(this.cockpitId).subscribe({
           next: (cargos) => {
             this.cargos = cargos;
+            this.inicializarExpansaoCargos();
             this.loading = false;
           },
           error: (err) => {
@@ -73,6 +76,7 @@ export class MatrizCargosFuncoesComponent implements OnInit {
     component.empresaId = this.empresaId || '';
     component.cargoSalvo.subscribe((cargo: CargoCockpit) => {
       this.cargos.push(cargo);
+      this.cargoExpandido[cargo.id] = true;
       this.recalcularOrdensCargos();
     });
   }
@@ -159,6 +163,8 @@ export class MatrizCargosFuncoesComponent implements OnInit {
 
     const component = offcanvasRef.componentInstance as FuncaoFormDrawerComponent;
     component.cargoId = cargo.id;
+    component.cargoNome = cargo.cargo;
+    
     component.funcaoSalva.subscribe((funcao: FuncaoCargo) => {
       cargo.funcoes = cargo.funcoes || [];
       cargo.funcoes.push(funcao);
@@ -175,6 +181,7 @@ export class MatrizCargosFuncoesComponent implements OnInit {
 
     const component = offcanvasRef.componentInstance as FuncaoFormDrawerComponent;
     component.cargoId = cargo.id;
+    component.cargoNome = cargo.cargo;
     component.funcaoParaEditar = funcao;
     component.funcaoSalva.subscribe((funcaoAtualizada: FuncaoCargo) => {
       const index = cargo.funcoes?.findIndex((f) => f.id === funcaoAtualizada.id) ?? -1;
@@ -249,6 +256,22 @@ export class MatrizCargosFuncoesComponent implements OnInit {
       .map((r) => r.usuario?.nome)
       .filter(Boolean)
       .join(', ');
+  }
+
+  toggleCargo(cargoId: string): void {
+    this.cargoExpandido[cargoId] = !this.cargoExpandido[cargoId];
+  }
+
+  isCargoExpanded(cargoId: string): boolean {
+    return !!this.cargoExpandido[cargoId];
+  }
+
+  private inicializarExpansaoCargos(): void {
+    this.cargos.forEach((cargo) => {
+      if (this.cargoExpandido[cargo.id] === undefined) {
+        this.cargoExpandido[cargo.id] = true;
+      }
+    });
   }
 
   getCriticidadeClass(criticidade: Criticidade): string {

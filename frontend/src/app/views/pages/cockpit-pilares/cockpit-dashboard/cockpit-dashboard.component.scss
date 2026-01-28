@@ -5,3 +5,17 @@
 .nav-tabs .nav-link {
   cursor: pointer;
 }
+
+// Ajuste responsivo do tamanho da fonte das tabs
+@media (max-width: 1200px) {
+  .nav-tabs .nav-link {
+    font-size: 0.95rem;
+  }
+}
+
+@media (max-width: 900px) {
+  .nav-tabs .nav-link {
+    font-size: 0.8rem;
+  }
+}
+
