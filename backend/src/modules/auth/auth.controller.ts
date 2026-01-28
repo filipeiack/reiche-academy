@@ -58,8 +58,11 @@ export class AuthController {
   @ApiOperation({ summary: 'Redefinir senha com token' })
   @ApiResponse({ status: 200, description: 'Senha alterada com sucesso' })
   @ApiResponse({ status: 400, description: 'Token inválido ou expirado' })
-  async resetPassword(@Body() dto: ResetPasswordDto) {
-    return this.authService.resetPassword(dto);
+  async resetPassword(@Body() dto: ResetPasswordDto, @Request() req: ExpressRequest) {
+    const ip = req.ip || req.headers['x-forwarded-for'] as string || req.socket.remoteAddress;
+    const userAgent = req.headers['user-agent'];
+
+    return this.authService.resetPassword(dto, ip, userAgent);
   }
 
   @Post('logout')
@@ -68,8 +71,14 @@ export class AuthController {
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Logout do usuário atual' })
   @ApiResponse({ status: 200, description: 'Logout realizado com sucesso' })
-  async logout(@Body() logoutDto: { refreshToken: string }) {
-    return this.authService.logout(logoutDto.refreshToken);
+  async logout(
+    @Body() logoutDto: { refreshToken: string },
+    @Request() req: ExpressRequest & { user: any },
+  ) {
+    const ip = req.ip || req.headers['x-forwarded-for'] as string || req.socket.remoteAddress;
+    const userAgent = req.headers['user-agent'];
+
+    return this.authService.logout(logoutDto.refreshToken, req.user, ip, userAgent);
   }
 
   @Post('logout-all')
@@ -79,6 +88,9 @@ export class AuthController {
   @ApiOperation({ summary: 'Logout de todos os dispositivos do usuário' })
   @ApiResponse({ status: 200, description: 'Logout de todos os dispositivos realizado com sucesso' })
   async logoutAll(@Request() req: ExpressRequest & { user: any }) {
-    return this.authService.logoutAllDevices(req.user.id);
+    const ip = req.ip || req.headers['x-forwarded-for'] as string || req.socket.remoteAddress;
+    const userAgent = req.headers['user-agent'];
+
+    return this.authService.logoutAllDevices(req.user, ip, userAgent);
   }
 }

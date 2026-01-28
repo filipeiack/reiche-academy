@@ -156,6 +156,7 @@ model LoginHistory {
   email       String
   sucesso     Boolean
   motivoFalha String?
+  evento      LoginHistoryEvento @default(LOGIN)
 
   ipAddress   String?
   userAgent   String?
@@ -169,6 +170,13 @@ model LoginHistory {
   @@index([createdAt])
   @@index([sucesso])
   @@map("login_history")
+}
+
+enum LoginHistoryEvento {
+  LOGIN
+  LOGOUT
+  LOGOUT_ALL
+  RESET_SENHA
 }
 
 model RefreshToken {

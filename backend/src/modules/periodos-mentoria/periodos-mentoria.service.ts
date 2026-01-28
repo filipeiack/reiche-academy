@@ -5,13 +5,17 @@ import {
   BadRequestException,
 } from '@nestjs/common';
 import { PrismaService } from '../../common/prisma/prisma.service';
+import { AuditService } from '../audit/audit.service';
 import { CreatePeriodoMentoriaDto } from './dto/create-periodo-mentoria.dto';
 import { RenovarPeriodoMentoriaDto } from './dto/renovar-periodo-mentoria.dto';
 import { addYears } from 'date-fns';
 
 @Injectable()
 export class PeriodosMentoriaService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly audit: AuditService,
+  ) {}
 
   /**
    * Calcula data fim corrigida para períodos anuais
@@ -82,6 +86,19 @@ export class PeriodosMentoriaService {
         createdBy,
       },
     });
+
+    if (createdBy) {
+      const user = await this.prisma.usuario.findUnique({ where: { id: createdBy } });
+      await this.audit.log({
+        usuarioId: createdBy,
+        usuarioNome: user?.nome ?? '',
+        usuarioEmail: user?.email ?? '',
+        entidade: 'periodos_mentoria',
+        entidadeId: periodo.id,
+        acao: 'CREATE',
+        dadosDepois: periodo,
+      });
+    }
 
     // Nota: Criação de meses dos indicadores agora é responsabilidade do Cockpit
     // (botão "Criar Cockpit" ou "Novo ciclo de 12 meses")
@@ -171,6 +188,30 @@ export class PeriodosMentoriaService {
         },
       }),
     ]);
+
+    if (updatedBy) {
+      const user = await this.prisma.usuario.findUnique({ where: { id: updatedBy } });
+      await this.audit.log({
+        usuarioId: updatedBy,
+        usuarioNome: user?.nome ?? '',
+        usuarioEmail: user?.email ?? '',
+        entidade: 'periodos_mentoria',
+        entidadeId: periodoId,
+        acao: 'UPDATE',
+        dadosAntes: periodoAtual,
+        dadosDepois: periodoEncerrado,
+      });
+
+      await this.audit.log({
+        usuarioId: updatedBy,
+        usuarioNome: user?.nome ?? '',
+        usuarioEmail: user?.email ?? '',
+        entidade: 'periodos_mentoria',
+        entidadeId: novoPeriodo.id,
+        acao: 'CREATE',
+        dadosDepois: novoPeriodo,
+      });
+    }
 
     // Nota: Criação de novos meses dos indicadores agora é responsabilidade do Cockpit
     // (botão "Novo ciclo de 12 meses" na tela de edição de valores mensais)

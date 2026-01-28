@@ -137,12 +137,41 @@ export class AuthService {
     }
   }
 
-  async logout(refreshToken: string): Promise<void> {
+  async logout(
+    refreshToken: string,
+    requestUser: { id: string; email: string },
+    ip?: string,
+    userAgent?: string,
+  ): Promise<void> {
     await this.refreshTokensService.invalidateToken(refreshToken);
+
+    await this.registrarEventoAuth({
+      usuarioId: requestUser.id,
+      email: requestUser.email,
+      sucesso: true,
+      motivoFalha: null,
+      evento: 'LOGOUT',
+      ip,
+      userAgent,
+    });
   }
 
-  async logoutAllDevices(userId: string): Promise<void> {
-    await this.refreshTokensService.invalidateAllUserTokens(userId);
+  async logoutAllDevices(
+    requestUser: { id: string; email: string },
+    ip?: string,
+    userAgent?: string,
+  ): Promise<void> {
+    await this.refreshTokensService.invalidateAllUserTokens(requestUser.id);
+
+    await this.registrarEventoAuth({
+      usuarioId: requestUser.id,
+      email: requestUser.email,
+      sucesso: true,
+      motivoFalha: null,
+      evento: 'LOGOUT_ALL',
+      ip,
+      userAgent,
+    });
   }
 
   async hashPassword(senha: string): Promise<string> {
@@ -202,7 +231,11 @@ export class AuthService {
   /**
    * Reseta a senha usando o token
    */
-  async resetPassword(dto: ResetPasswordDto): Promise<{ message: string }> {
+  async resetPassword(
+    dto: ResetPasswordDto,
+    ip?: string,
+    userAgent?: string,
+  ): Promise<{ message: string }> {
     // Busca token
     const passwordReset = await this.prisma.passwordReset.findUnique({
       where: { token: dto.token },
@@ -246,6 +279,16 @@ export class AuthService {
       );
     }
 
+    await this.registrarEventoAuth({
+      usuarioId: passwordReset.usuarioId,
+      email: passwordReset.usuario.email ?? '',
+      sucesso: true,
+      motivoFalha: null,
+      evento: 'RESET_SENHA',
+      ip,
+      userAgent,
+    });
+
     return { message: 'Senha alterada com sucesso!' };
   }
 
@@ -260,13 +303,33 @@ export class AuthService {
     ip?: string,
     userAgent?: string,
   ): Promise<void> {
+    return this.registrarEventoAuth({
+      usuarioId,
+      email,
+      sucesso,
+      motivoFalha,
+      evento: 'LOGIN',
+      ip,
+      userAgent,
+    });
+  }
+
+  private async registrarEventoAuth(params: {
+    usuarioId: string | null;
+    email: string;
+    sucesso: boolean;
+    motivoFalha: string | null;
+    evento: 'LOGIN' | 'LOGOUT' | 'LOGOUT_ALL' | 'RESET_SENHA';
+    ip?: string;
+    userAgent?: string;
+  }): Promise<void> {
     try {
       let dispositivo: string | null = null;
       let navegador: string | null = null;
 
       // Parse básico do user agent
-      if (userAgent) {
-        const ua = userAgent.toLowerCase();
+      if (params.userAgent) {
+        const ua = params.userAgent.toLowerCase();
         
         // Detecta dispositivo
         if (ua.includes('mobile') || ua.includes('android') || ua.includes('iphone')) {
@@ -295,12 +358,13 @@ export class AuthService {
 
       await this.prisma.loginHistory.create({
         data: {
-          usuarioId,
-          email,
-          sucesso,
-          motivoFalha,
-          ipAddress: ip,
-          userAgent,
+          usuarioId: params.usuarioId,
+          email: params.email,
+          sucesso: params.sucesso,
+          motivoFalha: params.motivoFalha,
+          evento: params.evento,
+          ipAddress: params.ip,
+          userAgent: params.userAgent,
           dispositivo,
           navegador,
         },
