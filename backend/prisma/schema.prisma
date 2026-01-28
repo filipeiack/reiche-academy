@@ -672,6 +672,7 @@ model AcaoCockpit {
 
   status StatusAcao @default(PENDENTE)
   prazo  DateTime?
+  dataConclusao DateTime?
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt

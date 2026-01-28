@@ -10,7 +10,7 @@
       <!-- Botao Novo Ciclo -->
       @if (!loading && indicadores.length > 0) {
 
-        <button type="button" data-testid="btn-novo-ciclo-mensal" class="btn btn-outline-primary btn-sm"
+        <button type="button" data-testid="btn-novo-ciclo-mensal" class="btn btn-primary btn-sm"
           [disabled]="!podeCriarNovoCiclo || criandoNovoCiclo" (click)="criarNovoCicloMeses()"
           [title]="!podeCriarNovoCiclo ? mensagemBotaoCiclo : 'Criar próximos 12 meses para todos os indicadores'">
           @if (criandoNovoCiclo) {

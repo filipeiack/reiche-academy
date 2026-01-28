@@ -118,7 +118,7 @@ export class MenuService {
       // Criar submenus para cada cockpit
       const cockpitSubItems: MenuItem[] = cockpits.map((cockpit, index) => ({
         id: 1000 + index, // IDs únicos começando de 1000
-        label: cockpit.pilarEmpresa?.nome.toLowerCase(),
+        label: cockpit.pilarEmpresa?.nome.charAt(0).toUpperCase() + cockpit.pilarEmpresa?.nome.slice(1).toLowerCase(),
         link: `/cockpits/${cockpit.id}/dashboard`
       }));
 

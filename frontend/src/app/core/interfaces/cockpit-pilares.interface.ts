@@ -188,6 +188,7 @@ export interface AcaoCockpit {
   };
   status: StatusAcao;
   prazo?: string | null;
+  dataConclusao?: string | null;
   statusCalculado?: string;
   createdAt: string;
   updatedAt: string;
@@ -275,28 +276,30 @@ export interface UpdateFuncaoCargoDto {
 
 export interface CreateAcaoCockpitDto {
   indicadorMensalId: string;
-  causa1: string;
-  causa2: string;
-  causa3: string;
-  causa4: string;
-  causa5: string;
+  causa1?: string | null;
+  causa2?: string | null;
+  causa3?: string | null;
+  causa4?: string | null;
+  causa5?: string | null;
   acaoProposta: string;
   responsavelId?: string | null;
   status?: StatusAcao;
-  prazo?: string | null;
+  prazo: string;
+  dataConclusao?: string | null;
 }
 
 export interface UpdateAcaoCockpitDto {
   indicadorMensalId?: string;
-  causa1?: string;
-  causa2?: string;
-  causa3?: string;
-  causa4?: string;
-  causa5?: string;
+  causa1?: string | null;
+  causa2?: string | null;
+  causa3?: string | null;
+  causa4?: string | null;
+  causa5?: string | null;
   acaoProposta?: string;
   responsavelId?: string | null;
   status?: StatusAcao;
   prazo?: string | null;
+  dataConclusao?: string | null;
 }
 
 export interface CreateProcessoFluxogramaDto {

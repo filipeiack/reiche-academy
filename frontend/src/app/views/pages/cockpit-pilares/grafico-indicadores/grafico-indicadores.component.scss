@@ -31,3 +31,11 @@ span.bg-success {
 ::ng-deep ng-select.ng-select-primary-border .ng-select-container {
   border-color: var(--bs-primary) !important;
 }
+
+::ng-deep ng-select.ng-select-indicador .ng-select-container {
+  min-height: 56px;
+  height: auto;
+  align-items: flex-start;
+  padding-top: 6px;
+  padding-bottom: 6px;
+}

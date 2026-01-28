@@ -7,7 +7,6 @@ import {
   AcaoCockpit,
   IndicadorCockpit,
   IndicadorMensal,
-  StatusAcao,
 } from '@core/interfaces/cockpit-pilares.interface';
 import { OFFCANVAS_SIZE } from '@core/constants/ui.constants';
 import { AcaoFormDrawerComponent } from '@app/views/pages/cockpit-pilares/plano-acao-especifico/acao-form-drawer/acao-form-drawer.component';
@@ -137,30 +136,32 @@ export class PlanoAcaoEspecificoComponent implements OnInit {
   }
 
   getStatusLabel(acao: AcaoCockpit): string {
-    if (acao.statusCalculado === 'ATRASADA') return 'ATRASADA';
-    switch (acao.status) {
-      case StatusAcao.PENDENTE:
-        return 'A INICIAR';
-      case StatusAcao.EM_ANDAMENTO:
-        return 'EM ANDAMENTO';
-      case StatusAcao.CONCLUIDA:
+    switch (acao.statusCalculado) {
+      case 'CONCLUIDA':
         return 'CONCLUÍDA';
-      case StatusAcao.CANCELADA:
-        return 'CANCELADA';
+      case 'ATRASADA':
+        return 'ATRASADA';
+      case 'SEM_PRAZO':
+        return 'SEM PRAZO';
+      case 'A_INICIAR':
+        return 'A INICIAR';
       default:
         return 'A INICIAR';
     }
   }
 
   getStatusClass(acao: AcaoCockpit): string {
-    const status = acao.statusCalculado === 'ATRASADA' ? 'ATRASADA' : acao.status;
-    switch (status) {
+    switch (acao.statusCalculado) {
       case 'ATRASADA':
         return 'bg-danger';
-      case StatusAcao.EM_ANDAMENTO:
-        return 'bg-warning text-dark';
-      case StatusAcao.CONCLUIDA:
+      case 'CONCLUIDA':
         return 'bg-success';
+      case 'SEM_PRAZO':
+        return 'bg-secondary';
+      case 'EM_ANDAMENTO':
+        return 'bg-warning';
+      case 'A_INICIAR':
+        return 'bg-secondary';
       default:
         return 'bg-secondary';
     }

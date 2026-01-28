@@ -15,35 +15,35 @@ export class CreateAcaoCockpitDto {
   @IsUUID()
   indicadorMensalId: string;
 
-  @ApiProperty({ example: 'Causa 1' })
+  @ApiPropertyOptional({ example: 'Causa 1' })
+  @IsOptional()
   @IsString()
-  @IsNotEmpty()
   @MinLength(3)
-  causa1: string;
+  causa1?: string;
 
-  @ApiProperty({ example: 'Causa 2' })
+  @ApiPropertyOptional({ example: 'Causa 2' })
+  @IsOptional()
   @IsString()
-  @IsNotEmpty()
   @MinLength(3)
-  causa2: string;
+  causa2?: string;
 
-  @ApiProperty({ example: 'Causa 3' })
+  @ApiPropertyOptional({ example: 'Causa 3' })
+  @IsOptional()
   @IsString()
-  @IsNotEmpty()
   @MinLength(3)
-  causa3: string;
+  causa3?: string;
 
-  @ApiProperty({ example: 'Causa 4' })
+  @ApiPropertyOptional({ example: 'Causa 4' })
+  @IsOptional()
   @IsString()
-  @IsNotEmpty()
   @MinLength(3)
-  causa4: string;
+  causa4?: string;
 
-  @ApiProperty({ example: 'Causa 5' })
+  @ApiPropertyOptional({ example: 'Causa 5' })
+  @IsOptional()
   @IsString()
-  @IsNotEmpty()
   @MinLength(3)
-  causa5: string;
+  causa5?: string;
 
   @ApiProperty({ example: 'Revisar funil com equipe comercial' })
   @IsString()
@@ -61,8 +61,13 @@ export class CreateAcaoCockpitDto {
   @IsEnum(StatusAcao)
   status?: StatusAcao;
 
-  @ApiPropertyOptional({ example: '2026-02-28T00:00:00.000Z' })
+  @ApiProperty({ example: '2026-02-28T00:00:00.000Z' })
+  @IsDateString()
+  @IsNotEmpty()
+  prazo: string;
+
+  @ApiPropertyOptional({ example: '2026-03-15T00:00:00.000Z' })
   @IsOptional()
   @IsDateString()
-  prazo?: string;
+  dataConclusao?: string;
 }

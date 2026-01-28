@@ -27,7 +27,7 @@ import { TranslatePipe } from '@core/pipes/translate.pipe';
     <form [formGroup]="form" class="d-flex flex-column h-100">
       <div class="offcanvas-header border-bottom flex-shrink-0">
         <h5 class="offcanvas-title">
-          <i class="bi bi-diagram-3 me-2"></i>
+          <i class="bi bi-diagram-3 me-0"></i>
           {{ 'PROCESSOS_FLUXOGRAMA.TITLE' | translate }}
         </h5>
         <button type="button" class="btn-close" (click)="fechar()"></button>
@@ -35,7 +35,7 @@ import { TranslatePipe } from '@core/pipes/translate.pipe';
 
       <div class="offcanvas-body flex-grow-1 overflow-auto">
         @if (processo) {
-          <div class="alert alert-info mb-3">
+          <div class="alert alert-info mb-2">
             <i class="feather icon-layers me-2"></i>
             <strong>{{ 'PROCESSOS_FLUXOGRAMA.PROCESS_LABEL' | translate }}:</strong>
             {{ processo.rotinaEmpresa?.nome || ('PROCESSOS_FLUXOGRAMA.DEFAULT_PROCESS' | translate) }}
@@ -43,24 +43,24 @@ import { TranslatePipe } from '@core/pipes/translate.pipe';
         }
 
         @if (loading) {
-          <div class="text-center py-5">
+          <div class="text-center py-3">
             <div class="spinner-border text-primary" role="status">
               <span class="visually-hidden">{{ 'COMMON.LOADING' | translate }}</span>
             </div>
           </div>
         } @else {
           @if (acoes.length === 0) {
-            <div class="alert alert-info">
+            <div class="alert alert-info mb-2">
               <i class="feather icon-info me-2"></i>
               {{ 'PROCESSOS_FLUXOGRAMA.EMPTY_STATE' | translate }}
             </div>
           } @else {
-            <div class="mb-3 small">
-              <label class="form-label d-flex align-items-center">
+            <div class="mb-1 small">
+              <!-- <label class="form-label d-flex align-items-center">
                 <i class="feather icon-move me-2"></i>
                 {{ 'PROCESSOS_FLUXOGRAMA.REORDER_TITLE' | translate }}
                 <small class="text-muted ms-2">({{ 'PROCESSOS_FLUXOGRAMA.REORDER_HINT' | translate }})</small>
-              </label>
+              </label> -->
               <div
                 cdkDropList
                 (cdkDropListDropped)="onDrop($event)"
@@ -99,18 +99,13 @@ import { TranslatePipe } from '@core/pipes/translate.pipe';
                         <span class="flex-grow-1 acao-descricao">
                           {{ acao.descricao }}
                         </span>
-                        <button
-                          class="btn btn-sm btn-outline-primary"
-                          (click)="iniciarEdicao(i)"
-                          [disabled]="!canEdit"
-                        >
-                          <i class="feather icon-edit-2"></i>
+                        
+                        <button data-testid="edit-cargo-button" class="btn btn-icon text-secondary"
+                          (click)="iniciarEdicao(i)" [title]="'BUTTONS.EDIT' | translate">
+                          <i class="feather icon-edit"></i>
                         </button>
-                        <button
-                          class="btn btn-sm btn-outline-danger"
-                          (click)="removerAcao(i)"
-                          [disabled]="!canEdit"
-                        >
+                        <button data-testid="delete-cargo-button" class="btn btn-icon text-danger"
+                          (click)="removerAcao(i)" [title]="'BUTTONS.DELETE' | translate">
                           <i class="feather icon-trash-2"></i>
                         </button>
                       }
@@ -123,8 +118,8 @@ import { TranslatePipe } from '@core/pipes/translate.pipe';
         }
       </div>
 
-      <div class="offcanvas-footer border-top p-3 flex-shrink-0 bg-light">
-        <div class="mb-3">
+      <div class="offcanvas-footer border-top px-3 py-2 flex-shrink-0 bg-light">
+        <div class="mb-2">
           <label class="form-label">
             {{ 'PROCESSOS_FLUXOGRAMA.NEW_ACTION_LABEL' | translate }}
           </label>

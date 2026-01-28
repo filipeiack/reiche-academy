@@ -6,11 +6,12 @@ import { CdkDragDrop, DragDropModule, moveItemInArray } from '@angular/cdk/drag-
 import Swal from 'sweetalert2';
 import { RotinasEmpresaService, RotinaEmpresa } from '@core/services/rotinas-empresa.service';
 import { PilarEmpresa } from '@core/services/pilares-empresa.service';
+import { TranslatePipe } from "../../../../core/pipes/translate.pipe";
 
 @Component({
   selector: 'app-rotina-edit-drawer',
   standalone: true,
-  imports: [CommonModule, FormsModule, DragDropModule],
+  imports: [CommonModule, FormsModule, DragDropModule, TranslatePipe],
   template: `
     <div class="d-flex flex-column h-100">
       <div class="offcanvas-header border-bottom flex-shrink-0">
@@ -86,16 +87,13 @@ import { PilarEmpresa } from '@core/services/pilares-empresa.service';
                       </button>
                     } @else {
                       <span class="flex-grow-1 rotina-nome">{{ rotina.nome }}</span>
-                      <button
-                        class="btn btn-sm btn-outline-primary"
-                        (click)="iniciarEdicao(rotina)"
-                      >
-                        <i class="feather icon-edit-2"></i>
+                      
+                      <button data-testid="edit-cargo-button" class="btn btn-icon text-secondary"
+                        (click)="iniciarEdicao(rotina)" [title]="'BUTTONS.EDIT' | translate">
+                        <i class="feather icon-edit"></i>
                       </button>
-                      <button
-                        class="btn btn-sm btn-outline-danger"
-                        (click)="removerRotina(rotina)"
-                      >
+                      <button data-testid="delete-cargo-button" class="btn btn-icon text-danger"
+                        (click)="removerRotina(rotina)" [title]="'BUTTONS.DELETE' | translate">
                         <i class="feather icon-trash-2"></i>
                       </button>
                     }

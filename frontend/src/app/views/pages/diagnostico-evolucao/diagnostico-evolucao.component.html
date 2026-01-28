@@ -14,7 +14,7 @@
         <!-- Botão Congelar/Recongelar -->
         @if (canCongelar) {
         <button type="button"
-            [class]="periodoAtual ? 'btn btn-outline-primary btn-sm' : 'btn btn-outline-warning btn-sm'"
+            [class]="periodoAtual ? 'btn btn-primary btn-sm' : 'btn btn-outline-warning btn-sm'"
             (click)="congelarMedias()" [disabled]="!periodoAtual && medias.length === 0"
             data-testid="btn-congelar-medias">
             <i class="feather icon-download"></i>

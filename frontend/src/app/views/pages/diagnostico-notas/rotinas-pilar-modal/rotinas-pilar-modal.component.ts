@@ -51,7 +51,7 @@ import { TranslatePipe } from "../../../../core/pipes/translate.pipe";
               <i class="feather icon-info me-1"></i>
               Arraste as rotinas para reordenar, adicione novas rotinas ou remova as existentes.
             </p>
-            <button type="button" class="btn btn-outline-primary btn-sm" 
+            <button type="button" class="btn btn-primary btn-sm" 
                     (click)="abrirModalNovaRotina(); $event.preventDefault()">
               <i class="bi bi-plus-circle me-1"></i>
               Adicionar Rotina

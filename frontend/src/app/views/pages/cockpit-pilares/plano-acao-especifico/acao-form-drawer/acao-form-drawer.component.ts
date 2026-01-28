@@ -24,26 +24,44 @@ import { Usuario } from '@core/models/auth.model';
       <div class="offcanvas-header border-bottom flex-shrink-0">
         <h5 class="offcanvas-title">
           <i class="bi bi-clipboard-check me-2"></i>
-          {{ isEditMode ? 'Editar Ação' : 'Adicionar Ação' }}
+          {{ isEditMode ? 'Editar Plano de Ação' : 'Adicionar Plano de Ação' }}
         </h5>
         <button type="button" class="btn-close" (click)="fechar()"></button>
       </div>
 
       <div class="offcanvas-body flex-grow-1 overflow-auto">
-        <div class="alert alert-info mb-3">
+        <!-- <div class="alert alert-info mb-3">
           <i class="bi bi-bar-chart me-1"></i>
-          <strong>Plano de Ação do Indicador:</strong>
-        </div>
+          <strong>Plano de Ação</strong>
+        </div> -->
         <div class="row g-2">
-          <div class="col-md-6">
+          <div class="col-md-12">
             <label class="form-label">Indicador</label>
             <ng-select
+              class="ng-select-indicador"
               formControlName="indicadorId"
               [items]="indicadores"
               bindLabel="nome"
               bindValue="id"
               placeholder="Selecione um indicador..."
-            ></ng-select>
+            >
+              <ng-template ng-label-tmp let-item="item">
+                <div class="d-flex flex-column">
+                  <span class="fw-bold">{{ item?.nome }}</span>
+                  @if (item?.descricao) {
+                  <small class="text-muted">{{ item?.descricao }}</small>
+                  }
+                </div>
+              </ng-template>
+              <ng-template ng-option-tmp let-item="item">
+                <div class="d-flex flex-column">
+                  <span>{{ item?.nome }}</span>
+                  @if (item?.descricao) {
+                  <small class="text-muted">{{ item?.descricao }}</small>
+                  }
+                </div>
+              </ng-template>
+            </ng-select>
           </div>
           <div class="col-md-6">
             <label class="form-label">Mês de Análise</label>
@@ -62,6 +80,15 @@ import { Usuario } from '@core/models/auth.model';
               </ng-template>
             </ng-select>
           </div>
+
+          <div class="col-md-6">
+            <label class="form-label">Status</label>
+            <select class="form-select" formControlName="status">
+              @for (status of statusOptions; track status.value) {
+                <option [value]="status.value">{{ status.label }}</option>
+              }
+            </select>
+          </div>
           
           <div class="col-md-12">
             <label class="form-label">Causas (5 Porquês)</label>
@@ -69,22 +96,22 @@ import { Usuario } from '@core/models/auth.model';
               <div class="col-md-12">
                 <input class="form-control" placeholder="1º porquê" formControlName="causa1" />
               </div>
-              <div class="col-md-6">
+              <div class="col-md-12">
                 <input class="form-control" placeholder="2º porquê" formControlName="causa2" />
               </div>
-              <div class="col-md-6">
+              <div class="col-md-12">
                 <input class="form-control" placeholder="3º porquê" formControlName="causa3" />
               </div>
-              <div class="col-md-6">
+              <div class="col-md-12">
                 <input class="form-control" placeholder="4º porquê" formControlName="causa4" />
               </div>
-              <div class="col-md-6">
+              <div class="col-md-12">
                 <input class="form-control" placeholder="5º porquê" formControlName="causa5" />
               </div>
             </div>
           </div>
 
-          <div class="col-md-6">
+          <div class="col-md-12">
             <label class="form-label">Responsável</label>
             <ng-select
               formControlName="responsavelId"
@@ -96,22 +123,20 @@ import { Usuario } from '@core/models/auth.model';
               [clearable]="true"
             ></ng-select>
           </div>
-          <div class="col-md-6">
-            <label class="form-label">Status</label>
-            <select class="form-select" formControlName="status">
-              @for (status of statusOptions; track status.value) {
-                <option [value]="status.value">{{ status.label }}</option>
-              }
-            </select>
-          </div>
+          
           <div class="col-md-6">
             <label class="form-label">Prazo</label>
             <input type="date" class="form-control" formControlName="prazo" />
           </div>
 
+          <div class="col-md-6">
+            <label class="form-label">Data de Conclusão</label>
+            <input type="date" class="form-control" formControlName="dataConclusao" />
+          </div>
+
           <div class="col-md-12">
             <label class="form-label">Ação Proposta</label>
-            <textarea class="form-control" rows="2" formControlName="acaoProposta"></textarea>
+            <textarea class="form-control" rows="2" formControlName="acaoProposta" maxlength="500"></textarea>
           </div>
 
           
@@ -149,6 +174,13 @@ import { Usuario } from '@core/models/auth.model';
       .offcanvas-footer {
         background-color: #f8f9fa;
       }
+      ::ng-deep ng-select.ng-select-indicador .ng-select-container {
+        min-height: 56px;
+        height: auto;
+        align-items: flex-start;
+        padding-top: 6px;
+        padding-bottom: 6px;
+      }
     `,
   ],
 })
@@ -179,7 +211,8 @@ export class AcaoFormDrawerComponent implements OnInit {
         acaoProposta: value.acaoProposta || '',
         responsavelId: value.responsavelId || null,
         status: value.status,
-        prazo: value.prazo || null,
+        prazo: value.prazo ? this.toDateInput(value.prazo) : null,
+        dataConclusao: value.dataConclusao ? this.toDateInput(value.dataConclusao) : null,
       });
       this.onIndicadorChange(indicadorId, true);
       this.form.patchValue({ indicadorMensalId });
@@ -203,15 +236,16 @@ export class AcaoFormDrawerComponent implements OnInit {
   form = this.fb.group({
     indicadorId: [null as string | null, Validators.required],
     indicadorMensalId: [null as string | null, Validators.required],
-    causa1: ['', [Validators.required, Validators.minLength(3)]],
-    causa2: ['', [Validators.required, Validators.minLength(3)]],
-    causa3: ['', [Validators.required, Validators.minLength(3)]],
-    causa4: ['', [Validators.required, Validators.minLength(3)]],
-    causa5: ['', [Validators.required, Validators.minLength(3)]],
-    acaoProposta: ['', [Validators.required, Validators.minLength(3)]],
+    causa1: [''],
+    causa2: [''],
+    causa3: [''],
+    causa4: [''],
+    causa5: [''],
+    acaoProposta: ['', [Validators.required, Validators.minLength(3), Validators.maxLength(500)]],
     responsavelId: [null as string | null],
     status: [StatusAcao.PENDENTE],
-    prazo: [null as string | null],
+    prazo: [null as string | null, Validators.required],
+    dataConclusao: [null as string | null],
   });
 
   ngOnInit(): void {
@@ -238,17 +272,24 @@ export class AcaoFormDrawerComponent implements OnInit {
     if (this.form.invalid) return;
 
     this.saving = true;
+    const normalizeCausa = (value: string | null | undefined) => {
+      if (value === undefined || value === null) return undefined;
+      const trimmed = value.trim();
+      return trimmed.length > 0 ? trimmed : null;
+    };
+
     const dto = {
       indicadorMensalId: this.form.value.indicadorMensalId!,
-      causa1: this.form.value.causa1 || '',
-      causa2: this.form.value.causa2 || '',
-      causa3: this.form.value.causa3 || '',
-      causa4: this.form.value.causa4 || '',
-      causa5: this.form.value.causa5 || '',
-      acaoProposta: this.form.value.acaoProposta || '',
+      causa1: normalizeCausa(this.form.value.causa1),
+      causa2: normalizeCausa(this.form.value.causa2),
+      causa3: normalizeCausa(this.form.value.causa3),
+      causa4: normalizeCausa(this.form.value.causa4),
+      causa5: normalizeCausa(this.form.value.causa5),
+      acaoProposta: this.form.value.acaoProposta?.trim() || '',
       responsavelId: this.form.value.responsavelId || null,
       status: this.form.value.status || StatusAcao.PENDENTE,
-      prazo: this.form.value.prazo || null,
+      prazo: this.form.value.prazo!,
+      dataConclusao: this.form.value.dataConclusao || null,
     };
 
     const request$ = this.isEditMode && this.acaoId
@@ -279,6 +320,11 @@ export class AcaoFormDrawerComponent implements OnInit {
     if (!mes) return '-';
     const mesLabel = mes.mes ? mes.mes.toString().padStart(2, '0') : '--';
     return `${mesLabel}/${mes.ano}`;
+  }
+
+  private toDateInput(value: string): string {
+    if (!value) return '';
+    return value.split('T')[0];
   }
 
   private carregarPerfilColaborador(): void {

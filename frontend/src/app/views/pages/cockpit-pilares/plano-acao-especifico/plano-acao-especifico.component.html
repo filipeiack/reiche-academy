@@ -1,55 +1,76 @@
-@if (loading) {
-  <div class="text-center py-4">
-    <div class="spinner-border text-primary" role="status"></div>
-    <p class="mt-2 text-muted">Carregando plano de ação...</p>
-  </div>
-} @else {
-  <div class="d-flex align-items-center justify-content-between flex-wrap mb-2">
-    <h5 class="mb-0">
-      <i class="bi bi-clipboard-check me-2"></i>
-      Plano de Ação Específico
-    </h5>
-    <button type="button" class="btn btn-outline-primary btn-sm" (click)="abrirDrawerNovaAcao()">
-      <i class="bi bi-plus-circle me-1"></i>
-      Adicionar Ação
-    </button>
-  </div>
+<div class="card">
+  <div class="card-body">
 
-  <div class="card">
-    <div class="card-body">
-      <h6 class="card-title mb-3">Ações Cadastradas</h6>
-      @if (acoes.length === 0) {
-        <div class="text-muted">Nenhuma ação encontrada.</div>
-      } @else {
-        <div class="table-responsive">
-          <table class="table table-sm align-middle">
-            <thead>
-              <tr>
-                <th>Indicador</th>
-                <th class="col-mobile-hide">Causas e Ação</th>
-                <th class="col-mobile-hide">Status</th>
-                <th class="col-mobile-hide">Responsável</th>
-                <th class="text-center">Ações</th>
-              </tr>
-            </thead>
-            <tbody>
-              @for (acao of acoes; track acao.id) {
-                <tr>
-                  <td>{{ acao.indicadorCockpit?.nome || '-' }} <br>
-                    <small>{{ getMesLabel(acao.indicadorMensal) }}</small></td>
-                  <td class="col-mobile-hide" style="white-space: normal; overflow-wrap: break-word;">
-                    <small>causas: </small>{{ acao.causa1 }} > {{ acao.causa2 }} > {{ acao.causa3 }} > {{ acao.causa4 }} > {{ acao.causa5 }}<br />
-                    <small>ação: </small>{{ acao.acaoProposta }}
-                  </td>
-                  <td class="col-mobile-hide">
-                    <span class="badge" [class]="getStatusClass(acao)">
-                      {{ getStatusLabel(acao) }}
-                    </span>
-                  </td>
-                  <td class="col-mobile-hide">{{ acao.responsavel?.nome || '-' }}</td>
-                  <td class="text-center">
-                    <button data-testid="edit-acao-button" class="btn btn-icon text-secondary" 
-                    (click)="editarAcao(acao)"
+    @if (loading) {
+    <div class="text-center py-4">
+      <div class="spinner-border text-primary" role="status"></div>
+      <p class="mt-2 text-muted">Carregando plano de ação...</p>
+    </div>
+    } @else {
+    <div class="d-flex align-items-center justify-content-between flex-wrap mb-2">
+      <h5 class="card-title mb-2">
+        <i class="bi bi-clipboard-check me-2"></i>
+        PLANO DE AÇÃO ESPECÍFICO
+      </h5>
+      <button type="button" class="btn btn-primary btn-sm" (click)="abrirDrawerNovaAcao()">
+        <i class="bi bi-plus-circle me-1"></i>
+        Adicionar Ação
+      </button>
+    </div>
+    @if (acoes.length === 0) {
+    <div class="text-muted">Nenhuma ação encontrada.</div>
+    } @else {
+    <div class="table-responsive">
+      <table class="table table-sm align-middle">
+        <thead class="table-light small">
+          <tr>
+            <th>Indicador</th>
+            <th class="col-mobile-hide">Análise de Causas</th>
+            <th class="text-center col-mobile-hide">Status</th>
+            <th class="text-center">Ações</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (acao of acoes; track acao.id) {
+          <tr>
+            <td>
+              {{ acao.indicadorCockpit?.nome || '-' }} <br>
+              <small> {{ getMesLabel(acao.indicadorMensal) }}</small>
+            </td>
+            <td class="col-mobile-hide">
+              @if (acao.causa1) {
+              <span class="badge bg-gray-100 text-black acao-badge mb-1" style="text-align: left;"><small>Causa 1:
+                </small>{{ acao.causa1 }}</span>
+              }
+              @if (acao.causa2) {
+              <span class="badge bg-gray-100 text-black acao-badge mb-1" style="text-align: left;"><small>Causa 2:
+                </small>{{ acao.causa2 }}</span>
+              }
+              @if (acao.causa3) {
+              <span class="badge bg-gray-100 text-black acao-badge mb-1" style="text-align: left;"><small>Causa 3:
+                </small>{{ acao.causa3 }}</span>
+              }
+              @if (acao.causa4) {
+              <span class="badge bg-gray-100 text-black acao-badge mb-1" style="text-align: left;"><small>Causa 4:
+                </small>{{ acao.causa4 }}</span>
+              }
+              @if (acao.causa5) {
+              <span class="badge bg-gray-100 text-black acao-badge mb-1" style="text-align: left;"><small>Causa 5:
+                </small>{{ acao.causa5 }}</span>
+              }
+              <span class="badge bg-gray-300 text-black acao-badge" style="text-align: left;"><small>Ação: </small>{{
+                acao.acaoProposta }}</span>
+            </td>
+            <td class="col-mobile-hide">
+              <span class="badge" [class]="getStatusClass(acao)" style="width: 100%;">
+                {{ getStatusLabel(acao) }}
+              </span>
+              <br>
+              <small>Prazo: <b>{{ acao.prazo | date:'shortDate' }}</b></small><br>
+              <small>Responsável: <b>{{ acao.responsavel?.nome || '-' }}</b></small>
+            </td>
+            <td class="text-center">
+              <button data-testid="edit-acao-button" class="btn btn-icon text-secondary" (click)="editarAcao(acao)"
                 [title]="'BUTTONS.EDIT' | translate">
                 <i class="feather icon-edit"></i>
               </button>
@@ -57,13 +78,13 @@
                 [title]="'BUTTONS.DELETE' | translate">
                 <i class="feather icon-trash-2"></i>
               </button>
-                  </td>
-                </tr>
-              }
-            </tbody>
-          </table>
-        </div>
-      }
+            </td>
+          </tr>
+          }
+        </tbody>
+      </table>
     </div>
+    }
+    }
   </div>
-}
+</div>

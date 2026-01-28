@@ -24,24 +24,26 @@ Aplicar-se quando o usuário:
 Campos obrigatórios:
 - Indicador (IndicadorCockpit)
 - Mês (IndicadorMensal)
-- 5 Porquês (5 campos de texto)
+- Prazo
 - Ação proposta
 
 Campos opcionais:
+- Causas (5 Porquês) — campos independentes
 - Responsável (usuário da empresa; cadastro simplificado)
-- Status
-- Prazo
+- Data de conclusão da ação
 
 ### 3. Status e Cores (UI)
 Status disponíveis na tela:
 - A INICIAR (neutro/sem cor)
-- EM ANDAMENTO (amarelo)
 - CONCLUÍDA (verde)
 - ATRASADA (vermelho)
+- SEM PRAZO (neutro/sem cor)
 
-Regra de atraso (backend):
-- ATRASADA é **calculada no backend** quando `prazo` < data atual e status não é CONCLUÍDA.
-- Se prazo não estiver preenchido, não marcar como ATRASADA.
+Regra de status (backend):
+- **CONCLUÍDA** quando `dataConclusao` está preenchida.
+- **ATRASADA** quando `prazo` < data atual **e** `dataConclusao` não está preenchida.
+- **A INICIAR** quando `prazo` está preenchido e não caiu nas regras acima.
+- **SEM PRAZO** quando `prazo` não está preenchido.
 
 ### 4. Responsável
 - Seleção de usuário da empresa com o **mesmo fluxo simplificado** usado em diagnóstico-notas.
@@ -50,6 +52,10 @@ Regra de atraso (backend):
 ### 5. Permissões e Segurança
 - Restringir CRUD a usuários com perfil adequado conforme regras de cockpit (ADMINISTRADOR/GESTOR).
 - Validar multi-tenant em todas as operações.
+
+### 6. Listagem (UI)
+- A listagem deve exibir somente as causas preenchidas no registro.
+- Campos de causa devem ser exibidos individualmente **apenas se preenchidos** (ex.: se houver somente causa1 e causa2, não renderizar causa3-5).
 
 ## Cenários
 ### Happy Path
@@ -65,20 +71,24 @@ Regra de atraso (backend):
 
 ## Restrições
 - Vincular ação a `IndicadorMensal` (não apenas a texto do mês).
-- Status ATRASADA é derivado, não armazenado.
+- Status é derivado das datas e não deve ser armazenado manualmente.
+- `dataConclusao` é opcional, mas sua presença tem prioridade sobre atraso.
+- Comparação de datas usa data do servidor em horário de São Paulo (Brasil).
 
 ## Impacto Técnico Estimado
 - Backend:
   - Ajustar modelo de ações para armazenar `indicadorMensalId`.
   - Endpoints CRUD com validação do vínculo indicador↔mês.
-  - Cálculo de atraso centralizado no backend.
+  - Incluir campo `dataConclusao` na criação/edição.
+  - Cálculo de status centralizado no backend com base em `prazo` e `dataConclusao`.
 - Frontend:
   - Aba com fluxo de seleção Indicador → Mês.
   - Lista de ações com badges de status e cálculo de atraso.
+  - Exibir somente campos presentes na listagem (ex.: se só houver causa1 e causa2, não renderizar causa3-5).
   - Reuso do cadastro simplificado de usuário.
 
 ---
 ## Observações
 - Regra proposta - aguardando implementação.
-- Decisão aprovada por: usuário (2026-01-27).
+- Decisão aprovada por: usuário (2026-01-28).
 - Prioridade: alta.

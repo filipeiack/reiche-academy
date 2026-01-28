@@ -242,24 +242,30 @@ export class CockpitPilaresService {
     }
   }
 
-  private getStatusCalculado(status: StatusAcao, prazo?: Date | null): string {
-    const agora = new Date();
-    if (prazo && prazo.getTime() < agora.getTime() && status !== StatusAcao.CONCLUIDA) {
+  private getAgoraSaoPaulo(): Date {
+    return new Date(
+      new Date().toLocaleString('en-US', { timeZone: 'America/Sao_Paulo' }),
+    );
+  }
+
+  private getStatusCalculado(
+    prazo?: Date | null,
+    dataConclusao?: Date | null,
+  ): string {
+    if (dataConclusao) {
+      return 'CONCLUIDA';
+    }
+
+    if (!prazo) {
+      return 'SEM_PRAZO';
+    }
+
+    const agora = this.getAgoraSaoPaulo();
+    if (prazo.getTime() < agora.getTime()) {
       return 'ATRASADA';
     }
 
-    switch (status) {
-      case StatusAcao.PENDENTE:
-        return 'A_INICIAR';
-      case StatusAcao.EM_ANDAMENTO:
-        return 'EM_ANDAMENTO';
-      case StatusAcao.CONCLUIDA:
-        return 'CONCLUIDA';
-      case StatusAcao.CANCELADA:
-        return 'CANCELADA';
-      default:
-        return 'A_INICIAR';
-    }
+    return 'A_INICIAR';
   }
 
   private sanitizeDescricao(value: string): string {
@@ -1302,7 +1308,7 @@ export class CockpitPilaresService {
 
     return acoes.map((acao) => ({
       ...acao,
-      statusCalculado: this.getStatusCalculado(acao.status, acao.prazo),
+      statusCalculado: this.getStatusCalculado(acao.prazo, acao.dataConclusao),
     }));
   }
 
@@ -1345,15 +1351,16 @@ export class CockpitPilaresService {
         cockpitPilarId: cockpitId,
         indicadorCockpitId: indicadorMensal.indicadorCockpitId,
         indicadorMensalId: indicadorMensal.id,
-        causa1: this.sanitizeDescricao(dto.causa1),
-        causa2: this.sanitizeDescricao(dto.causa2),
-        causa3: this.sanitizeDescricao(dto.causa3),
-        causa4: this.sanitizeDescricao(dto.causa4),
-        causa5: this.sanitizeDescricao(dto.causa5),
+        causa1: dto.causa1 ? this.sanitizeDescricao(dto.causa1) : null,
+        causa2: dto.causa2 ? this.sanitizeDescricao(dto.causa2) : null,
+        causa3: dto.causa3 ? this.sanitizeDescricao(dto.causa3) : null,
+        causa4: dto.causa4 ? this.sanitizeDescricao(dto.causa4) : null,
+        causa5: dto.causa5 ? this.sanitizeDescricao(dto.causa5) : null,
         acaoProposta: this.sanitizeDescricao(dto.acaoProposta),
         responsavelId: dto.responsavelId,
-        status: dto.status ?? StatusAcao.PENDENTE,
-        prazo: dto.prazo ? new Date(dto.prazo) : null,
+        status: dto.dataConclusao ? StatusAcao.CONCLUIDA : StatusAcao.PENDENTE,
+        prazo: new Date(dto.prazo),
+        dataConclusao: dto.dataConclusao ? new Date(dto.dataConclusao) : null,
         createdBy: user.id,
         updatedBy: user.id,
       },
@@ -1384,7 +1391,10 @@ export class CockpitPilaresService {
 
     return {
       ...created,
-      statusCalculado: this.getStatusCalculado(created.status, created.prazo),
+      statusCalculado: this.getStatusCalculado(
+        created.prazo,
+        created.dataConclusao,
+      ),
     };
   }
 
@@ -1435,17 +1445,58 @@ export class CockpitPilaresService {
       data: {
         indicadorMensalId,
         indicadorCockpitId,
-        causa1: dto.causa1 ? this.sanitizeDescricao(dto.causa1) : undefined,
-        causa2: dto.causa2 ? this.sanitizeDescricao(dto.causa2) : undefined,
-        causa3: dto.causa3 ? this.sanitizeDescricao(dto.causa3) : undefined,
-        causa4: dto.causa4 ? this.sanitizeDescricao(dto.causa4) : undefined,
-        causa5: dto.causa5 ? this.sanitizeDescricao(dto.causa5) : undefined,
+        causa1:
+          dto.causa1 !== undefined
+            ? dto.causa1
+              ? this.sanitizeDescricao(dto.causa1)
+              : null
+            : undefined,
+        causa2:
+          dto.causa2 !== undefined
+            ? dto.causa2
+              ? this.sanitizeDescricao(dto.causa2)
+              : null
+            : undefined,
+        causa3:
+          dto.causa3 !== undefined
+            ? dto.causa3
+              ? this.sanitizeDescricao(dto.causa3)
+              : null
+            : undefined,
+        causa4:
+          dto.causa4 !== undefined
+            ? dto.causa4
+              ? this.sanitizeDescricao(dto.causa4)
+              : null
+            : undefined,
+        causa5:
+          dto.causa5 !== undefined
+            ? dto.causa5
+              ? this.sanitizeDescricao(dto.causa5)
+              : null
+            : undefined,
         acaoProposta: dto.acaoProposta
           ? this.sanitizeDescricao(dto.acaoProposta)
           : undefined,
         responsavelId: dto.responsavelId,
-        status: dto.status,
-        prazo: dto.prazo ? new Date(dto.prazo) : undefined,
+        status:
+          dto.dataConclusao !== undefined
+            ? dto.dataConclusao
+              ? StatusAcao.CONCLUIDA
+              : StatusAcao.PENDENTE
+            : undefined,
+        prazo:
+          dto.prazo !== undefined
+            ? dto.prazo
+              ? new Date(dto.prazo)
+              : null
+            : undefined,
+        dataConclusao:
+          dto.dataConclusao !== undefined
+            ? dto.dataConclusao
+              ? new Date(dto.dataConclusao)
+              : null
+            : undefined,
         updatedBy: user.id,
       },
     });
@@ -1475,7 +1526,10 @@ export class CockpitPilaresService {
 
     return {
       ...result,
-      statusCalculado: this.getStatusCalculado(result.status, result.prazo),
+      statusCalculado: this.getStatusCalculado(
+        result.prazo,
+        result.dataConclusao,
+      ),
     };
   }
 

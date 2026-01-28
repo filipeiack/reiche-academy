@@ -5,11 +5,12 @@ import { NgbActiveOffcanvas } from '@ng-bootstrap/ng-bootstrap';
 import { CdkDragDrop, DragDropModule, moveItemInArray } from '@angular/cdk/drag-drop';
 import Swal from 'sweetalert2';
 import { PilaresEmpresaService, PilarEmpresa } from '@core/services/pilares-empresa.service';
+import { TranslatePipe } from "../../../../core/pipes/translate.pipe";
 
 @Component({
   selector: 'app-pilar-edit-drawer',
   standalone: true,
-  imports: [CommonModule, FormsModule, DragDropModule],
+  imports: [CommonModule, FormsModule, DragDropModule, TranslatePipe],
   template: `
     <div class="d-flex flex-column h-100">
       <div class="offcanvas-header border-bottom flex-shrink-0">
@@ -78,16 +79,12 @@ import { PilaresEmpresaService, PilarEmpresa } from '@core/services/pilares-empr
                       </button>
                     } @else {
                       <span class="flex-grow-1 pilar-nome">{{ pilar.nome }}</span>
-                      <button
-                        class="btn btn-sm btn-outline-primary"
-                        (click)="iniciarEdicao(pilar)"
-                      >
-                        <i class="feather icon-edit-2"></i>
+                      <button data-testid="edit-cargo-button" class="btn btn-icon text-secondary"
+                        (click)="iniciarEdicao(pilar)" [title]="'BUTTONS.EDIT' | translate">
+                        <i class="feather icon-edit"></i>
                       </button>
-                      <button
-                        class="btn btn-sm btn-outline-danger"
-                        (click)="removerPilar(pilar)"
-                      >
+                      <button data-testid="delete-cargo-button" class="btn btn-icon text-danger"
+                        (click)="removerPilar(pilar)" [title]="'BUTTONS.DELETE' | translate">
                         <i class="feather icon-trash-2"></i>
                       </button>
                     }
