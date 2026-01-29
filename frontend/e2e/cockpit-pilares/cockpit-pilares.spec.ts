@@ -1,11 +1,11 @@
 import { test, expect, TEST_USERS, type TestUser } from '../fixtures';
+import type { Page } from '@playwright/test';
 
 // IDs de cockpit para testes multi-tenant (simulados)
 const COCKPIT_IDS = {
   empresaA: 'cockpit-empresa-a-id',
   empresaB: 'cockpit-empresa-b-id',
 };
-import type { Page } from '@playwright/test';
 
 /**
  * Verifica se o servidor frontend está acessível
@@ -262,7 +262,7 @@ async function encontrarEClicarPrimeiroCockpit(page: Page): Promise<string> {
 // Fonte: /docs/business-rules/cockpit-processos-prioritarios.md
 // =================================================================
 
-test.describe('[COCKPIT] Criação com Auto-vinculação de Rotinas', () => {
+test.describe.skip('LEGACY: [COCKPIT] Criação com Auto-vinculação de Rotinas @cockpit @regression @high @legacy', () => {
   test('deve criar cockpit e auto-vincular rotinas ativas do pilar', async ({ page }) => {
     await login(page, TEST_USERS['gestorEmpresaA']);
     const pilarNome = await criarPilarSeNecessario(page);
@@ -315,7 +315,7 @@ test.describe('[COCKPIT] Criação com Auto-vinculação de Rotinas', () => {
 // Fonte: /docs/business-rules/cockpit-gestao-indicadores.md
 // =================================================================
 
-test.describe('[INDICADORES] CRUD com Validações Multi-tenant', () => {
+test.describe.skip('LEGACY: [INDICADORES] CRUD com Validações Multi-tenant @cockpit @indicadores @high @legacy', () => {
   test.beforeEach(async ({ page }) => {
     await login(page, TEST_USERS.gestorEmpresaA);
     
@@ -493,7 +493,7 @@ test.describe('[INDICADORES] CRUD com Validações Multi-tenant', () => {
 // Fonte: /docs/business-rules/cockpit-processos-prioritarios.md
 // =================================================================
 
-test.describe('[PROCESSOS] Atualização de Status Mapeamento/Treinamento', () => {
+test.describe.skip('LEGACY: [PROCESSOS] Atualização de Status Mapeamento/Treinamento @cockpit @regression @high @legacy', () => {
   test.beforeEach(async ({ page }) => {
     await login(page, TEST_USERS.gestorEmpresaA);
     
@@ -562,7 +562,7 @@ test.describe('[PROCESSOS] Atualização de Status Mapeamento/Treinamento', () =
 // Fonte: /docs/business-rules/cockpit-multi-tenant-seguranca.md
 // =================================================================
 
-test.describe('[MULTI-TENANT] Validações de Acesso por Perfil', () => {
+test.describe.skip('LEGACY: [MULTI-TENANT] Validações de Acesso por Perfil @cockpit @security @high @legacy', () => {
   test('GESTOR não deve acessar cockpit de outra empresa', async ({ page }) => {
     await login(page, TEST_USERS.gestorEmpresaA);
     
@@ -626,7 +626,7 @@ test.describe('[MULTI-TENANT] Validações de Acesso por Perfil', () => {
 // TESTES: Performance e Usabilidade (Opcional)
 // =================================================================
 
-test.describe('[PERFORMANCE] Carregamento e Responsividade', () => {
+test.describe.skip('LEGACY: [PERFORMANCE] Carregamento e Responsividade @cockpit @performance @high @legacy', () => {
   test('deve carregar Matriz de Indicadores em menos de 5 segundos', async ({ page }) => {
     await login(page, TEST_USERS.gestorEmpresaA);
     

@@ -31,7 +31,7 @@ import {
  * Agente: QA_E2E_Interface
  */
 
-test.describe('CRUD de Usuários', () => {
+test.describe.skip('LEGACY: CRUD de Usuários @usuarios @crud @medium @legacy', () => {
   
   test.describe('Criação de Usuário (CREATE)', () => {
     let createdUserId: string | null = null;

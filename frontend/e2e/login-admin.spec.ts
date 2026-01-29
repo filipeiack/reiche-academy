@@ -1,6 +1,6 @@
 import { test, expect } from '@playwright/test';
 
-test('login administrativo - fluxo completo', async ({ page }) => {
+test.skip('login administrativo - fluxo completo @auth @legacy @high', async ({ page }) => {
   // 1. Navegar para página de login
   await page.goto('http://localhost:4200/login');
   

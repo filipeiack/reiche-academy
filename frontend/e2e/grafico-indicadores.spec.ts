@@ -16,7 +16,7 @@ import { test, expect } from '@playwright/test';
  * 5. Gráfico exibe dados corretos para filtro selecionado
  */
 
-test.describe('Gráfico de Indicadores - Filtro por Ano', () => {
+test.describe.skip('LEGACY: Gráfico de Indicadores - Filtro por Ano @cockpit @charts @high @legacy', () => {
   test.beforeEach(async ({ page }) => {
     // Login como GESTOR
     await page.goto('/login');

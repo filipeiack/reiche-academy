@@ -1,16 +1,37 @@
-<nav aria-label="breadcrumb">
-    <ol class="breadcrumb breadcrumb-arrow mb-1">
-        <li class="breadcrumb-item">
-            <i class="feather icon-layers"></i>
-        </li>
-        <li class="breadcrumb-item">
-            {{ 'MENU.PILARES' | translate }}
-        </li>
-        <li class="breadcrumb-item active" aria-current="page">
-            {{ (isEditMode ? 'PILARES.EDIT' : 'PILARES.NEW_PILAR') | translate }}
-        </li>
-    </ol>
-</nav>
+<div class="mb-2 align-items-center gap-2 d-flex justify-content-between flex-wrap">
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb breadcrumb-arrow mb-1">
+            <li class="breadcrumb-item">
+                <i class="feather icon-layers"></i>
+            </li>
+            <li class="breadcrumb-item">
+                {{ 'MENU.PILARES' | translate }}
+            </li>
+            <li class="breadcrumb-item active" aria-current="page">
+                {{ (isEditMode ? 'PILARES.EDIT' : 'PILARES.NEW_PILAR') | translate }}
+            </li>
+        </ol>
+    </nav>
+
+    <!-- Buttons -->
+    <div class="d-flex gap-2">
+        <button type="button" data-testid="cancel-pilar-button" (click)="handleCancel()"
+            class="btn btn-outline-secondary">
+            {{ 'BUTTONS.CANCEL' | translate }}
+        </button>
+        <button type="submit" form="pilarForm" data-testid="submit-pilar-button" class="btn btn-primary"
+            [disabled]="loading || form.invalid">
+            @if (loading) {
+            <span class="spinner-border spinner-border-sm me-2" role="status"></span>
+            } @if (isEditMode) {
+            {{ "BUTTONS.UPDATE" | translate }}
+            } @else {
+            {{ "BUTTONS.CREATE" | translate }}
+            }
+        </button>
+
+    </div>
+</div>
 
 
 <div class="card-body">
@@ -23,7 +44,7 @@
     } @else {
     <div class="row">
         <div class="col-md-8">
-            <form [formGroup]="form" (ngSubmit)="onSubmit()">
+            <form id="pilarForm" [formGroup]="form" (ngSubmit)="onSubmit()">
                 <div class="card">
                     <div class="card-body">
                         <div class="d-flex justify-content-end mb-0">
@@ -42,8 +63,8 @@
                                 {{ 'PILARES.FIELDS.NAME' | translate }} <span class="text-danger">*</span>
                             </label>
                             <input type="text" class="form-control" id="nome" formControlName="nome"
-                                [class.is-invalid]="isFieldInvalid('nome')" placeholder="{{ 'PILARES.PLACEHOLDERS.NAME' | translate }}"
-                                maxlength="60">
+                                [class.is-invalid]="isFieldInvalid('nome')"
+                                placeholder="{{ 'PILARES.PLACEHOLDERS.NAME' | translate }}" maxlength="60">
                             <small class="text-muted">Máximo 60 caracteres</small>
                             @if (isFieldInvalid('nome')) {
                             <div class="invalid-feedback">
@@ -68,58 +89,12 @@
                             }
                         </div>
 
-                        <!-- Pilar Padrão e Ordem (lado a lado) -->
-                        <div class="row mb-3">
-                            <!-- <div class="col-md-8 mb-3">
-                                <div class="form-check form-switch">
-                                    <input class="form-check-input" type="checkbox" id="modelo"
-                                        formControlName="modelo">
-                                    <label class="form-check-label" for="modelo">
-                                        {{ 'PILARES.FIELDS.IS_MODEL' | translate }}
-                                    </label>
-                                </div>
-                                <div class="form-text">
-                                    {{ 'PILARES.HELPERS.MODEL' | translate }}
-                                </div>
-                            </div> -->
-
-                            <!-- Ordem padrao do pilar comentado para rever necessidade no futuro -->
-                            <!--
-                            <div class="col-md-4 mb-3">
-                                <label for="ordem" class="form-label">
-                                    {{ 'PILARES.FIELDS.ORDER' | translate }}
-                                </label>
-                                <input type="number" class="form-control" id="ordem" formControlName="ordem"
-                                    [class.is-invalid]="isFieldInvalid('ordem')" min="1" placeholder="{{ 'PILARES.PLACEHOLDERS.ORDER' | translate }}">
-                                <div class="form-text">
-                                    {{ 'PILARES.HELPERS.ORDER' | translate }}
-                                </div>
-                                @if (isFieldInvalid('ordem')) {
-                                <div class="invalid-feedback">
-                                    {{ getFieldError('ordem') }}
-                                </div>
-                                }
-                            </div> -->
-                        </div>
 
                     </div>
                 </div>
 
-                <!-- Botões -->
                 <div class="form-footer mt-4 d-flex justify-content-end gap-2">
-                    <button type="button" (click)="handleCancel()" class="btn btn-outline-secondary">
-                        {{ 'BUTTONS.CANCEL' | translate }}
-                    </button>
-                    <button type="submit" class="btn btn-primary" [disabled]="loading || submitting || form.invalid">
-                        @if (loading || submitting) {
-                        <span class="spinner-border spinner-border-sm me-2" role="status"></span>
-                        }
-                        @if (isEditMode) {
-                        {{ 'BUTTONS.UPDATE' | translate }}
-                        } @else {
-                        {{ 'BUTTONS.CREATE' | translate }}
-                        }
-                    </button>
+
                 </div>
             </form>
         </div>

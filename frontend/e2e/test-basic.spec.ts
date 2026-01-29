@@ -1,6 +1,6 @@
 import { test, expect } from './fixtures';
 
-test.describe('Smoke Test - Frontend Básico', () => {
+test.describe('Smoke Test - Frontend Básico @smoke @low', () => {
   test('verifica se frontend está acessível', async ({ page }) => {
     console.log('Tentando acessar http://localhost:4200/login...');
     

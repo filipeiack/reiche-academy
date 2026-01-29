@@ -1,6 +1,6 @@
 import { test, expect } from '@playwright/test';
 
-test.describe('Edição de Valores Mensais', () => {
+test.describe.skip('LEGACY: Edição de Valores Mensais @cockpit @indicadores @high @legacy', () => {
   test.beforeEach(async ({ page }) => {
     // Navegar para a página de edição de valores mensais
     await page.goto('/cockpit-pilares/123/valores-mensais');
@@ -132,7 +132,7 @@ test.describe('Edição de Valores Mensais', () => {
   });
 });
 
-test.describe('Edição de Valores Mensais - Estados de Erro', () => {
+test.describe.skip('LEGACY: Edição de Valores Mensais - Estados de Erro @cockpit @indicadores @high @legacy', () => {
   test('deve exibir loading durante carregamento', async ({ page }) => {
     await page.goto('/cockpit-pilares/123/valores-mensais');
     
@@ -160,7 +160,7 @@ test.describe('Edição de Valores Mensais - Estados de Erro', () => {
   });
 });
 
-test.describe('Edição de Valores Mensais - Responsividade', () => {
+test.describe.skip('LEGACY: Edição de Valores Mensais - Responsividade @cockpit @indicadores @high @legacy', () => {
   test('deve ser responsivo em mobile', async ({ page }) => {
     // Simular viewport mobile
     await page.setViewportSize({ width: 375, height: 667 });

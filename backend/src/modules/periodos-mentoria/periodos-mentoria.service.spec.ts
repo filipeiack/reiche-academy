@@ -2,6 +2,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { ConflictException, NotFoundException, BadRequestException } from '@nestjs/common';
 import { PrismaService } from '../../common/prisma/prisma.service';
 import { PeriodosMentoriaService } from './periodos-mentoria.service';
+import { AuditService } from '../audit/audit.service';
 
 describe('PeriodosMentoriaService - Validação Completa', () => {
   let service: PeriodosMentoriaService;
@@ -45,6 +46,9 @@ describe('PeriodosMentoriaService - Validação Completa', () => {
     empresa: {
       findUnique: jest.fn(),
     },
+    usuario: {
+      findUnique: jest.fn(),
+    },
     periodoMentoria: {
       findFirst: jest.fn(),
       create: jest.fn(),
@@ -61,6 +65,10 @@ describe('PeriodosMentoriaService - Validação Completa', () => {
     $transaction: jest.fn(),
   };
 
+  const mockAudit = {
+    log: jest.fn(),
+  };
+
   beforeEach(async () => {
     module = await Test.createTestingModule({
       providers: [
@@ -68,6 +76,10 @@ describe('PeriodosMentoriaService - Validação Completa', () => {
         {
           provide: PrismaService,
           useValue: mockPrisma,
+        },
+        {
+          provide: AuditService,
+          useValue: mockAudit,
         },
       ],
     }).compile();
@@ -87,6 +99,11 @@ describe('PeriodosMentoriaService - Validação Completa', () => {
     // Mock padrão para indicadores (vazio por padrão)
     mockPrisma.indicadorCockpit.findMany.mockResolvedValue([]);
     mockPrisma.indicadorMensal.createMany.mockResolvedValue({ count: 0 });
+    mockPrisma.usuario.findUnique.mockResolvedValue({
+      id: 'user-uuid',
+      nome: 'User Teste',
+      email: 'user@teste.com',
+    } as any);
   });
 
   // ============================================================
@@ -329,20 +346,12 @@ describe('PeriodosMentoriaService - Validação Completa', () => {
       ).rejects.toThrow(BadRequestException);
     });
 
-    it('deve permitir data exatamente igual ao fim do período atual', async () => {
+    it('deve rejeitar data igual ao fim do período atual', async () => {
       jest.spyOn(prisma.periodoMentoria, 'findFirst').mockResolvedValue(mockPeriodoAtivo as any);
-      jest.spyOn(prisma, '$transaction').mockResolvedValue([
-        { ...mockPeriodoAtivo, ativo: false, dataEncerramento: expect.any(Date) },
-        { id: 'novo-uuid', numero: 2, dataInicio: new Date('2024-12-31'), dataFim: new Date('2025-12-31'), ativo: true },
-      ] as any);
 
-      const result = await service.renovar(
-        'empresa-uuid',
-        'periodo-ativo-uuid',
-        { dataInicio: '2024-12-31' },
-      );
-
-      expect(result.dataInicio).toEqual(new Date('2024-12-31'));
+      await expect(
+        service.renovar('empresa-uuid', 'periodo-ativo-uuid', { dataInicio: '2024-12-31' }),
+      ).rejects.toThrow(BadRequestException);
     });
   });
 

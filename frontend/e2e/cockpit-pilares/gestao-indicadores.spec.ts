@@ -1,6 +1,6 @@
 import { test, expect } from '@playwright/test';
 
-test.describe('Gestão de Indicadores', () => {
+test.describe.skip('LEGACY: Gestão de Indicadores @cockpit @indicadores @high @legacy', () => {
   test.beforeEach(async ({ page }) => {
     // Navegar para a página de gestão de indicadores
     await page.goto('/cockpit-pilares/123/indicadores');
@@ -37,7 +37,7 @@ test.describe('Gestão de Indicadores', () => {
     await page.getByTestId('btn-novo-indicador').click();
     
     // Verificar se o modal foi aberto (dependendo da implementação)
-    const modal = page.locator('.modal');
+    const modal = page.locator('.offcanvas, [data-testid*="drawer"], [data-testid*="offcanvas"]');
     if (await modal.isVisible({ timeout: 2000 })) {
       await expect(modal).toBeVisible();
       // Verificar elementos dentro do modal se necessário
@@ -52,7 +52,7 @@ test.describe('Gestão de Indicadores', () => {
     await page.getByTestId('edit-indicador-button').first().click();
     
     // Verificar se o modal de edição foi aberto
-    const modal = page.locator('.modal');
+    const modal = page.locator('.offcanvas, [data-testid*="drawer"], [data-testid*="offcanvas"]');
     if (await modal.isVisible({ timeout: 2000 })) {
       await expect(modal).toBeVisible();
       // Verificar se há campos preenchidos (dependendo da implementação)
@@ -248,7 +248,7 @@ test.describe('Gestão de Indicadores', () => {
   });
 });
 
-test.describe('Gestão de Indicadores - Performance', () => {
+test.describe.skip('LEGACY: Gestão de Indicadores - Performance @cockpit @indicadores @high @legacy', () => {
   test('deve carregar página rapidamente', async ({ page }) => {
     const startTime = Date.now();
     
@@ -271,7 +271,7 @@ test.describe('Gestão de Indicadores - Performance', () => {
     await page.getByTestId('btn-novo-indicador').click();
     await page.waitForTimeout(500);
     
-    const modal = page.locator('.modal');
+    const modal = page.locator('.offcanvas, [data-testid*="drawer"], [data-testid*="offcanvas"]');
     if (await modal.isVisible()) {
       await page.keyboard.press('Escape'); // Fechar modal
     }

@@ -20,14 +20,12 @@
 
     <!-- Buttons -->
     <div class="d-flex gap-2">
-        <button type="button" (click)="handleCancel()" class="btn btn-outline-secondary">
+        <button type="button" data-testid="cancel-usuario-button" (click)="handleCancel()" class="btn btn-outline-secondary">
             {{ "BUTTONS.CANCEL" | translate }}
         </button>
-        <button type="submit" class="btn btn-primary" [disabled]="loading || form.invalid">
+        <button type="submit" form="usuarioForm" data-testid="submit-usuario-button" class="btn btn-primary" [disabled]="loading || form.invalid">
             @if (loading) {
-            <span class="spinner-border spinner-border-sm me-2" role="status">
-                <span class="visually-hidden">Loading...</span>
-            </span>
+            <span class="spinner-border spinner-border-sm me-2" role="status"></span>
             } @if (isEditMode) {
             {{ "BUTTONS.UPDATE" | translate }}
             } @else {
@@ -43,7 +41,7 @@
     <div class="row">
         <div [ngClass]="!modalMode ? 'col-md-8' : 'col-md-12'">
             <!-- Form Card -->
-            <form [formGroup]="form" (ngSubmit)="onSubmit()">
+            <form id="usuarioForm" [formGroup]="form" (ngSubmit)="onSubmit()">
                 <div class="card mb-3">
                     <div class="card-body">
 

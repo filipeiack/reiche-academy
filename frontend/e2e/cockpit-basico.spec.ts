@@ -7,7 +7,7 @@ import { test, expect, login, TEST_USERS } from './fixtures';
  * antes de executar testes complexos
  */
 
-test.describe('Cockpit - Básico', () => {
+test.describe('Cockpit - Básico @cockpit @regression @high', () => {
   
   test('deve acessar lista de cockpits', async ({ page }) => {
     await login(page, TEST_USERS.gestorEmpresaA);

@@ -93,28 +93,52 @@ export function isProtectedTestUser(email: string): boolean {
 
 // Helpers de autenticação
 export async function login(page: Page, user: TestUser) {
-  await page.goto('/login');
+  await page.goto('/auth/login');
   
   // Seletores baseados em formControlName (Angular)
   await page.fill('[formControlName="email"]', user.email);
   await page.fill('[formControlName="senha"]', user.senha);
   
   // Buscar botão de login por type="submit"
+  const loginResponsePromise = page.waitForResponse(
+    (response) =>
+      response.url().includes('/api/auth/login') && response.request().method() === 'POST',
+    { timeout: 15000 }
+  ).catch(() => null);
+
   await page.click('button[type="submit"]');
+
+  const loginResponse = await loginResponsePromise;
+  if (loginResponse && !loginResponse.ok()) {
+    throw new Error(`Login falhou: status ${loginResponse.status()}`);
+  }
   
-  // Aguardar navegação acontecer (detecta qualquer mudança de URL)
-  await page.waitForNavigation({ waitUntil: 'networkidle', timeout: 15000 }).catch(async () => {
-    // Se não houver navegação, verificar se token foi criado
-    const token = await page.evaluate(() => localStorage.getItem('access_token'));
+  // Aguardar navegação SPA ou token ser criado
+  await Promise.race([
+    page.waitForURL((url) => !url.pathname.includes('/login'), { timeout: 15000 }),
+    page.waitForFunction(
+      () => !!localStorage.getItem('access_token') || !!sessionStorage.getItem('access_token'),
+      { timeout: 15000 }
+    ),
+  ]).catch(async () => {
+    const token = await page.evaluate(
+      () => localStorage.getItem('access_token') || sessionStorage.getItem('access_token')
+    );
     if (!token) {
       throw new Error('Login falhou: sem navegação e sem token');
     }
   });
   
-  // Validar que saiu da página de login
+  // Se token existe mas URL ainda está em /login, forçar navegação
   const currentUrl = page.url();
   if (currentUrl.includes('/login')) {
-    throw new Error('Login falhou: ainda na página de login');
+    const token = await page.evaluate(
+      () => localStorage.getItem('access_token') || sessionStorage.getItem('access_token')
+    );
+    if (!token) {
+      throw new Error('Login falhou: ainda na página de login');
+    }
+    await page.goto('/');
   }
 }
 
@@ -151,12 +175,21 @@ export async function selectEmpresa(page: Page, empresaNome: string) {
   await page.waitForTimeout(1500);
   
   // Localizar o ng-select de empresa na navbar
-  const empresaSelect = page.locator('[data-testid="empresa-select"]').first();
+  let empresaSelect = page.locator('[data-testid="empresa-select"]').first();
   
   // Verificar se existe (apenas ADMIN tem este seletor)
   const selectCount = await empresaSelect.count();
   if (selectCount === 0) {
-    throw new Error('Seletor de empresa não encontrado. Apenas ADMINISTRADOR pode selecionar empresa.');
+    // Tentar navegar para uma rota protegida para garantir que a navbar foi carregada
+    await page.goto('/usuarios');
+    await page.waitForLoadState('networkidle');
+    await page.waitForTimeout(1000);
+
+    empresaSelect = page.locator('[data-testid="empresa-select"]').first();
+    const retryCount = await empresaSelect.count();
+    if (retryCount === 0) {
+      throw new Error('Seletor de empresa não encontrado. Apenas ADMINISTRADOR pode selecionar empresa.');
+    }
   }
   
   // Aguardar elemento estar visível

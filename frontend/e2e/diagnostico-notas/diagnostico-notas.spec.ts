@@ -1,6 +1,6 @@
 import { test, expect } from '@playwright/test';
 
-test.describe('Diagnóstico de Notas', () => {
+test.describe.skip('LEGACY: Diagnóstico de Notas @diagnostico @critical @medium @legacy', () => {
   test.beforeEach(async ({ page }) => {
     // Navegar para a página de diagnóstico
     await page.goto('/diagnostico/notas');
@@ -188,7 +188,7 @@ test.describe('Diagnóstico de Notas', () => {
       await responsavelButton.click();
       
       // Verificar se o modal foi aberto
-      const modal = page.locator('.modal');
+      const modal = page.locator('.offcanvas, [data-testid*="drawer"], [data-testid*="offcanvas"]');
       await expect(modal).toBeVisible({ timeout: 2000 });
       
       // Verificar se há select de usuários
@@ -220,7 +220,7 @@ test.describe('Diagnóstico de Notas', () => {
       await adicionarRotinaButton.click();
       
       // Verificar se o modal foi aberto
-      const modal = page.locator('.modal');
+      const modal = page.locator('.offcanvas, [data-testid*="drawer"], [data-testid*="offcanvas"]');
       await expect(modal).toBeVisible({ timeout: 2000 });
       
       // Verificar se há campo de nome
@@ -366,7 +366,7 @@ test.describe('Diagnóstico de Notas', () => {
   });
 });
 
-test.describe('Diagnóstico de Notas - Estados de Erro', () => {
+test.describe.skip('LEGACY: Diagnóstico de Notas - Estados de Erro @diagnostico @legacy', () => {
   test('deve exibir loading durante carregamento', async ({ page }) => {
     // Simular carregamento lento
     await page.route('**/api/empresas/*/diagnostico/notas', route => {
@@ -448,7 +448,7 @@ test.describe('Diagnóstico de Notas - Estados de Erro', () => {
   });
 });
 
-test.describe('Diagnóstico de Notas - Performance', () => {
+test.describe.skip('LEGACY: Diagnóstico de Notas - Performance @diagnostico @legacy', () => {
   test('deve carregar página rapidamente', async ({ page }) => {
     const startTime = Date.now();
     

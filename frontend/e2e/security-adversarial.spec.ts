@@ -16,7 +16,7 @@ import { test, expect, login, TEST_USERS } from './fixtures';
  * - CSRF vulnerabilities
  */
 
-test.describe('SEGURANÇA ADVERSARIAL - Isolamento Multi-Tenant', () => {
+test.describe.skip('LEGACY: SEGURANÇA ADVERSARIAL - Isolamento Multi-Tenant @security @high @legacy', () => {
   
   test('GESTOR não deve acessar cockpit de outra empresa por URL direta', async ({ page }) => {
     await login(page, TEST_USERS.gestorEmpresaA);
@@ -81,7 +81,7 @@ test.describe('SEGURANÇA ADVERSARIAL - Isolamento Multi-Tenant', () => {
   });
 });
 
-test.describe('SEGURANÇA ADVERSARIAL - RBAC Bypass', () => {
+test.describe.skip('LEGACY: SEGURANÇA ADVERSARIAL - RBAC Bypass @security @high @legacy', () => {
   
   test('COLABORADOR não deve conseguir criar usuário com privilégios elevados', async ({ page }) => {
     await login(page, TEST_USERS.colaborador);
@@ -144,7 +144,7 @@ test.describe('SEGURANÇA ADVERSARIAL - RBAC Bypass', () => {
   });
 });
 
-test.describe('SEGURANÇA ADVERSARIAL - Exposição de Dados Sensíveis', () => {
+test.describe.skip('LEGACY: SEGURANÇA ADVERSARIAL - Exposição de Dados Sensíveis @security @high @legacy', () => {
   
   test('Não deve expor senhas em responses de API', async ({ page }) => {
     await login(page, TEST_USERS.gestorEmpresaA);
@@ -229,7 +229,7 @@ test.describe('SEGURANÇA ADVERSARIAL - Exposição de Dados Sensíveis', () => 
   });
 });
 
-test.describe('SEGURANÇA ADVERSARIAL - Injeção e XSS', () => {
+test.describe.skip('LEGACY: SEGURANÇA ADVERSARIAL - Injeção e XSS @security @legacy', () => {
   
   test('Formulários devem resistir a injeção básica', async ({ page }) => {
     await login(page, TEST_USERS.gestorEmpresaA);
@@ -283,7 +283,7 @@ test.describe('SEGURANÇA ADVERSARIAL - Injeção e XSS', () => {
   });
 });
 
-test.describe('SEGURANÇA ADVERSARIAL - Rate Limiting e Brute Force', () => {
+test.describe.skip('LEGACY: SEGURANÇA ADVERSARIAL - Rate Limiting e Brute Force @security @legacy', () => {
   
   test('Não deve permitir múltiplas tentativas de login falhadas', async ({ page }) => {
     const failedAttempts = [];

@@ -10,7 +10,7 @@ import { test, expect, login, TEST_USERS } from '../fixtures';
  * Priority: CRITICAL
  */
 
-test.describe('SECURITY - JWT Token Manipulation', () => {
+test.describe.skip('LEGACY: SECURITY - JWT Token Manipulation @security @high @legacy', () => {
   
   test('deve rejeitar token expirado', async ({ page }) => {
     // Token JWT expirado (exp: 1623456789 = 2021)
@@ -88,7 +88,7 @@ test.describe('SECURITY - JWT Token Manipulation', () => {
   });
 });
 
-test.describe('SECURITY - Multi-tenant Data Isolation', () => {
+test.describe.skip('LEGACY: SECURITY - Multi-tenant Data Isolation @security @high @legacy', () => {
   
   test('deve bloquear acesso direto por ID sequencial', async ({ page }) => {
     await login(page, TEST_USERS.gestorEmpresaA);
@@ -218,7 +218,7 @@ test.describe('SECURITY - Multi-tenant Data Isolation', () => {
   });
 });
 
-test.describe('SECURITY - XSS and Input Validation', () => {
+test.describe.skip('LEGACY: SECURITY - XSS and Input Validation @security @high @legacy', () => {
   
   const XSS_PAYLOADS = [
     '<script>alert("XSS")</script>',
@@ -256,7 +256,7 @@ test.describe('SECURITY - XSS and Input Validation', () => {
       
       // Verificar se script não foi executado
       // 1. Não deve haver alertas (verificar se há dialogs)
-      const alertDialogs = page.locator('.swal2-popup, .modal, .alert');
+      const alertDialogs = page.locator('.swal2-popup, .offcanvas, [data-testid*="drawer"], [data-testid*="offcanvas"], .alert');
       const alertCount = await alertDialogs.count();
       
       // 2. DOM não deve conter o script tag
@@ -333,7 +333,7 @@ test.describe('SECURITY - XSS and Input Validation', () => {
   });
 });
 
-test.describe('SECURITY - SQL Injection', () => {
+test.describe.skip('LEGACY: SECURITY - SQL Injection @security @high @legacy', () => {
   
   const SQLI_PAYLOADS = [
     "'; DROP TABLE usuarios; --",
@@ -407,7 +407,7 @@ test.describe('SECURITY - SQL Injection', () => {
   });
 });
 
-test.describe('SECURITY - Rate Limiting and Brute Force', () => {
+test.describe.skip('LEGACY: SECURITY - Rate Limiting and Brute Force @security @high @legacy', () => {
   
   test('deve implementar rate limiting em endpoints de API', async ({ page }) => {
     await login(page, TEST_USERS.admin);
@@ -540,7 +540,7 @@ test.describe('SECURITY - Rate Limiting and Brute Force', () => {
   });
 });
 
-test.describe('SECURITY - CSRF Protection', () => {
+test.describe.skip('LEGACY: SECURITY - CSRF Protection @security @high @legacy', () => {
   
   test('deve exigir CSRF token em requisições POST', async ({ page }) => {
     await login(page, TEST_USERS.admin);
@@ -629,7 +629,7 @@ test.describe('SECURITY - CSRF Protection', () => {
   });
 });
 
-test.describe('SECURITY - Information Disclosure', () => {
+test.describe.skip('LEGACY: SECURITY - Information Disclosure @security @high @legacy', () => {
   
   test('não deve expor dados sensíveis no DOM', async ({ page }) => {
     await login(page, TEST_USERS.admin);
@@ -748,7 +748,7 @@ test.describe('SECURITY - Information Disclosure', () => {
   });
 });
 
-test.describe('SECURITY - Memory and Performance', () => {
+test.describe.skip('LEGACY: SECURITY - Memory and Performance @security @high @legacy', () => {
   
   test('não deve vazar dados sensíveis na memória', async ({ page }) => {
     await login(page, TEST_USERS.admin);

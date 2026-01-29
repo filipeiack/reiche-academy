@@ -8,7 +8,7 @@ import { test, expect } from './fixtures';
  * Agente: QA_E2E_Interface
  * Data: 2026-01-09
  */
-test.describe('Login', () => {
+test.describe('Login @smoke @auth @medium', () => {
   test('deve fazer login com credenciais válidas', async ({ page }) => {
     await page.goto('http://localhost:4200/login');
     

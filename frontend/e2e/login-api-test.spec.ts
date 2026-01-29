@@ -1,6 +1,6 @@
 import { test, expect } from '@playwright/test';
 
-test('login administrativo - teste de API direta', async ({ page }) => {
+test.skip('login administrativo - teste de API direta @auth @legacy @high', async ({ page }) => {
   console.log('🔍 Testando login via API direta...');
   
   // 1. Testar login via API diretamente

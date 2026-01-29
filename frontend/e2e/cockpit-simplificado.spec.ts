@@ -7,7 +7,7 @@ import { test, expect, login, TEST_USERS } from './fixtures';
  * antes de testar funcionalidades complexas
  */
 
-test.describe('Cockpit - Simplificado', () => {
+test.describe('Cockpit - Simplificado @cockpit @regression @high', () => {
   
   test('deve acessar cockpit dinamicamente', async ({ page }) => {
     await login(page, TEST_USERS.gestorEmpresaA);

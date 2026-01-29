@@ -38,7 +38,7 @@ import {
  * Decisão: Documentar limitação e focar em testes de maior valor
  */
 
-test.describe('Pilares - Acesso e Navegação', () => {
+test.describe('Pilares - Acesso e Navegação @pilares @ui @high', () => {
   
   test.beforeEach(async ({ page }) => {
     await login(page, TEST_USERS['admin']);
@@ -58,8 +58,8 @@ test.describe('Pilares - Acesso e Navegação', () => {
     await page.waitForTimeout(2000);
     
     // Verificar se há pilares ou mensagem de vazio
-    const pilares = page.locator('[data-testid="pilar-list-item"], .pilar-card, .list-group-item');
-    const mensagemVazio = page.locator('text=/nenhum pilar|sem pilares cadastrados/i');
+    const pilares = page.locator('[data-testid="pilar-list-item"]');
+    const mensagemVazio = page.locator('text=/Nenhum pilar encontrado/i');
     
     const pilarCount = await pilares.count();
     const vazioCount = await mensagemVazio.count();
@@ -99,7 +99,7 @@ test.describe('Pilares - Acesso e Navegação', () => {
   });
 });
 
-test.describe('Pilares - Reordenação (Drag-and-Drop)', () => {
+test.describe('Pilares - Reordenação (Drag-and-Drop) @pilares @ui @high', () => {
   
   /**
    * TESTES DE DRAG-AND-DROP REMOVIDOS
@@ -149,7 +149,7 @@ test.describe('Pilares - Reordenação (Drag-and-Drop)', () => {
   });
 });
 
-test.describe('Pilares - Multi-tenant e Permissões', () => {
+test.describe('Pilares - Multi-tenant e Permissões @pilares @ui @high', () => {
   
   test('ADMINISTRADOR deve poder gerenciar pilares globais', async ({ page }) => {
     await login(page, TEST_USERS['admin']);

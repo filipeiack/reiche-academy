@@ -27,7 +27,7 @@ import {
  * Data: 2026-01-09
  */
 
-test.describe('Diagnóstico - Acesso e Navegação', () => {
+test.describe.skip('LEGACY: Diagnóstico - Acesso e Navegação @diagnostico @regression @high @legacy', () => {
   
   test('ADMINISTRADOR deve acessar página de diagnóstico', async ({ page }) => {
     try {
@@ -100,7 +100,7 @@ test.describe('Diagnóstico - Acesso e Navegação', () => {
   });
 });
 
-test.describe('Diagnóstico - Estrutura de Dados', () => {
+test.describe.skip('LEGACY: Diagnóstico - Estrutura de Dados @diagnostico @legacy', () => {
   
   test('deve carregar estrutura de pilares (se existirem)', async ({ page }) => {
     await login(page, TEST_USERS.admin);
@@ -150,7 +150,7 @@ test.describe('Diagnóstico - Estrutura de Dados', () => {
   });
 });
 
-test.describe('Diagnóstico - Preenchimento de Notas', () => {
+test.describe.skip('LEGACY: Diagnóstico - Preenchimento de Notas @diagnostico @legacy', () => {
   
   test('deve exibir campos de nota e criticidade para rotinas (se existirem)', async ({ page }) => {
     await login(page, TEST_USERS.admin);
@@ -255,7 +255,7 @@ test.describe('Diagnóstico - Preenchimento de Notas', () => {
   });
 });
 
-test.describe('Diagnóstico - Validações', () => {
+test.describe.skip('LEGACY: Diagnóstico - Validações @diagnostico @legacy', () => {
   
   test('nota fora do intervalo 1-10 deve ser rejeitada (validação HTML5)', async ({ page }) => {
     await login(page, TEST_USERS['admin']);

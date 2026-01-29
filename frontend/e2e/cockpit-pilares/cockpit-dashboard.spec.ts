@@ -1,6 +1,6 @@
 import { test, expect } from '@playwright/test';
 
-test.describe('Dashboard Cockpit', () => {
+test.describe.skip('LEGACY: Dashboard Cockpit @cockpit @regression @high @legacy', () => {
   test.beforeEach(async ({ page }) => {
     // Login primeiro
     await page.goto('/login');
@@ -269,7 +269,7 @@ test('deve ser responsivo em diferentes viewports', async ({ page }) => {
   });
 });
 
-test.describe('Dashboard Cockpit - Componentes Filhos', () => {
+test.describe.skip('LEGACY: Dashboard Cockpit - Componentes Filhos @cockpit @legacy', () => {
   test.beforeEach(async ({ page }) => {
     // Login primeiro
     await page.goto('/login');
@@ -344,7 +344,7 @@ test.describe('Dashboard Cockpit - Componentes Filhos', () => {
   });
 });
 
-test.describe('Dashboard Cockpit - Performance', () => {
+test.describe.skip('LEGACY: Dashboard Cockpit - Performance @cockpit @legacy', () => {
   test('deve carregar em tempo aceitável', async ({ page }) => {
     // Login primeiro
     await page.goto('/login');

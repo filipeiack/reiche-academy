@@ -7,7 +7,7 @@ import { test, expect } from '@playwright/test';
  * sem depender de backend ou banco de dados.
  */
 
-test.describe('Acessibilidade Básica das Páginas', () => {
+test.describe('Acessibilidade Básica das Páginas @a11y @medium', () => {
   
   test('página de login deve carregar', async ({ page }) => {
     await page.goto('http://localhost:4200/login');

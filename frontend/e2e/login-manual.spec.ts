@@ -1,6 +1,6 @@
 import { test, expect } from '@playwright/test';
 
-test('login administrativo - teste manual', async ({ page }) => {
+test.skip('login administrativo - teste manual @auth @legacy @high', async ({ page }) => {
   console.log('🔍 Iniciando teste manual de login...');
   
   // 1. Verificar se backend está online

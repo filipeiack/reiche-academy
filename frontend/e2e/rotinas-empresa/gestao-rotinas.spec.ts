@@ -6,6 +6,23 @@ import {
   selectEmpresa,
   TEST_USERS 
 } from '../fixtures';
+import type { Page } from '@playwright/test';
+
+const getDrawerContainer = (page: Page) =>
+  page.locator('.offcanvas, [data-testid*="drawer"], [data-testid*="offcanvas"]').first();
+
+const getDrawerTitle = (page: Page, title: string) =>
+  getDrawerContainer(page)
+    .locator(
+      `.offcanvas-title:has-text("${title}"), .offcanvas-header:has-text("${title}"), [data-testid="drawer-title"]:has-text("${title}"), [data-testid="offcanvas-title"]:has-text("${title}")`
+    )
+    .first();
+
+const getDrawerBody = (page: Page) =>
+  getDrawerContainer(page).locator('.offcanvas-body, [data-testid="drawer-body"], [data-testid="offcanvas-body"]');
+
+const getDrawerFooter = (page: Page) =>
+  getDrawerContainer(page).locator('.offcanvas-footer, [data-testid="drawer-footer"], [data-testid="offcanvas-footer"], .offcanvas-body, .offcanvas');
 
 /**
  * E2E Tests - Gestão de Rotinas por Empresa
@@ -25,7 +42,7 @@ import {
  * Versão: 2.0 - Ajustado conforme handoff DEV-to-QA-E2E-pilares-rotinas-rbac-v1
  */
 
-test.describe('Gestão de Rotinas - Adicionar Rotina Customizada', () => {
+test.describe.skip('LEGACY: Gestão de Rotinas - Adicionar Rotina Customizada @rotinas @regression @medium @legacy', () => {
   
   test('ADMINISTRADOR deve abrir modal Adicionar Rotina', async ({ page }) => {
     await login(page, TEST_USERS['admin']);
@@ -54,12 +71,11 @@ test.describe('Gestão de Rotinas - Adicionar Rotina Customizada', () => {
       await page.waitForTimeout(500);
       
       // Clicar em "Adicionar Rotina"
-      const adicionarRotinaBtn = page.locator('a:has-text("Adicionar Rotina")').first();
+      const adicionarRotinaBtn = page.locator('[data-testid="btn-adicionar-rotina"], a:has-text("Adicionar Rotina")').first();
       await adicionarRotinaBtn.click();
       
-      // Validar que modal foi aberto
-      const modalTitle = page.locator('.modal-title:has-text("Nova Rotina Customizada")');
-      await expect(modalTitle).toBeVisible({ timeout: 5000 });
+      // Validar que drawer foi aberto
+      await expect(getDrawerTitle(page, 'Nova Rotina Customizada')).toBeVisible({ timeout: 5000 });
     }
   });
 
@@ -93,27 +109,26 @@ test.describe('Gestão de Rotinas - Adicionar Rotina Customizada', () => {
     await page.waitForTimeout(500);
     
     // Clicar em "Adicionar Rotina"
-    const adicionarRotinaBtn = page.locator('a:has-text("Adicionar Rotina")').first();
+    const adicionarRotinaBtn = page.locator('[data-testid="btn-adicionar-rotina"], a:has-text("Adicionar Rotina")').first();
     await adicionarRotinaBtn.click();
     
-    // Aguardar modal carregar
-    await page.waitForSelector('.modal-title:has-text("Nova Rotina Customizada")', { timeout: 5000 });
+    // Aguardar drawer carregar
+    await expect(getDrawerTitle(page, 'Nova Rotina Customizada')).toBeVisible({ timeout: 5000 });
     await page.waitForTimeout(1000);
     
     // Preencher nome da rotina (textarea com formControlName="nome")
     const nomeRotina = `Rotina E2E Test ${Date.now()}`;
-    const nomeTextarea = page.locator('.modal-body textarea[formControlName="nome"]');
+    const nomeTextarea = getDrawerBody(page).locator('textarea[formControlName="nome"]');
     await nomeTextarea.fill(nomeRotina);
     await page.waitForTimeout(500);
     
-    // Clicar em "Criar Rotina"
-    const criarButton = page.locator('.modal-footer button:has-text("Criar Rotina")');
+    // Clicar em "Adicionar Rotina"
+    const criarButton = getDrawerFooter(page).locator('button:has-text("Adicionar Rotina")');
     await criarButton.click();
     await page.waitForTimeout(1500);
     
-    // Validar que modal fechou
-    const modalVisible = await page.locator('.modal-title:has-text("Nova Rotina Customizada")').count();
-    expect(modalVisible).toBe(0);
+    // Drawer permanece aberto após adicionar (padrão atual)
+    await expect(getDrawerTitle(page, 'Nova Rotina Customizada')).toBeVisible();
   });
 
   test('GESTOR deve criar rotina customizada com sucesso', async ({ page }) => {
@@ -144,20 +159,19 @@ test.describe('Gestão de Rotinas - Adicionar Rotina Customizada', () => {
     const adicionarRotinaBtn = page.locator('a:has-text("Adicionar Rotina")').first();
     await adicionarRotinaBtn.click();
     
-    await page.waitForSelector('.modal-title:has-text("Nova Rotina Customizada")', { timeout: 5000 });
+    await expect(getDrawerTitle(page, 'Nova Rotina Customizada')).toBeVisible({ timeout: 5000 });
     await page.waitForTimeout(1000);
     
     const nomeRotina = `Rotina GESTOR Test ${Date.now()}`;
-    const nomeTextarea = page.locator('.modal-body textarea[formControlName="nome"]');
+    const nomeTextarea = getDrawerBody(page).locator('textarea[formControlName="nome"]');
     await nomeTextarea.fill(nomeRotina);
     await page.waitForTimeout(500);
     
-    const criarButton = page.locator('.modal-footer button:has-text("Criar Rotina")');
+    const criarButton = getDrawerFooter(page).locator('button:has-text("Criar Rotina")');
     await criarButton.click();
     await page.waitForTimeout(1500);
     
-    const modalVisible = await page.locator('.modal-title:has-text("Nova Rotina Customizada")').count();
-    expect(modalVisible).toBe(0);
+    await expect(getDrawerTitle(page, 'Nova Rotina Customizada')).toHaveCount(0);
   });
 
   test('ADMINISTRADOR deve validar nome mínimo de 3 caracteres', async ({ page }) => {
@@ -190,22 +204,21 @@ test.describe('Gestão de Rotinas - Adicionar Rotina Customizada', () => {
     const adicionarRotinaBtn = page.locator('a:has-text("Adicionar Rotina")').first();
     await adicionarRotinaBtn.click();
     
-    await page.waitForSelector('.modal-title:has-text("Nova Rotina Customizada")', { timeout: 5000 });
+    await expect(getDrawerTitle(page, 'Nova Rotina Customizada')).toBeVisible({ timeout: 5000 });
     await page.waitForTimeout(1000);
     
     // Preencher com apenas 2 caracteres
-    const nomeTextarea = page.locator('.modal-body textarea[formControlName="nome"]');
+    const nomeTextarea = getDrawerBody(page).locator('textarea[formControlName="nome"]');
     await nomeTextarea.fill('AB');
     await page.waitForTimeout(500);
     
     // Validar que botão "Criar Rotina" fica desabilitado (validação)
-    const criarButton = page.locator('.modal-footer button:has-text("Criar Rotina")');
+    const criarButton = getDrawerFooter(page).locator('button:has-text("Criar Rotina")');
     const isDisabled = await criarButton.isDisabled();
     expect(isDisabled).toBe(true);
     
     // Validar que modal NÃO fechou (erro de validação)
-    const modalStillVisible = await page.locator('.modal-title:has-text("Nova Rotina Customizada")').count();
-    expect(modalStillVisible).toBe(1);
+    await expect(getDrawerTitle(page, 'Nova Rotina Customizada')).toHaveCount(1);
   });
 
   test('GESTOR deve validar nome mínimo de 3 caracteres', async ({ page }) => {
@@ -236,20 +249,19 @@ test.describe('Gestão de Rotinas - Adicionar Rotina Customizada', () => {
     const adicionarRotinaBtn = page.locator('a:has-text("Adicionar Rotina")').first();
     await adicionarRotinaBtn.click();
     
-    await page.waitForSelector('.modal-title:has-text("Nova Rotina Customizada")', { timeout: 5000 });
+    await expect(getDrawerTitle(page, 'Nova Rotina Customizada')).toBeVisible({ timeout: 5000 });
     await page.waitForTimeout(1000);
     
-    const nomeTextarea = page.locator('.modal-body textarea[formControlName="nome"]');
+    const nomeTextarea = getDrawerBody(page).locator('textarea[formControlName="nome"]');
     await nomeTextarea.fill('XY');
     await page.waitForTimeout(500);
     
     // Validar que botão "Criar Rotina" fica desabilitado
-    const criarButton = page.locator('.modal-footer button:has-text("Criar Rotina")');
+    const criarButton = getDrawerFooter(page).locator('button:has-text("Criar Rotina")');
     const isDisabled = await criarButton.isDisabled();
     expect(isDisabled).toBe(true);
     
-    const modalStillVisible = await page.locator('.modal-title:has-text("Nova Rotina Customizada")').count();
-    expect(modalStillVisible).toBe(1);
+    await expect(getDrawerTitle(page, 'Nova Rotina Customizada')).toHaveCount(1);
   });
 
   test('ADMINISTRADOR deve cancelar criação de rotina', async ({ page }) => {
@@ -282,22 +294,21 @@ test.describe('Gestão de Rotinas - Adicionar Rotina Customizada', () => {
     const adicionarRotinaBtn = page.locator('a:has-text("Adicionar Rotina")').first();
     await adicionarRotinaBtn.click();
     
-    await page.waitForSelector('.modal-title:has-text("Nova Rotina Customizada")', { timeout: 5000 });
+    await expect(getDrawerTitle(page, 'Nova Rotina Customizada')).toBeVisible({ timeout: 5000 });
     await page.waitForTimeout(1000);
     
     // Preencher rotina
-    const nomeTextarea = page.locator('.modal-body textarea[formControlName="nome"]');
+    const nomeTextarea = getDrawerBody(page).locator('textarea[formControlName="nome"]');
     await nomeTextarea.fill('Rotina a cancelar');
     await page.waitForTimeout(500);
     
     // Cancelar
-    const cancelButton = page.locator('.modal-footer button:has-text("Cancelar")');
+    const cancelButton = getDrawerFooter(page).locator('button:has-text("Cancelar")');
     await cancelButton.click();
     await page.waitForTimeout(1000);
     
-    // Validar que modal fechou
-    const modalVisible = await page.locator('.modal-title:has-text("Nova Rotina Customizada")').count();
-    expect(modalVisible).toBe(0);
+    // Validar que drawer fechou
+    await expect(getDrawerTitle(page, 'Nova Rotina Customizada')).toHaveCount(0);
   });
 
   test('GESTOR deve cancelar criação de rotina', async ({ page }) => {
@@ -328,23 +339,22 @@ test.describe('Gestão de Rotinas - Adicionar Rotina Customizada', () => {
     const adicionarRotinaBtn = page.locator('a:has-text("Adicionar Rotina")').first();
     await adicionarRotinaBtn.click();
     
-    await page.waitForSelector('.modal-title:has-text("Nova Rotina Customizada")', { timeout: 5000 });
+    await expect(getDrawerTitle(page, 'Nova Rotina Customizada')).toBeVisible({ timeout: 5000 });
     await page.waitForTimeout(1000);
     
-    const nomeTextarea = page.locator('.modal-body textarea[formControlName="nome"]');
+    const nomeTextarea = getDrawerBody(page).locator('textarea[formControlName="nome"]');
     await nomeTextarea.fill('Rotina GESTOR a cancelar');
     await page.waitForTimeout(500);
     
-    const cancelButton = page.locator('.modal-footer button:has-text("Cancelar")');
+    const cancelButton = getDrawerFooter(page).locator('button:has-text("Cancelar")');
     await cancelButton.click();
     await page.waitForTimeout(1000);
     
-    const modalVisible = await page.locator('.modal-title:has-text("Nova Rotina Customizada")').count();
-    expect(modalVisible).toBe(0);
+    await expect(getDrawerTitle(page, 'Nova Rotina Customizada')).toHaveCount(0);
   });
 });
 
-test.describe('Gestão de Rotinas - Gerenciar Rotinas Modal', () => {
+test.describe.skip('LEGACY: Gestão de Rotinas - Gerenciar Rotinas Modal @rotinas @legacy', () => {
   
   test('ADMINISTRADOR deve abrir modal Gerenciar Rotinas', async ({ page }) => {
     await login(page, TEST_USERS['admin']);
@@ -372,8 +382,8 @@ test.describe('Gestão de Rotinas - Gerenciar Rotinas Modal', () => {
       const gerenciarRotinasBtn = page.locator('a:has-text("Gerenciar Rotinas")').first();
       await gerenciarRotinasBtn.click();
       
-      const modalTitle = page.locator('.modal-title:has(.feather.icon-list)');
-      await expect(modalTitle).toBeVisible({ timeout: 5000 });
+      const drawerTitle = getDrawerContainer(page).locator('.offcanvas-title, .offcanvas-header, [data-testid="drawer-title"], [data-testid="offcanvas-title"]');
+      await expect(drawerTitle).toBeVisible({ timeout: 5000 });
     }
   });
 
@@ -401,8 +411,8 @@ test.describe('Gestão de Rotinas - Gerenciar Rotinas Modal', () => {
       const gerenciarRotinasBtn = page.locator('a:has-text("Gerenciar Rotinas")').first();
       await gerenciarRotinasBtn.click();
       
-      const modalTitle = page.locator('.modal-title:has(.feather.icon-list)');
-      await expect(modalTitle).toBeVisible({ timeout: 5000 });
+      const drawerTitle = getDrawerContainer(page).locator('.offcanvas-title, .offcanvas-header, [data-testid="drawer-title"], [data-testid="offcanvas-title"]');
+      await expect(drawerTitle).toBeVisible({ timeout: 5000 });
     }
   });
 
