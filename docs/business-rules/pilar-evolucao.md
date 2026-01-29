@@ -254,6 +254,20 @@ const historico = await prisma.pilarEvolucao.findMany({
 
 ---
 
+### UI-EVOL-006: Filtro de Evolução por Ano e Últimos 12 Meses
+
+**Descrição:** O filtro de ano deve usar os anos presentes em `PilarEvolucao` da empresa e sempre oferecer a opção “Últimos 12 meses”.
+
+**Comportamento:**
+- Exibir opções: **“Últimos 12 meses”** (padrão) + **anos distintos** de `PilarEvolucao.createdAt` (ordem desc).
+- Ao selecionar “Últimos 12 meses”, o gráfico usa apenas registros de `PilarEvolucao` dos últimos 12 meses.
+- Ao selecionar um ano, o gráfico usa apenas registros de `PilarEvolucao` daquele ano.
+- Sem registros no período: exibir estado vazio.
+
+**Fonte de dados:** `PilarEvolucao` (snapshots congelados).
+
+---
+
 ### UI-EVOL-003: Zonas Coloridas de Performance
 
 **Plugin:** chartjs-plugin-annotation

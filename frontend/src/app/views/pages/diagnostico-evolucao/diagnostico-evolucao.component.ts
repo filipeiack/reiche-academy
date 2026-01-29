@@ -12,7 +12,7 @@ import { EmpresaBasic } from '@app/core/models/auth.model';
 import { AuthService } from '../../../core/services/auth.service';
 import { EmpresaContextService } from '../../../core/services/empresa-context.service';
 import { PeriodosAvaliacaoService } from '../../../core/services/periodos-avaliacao.service';
-import { PeriodoAvaliacao } from '../../../core/models/periodo-avaliacao.model';
+import { PeriodoAvaliacao, PeriodoComSnapshots } from '../../../core/models/periodo-avaliacao.model';
 import { Chart, registerables } from 'chart.js';
 import annotationPlugin from 'chartjs-plugin-annotation';
 import { MediaBadgeComponent } from '../../../shared/components/media-badge/media-badge.component';
@@ -55,8 +55,10 @@ export class DiagnosticoEvolucaoComponent implements OnInit, OnDestroy {
   barChart: Chart<'bar', any[], any> | null = null;
   periodoAtual: PeriodoAvaliacao | null = null;
   periodoCongelado: PeriodoAvaliacao | null = null; // Último período congelado (para recongelamento)
-  anoFiltro: number | undefined = undefined;
-  anosDisponiveis: number[] = [];
+  private readonly FILTRO_ULTIMOS_12_MESES = 'ultimos-12-meses';
+  anoFiltro: string = this.FILTRO_ULTIMOS_12_MESES;
+  anosDisponiveis: Array<{ value: string; label: string }> = [];
+  private periodosHistorico: PeriodoComSnapshots[] = [];
 
   canCongelar = false; // ADMINISTRADOR, CONSULTOR, GESTOR
 
@@ -146,8 +148,7 @@ export class DiagnosticoEvolucaoComponent implements OnInit, OnDestroy {
       next: (data) => {
         this.medias = data;
         this.loading = false;
-        // Gerar anos disponíveis (últimos 5 anos a partir do ano atual)
-        this.gerarAnosDisponiveis();
+        this.anoFiltro = this.FILTRO_ULTIMOS_12_MESES;
         // Carregar período atual
         this.loadPeriodoAtual();
         // Carregar histórico com filtro de ano
@@ -261,16 +262,19 @@ export class DiagnosticoEvolucaoComponent implements OnInit, OnDestroy {
     }
 
     try {
-      // Buscar histórico de períodos congelados com filtro de ano
+      // Buscar histórico de períodos congelados
       const periodos = await firstValueFrom(
-        this.periodosService.getHistorico(this.selectedEmpresaId, this.anoFiltro)
+        this.periodosService.getHistorico(this.selectedEmpresaId)
       );
+
+      this.periodosHistorico = periodos || [];
+      this.atualizarAnosDisponiveis(this.periodosHistorico);
+      const periodosFiltrados = this.filtrarPeriodos(this.periodosHistorico);
 
       // Converter períodos em estrutura de histórico para o chart
       // Cada período usa sua dataReferencia real
       this.historico = this.medias.map(media => {
-        const dadosPilar = periodos
-          .filter(p => !p.aberto) // Apenas períodos congelados
+        const dadosPilar = periodosFiltrados
           .sort((a, b) => {
             // Ordenar por dataReferencia
             const dataA = new Date(a.dataReferencia);
@@ -305,6 +309,10 @@ export class DiagnosticoEvolucaoComponent implements OnInit, OnDestroy {
       this.showToast('Erro ao carregar histórico', 'error');
       this.historico = [];
       this.destroyBarChart();
+      this.anosDisponiveis = [
+        { value: this.FILTRO_ULTIMOS_12_MESES, label: 'Últimos 12 meses' }
+      ];
+      this.anoFiltro = this.FILTRO_ULTIMOS_12_MESES;
     }
   }
 
@@ -642,19 +650,79 @@ renderBarChart(): void {
   /**
    * Gera lista de anos disponíveis para o filtro (últimos 5 anos a partir do ano atual)
    */
-  private gerarAnosDisponiveis(): void {
-    const anoAtual = new Date().getFullYear();
-    this.anosDisponiveis = [];
-    for (let i = 0; i < 3; i++) {
-      this.anosDisponiveis.push(anoAtual - i);
+  private atualizarAnosDisponiveis(periodos: PeriodoComSnapshots[]): void {
+    const anosUnicos = Array.from(new Set(periodos.map(p => p.ano))).sort((a, b) => b - a);
+
+    this.anosDisponiveis = [
+      { value: this.FILTRO_ULTIMOS_12_MESES, label: 'Últimos 12 meses' },
+      ...anosUnicos.map(ano => ({ value: ano.toString(), label: ano.toString() }))
+    ];
+
+    if (!this.anoFiltro || (this.anoFiltro !== this.FILTRO_ULTIMOS_12_MESES && !anosUnicos.includes(Number(this.anoFiltro)))) {
+      this.anoFiltro = this.FILTRO_ULTIMOS_12_MESES;
     }
+  }
+
+  private filtrarPeriodos(periodos: PeriodoComSnapshots[]): PeriodoComSnapshots[] {
+    const periodosFechados = periodos.filter(p => !p.aberto);
+
+    if (this.anoFiltro === this.FILTRO_ULTIMOS_12_MESES) {
+      const limite = new Date();
+      limite.setMonth(limite.getMonth() - 12);
+      return periodosFechados.filter(p => new Date(p.dataReferencia) >= limite);
+    }
+
+    if (this.anoFiltro) {
+      const ano = Number(this.anoFiltro);
+      if (!Number.isNaN(ano)) {
+        return periodosFechados.filter(p => p.ano === ano);
+      }
+    }
+
+    return periodosFechados;
   }
 
   /**
    * Callback quando usuário muda o filtro de ano
    */
   onAnoChange(): void {
-    this.loadAllHistorico();
+    if (this.periodosHistorico.length > 0) {
+      this.atualizarAnosDisponiveis(this.periodosHistorico);
+      const periodosFiltrados = this.filtrarPeriodos(this.periodosHistorico);
+
+      this.historico = this.medias
+        .map(media => {
+          const dadosPilar = periodosFiltrados
+            .sort((a, b) => {
+              const dataA = new Date(a.dataReferencia);
+              const dataB = new Date(b.dataReferencia);
+              return dataA.getTime() - dataB.getTime();
+            })
+            .map(periodo => {
+              const snapshot = periodo.snapshots?.find(s => s.pilarEmpresaId === media.pilarEmpresaId);
+              return {
+                data: periodo.dataReferencia,
+                media: snapshot?.mediaNotas || null,
+                trimestre: periodo.trimestre,
+                ano: periodo.ano
+              };
+            })
+            .filter(d => d.media !== null);
+
+          return {
+            pilarEmpresaId: media.pilarEmpresaId,
+            pilarNome: media.pilarNome,
+            data: dadosPilar
+          };
+        })
+        .filter(h => h.data.length > 0);
+
+      setTimeout(() => {
+        this.renderBarChart();
+      }, 100);
+    } else {
+      this.loadAllHistorico();
+    }
   }
 
   /**

@@ -7,8 +7,8 @@
       <p class="mt-2 text-muted">Carregando plano de ação...</p>
     </div>
     } @else {
-    <div class="d-flex align-items-center justify-content-between flex-wrap mb-2">
-      <h5 class="card-title mb-2">
+    <div class="cockpit-tab-header d-flex align-items-center justify-content-between flex-wrap">
+      <h5 class="card-title cockpit-tab-title">
         <i class="bi bi-clipboard-check me-2"></i>
         PLANO DE AÇÃO ESPECÍFICO
       </h5>
@@ -58,11 +58,11 @@
               <span class="badge bg-gray-100 text-black acao-badge mb-1" style="text-align: left;"><small>Causa 5:
                 </small>{{ acao.causa5 }}</span>
               }
-              <span class="badge bg-gray-300 text-black acao-badge" style="text-align: left;"><small>Ação: </small>{{
+              <span class="badge bg-gray-300 text-black acao-badge" style="text-align: left;"><small>Ação Proposta: </small>{{
                 acao.acaoProposta }}</span>
             </td>
             <td class="col-mobile-hide">
-              <span class="badge" [class]="getStatusClass(acao)" style="width: 100%;">
+              <span class="badge" [class]="getStatusClass(acao) + ' text-black'" style="width: 100%;">
                 {{ getStatusLabel(acao) }}
               </span>
               <br>

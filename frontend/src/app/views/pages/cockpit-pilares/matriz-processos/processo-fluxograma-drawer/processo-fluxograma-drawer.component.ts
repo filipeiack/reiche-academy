@@ -164,7 +164,7 @@ import { TranslatePipe } from '@core/pipes/translate.pipe';
     }
 
     .offcanvas-footer {
-      background-color: #f8f9fa;
+      background-color: var(--bs-body-bg);
     }
 
     .acoes-list {
@@ -174,20 +174,20 @@ import { TranslatePipe } from '@core/pipes/translate.pipe';
     }
 
     .acao-item {
-      background: #f8f9fa;
-      border: 1px solid #dee2e6;
+      background: var(--bs-tertiary-bg);
+      border: 1px solid var(--bs-border-color);
       border-radius: 0.375rem;
-      padding: 0.75rem;
+      padding: 0.5rem;
       transition: all 0.2s;
     }
 
     .acao-item:hover {
-      background: #e9ecef;
-      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+      background: var(--bs-secondary-bg);
+      box-shadow: var(--bs-box-shadow-sm);
     }
 
     .acao-item.cdk-drag-preview {
-      box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+      box-shadow: var(--bs-box-shadow-lg);
       opacity: 0.8;
     }
 
@@ -197,7 +197,7 @@ import { TranslatePipe } from '@core/pipes/translate.pipe';
 
     .drag-handle {
       cursor: move;
-      color: #6c757d;
+      color: var(--bs-secondary-color);
       padding: 0.25rem;
     }
 
@@ -388,7 +388,7 @@ export class ProcessoFluxogramaDrawerComponent implements OnInit {
       html: this.getTranslation('PROCESSOS_FLUXOGRAMA.CONFIRM_DELETE_TEXT'),
       showCancelButton: true,
       confirmButtonColor: '#d33',
-      cancelButtonColor: '#6c757d',
+      cancelButtonColor: 'var(--bs-secondary)',
       confirmButtonText: this.getTranslation('BUTTONS.DELETE'),
       cancelButtonText: this.getTranslation('BUTTONS.CANCEL'),
     });

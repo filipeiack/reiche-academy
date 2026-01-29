@@ -170,7 +170,7 @@ import { StatusMedicaoUtil } from '@core/utils/status-medicao.util';
     }
     
     .offcanvas-footer {
-      background-color: #f8f9fa;
+        background-color: var(--bs-body-bg);
     }
   `]
 })

@@ -172,7 +172,7 @@ import { Usuario } from '@core/models/auth.model';
         height: 100%;
       }
       .offcanvas-footer {
-        background-color: #f8f9fa;
+        background-color: var(--bs-body-bg);
       }
       ::ng-deep ng-select.ng-select-indicador .ng-select-container {
         min-height: 56px;

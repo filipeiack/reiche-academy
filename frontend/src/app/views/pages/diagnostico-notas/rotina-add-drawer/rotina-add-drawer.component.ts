@@ -85,7 +85,7 @@ import { PilarEmpresa } from '@core/services/pilares-empresa.service';
     }
     
     .offcanvas-footer {
-      background-color: #f8f9fa;
+      background-color: var(--bs-body-bg);
     }
   `]
 })

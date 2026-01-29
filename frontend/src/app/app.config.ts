@@ -14,6 +14,7 @@ import { SweetAlert2Module } from '@sweetalert2/ngx-sweetalert2';
 import { provideHighlightOptions } from 'ngx-highlightjs';
 import { TranslateService } from './core/services/translate.service';
 import { AuthInterceptor } from './core/interceptors/auth.interceptor';
+import { NgSelectConfig } from '@ng-select/ng-select';
 
 const highlightOptions = {
   coreLibraryLoader: () => import('highlight.js/lib/core'),
@@ -35,6 +36,13 @@ export function initializeApp(translateService: TranslateService) {
   };
 }
 
+export function initializeNgSelect(config: NgSelectConfig) {
+  return () => {
+    config.notFoundText = 'Nenhum item encontrado';
+    config.addTagText = 'Adicionar item';
+  };
+}
+
 export const appConfig: ApplicationConfig = {
   providers: [
     provideZoneChangeDetection({ eventCoalescing: true }), 
@@ -53,6 +61,12 @@ export const appConfig: ApplicationConfig = {
       provide: APP_INITIALIZER,
       useFactory: initializeApp,
       deps: [TranslateService],
+      multi: true
+    },
+    {
+      provide: APP_INITIALIZER,
+      useFactory: initializeNgSelect,
+      deps: [NgSelectConfig],
       multi: true
     }
   ],

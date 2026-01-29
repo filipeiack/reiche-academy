@@ -129,7 +129,7 @@ import { TranslatePipe } from "../../../../core/pipes/translate.pipe";
     }
     
     .offcanvas-footer {
-      background-color: #f8f9fa;
+      background-color: var(--bs-body-bg);
     }
 
     .rotinas-list {
@@ -139,20 +139,20 @@ import { TranslatePipe } from "../../../../core/pipes/translate.pipe";
     }
 
     .rotina-item {
-      background: #f8f9fa;
-      border: 1px solid #dee2e6;
+      background: var(--bs-tertiary-bg);
+      border: 1px solid var(--bs-border-color);
       border-radius: 0.375rem;
       padding: 0.75rem;
       transition: all 0.2s;
     }
 
     .rotina-item:hover {
-      background: #e9ecef;
-      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+      background: var(--bs-secondary-bg);
+      box-shadow: var(--bs-box-shadow-sm);
     }
 
     .rotina-item.cdk-drag-preview {
-      box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+      box-shadow: var(--bs-box-shadow-lg);
       opacity: 0.8;
     }
 
@@ -162,12 +162,12 @@ import { TranslatePipe } from "../../../../core/pipes/translate.pipe";
 
     .drag-handle {
       cursor: move;
-      color: #6c757d;
+      color: var(--bs-secondary-color);
       padding: 0.25rem;
     }
 
     .drag-handle:hover {
-      color: #495057;
+      color: var(--bs-body-color);
     }
 
     .rotina-nome {
@@ -255,7 +255,7 @@ export class RotinaEditDrawerComponent implements OnInit {
       html: `Deseja remover a rotina <strong>"${rotina.nome}"</strong>?`,
       showCancelButton: true,
       confirmButtonColor: '#d33',
-      cancelButtonColor: '#6c757d',
+        cancelButtonColor: 'var(--bs-secondary)',
       confirmButtonText: 'Sim, remover',
       cancelButtonText: 'Cancelar'
     }).then((result) => {

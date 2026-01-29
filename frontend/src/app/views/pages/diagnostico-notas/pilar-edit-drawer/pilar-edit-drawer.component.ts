@@ -122,7 +122,7 @@ import { TranslatePipe } from "../../../../core/pipes/translate.pipe";
     }
     
     .offcanvas-footer {
-      background-color: #f8f9fa;
+      background-color: var(--bs-body-bg);
     }
 
     .pilares-list {
@@ -132,20 +132,20 @@ import { TranslatePipe } from "../../../../core/pipes/translate.pipe";
     }
 
     .pilar-item {
-      background: #f8f9fa;
-      border: 1px solid #dee2e6;
+      background: var(--bs-tertiary-bg);
+      border: 1px solid var(--bs-border-color);
       border-radius: 0.375rem;
       padding: 0.75rem;
       transition: all 0.2s;
     }
 
     .pilar-item:hover {
-      background: #e9ecef;
-      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+      background: var(--bs-secondary-bg);
+      box-shadow: var(--bs-box-shadow-sm);
     }
 
     .pilar-item.cdk-drag-preview {
-      box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+      box-shadow: var(--bs-box-shadow-lg);
       opacity: 0.8;
     }
 
@@ -155,12 +155,12 @@ import { TranslatePipe } from "../../../../core/pipes/translate.pipe";
 
     .drag-handle {
       cursor: move;
-      color: #6c757d;
+      color: var(--bs-secondary-color);
       padding: 0.25rem;
     }
 
     .drag-handle:hover {
-      color: #495057;
+      color: var(--bs-body-color);
     }
 
     .pilar-nome {
@@ -245,7 +245,7 @@ export class PilarEditDrawerComponent implements OnInit {
       html: `Deseja remover o pilar <strong>${pilar.nome}</strong>?<br><small class="text-danger">Todas as rotinas associadas também serão removidas.</small>`,
       showCancelButton: true,
       confirmButtonColor: '#d33',
-      cancelButtonColor: '#6c757d',
+        cancelButtonColor: 'var(--bs-secondary)',
       confirmButtonText: 'Sim, remover',
       cancelButtonText: 'Cancelar'
     }).then((result) => {

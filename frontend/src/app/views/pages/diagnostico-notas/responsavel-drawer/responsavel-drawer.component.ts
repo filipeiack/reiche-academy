@@ -93,7 +93,7 @@ import { PilarEmpresa } from '@core/services/diagnostico-notas.service';
     }
     
     .offcanvas-footer {
-      background-color: #f8f9fa;
+      background-color: var(--bs-body-bg);
     }
   `]
 })

@@ -6,8 +6,8 @@
 } @else {
 <div class="card mb-2">
   <div class="card-body">
-    <div class="d-flex justify-content-between align-items-center mb-2">
-      <h5 class="card-title mb-0">
+    <div class="cockpit-tab-header d-flex justify-content-between align-items-center">
+      <h5 class="card-title cockpit-tab-title">
         <i class="bi bi-people me-2"></i>
         Matriz de Cargos e Responsáveis
       </h5>
@@ -70,8 +70,8 @@
 
 <div class="card mb-2">
   <div class="card-body">
-    <div class="d-flex justify-content-between align-items-center">
-      <h5 class="card-title mb-0">
+    <div class="cockpit-tab-header d-flex justify-content-between align-items-center">
+      <h5 class="card-title cockpit-tab-title">
         <i class="bi bi-list-task me-2"></i>
         Funções por Cargo
       </h5>
@@ -109,8 +109,8 @@
 
   @if (isCargoExpanded(cargo.id)) {
   <div class="card-body">
-    <div class="d-flex justify-content-end mb-2">
-      <h5 class="me-auto mb-0">Lista de Funções do cargo {{ cargo.cargo }}</h5>
+    <div class="cockpit-tab-header d-flex justify-content-end">
+      <h5 class="me-auto cockpit-tab-title">Lista de Funções do cargo {{ cargo.cargo }}</h5>
       <button class="btn btn-sm btn-primary" (click)="abrirDrawerNovaFuncao(cargo)">
         <i class="bi bi-plus-circle me-1"></i>
         Adicionar Função

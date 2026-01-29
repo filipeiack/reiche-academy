@@ -14,11 +14,11 @@
         <!-- Botão Congelar/Recongelar -->
         @if (canCongelar) {
         <button type="button"
-            [class]="periodoAtual ? 'btn btn-primary btn-sm' : 'btn btn-outline-warning btn-sm'"
+            [class]="periodoAtual ? 'btn btn-primary btn-sm' : 'btn btn-outline-primary btn-sm'"
             (click)="congelarMedias()" [disabled]="!periodoAtual && medias.length === 0"
             data-testid="btn-congelar-medias">
-            <i class="feather icon-download"></i>
-            <span class="ms-1">Congelar Médias</span>
+            <i class="bi bi-arrow-bar-down"></i>
+            <span class="ms-1">Atualizar Médias</span>
         </button>
         }
     </div>
@@ -77,8 +77,9 @@
             </div>
             <!-- Filtro de Ano -->
             <ng-select [(ngModel)]="anoFiltro" (ngModelChange)="onAnoChange()" [items]="anosDisponiveis"
-                [clearable]="true" [searchable]="false" placeholder="Filtrar por ano" class="ng-select-sm"
-                style="width: 150px;" data-testid="ano-filtro-select">
+                bindLabel="label" bindValue="value" [clearable]="false" [searchable]="false"
+                placeholder="Filtrar por ano" class="ng-select-sm ng-select-primary-border" style="width: 170px;"
+                data-testid="ano-filtro-select">
             </ng-select>
 
 

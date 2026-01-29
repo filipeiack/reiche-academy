@@ -60,6 +60,9 @@ export class SidebarComponent implements OnInit, AfterViewInit {
     // Subscribe to translated menu items
     this.menuService.getMenuItems().subscribe(items => {
       this.menuItems = items;
+      setTimeout(() => {
+        this._activateMenuDropdown();
+      });
     });
 
     /**

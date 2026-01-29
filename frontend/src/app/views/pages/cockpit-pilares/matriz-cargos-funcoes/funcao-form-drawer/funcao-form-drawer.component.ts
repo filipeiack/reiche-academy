@@ -96,7 +96,7 @@ import { Criticidade, FuncaoCargo } from '@core/interfaces/cockpit-pilares.inter
         overflow: auto;
       }
       .offcanvas-footer {
-        background-color: #f8f9fa;
+        background-color: var(--bs-body-bg);
         margin-top: auto;
         position: sticky;
         bottom: 0;
