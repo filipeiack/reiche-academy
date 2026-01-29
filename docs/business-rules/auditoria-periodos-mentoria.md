@@ -4,35 +4,27 @@
 Períodos de mentoria são criados e renovados no módulo PeriodosMentoria e representam ciclos anuais por empresa.
 
 ## Descrição
-Todas as operações CUD relacionadas a períodos de mentoria devem gerar auditoria em AuditLog.
+Operações de criação e renovação de períodos de mentoria geram auditoria em `AuditLog` quando há identificação do usuário (`createdBy`/`updatedBy`).
 
 ## Condição
-Quando ocorrer criação, renovação (encerramento do período anterior) ou atualização relevante de período de mentoria.
+- Ao criar um novo período (`create`).
+- Ao renovar um período (`renovar`) — encerramento do período anterior e criação do novo.
 
-## Comportamento Esperado
-- Registrar AuditLog após CREATE de período.
-- Registrar AuditLog após UPDATE que encerra período vigente.
-- Registrar AuditLog após criação do novo período no fluxo de renovação.
-
-## Cenários
-
-### Happy Path
-1. Usuário cria período de mentoria.
-2. Sistema cria o registro no banco.
-3. Sistema registra AuditLog (acao: CREATE) com `dadosDepois` do período criado.
-
-### Casos de Erro
-- Falha ao registrar auditoria não deve impedir a criação/renovação? **Decisão pendente.**
+## Comportamento Implementado
+- **CREATE:** registra auditoria com `entidade = 'periodos_mentoria'` e `dadosDepois` do período criado.
+- **RENEW:** registra auditoria do encerramento (UPDATE) do período ativo e auditoria de CREATE do novo período.
+- A auditoria só é registrada quando `createdBy`/`updatedBy` é fornecido pelo controller.
 
 ## Restrições
-- O registro de auditoria deve respeitar a padronização de `entidade` definida em regra específica.
+- A padronização de `entidade` segue `periodos_mentoria`.
+- Não há tratamento explícito de falha na auditoria (o comportamento depende do `AuditService`).
 
-## Impacto Técnico Estimado
-- Backend: adicionar chamadas a `AuditService.log()` em PeriodosMentoriaService.
-- Regras de auditoria: atualizar documento de auditoria com nova cobertura.
+## Fonte no Código
+- Arquivo: backend/src/modules/periodos-mentoria/periodos-mentoria.service.ts
+- Classe: `PeriodosMentoriaService`
+- Métodos: `create()` e `renovar()`
 
 ---
 ## Observações
-- Regra proposta - aguardando implementação
-- Decisão aprovada por: usuário (2026-01-28)
-- Prioridade: alta
+- Regra extraída por engenharia reversa
+- Não representa necessariamente o comportamento desejado

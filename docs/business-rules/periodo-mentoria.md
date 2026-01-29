@@ -3,8 +3,8 @@
 **Módulo:** Períodos de Mentoria  
 **Backend:** `backend/src/modules/periodos-mentoria/`  
 **Frontend:** `frontend/src/app/views/pages/empresas/` e componentes de cockpit  
-**Última atualização:** 2026-01-21  
-**Agente:** Business Rules Extractor  
+**Última atualização:** 2026-01-29  
+**Agente:** Business Analyst (Extração)  
 **Ref:** ADR-007 (Período de Mentoria de 1 Ano)
 
 ---
@@ -25,20 +25,20 @@ O módulo Períodos de Mentoria é responsável por:
 **Entidades relacionadas:**
 - **Empresa** → Dona dos períodos de mentoria
 - **PeriodoAvaliacao** → Trimestres vinculados ao período
-- **IndicadorMensal** → Valores mensais vinculados ao período
+- **IndicadorMensal** → **Sem vínculo direto no schema atual** (não existe `periodoMentoriaId`)
 
-**Integração:**
-- Períodos de mentoria definem QUANDO trimestres podem ser criados
-- Valores mensais são validados contra dataInicio/dataFim do período
-- Frontend filtra dados por período selecionado (dropdown)
+**Integração (estado atual):**
+- Períodos de mentoria definem quando trimestres podem ser criados (quando a validação está habilitada no módulo correspondente)
+- Valores mensais **não** são vinculados por `periodoMentoriaId` no schema atual
+- Frontend consulta período ativo via endpoint `/ativo` para exibição e validações pontuais
 
-**Endpoints a implementar:**
+**Endpoints implementados:**
 - `POST /empresas/:id/periodos-mentoria` — Criar período (ADMINISTRADOR)
 - `GET /empresas/:id/periodos-mentoria` — Listar histórico de períodos
 - `GET /empresas/:id/periodos-mentoria/ativo` — Buscar período ativo
 - `POST /empresas/:id/periodos-mentoria/:periodoId/renovar` — Renovar mentoria (ADMINISTRADOR)
 
-**Status do módulo:** ⏳ **A IMPLEMENTAR**
+**Status do módulo:** ✅ **IMPLEMENTADO (backend)**
 
 ---
 
@@ -46,7 +46,7 @@ O módulo Períodos de Mentoria é responsável por:
 
 ### 2.1. Backend
 
-**Arquivos a criar:**
+**Arquivos existentes:**
 - `periodos-mentoria.service.ts` — Lógica de negócio
 - `periodos-mentoria.controller.ts` — Endpoints REST
 - `periodos-mentoria.module.ts` — Módulo NestJS
@@ -56,7 +56,7 @@ O módulo Períodos de Mentoria é responsável por:
 **Integrações:**
 - PrismaService — Acesso ao banco de dados
 - AuditService — Registro de operações CREATE/UPDATE
-- date-fns — Cálculo de dataFim (dataInicio + 1 ano)
+- Cálculo de dataFim por regra de fim de ano (UTC) via `calcularDataFimAno`
 
 ### 2.2. Frontend
 
@@ -65,7 +65,7 @@ O módulo Períodos de Mentoria é responsável por:
 - `empresas-list.component.ts` — Exibir status do período ativo na coluna
 - `edicao-valores-mensais.component.ts` — Sempre exibe último período (vigente)
 - `grafico-indicadores.component.ts` — Dropdown de seleção de período + cálculo dinâmico de meses
-- `periodos-mentoria.service.ts` — Service Angular (a criar)
+- `periodos-mentoria.service.ts` — Service Angular (existente)
 
 **Funcionalidades:**
 
@@ -107,7 +107,7 @@ O módulo Períodos de Mentoria é responsável por:
 | empresaId | String | FK para Empresa |
 | numero | Int | Sequencial por empresa (1, 2, 3...) |
 | dataInicio | DateTime | Data de início da mentoria (ex: 2026-05-01) |
-| dataFim | DateTime | Data de término (calculado: dataInicio + 1 ano) |
+| dataFim | DateTime | Data de término (calculado: **31/12 do ano de dataInicio, 23:59:59.999 UTC**) |
 | ativo | Boolean | true = período ativo, false = encerrado |
 | dataContratacao | DateTime | Quando foi contratado (default: now()) |
 | dataEncerramento | DateTime? | Quando foi encerrado (renovação ou cancelamento) |
@@ -119,7 +119,6 @@ O módulo Períodos de Mentoria é responsável por:
 **Relações:**
 - `empresa`: Empresa (dona do período)
 - `periodosAvaliacao`: PeriodoAvaliacao[] (trimestres vinculados)
-- `indicadoresMensais`: IndicadorMensal[] (valores mensais vinculados)
 
 **Índices:**
 - `@@unique([empresaId, numero])` — Evita duplicatas de número
@@ -127,7 +126,7 @@ O módulo Períodos de Mentoria é responsável por:
 
 **Comportamento:**
 - Sistema permite apenas 1 período ativo por empresa
-- Duração fixa de 1 ano (dataFim = dataInicio + 365 dias)
+- dataFim é calculada como **último dia do ano de `dataInicio` (UTC)**
 - Ao renovar, período anterior é encerrado (`ativo = false`)
 - Histórico completo de todos os períodos fica registrado
 
@@ -151,22 +150,22 @@ O módulo Períodos de Mentoria é responsável por:
 
 ---
 
-### 3.3. IndicadorMensal (Modificado)
+### 3.3. IndicadorMensal (Estado Atual)
 
-**Alteração:** Adicionado campo `periodoMentoriaId` (nullable para retrocompatibilidade)
+**Estado atual:** Não há vínculo direto com `PeriodoMentoria` no schema.
 
 | Campo | Tipo | Descrição |
 |-------|------|-----------|
-| periodoMentoriaId | String? | FK para PeriodoMentoria |
-| periodoMentoria | PeriodoMentoria? | Período de mentoria ao qual este valor pertence |
+| indicadorCockpitId | String | FK para IndicadorCockpit |
+| ano | Int | Ano do registro |
+| mes | Int? | Mês (1-12) ou null para resumo anual |
 
-**Constraint alterada:**
-- `@@unique([indicadorCockpitId, ano, mes, periodoMentoriaId])` — Permite mesmos meses em períodos diferentes
+**Constraint atual:**
+- `@@unique([indicadorCockpitId, ano, mes])`
 
 **Comportamento:**
-- Valores de `meta` e `realizado` DEVEM estar dentro do período de mentoria
-- Campo `historico` é **EXCEÇÃO** (pode conter dados anteriores ao período)
-- Ao deletar período de mentoria, valores são deletados em cascata (onDelete: Cascade)
+- Validações de período de mentoria **não** são feitas via `periodoMentoriaId` no schema atual.
+- O controle de ciclos de meses é tratado no módulo Cockpit (ver regra em `cockpit-indicadores-mensais.md`).
 
 ---
 
@@ -198,16 +197,16 @@ const periodoAtivo = await this.prisma.periodoMentoria.findFirst({
 });
 
 if (periodoAtivo) {
-  throw new BadRequestException(
-    'Empresa já possui período de mentoria ativo. Encerre o período atual antes de criar novo.'
+  throw new ConflictException(
+    `Empresa já possui período de mentoria ativo (Período ${periodoAtivo.numero})`
   );
 }
 ```
 
-3. **Calcular dataFim (1 ano):**
+3. **Calcular dataFim (fim do ano de dataInicio):**
 ```typescript
 const dataInicio = new Date(dto.dataInicio);
-const dataFim = addYears(dataInicio, 1); // dataInicio + 365 dias
+const dataFim = this.calcularDataFimAno(dataInicio); // 31/12 do ano (UTC)
 ```
 
 4. **Calcular numero sequencial:**
@@ -229,64 +228,23 @@ const periodo = await this.prisma.periodoMentoria.create({
     dataInicio,
     dataFim,
     ativo: true,
-    dataContratacao: new Date(),
     createdBy: user.id,
   },
 });
-
-// ✅ CRIAR MESES PARA TODOS OS INDICADORES EXISTENTES
-const indicadoresExistentes = await this.prisma.indicadorCockpit.findMany({
-  where: {
-    cockpitPilar: {
-      pilarEmpresa: {
-        empresaId,
-      },
-    },
-    ativo: true,
-  },
-});
-
-const anoInicio = dataInicio.getUTCFullYear();
-const mesesParaCriar = [];
-
-for (const indicador of indicadoresExistentes) {
-  // Criar 12 meses + resumo anual
-  for (let mes = 1; mes <= 12; mes++) {
-    mesesParaCriar.push({
-      indicadorCockpitId: indicador.id,
-      mes,
-      ano: anoInicio,
-      periodoMentoriaId: periodo.id,
-      createdBy: user.id,
-      updatedBy: user.id,
-    });
-  }
-  // Resumo anual
-  mesesParaCriar.push({
-    indicadorCockpitId: indicador.id,
-    mes: null,
-    ano: anoInicio,
-    periodoMentoriaId: periodo.id,
-    createdBy: user.id,
-    updatedBy: user.id,
-  });
-}
-
-if (mesesParaCriar.length > 0) {
-  await this.prisma.indicadorMensal.createMany({
-    data: mesesParaCriar,
-  });
-}
 ```
 
-**Auditoria:**
+> ⚠️ A criação automática de meses foi removida do módulo de mentoria (ver R-MENT-006).
+
+**Auditoria (quando `createdBy` é informado):**
 ```typescript
-await this.auditService.log({
-  entidade: 'PeriodoMentoria',
+await this.audit.log({
+  usuarioId: createdBy,
+  usuarioNome: user?.nome ?? '',
+  usuarioEmail: user?.email ?? '',
+  entidade: 'periodos_mentoria',
   entidadeId: periodo.id,
   acao: 'CREATE',
-  dadosDepois: { empresaId, numero, dataInicio, dataFim },
-  usuarioId: user.id,
+  dadosDepois: periodo,
 });
 ```
 
@@ -297,7 +255,7 @@ await this.auditService.log({
   "empresaId": "uuid",
   "numero": 1,
   "dataInicio": "2026-05-01T00:00:00Z",
-  "dataFim": "2027-04-30T23:59:59Z",
+  "dataFim": "2026-12-31T23:59:59.999Z",
   "ativo": true,
   "dataContratacao": "2026-01-21T10:00:00Z",
   "dataEncerramento": null
@@ -330,15 +288,15 @@ const periodoAtivo = await this.prisma.periodoMentoria.findFirst({
 });
 
 if (periodoAtivo) {
-  throw new BadRequestException(
-    'Empresa já possui período de mentoria ativo'
+  throw new ConflictException(
+    `Empresa já possui período de mentoria ativo (Período ${periodoAtivo.numero})`
   );
 }
 ```
 
 **Aplicado em:**
-- `create()` — Criar novo período
-- `renovar()` — Renovar período (encerra anterior antes)
+- `create()` — Bloqueia criação quando já existe período ativo
+- `renovar()` — Encerra o ativo antes de criar o novo (não cria período paralelo)
 
 **Arquivo:** `backend/src/modules/periodos-mentoria/periodos-mentoria.service.ts`
 
@@ -346,7 +304,7 @@ if (periodoAtivo) {
 
 ### R-MENT-003: Renovação de Mentoria
 
-**Descrição:** Administrador pode renovar mentoria antes ou após término do período atual.
+**Descrição:** Administrador renova mentoria encerrando o período ativo e criando um novo período com `dataInicio` **após** o `dataFim` do período atual.
 
 **Implementação:**
 - **Endpoint:** `POST /empresas/:id/periodos-mentoria/:periodoId/renovar` (ADMINISTRADOR)
@@ -356,11 +314,14 @@ if (periodoAtivo) {
 
 1. **Período existe e pertence à empresa:**
 ```typescript
-const periodoAtual = await this.prisma.periodoMentoria.findUnique({
-  where: { id: periodoId },
+const periodoAtual = await this.prisma.periodoMentoria.findFirst({
+  where: {
+    id: periodoId,
+    empresaId,
+  },
 });
 
-if (!periodoAtual || periodoAtual.empresaId !== empresaId) {
+if (!periodoAtual) {
   throw new NotFoundException('Período de mentoria não encontrado');
 }
 ```
@@ -368,78 +329,80 @@ if (!periodoAtual || periodoAtual.empresaId !== empresaId) {
 2. **Período ainda está ativo:**
 ```typescript
 if (!periodoAtual.ativo) {
-  throw new BadRequestException('Período já está encerrado');
+  throw new BadRequestException('Não é possível renovar período já encerrado');
+}
+```
+
+3. **Data de início da renovação deve ser posterior ao fim do período atual:**
+```typescript
+const dataInicio = new Date(dto.dataInicio);
+if (dataInicio < periodoAtual.dataFim) {
+  throw new BadRequestException(
+    `Data de início da renovação deve ser posterior a ${periodoAtual.dataFim.toISOString().split('T')[0]}`,
+  );
 }
 ```
 
 **Lógica de Renovação:**
 
 ```typescript
-// 1. Encerrar período atual
-await this.prisma.periodoMentoria.update({
-  where: { id: periodoId },
-  data: {
-    ativo: false,
-    dataEncerramento: new Date(),
-    updatedBy: user.id,
-  },
-});
+const dataFim = this.calcularDataFimAno(dataInicio);
+const novoNumero = periodoAtual.numero + 1;
 
-// 2. Calcular datas do novo período
-const novaDataInicio = addDays(periodoAtual.dataFim, 1); // Continuidade
-const novaDataFim = addYears(novaDataInicio, 1);
-
-// 3. Criar novo período
-const novoPeriodo = await this.prisma.periodoMentoria.create({
-  data: {
-    empresaId,
-    numero: periodoAtual.numero + 1,
-    dataInicio: novaDataInicio,
-    dataFim: novaDataFim,
-    ativo: true,
-    dataContratacao: new Date(),
-    createdBy: user.id,
-  },
-});
+const [periodoEncerrado, novoPeriodo] = await this.prisma.$transaction([
+  this.prisma.periodoMentoria.update({
+    where: { id: periodoId },
+    data: {
+      ativo: false,
+      dataEncerramento: new Date(),
+      updatedBy: user.id,
+    },
+  }),
+  this.prisma.periodoMentoria.create({
+    data: {
+      empresaId,
+      numero: novoNumero,
+      dataInicio,
+      dataFim,
+      ativo: true,
+      createdBy: user.id,
+    },
+  }),
+]);
 ```
 
-**Auditoria:**
+**Auditoria (quando `updatedBy` é informado):**
 ```typescript
-// Auditoria de encerramento
-await this.auditService.log({
-  entidade: 'PeriodoMentoria',
+await this.audit.log({
+  usuarioId: updatedBy,
+  usuarioNome: user?.nome ?? '',
+  usuarioEmail: user?.email ?? '',
+  entidade: 'periodos_mentoria',
   entidadeId: periodoId,
   acao: 'UPDATE',
-  dadosDepois: { ativo: false, dataEncerramento: new Date() },
-  usuarioId: user.id,
+  dadosAntes: periodoAtual,
+  dadosDepois: periodoEncerrado,
 });
 
-// Auditoria de criação do novo
-await this.auditService.log({
-  entidade: 'PeriodoMentoria',
+await this.audit.log({
+  usuarioId: updatedBy,
+  usuarioNome: user?.nome ?? '',
+  usuarioEmail: user?.email ?? '',
+  entidade: 'periodos_mentoria',
   entidadeId: novoPeriodo.id,
   acao: 'CREATE',
-  dadosDepois: { numero: novoPeriodo.numero, dataInicio, dataFim },
-  usuarioId: user.id,
+  dadosDepois: novoPeriodo,
 });
 ```
 
 **Retorno:**
 ```json
 {
-  "periodoAnterior": {
-    "id": "uuid",
-    "numero": 1,
-    "ativo": false,
-    "dataEncerramento": "2026-01-21T10:00:00Z"
-  },
-  "novoPeriodo": {
-    "id": "uuid",
-    "numero": 2,
-    "dataInicio": "2027-05-01T00:00:00Z",
-    "dataFim": "2028-04-30T23:59:59Z",
-    "ativo": true
-  }
+  "id": "uuid",
+  "numero": 2,
+  "dataInicio": "2027-05-01T00:00:00Z",
+  "dataFim": "2027-12-31T23:59:59.999Z",
+  "ativo": true
 }
 ```
 

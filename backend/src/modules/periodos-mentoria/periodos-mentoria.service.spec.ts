@@ -2,9 +2,6 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { ConflictException, NotFoundException, BadRequestException } from '@nestjs/common';
 import { PrismaService } from '../../common/prisma/prisma.service';
 import { PeriodosMentoriaService } from './periodos-mentoria.service';
-import { CreatePeriodoMentoriaDto } from './dto/create-periodo-mentoria.dto';
-import { RenovarPeriodoMentoriaDto } from './dto/renovar-periodo-mentoria.dto';
-import { addYears } from 'date-fns';
 
 describe('PeriodosMentoriaService - Validação Completa', () => {
   let service: PeriodosMentoriaService;
@@ -26,7 +23,7 @@ describe('PeriodosMentoriaService - Validação Completa', () => {
     empresaId: 'empresa-uuid',
     numero: 1,
     dataInicio: new Date('2024-01-01'),
-    dataFim: new Date('2024-12-31'),
+    dataFim: new Date('2024-12-31T23:59:59.999Z'),
     ativo: true,
     createdAt: new Date(),
     updatedAt: new Date(),
@@ -127,8 +124,8 @@ describe('PeriodosMentoriaService - Validação Completa', () => {
   // R-MENT-001: CRIAÇÃO DE PERÍODO (1 ANO)
   // ============================================================
 
-  describe('R-MENT-001: Criação de Período (dataFim = dataInicio + 1 ano)', () => {
-    it('deve criar período com dataFim exatamente 1 ano após dataInicio', async () => {
+  describe('R-MENT-001: Criação de Período (dataFim = último dia do ano UTC)', () => {
+    it('deve criar período com dataFim no último dia do ano da dataInicio (UTC)', async () => {
       jest.spyOn(prisma.empresa, 'findUnique').mockResolvedValue(mockEmpresa as any);
       
       // ORDEM CORRETA: O service chama findFirst duas vezes
@@ -144,9 +141,16 @@ describe('PeriodosMentoriaService - Validação Completa', () => {
       const result = await service.create('empresa-uuid', { dataInicio: '2024-01-01' });
 
       expect(result.numero).toBe(1);
+      expect(prisma.periodoMentoria.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({
+            dataFim: new Date('2024-12-31T23:59:59.999Z'),
+          }),
+        }),
+      );
     });
 
-    it('deve calcular corretamente para anos bissextos', async () => {
+    it('deve calcular dataFim no fim do ano mesmo para datas bissextas', async () => {
       jest.spyOn(prisma.empresa, 'findUnique').mockResolvedValue(mockEmpresa as any);
       jest.spyOn(prisma.periodoMentoria, 'findFirst').mockResolvedValue(null);
       jest.spyOn(prisma.periodoMentoria, 'findFirst').mockResolvedValueOnce(null).mockResolvedValueOnce(null);
@@ -154,13 +158,13 @@ describe('PeriodosMentoriaService - Validação Completa', () => {
       const expectedPeriodo = {
         ...mockPeriodoAtivo,
         dataInicio: new Date('2024-02-29'),
-        dataFim: new Date('2025-02-28'),
+        dataFim: new Date('2024-12-31T23:59:59.999Z'),
       };
       jest.spyOn(prisma.periodoMentoria, 'create').mockResolvedValue(expectedPeriodo as any);
 
       const result = await service.create('empresa-uuid', { dataInicio: '2024-02-29' });
 
-      expect(result.dataFim).toEqual(new Date('2025-02-28'));
+      expect(result.dataFim).toEqual(new Date('2024-12-31T23:59:59.999Z'));
     });
   });
 
@@ -256,7 +260,7 @@ describe('PeriodosMentoriaService - Validação Completa', () => {
       jest.clearAllMocks();
       
       const dataInicio = new Date('2025-01-01');
-      const dataFim = addYears(dataInicio, 1);
+      const dataFim = new Date('2025-12-31T23:59:59.999Z');
       
       const novoPeriodo = {
         id: 'novo-periodo-uuid',
@@ -408,52 +412,6 @@ describe('PeriodosMentoriaService - Validação Completa', () => {
   });
 
   // ============================================================
-  // INTEGRAÇÃO COM OUTROS MÓDULOS
-  // ============================================================
-
-  describe('Integração com Outros Módulos', () => {
-    it('deve ser compatível com validações do Cockpit (período ativo obrigatório)', async () => {
-      // Simula validação do Cockpit que busca período ativo
-      jest.spyOn(prisma.periodoMentoria, 'findFirst').mockResolvedValue(mockPeriodoAtivo as any);
-
-      const periodoAtivo = await service.findAtivo('empresa-uuid');
-
-      expect(periodoAtivo).toBeDefined();
-      expect(periodoAtivo!.ativo).toBe(true);
-      expect(periodoAtivo!.dataInicio).toBeDefined();
-      expect(periodoAtivo!.dataFim).toBeDefined();
-      // Cockpit usaria estas datas para validar valores mensais
-    });
-
-    it('deve fornecer contexto temporal para Indicadores Mensais', async () => {
-      jest.spyOn(prisma.periodoMentoria, 'findMany').mockResolvedValue([mockPeriodoAtivo] as any);
-
-      const periodos = await service.findByEmpresa('empresa-uuid');
-
-      // Indicadores Mensais usariam o período ativo para:
-      expect(periodos[0].id).toBeDefined(); // periodoMentoriaId em IndicadorMensal
-      expect(periodos[0].dataInicio).toBeDefined(); // Validação de datas
-      expect(periodos[0].dataFim).toBeDefined(); // Janela de validade
-    });
-
-    it('deve manter histórico para Evolution de Pilares', async () => {
-      const periodosHistoricos = [
-        { ...mockPeriodoAtivo, numero: 2 },
-        { ...mockPeriodoInativo, numero: 1 },
-      ];
-
-      jest.spyOn(prisma.periodoMentoria, 'findMany').mockResolvedValue(periodosHistoricos as any);
-
-      const historico = await service.findByEmpresa('empresa-uuid');
-
-      // Evolution usaria para organizar dados históricos:
-      expect(historico).toHaveLength(2);
-      expect(historico[0].numero).toBe(2); // Mais recente primeiro
-      expect(historico[1].numero).toBe(1); // Mais antigo depois
-    });
-  });
-
-  // ============================================================
   // VALIDAÇÕES DE DATAS E INTEGRIDADE
   // ============================================================
 
@@ -469,7 +427,7 @@ describe('PeriodosMentoriaService - Validação Completa', () => {
       const expectedPeriodo = {
         ...mockPeriodoAtivo,
         dataInicio: dataFutura,
-        dataFim: addYears(dataFutura, 1),
+        dataFim: new Date(Date.UTC(dataFutura.getUTCFullYear(), 11, 31, 23, 59, 59, 999)),
       };
       jest.spyOn(prisma.periodoMentoria, 'create').mockResolvedValue(expectedPeriodo as any);
 
@@ -478,6 +436,13 @@ describe('PeriodosMentoriaService - Validação Completa', () => {
       });
 
       expect(result.dataInicio).toEqual(dataFutura);
+      expect(prisma.periodoMentoria.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({
+            dataFim: expectedPeriodo.dataFim,
+          }),
+        }),
+      );
     });
 
     it('deve registrar createdBy e updatedBy corretamente', async () => {
@@ -511,69 +476,4 @@ describe('PeriodosMentoriaService - Validação Completa', () => {
     });
   });
 
-  describe('R-MENT-006: Criação Automática de Meses', () => {
-    it('deve criar meses para todos os indicadores existentes ao criar período', async () => {
-      const mockIndicadores = [
-        { id: 'indicador-1', nome: 'Faturamento', ativo: true },
-        { id: 'indicador-2', nome: 'Lucro', ativo: true },
-      ];
-
-      jest.spyOn(prisma.empresa, 'findUnique').mockResolvedValue(mockEmpresa as any);
-      jest.spyOn(prisma.periodoMentoria, 'findFirst').mockResolvedValue(null);
-      jest.spyOn(prisma.periodoMentoria, 'create').mockResolvedValue({
-        id: 'periodo-uuid',
-        empresaId: 'empresa-uuid',
-        numero: 1,
-        dataInicio: new Date('2026-01-01'),
-        dataFim: new Date('2026-12-31'),
-        ativo: true,
-      } as any);
-      jest.spyOn(prisma.indicadorCockpit, 'findMany').mockResolvedValue(mockIndicadores as any);
-
-      await service.create('empresa-uuid', { dataInicio: '2026-01-01' }, 'user-123');
-
-      expect(prisma.indicadorMensal.createMany).not.toHaveBeenCalled();
-    });
-
-    it('não deve criar meses se não há indicadores', async () => {
-      jest.spyOn(prisma.empresa, 'findUnique').mockResolvedValue(mockEmpresa as any);
-      jest.spyOn(prisma.periodoMentoria, 'findFirst').mockResolvedValue(null);
-      jest.spyOn(prisma.periodoMentoria, 'create').mockResolvedValue({
-        id: 'periodo-uuid',
-        empresaId: 'empresa-uuid',
-        numero: 1,
-        dataInicio: new Date('2026-01-01'),
-        dataFim: new Date('2026-12-31'),
-        ativo: true,
-      } as any);
-      jest.spyOn(prisma.indicadorCockpit, 'findMany').mockResolvedValue([]);
-
-      await service.create('empresa-uuid', { dataInicio: '2026-01-01' }, 'user-123');
-
-      expect(prisma.indicadorMensal.createMany).not.toHaveBeenCalled();
-    });
-
-    it('deve criar meses ao renovar período com indicadores existentes', async () => {
-      const mockIndicadores = [
-        { id: 'indicador-1', nome: 'Faturamento', ativo: true },
-      ];
-
-      jest.spyOn(prisma.periodoMentoria, 'findFirst').mockResolvedValue(mockPeriodoAtivo as any);
-      jest.spyOn(prisma, '$transaction').mockResolvedValue([
-        { ...mockPeriodoAtivo, ativo: false },
-        { 
-          id: 'novo-periodo-uuid', 
-          numero: 2, 
-          ativo: true,
-          dataInicio: new Date('2025-01-01'),
-          dataFim: new Date('2025-12-31'),
-        },
-      ] as any);
-      jest.spyOn(prisma.indicadorCockpit, 'findMany').mockResolvedValue(mockIndicadores as any);
-
-      await service.renovar('empresa-uuid', 'periodo-ativo-uuid', { dataInicio: '2025-01-01' }, 'user-456');
-
-      expect(prisma.indicadorMensal.createMany).not.toHaveBeenCalled();
-    });
-  });
 });
