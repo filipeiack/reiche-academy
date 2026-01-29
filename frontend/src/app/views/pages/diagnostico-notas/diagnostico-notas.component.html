@@ -90,7 +90,8 @@
         <div class="card-header sticky-header-card mb-0 collapsed">
             <div class="pilar-header">
                 <div class="d-flex align-items-center gap-2">
-                    <button class="btn btn-link p-0 d-flex align-items-center" type="button" (click)="togglePilar(i)">
+                    <button class="btn btn-link p-0 d-flex align-items-center" type="button" (click)="togglePilar(i)"
+                        data-testid="pilar-toggle-button">
                         <i [ngClass]="pilarExpandido[i] ? 'feather icon-chevron-up' : 'feather icon-chevron-down'"></i>
                         <span class="fw-bold text-muted" data-testid="pilar-accordion-nome">
                             {{ ('PILARES.PILAR' | translate).toUpperCase() }}
@@ -122,7 +123,8 @@
                     <div ngbDropdown class="w-30px">
                         @if (pilarExpandido[i] && !isReadOnlyPerfil) {
                         <div ngbDropdown class="mb-2">
-                            <a class="no-dropdown-toggle-icon btn btn-link" ngbDropdownToggle id="dropdownMenuButton">
+                            <a class="no-dropdown-toggle-icon btn btn-link" ngbDropdownToggle id="dropdownMenuButton"
+                                data-testid="pilar-actions-toggle">
                                 <i class="feather icon-more-horizontal"></i>
                             </a>
                             <div ngbDropdownMenu aria-labelledby="dropdownMenuButton">
@@ -203,6 +205,7 @@
                                         {{ 'DIAGNOSTICO.CRITICIDADE' | translate }} <span class="text-danger">*</span>
                                     </label>
                                     <ng-select [id]="'criticidade-' + rotina.id" [items]="criticidadeOptions"
+                                        data-testid="rotina-criticidade-select"
                                         bindLabel="label" bindValue="value" [ngModel]="getCriticidadeAtual(rotina)"
                                         (ngModelChange)="onNotaChange(rotina, getNotaAtual(rotina), $event)"
                                         placeholder="{{ 'DIAGNOSTICO.SELECT_CRITICIDADE' | translate }}"
@@ -217,6 +220,7 @@
                                         {{ 'DIAGNOSTICO.NOTA' | translate }} <span class="text-danger">*</span>
                                     </label>
                                     <input type="number" [id]="'nota-' + rotina.id" class="form-control" min="0"
+                                        data-testid="rotina-nota-input"
                                         max="10" step="1" [value]="getNotaAtual(rotina)"
                                         (input)="onNotaChange(rotina, $any($event.target).value, getCriticidadeAtual(rotina))"
                                         placeholder="0 - 10" [ngClass]="getNotaClass(getNotaAtual(rotina))" />

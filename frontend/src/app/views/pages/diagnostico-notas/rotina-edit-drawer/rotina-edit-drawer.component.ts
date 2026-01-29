@@ -15,7 +15,7 @@ import { TranslatePipe } from "../../../../core/pipes/translate.pipe";
   template: `
     <div class="d-flex flex-column h-100">
       <div class="offcanvas-header border-bottom flex-shrink-0">
-        <h5 class="offcanvas-title">
+        <h5 class="offcanvas-title" data-testid="rotina-edit-title">
           <i class="feather icon-edit me-2"></i>
           Editar Rotinas
         </h5>

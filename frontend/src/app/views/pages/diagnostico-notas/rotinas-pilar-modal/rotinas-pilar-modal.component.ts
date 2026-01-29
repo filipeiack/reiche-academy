@@ -27,7 +27,7 @@ import { TranslatePipe } from "../../../../core/pipes/translate.pipe";
   template: `
     <ng-template #modalContent let-modal>
       <div class="modal-header">
-        <h5 class="modal-title">
+        <h5 class="modal-title" data-testid="rotinas-modal-title">
           <i class="feather icon-list me-2"></i>
           {{'PILARES.PILAR' | translate}} {{ pilarNome }}
         </h5>

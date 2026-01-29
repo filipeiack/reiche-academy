@@ -115,6 +115,11 @@ Não use este agente para:
 - Executar testes iterativamente
 - Corrigir **testes E2E** (seletores, timeouts, assertions)
 
+**Higiene de Seletores (Exceção Controlada):**
+- Adicionar/ajustar/remover **apenas** atributos `data-testid` em templates HTML/Angular
+- Objetivo exclusivo: estabilização de testes
+- **Proibido** alterar comportamento, layout, bindings ou lógica de UI
+
 **Validação Adversarial:**
 - Pensar como atacante (edge cases, segurança)
 - Testar cenários que Dev não pensou
@@ -129,6 +134,7 @@ Não use este agente para:
 ### ❌ Não Pode Fazer:
 
 - **Alterar código de produção** (Services, Controllers, Components, Guards)
+- **Exceção**: permitido **somente** editar atributos `data-testid` em templates HTML/Angular (sem mudanças funcionais)
 - Criar regras de negócio não documentadas
 - Confiar em testes criados pelo Dev
 - Criar testes genéricos "só para cobertura"

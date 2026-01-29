@@ -13,7 +13,7 @@ import { PilarEmpresa } from '@core/services/pilares-empresa.service';
   template: `
     <div class="d-flex flex-column h-100">
       <div class="offcanvas-header border-bottom flex-shrink-0">
-        <h5 class="offcanvas-title">
+        <h5 class="offcanvas-title" data-testid="rotina-add-title">
           <i class="bi bi-plus-circle me-2"></i>
           Nova Rotina Customizada
         </h5>
@@ -36,6 +36,7 @@ import { PilarEmpresa } from '@core/services/pilares-empresa.service';
               <textarea
                 class="form-control"
                 formControlName="nome"
+                data-testid="rotina-add-nome"
                 rows="3"
                 placeholder="Digite a descrição da rotina..."
                 [class.is-invalid]="form.get('nome')?.invalid && form.get('nome')?.touched"
@@ -59,13 +60,14 @@ import { PilarEmpresa } from '@core/services/pilares-empresa.service';
 
       <div class="offcanvas-footer border-top p-3 flex-shrink-0 bg-light">
         <div class="d-flex gap-2 justify-content-end">
-          <button type="button" class="btn btn-secondary" (click)="fechar()">
+          <button type="button" class="btn btn-secondary" (click)="fechar()" data-testid="rotina-add-cancel">
             Cancelar
           </button>
           <button
             type="button"
             class="btn btn-primary"
             (click)="salvar()"
+            data-testid="rotina-add-submit"
             [disabled]="form.invalid || saving"
           >
             @if (saving) {
