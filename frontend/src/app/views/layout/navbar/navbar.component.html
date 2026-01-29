@@ -7,12 +7,13 @@
     </div>
 
     <!-- Seletor de Empresa (Admin) ou Exibição (Cliente) -->
-    <div class="empresa-selector-wrapper d-flex gap-3 align-items-center">
+    <div class="empresa-selector-wrapper d-flex gap-3 align-items-center w-100">
       @if (isAdmin) {
       <!-- Admin: combo para selecionar empresa -->
       <ng-select data-testid="empresa-select" id="empresaNavbarSelect" [items]="empresas" bindLabel="nome"
         bindValue="id" [(ngModel)]="selectedEmpresaId" (change)="onEmpresaChange($event)"
-        placeholder="Selecione uma empresa..." [clearable]="true" class="empresa-navbar-select">
+        placeholder="Selecione uma empresa..." [clearable]="true"
+        class="empresa-navbar-select ng-select-primary-border">
         <ng-template ng-option-tmp let-item="item">
           <div>
             <strong>{{ item.nome }}</strong>
@@ -23,6 +24,30 @@
           </div>
         </ng-template>
       </ng-select>
+
+      @if (selectedEmpresa) {
+      <!-- <div class="d-flex align-items-center gap-2">
+        <i class="feather icon-briefcase"></i>
+        <span class="h3 mb-0">
+          {{ selectedEmpresa.nome }}
+        </span>
+      </div> -->
+
+      <div class="d-flex flex-column gap-1 justify-content-center" style="width: 40%;">
+        @if (getSelectedEmpresaCnpj()) {
+        <span class="text-muted fs-11px">{{ getSelectedEmpresaCnpj() | cnpj }}</span>
+        }
+        @if (getSelectedEmpresaLocalizacao()) {
+        <span class="text-muted fs-11px">{{ getSelectedEmpresaLocalizacao() }}</span>
+        }
+        <!-- @if (getSelectedEmpresaPeriodoMentoriaLabel()) {
+        <span class="text-muted fs-11px">{{ getSelectedEmpresaPeriodoMentoriaLabel() }}</span>
+        } -->
+        @if (getSelectedEmpresaPeriodoMentoriaInterval()) {
+        <span class="text-muted fs-11px">Mentoria: {{ getSelectedEmpresaPeriodoMentoriaInterval() }}</span>
+        }
+      </div>
+      }
       } @else if (currentUser?.empresa) {
 
       <div class="d-flex align-items-center gap-2">
@@ -31,7 +56,6 @@
           {{ getEmpresaNomeUsuario() }}
         </span>
       </div>
-      }
 
       <div class="d-flex flex-column gap-1 justify-content-center">
         @if (getEmpresaCnpj()) {
@@ -41,6 +65,7 @@
         <span class="text-muted fs-12px">{{ getEmpresaLocalizacao() }}</span>
         }
       </div>
+      }
     </div>
 
     <ul class="navbar-nav">

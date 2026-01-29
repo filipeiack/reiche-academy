@@ -44,6 +44,7 @@ export class NavbarComponent implements OnInit {
   // Empresa context
   empresas: Empresa[] = [];
   selectedEmpresaId: string | null = null;
+  selectedEmpresa: Empresa | null = null;
   isAdmin = false;
 
   get hasEmpresa(): boolean {
@@ -102,6 +103,7 @@ export class NavbarComponent implements OnInit {
     // Subscribe to empresa context
     this.empresaContextService.selectedEmpresaId$.subscribe(empresaId => {
       this.selectedEmpresaId = empresaId;
+      this.updateSelectedEmpresa();
     });
 
     // Subscribe to empresa changes (criação/atualização)
@@ -172,11 +174,22 @@ export class NavbarComponent implements OnInit {
         if (empresaContextId) {
           this.selectedEmpresaId = empresaContextId;
         }
+
+        this.updateSelectedEmpresa();
       },
       error: (err) => {
         console.error('Erro ao carregar empresas:', err);
       }
     });
+  }
+
+  private updateSelectedEmpresa(): void {
+    if (!this.selectedEmpresaId) {
+      this.selectedEmpresa = null;
+      return;
+    }
+
+    this.selectedEmpresa = this.empresas.find(empresa => empresa.id === this.selectedEmpresaId) || null;
   }
 
   /**
@@ -235,6 +248,43 @@ export class NavbarComponent implements OnInit {
     if (!estado) return cidade;
     
     return `${cidade}/${estado}`;
+  }
+
+  getSelectedEmpresaCnpj(): string {
+    return this.selectedEmpresa?.cnpj || '';
+  }
+
+  getSelectedEmpresaLocalizacao(): string {
+    if (!this.selectedEmpresa) return '';
+
+    const { cidade, estado } = this.selectedEmpresa;
+    if (!cidade && !estado) return '';
+    if (!cidade) return estado || '';
+    if (!estado) return cidade;
+
+    return `${cidade}/${estado}`;
+  }
+
+  getSelectedEmpresaPeriodoMentoriaLabel(): string {
+    if (!this.selectedEmpresa) return '';
+    if (!this.selectedEmpresa.periodoMentoriaAtivo) return 'Sem mentoria';
+
+    return `Período ${this.selectedEmpresa.periodoMentoriaAtivo.numero} Ativo`;
+  }
+
+  getSelectedEmpresaPeriodoMentoriaInterval(): string {
+    if (!this.selectedEmpresa?.periodoMentoriaAtivo) return '';
+
+    const dataInicio = new Date(this.selectedEmpresa.periodoMentoriaAtivo.dataInicio);
+    const dataFim = new Date(this.selectedEmpresa.periodoMentoriaAtivo.dataFim);
+    const meses = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'];
+
+    const mesInicio = meses[dataInicio.getMonth()];
+    const anoInicio = dataInicio.getFullYear().toString().slice(-2);
+    const mesFim = meses[dataFim.getMonth()];
+    const anoFim = dataFim.getFullYear().toString().slice(-2);
+
+    return `${mesInicio}/${anoInicio} - ${mesFim}/${anoFim}`;
   }
 
   /**

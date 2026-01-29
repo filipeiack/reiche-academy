@@ -11,6 +11,10 @@
     width: 100%;
   }
 
+  ::ng-deep .empresa-navbar-select.ng-select-primary-border .ng-select-container {
+    border-color: var(--bs-primary) !important;
+  }
+
   .empresa-display {
     color: var(--text-color);
     font-weight: 500;
