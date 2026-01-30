@@ -123,21 +123,26 @@ fi
 # STEP 6: Build das imagens Docker
 # ============================================================================
 echo ""
-echo "🔨 [6/8] Fazendo build das imagens Docker..."
+echo "🔨 [6/8] Fazendo build das imagens Docker ($ENVIRONMENT)..."
 echo "⏳ Isto pode levar alguns minutos..."
 
-docker compose -f docker-compose.vps.yml build --no-cache
+if [ "$ENVIRONMENT" == "staging" ]; then
+    docker compose -f docker-compose.vps.yml build --no-cache backend-staging
+else
+    docker compose -f docker-compose.vps.yml build --no-cache backend-prod
+fi
 
 # ============================================================================
 # STEP 7: Iniciar serviços
 # ============================================================================
 echo ""
-echo "▶️  [7/8] Iniciando serviços..."
+echo "▶️  [7/8] Iniciando serviço ($ENVIRONMENT)..."
 
-docker compose -f docker-compose.vps.yml down 2>/dev/null || true
-sleep 5
-
-docker compose -f docker-compose.vps.yml up -d
+if [ "$ENVIRONMENT" == "staging" ]; then
+    docker compose -f docker-compose.vps.yml up -d backend-staging postgres-staging redis-staging
+else
+    docker compose -f docker-compose.vps.yml up -d backend-prod postgres-prod redis-prod
+fi
 
 # Aguardar serviços estarem prontos
 echo "⏳ Aguardando serviços iniciarem..."
@@ -147,23 +152,25 @@ sleep 30
 # STEP 8: Migrations e Seeds
 # ============================================================================
 echo ""
-echo "💾 [8/8] Executando migrations e seeds..."
+echo "💾 [8/8] Executando migrations e seeds ($ENVIRONMENT)..."
 
-echo ""
-echo "📊 Migrando banco de PRODUÇÃO..."
-docker compose -f docker-compose.vps.yml exec -T backend-prod npm run migration:prod
-
-echo ""
-echo "📊 Migrando banco de STAGING..."
-docker compose -f docker-compose.vps.yml exec -T backend-staging npm run migration:prod
-
-echo ""
-echo "🌱 Seeding dados em PRODUÇÃO..."
-docker compose -f docker-compose.vps.yml exec -T backend-prod npm run seed
-
-echo ""
-echo "🌱 Seeding dados em STAGING..."
-docker compose -f docker-compose.vps.yml exec -T backend-staging npm run seed
+if [ "$ENVIRONMENT" == "staging" ]; then
+    echo ""
+    echo "📊 Migrando banco de STAGING..."
+    docker compose -f docker-compose.vps.yml exec -T backend-staging npm run migration:prod
+    
+    echo ""
+    echo "🌱 Seeding dados em STAGING..."
+    docker compose -f docker-compose.vps.yml exec -T backend-staging npm run seed
+else
+    echo ""
+    echo "📊 Migrando banco de PRODUÇÃO..."
+    docker compose -f docker-compose.vps.yml exec -T backend-prod npm run migration:prod
+    
+    echo ""
+    echo "🌱 Seeding dados em PRODUÇÃO..."
+    docker compose -f docker-compose.vps.yml exec -T backend-prod npm run seed
+fi
 
 # ============================================================================
 # VERIFICAÇÃO FINAL
@@ -202,4 +209,12 @@ echo "4️⃣  Editar nginx/nginx.conf para ativar HTTPS e reiniciar:"
 echo "   docker compose -f docker-compose.vps.yml restart nginx"
 echo ""
 
-echo "✨ Seu VPS está pronto!"
+echo ""
+echo "✨ Deploy de $ENVIRONMENT concluído!"
+echo ""
+echo "📝 Para fazer deploy do outro ambiente, execute:"
+if [ "$ENVIRONMENT" == "staging" ]; then
+    echo "   bash deploy-vps.sh prod"
+else
+    echo "   bash deploy-vps.sh staging"
+fi

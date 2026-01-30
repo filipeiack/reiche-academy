@@ -119,7 +119,8 @@ ssh root@76.13.66.10
 
 ```bash
 cd /opt/reiche-academy
-bash scripts/deploy-vps.sh
+git pull origin staging
+bash scripts/deploy-vps.sh staging
 ```
 
 **O que faz:**
