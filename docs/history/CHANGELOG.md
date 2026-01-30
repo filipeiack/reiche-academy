@@ -2,6 +2,98 @@
 
 Registro de todas as mudanças e atualizações do projeto.
 
+## 🎯 [1.1.0] - 2026-01-14
+
+### Changed
+- **Período de Avaliação - Flexibilização da Data de Referência**
+  - Removida restrição de último dia do trimestre
+  - `dataReferencia` agora aceita **qualquer data**
+  - Trimestre calculado automaticamente: jan-mar=Q1, abr-jun=Q2, jul-set=Q3, out-dez=Q4
+  - Intervalo mínimo de 90 dias calculado entre datas de referência escolhidas
+  - Gráfico exibe mês/ano da `dataReferencia` real (ex: 01/2026, 05/2026)
+
+### Removed
+- Backend: validação `endOfQuarter()` e `isSameDay()`
+- Frontend: validação de último dia do trimestre no modal
+- Importações desnecessárias do date-fns: `endOfQuarter`, `isSameDay`
+
+---
+
+## 🎯 [1.0.0] - 2026-01-14 - Período de Avaliação Trimestral
+
+### ✅ Added
+
+#### Backend - Nova Feature: Período de Avaliação
+- ✅ **Nova Entidade**: `PeriodoAvaliacao`
+  - Controla períodos trimestrais de avaliação (Q1, Q2, Q3, Q4)
+  - Validação automática: intervalo mínimo de 90 dias entre períodos
+  - Cálculo automático de trimestre baseado na data de referência
+  - Restrição: apenas 1 período ativo por empresa
+  - Unique constraint: `[empresaId, trimestre, ano]`
+
+- ✅ **Endpoints REST**:
+  - `POST /empresas/:id/periodos-avaliacao` - Iniciar novo período
+  - `POST /periodos-avaliacao/:id/congelar` - Congelar período e criar snapshots
+  - `GET /empresas/:id/periodos-avaliacao/atual` - Obter período ativo
+  - `GET /empresas/:id/periodos-avaliacao?ano=X` - Histórico com filtro opcional
+
+- ✅ **Serviços e Validações**:
+  - `PeriodosAvaliacaoService` com 5 métodos + validações
+  - Cálculo automático de médias por pilar
+  - Criação atômica de snapshots (transaction)
+  - Integração com `AuditModule` para rastreabilidade
+
+#### Frontend - UI de Período de Avaliação
+- ✅ **Modelos e Serviços**:
+  - `PeriodoAvaliacao` interface com 3 tipos (base, com snapshots, pilar snapshot)
+  - `PeriodosAvaliacaoService` com 4 métodos HTTP
+
+- ✅ **DiagnosticoNotasComponent**:
+  - Badge indicador de período ativo: "Avaliação Q{trimestre}/{ano} em andamento"
+  - Modal para iniciar nova avaliação com date picker (aceita qualquer data)
+  - Trimestre calculado automaticamente pelo backend
+  - Menu dropdown com ação "Iniciar Avaliação Trimestral"
+
+- ✅ **DiagnosticoEvolucaoComponent**:
+  - Botão "Congelar Médias Q{N}/{ano}" (habilitado apenas se período ativo)
+  - Filtro por ano (dropdown com clearable, mostra todos se vazio)
+  - Chart reformulado: exibe mês/ano da dataReferencia real de cada período
+  - Integração com endpoint de histórico de períodos
+
+### 🔄 Changed
+
+#### Database Schema
+- ✅ **Empresa**: Adicionada relação `periodosAvaliacao`
+- ✅ **PilarEvolucao**: 
+  - Novo campo obrigatório: `periodoAvaliacaoId` (FK para PeriodoAvaliacao)
+  - Campo `mediaNotas` alterado de `Float?` para `Float` (não-nulo)
+  - Unique constraint: `[pilarEmpresaId, periodoAvaliacaoId]` (1 snapshot por pilar/período)
+
+#### Migration
+- ✅ **Data Migration**: Criados períodos retroativos para 28 snapshots existentes
+  - Períodos gerados com base em `EXTRACT(QUARTER FROM createdAt)`
+  - Snapshots vinculados aos períodos retroativos
+  - Status: fechado (`aberto = false`) para períodos históricos
+
+#### Comportamento Alterado
+- ✅ **Congelamento de Médias**:
+  - Antes: Atualizava/criava snapshots sem controle de período
+  - Agora: Requer período ativo; cria snapshots e fecha período atomicamente
+  - Validação: mínimo 90 dias desde último período
+- ✅ **Histórico de Evolução**:
+  - Antes: Agrupado por data de criação
+  - Agora: Agrupado por trimestre/ano (Q1-Q4)
+  - Filtro: Apenas snapshots de períodos congelados do ano selecionado
+
+### 🐛 Fixed
+- ✅ Migration strategy para adicionar FK obrigatória em tabela com dados existentes:
+  1. Criar coluna nullable
+  2. Popular com data migration
+  3. Tornar NOT NULL
+  4. Adicionar constraints
+
+---
+
 ## 🎯 [09/12/2024] - Atualização Completa de Documentação & Dark Theme
 
 ### ✅ Documentação Atualizada

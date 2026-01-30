@@ -10,9 +10,9 @@ datasource db {
 // ===== ENUMS =====
 
 enum Criticidade {
-  ALTO
-  MEDIO
-  BAIXO
+  ALTA
+  MEDIA
+  BAIXA
 }
 
 enum StatusAcao {
@@ -20,6 +20,30 @@ enum StatusAcao {
   EM_ANDAMENTO
   CONCLUIDA
   CANCELADA
+}
+
+enum TipoMedidaIndicador {
+  REAL
+  QUANTIDADE
+  TEMPO
+  PERCENTUAL
+}
+
+enum StatusMedicaoIndicador {
+  NAO_MEDIDO
+  MEDIDO_NAO_CONFIAVEL
+  MEDIDO_CONFIAVEL
+}
+
+enum DirecaoIndicador {
+  MAIOR
+  MENOR
+}
+
+enum StatusProcesso {
+  PENDENTE
+  EM_ANDAMENTO
+  CONCLUIDO
 }
 
 enum EstadoBrasil {
@@ -55,48 +79,54 @@ enum EstadoBrasil {
 // ===== MODELS =====
 
 model PerfilUsuario {
-  id          String    @id @default(uuid())
-  codigo      String    @unique  // ADMINISTRADOR, CONSULTOR, GESTOR, COLABORADOR, LEITURA
-  nome        String               // "Administrador", "Consultor", etc
-  descricao   String?
-  nivel       Int                  // 1 (maior poder) a 5 (menor poder)
-  ativo       Boolean   @default(true)
-  
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
-  
+  id        String  @id @default(uuid())
+  codigo    String  @unique // ADMINISTRADOR, CONSULTOR, GESTOR, COLABORADOR, LEITURA
+  nome      String // "Administrador", "Consultor", etc
+  descricao String?
+  nivel     Int // 1 (maior poder) a 5 (menor poder)
+  ativo     Boolean @default(true)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
   // Relations
-  usuarios    Usuario[]
-  
+  usuarios Usuario[]
+
   @@map("perfis_usuario")
 }
 
 model Usuario {
-  id        String   @id @default(uuid())
-  email     String?  @unique
-  nome      String
-  senha     String?
-  cargo     String?
-  telefone  String?
-  fotoUrl   String?
-  ativo     Boolean  @default(true)
-  
-  perfilId  String
-  perfil    PerfilUsuario @relation(fields: [perfilId], references: [id])
-  
+  id       String  @id @default(uuid())
+  email    String? @unique
+  nome     String
+  senha    String?
+  cargo    String?
+  telefone String?
+  fotoUrl  String?
+  ativo    Boolean @default(true)
+
+  perfilId String
+  perfil   PerfilUsuario @relation(fields: [perfilId], references: [id])
+
   empresaId String?
   empresa   Empresa? @relation(fields: [empresaId], references: [id])
-  
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
   createdBy String?
   updatedBy String?
+
+// Relations
+  reunioes           AgendaReuniao[]
+  passwordResets     PasswordReset[]
+  loginHistory       LoginHistory[]
+  pilaresResponsavel PilarEmpresa[]  @relation("ResponsavelPilarEmpresa")
+  refreshTokens      RefreshToken[]
   
-  // Relations
-  reunioes      AgendaReuniao[]
-  passwordResets PasswordReset[]
-  loginHistory   LoginHistory[]
-  pilaresResponsavel PilarEmpresa[] @relation("ResponsavelPilarEmpresa")
+  // Cockpit relations
+  indicadoresResponsavel IndicadorCockpit[] @relation("ResponsavelMedicaoIndicador")
+  cargosResponsavel      CargoCockpitResponsavel[]
+  acoesCockpit           AcaoCockpit[]      @relation("ResponsavelAcaoCockpit")
 
   @@map("usuarios")
 }
@@ -106,34 +136,35 @@ model PasswordReset {
   token     String   @unique
   expiresAt DateTime
   used      Boolean  @default(false)
-  
+
   usuarioId String
-  usuario   Usuario  @relation(fields: [usuarioId], references: [id], onDelete: Cascade)
-  
+  usuario   Usuario @relation(fields: [usuarioId], references: [id], onDelete: Cascade)
+
   createdAt DateTime @default(now())
-  
+
   @@index([token])
   @@index([usuarioId])
   @@map("password_resets")
 }
 
 model LoginHistory {
-  id          String   @id @default(uuid())
-  
-  usuarioId   String?
-  usuario     Usuario? @relation(fields: [usuarioId], references: [id], onDelete: SetNull)
-  
+  id String @id @default(uuid())
+
+  usuarioId String?
+  usuario   Usuario? @relation(fields: [usuarioId], references: [id], onDelete: SetNull)
+
   email       String
   sucesso     Boolean
   motivoFalha String?
-  
+  evento      LoginHistoryEvento @default(LOGIN)
+
   ipAddress   String?
   userAgent   String?
   dispositivo String?
   navegador   String?
-  
-  createdAt   DateTime @default(now())
-  
+
+  createdAt DateTime @default(now())
+
   @@index([usuarioId])
   @@index([email])
   @@index([createdAt])
@@ -141,207 +172,547 @@ model LoginHistory {
   @@map("login_history")
 }
 
-model Empresa {
-  id            String   @id @default(uuid())
-  nome          String
-  cnpj          String   @unique
-  tipoNegocio   String?
-  cidade        String
-  estado        EstadoBrasil
-  ativo         Boolean  @default(true)
+enum LoginHistoryEvento {
+  LOGIN
+  LOGOUT
+  LOGOUT_ALL
+  RESET_SENHA
+}
+
+model RefreshToken {
+  id        String   @id @default(uuid())
+  token     String   @unique
+  userId    String
+  isActive  Boolean  @default(true)
+  expiresAt DateTime
   
-  // Personalização
-  logoUrl       String?
-  loginUrl      String?
+  // Security tracking
+  ipAddress   String?
+  userAgent   String?
+  dispositivo String?
   
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
-  createdBy     String?
-  updatedBy     String?
-  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
   // Relations
-  usuarios      Usuario[]
-  pilares       PilarEmpresa[]
-  
+  user Usuario @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([token])
+  @@index([userId])
+  @@index([expiresAt])
+  @@index([userId, isActive])
+  @@map("refresh_tokens")
+}
+
+model Empresa {
+  id          String       @id @default(uuid())
+  nome        String
+  cnpj        String       @unique
+  tipoNegocio String?
+  cidade      String
+  estado      EstadoBrasil
+  ativo       Boolean      @default(true)
+
+  // Personalização
+  logoUrl  String?
+  loginUrl String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  createdBy String?
+  updatedBy String?
+
+  // Relations
+  usuarios          Usuario[]
+  pilares           PilarEmpresa[]
+  periodosAvaliacao PeriodoAvaliacao[]
+  periodosMentoria  PeriodoMentoria[]
+
   @@map("empresas")
 }
 
 model Pilar {
-  id          String   @id @default(uuid())
-  nome        String
-  descricao   String?
-  ordem       Int
-  ativo       Boolean  @default(true)
-  
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-  createdBy   String?
-  updatedBy   String?
-  
+  id        String  @id @default(uuid())
+  nome      String  @db.VarChar(60)
+  descricao String?
+  ordem     Int
+  ativo     Boolean @default(true)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  createdBy String?
+  updatedBy String?
+
   // Relations
-  rotinas     Rotina[]
-  empresas    PilarEmpresa[]
-  
+  rotinas  Rotina[]
+  empresas PilarEmpresa[]
+
   @@map("pilares")
 }
 
 model Rotina {
-  id          String   @id @default(uuid())
-  nome        String
-  descricao   String?
-  ordem       Int?
-  ativo       Boolean  @default(true)
-  
-  pilarId     String
-  pilar       Pilar    @relation(fields: [pilarId], references: [id])
-  
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-  createdBy   String?
-  updatedBy   String?
-  
+  id        String  @id @default(uuid())
+  nome      String
+  descricao String?
+  ordem     Int?
+  ativo     Boolean @default(true)
+
+  pilarId String
+  pilar   Pilar  @relation(fields: [pilarId], references: [id])
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  createdBy String?
+  updatedBy String?
+
   // Relations
   rotinaEmpresas RotinaEmpresa[]
-  
+
   @@map("rotinas")
 }
 
 model PilarEmpresa {
-  id          String   @id @default(uuid())
-  
-  empresaId   String
-  empresa     Empresa  @relation(fields: [empresaId], references: [id])
-  
+  id String @id @default(uuid())
+
+  empresaId String
+  empresa   Empresa @relation(fields: [empresaId], references: [id])
+
   // Snapshot Pattern: nullable template reference
   pilarTemplateId String?
-  pilarTemplate   Pilar? @relation(fields: [pilarTemplateId], references: [id], onDelete: SetNull)
-  
+  pilarTemplate   Pilar?  @relation(fields: [pilarTemplateId], references: [id], onDelete: SetNull)
+
   // Snapshot data (copied from template OR custom)
-  nome        String
-  
-  ordem       Int
-  ativo       Boolean  @default(true)
+  nome String @db.VarChar(60)
+
+  ordem Int
+  ativo Boolean @default(true)
 
   // Responsável pelo acompanhamento do pilar na empresa
-  responsavelId    String?
-  responsavel      Usuario? @relation("ResponsavelPilarEmpresa", fields: [responsavelId], references: [id], onDelete: SetNull)
-  
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-  createdBy   String?
-  updatedBy   String?
-  
+  responsavelId String?
+  responsavel   Usuario? @relation("ResponsavelPilarEmpresa", fields: [responsavelId], references: [id], onDelete: SetNull)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  createdBy String?
+  updatedBy String?
+
   // Relations
   rotinasEmpresa RotinaEmpresa[]
   evolucao       PilarEvolucao[]
-  
+  cockpit        CockpitPilar?
+
   @@unique([empresaId, nome])
   @@map("pilares_empresa")
 }
 
+model PeriodoAvaliacao {
+  id String @id @default(uuid())
+
+  empresaId String
+  empresa   Empresa @relation(fields: [empresaId], references: [id], onDelete: Cascade)
+
+  periodoMentoriaId String?
+  periodoMentoria   PeriodoMentoria? @relation(fields: [periodoMentoriaId], references: [id], onDelete: Cascade)
+
+  // Período que está sendo avaliado
+  trimestre      Int // 1, 2, 3, 4
+  ano            Int // 2026
+  dataReferencia DateTime // Data de referência do período (qualquer data, trimestre calculado automaticamente)
+
+  // Controle do ciclo
+  aberto           Boolean   @default(true) // true = em avaliação, false = congelado
+  dataInicio       DateTime  @default(now()) // Quando admin iniciou
+  dataCongelamento DateTime? // Quando admin congelou (null se ainda aberto)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  createdBy String?
+  updatedBy String?
+
+  // Relations
+  snapshots PilarEvolucao[]
+
+  @@unique([empresaId, trimestre, ano]) // Evita duplicatas
+  @@index([empresaId, aberto]) // Buscar período aberto rapidamente
+  @@map("periodos_avaliacao")
+}
+
 model RotinaEmpresa {
-  id            String      @id @default(uuid())
-  
+  id String @id @default(uuid())
+
   pilarEmpresaId String
   pilarEmpresa   PilarEmpresa @relation(fields: [pilarEmpresaId], references: [id], onDelete: Cascade)
-  
+
   // Snapshot Pattern: nullable template reference
   rotinaTemplateId String?
   rotinaTemplate   Rotina? @relation(fields: [rotinaTemplateId], references: [id], onDelete: SetNull)
-  
-  // Snapshot data (copied from template OR custom)
-  nome        String
-  
-  ordem         Int
 
-  observacao    String?
-  ativo         Boolean  @default(true)
-  
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
-  createdBy     String?
-  updatedBy     String?
-  
+  // Snapshot data (copied from template OR custom)
+  nome String
+
+  ordem Int
+
+  observacao String?
+  ativo      Boolean @default(true)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  createdBy String?
+  updatedBy String?
+
   // Relations
-  notas         NotaRotina[]
-  
+  notas                NotaRotina[]
+  processosPrioritarios ProcessoPrioritario[]
+
+  @@unique([pilarEmpresaId, nome])
   @@index([pilarEmpresaId])
   @@index([rotinaTemplateId])
-  @@unique([pilarEmpresaId, nome])
   @@map("rotinas_empresa")
 }
 
 model NotaRotina {
-  id            String      @id @default(uuid())
+  id String @id @default(uuid())
 
   rotinaEmpresaId String
   rotinaEmpresa   RotinaEmpresa @relation(fields: [rotinaEmpresaId], references: [id], onDelete: Cascade)
 
-  nota          Float?      // 0-10
-  criticidade   Criticidade?
+  nota        Float? // 0-10
+  criticidade Criticidade?
 
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-  createdBy   String?
-  updatedBy   String?
-  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  createdBy String?
+  updatedBy String?
+
   @@index([rotinaEmpresaId])
   @@map("nota_rotinas")
 }
 
 model PilarEvolucao {
-  id            String      @id @default(uuid())
+  id String @id @default(uuid())
 
   pilarEmpresaId String
   pilarEmpresa   PilarEmpresa @relation(fields: [pilarEmpresaId], references: [id], onDelete: Cascade)
 
-  mediaNotas          Float?      // 0-10
+  periodoAvaliacaoId String
+  periodoAvaliacao   PeriodoAvaliacao @relation(fields: [periodoAvaliacaoId], references: [id], onDelete: Cascade)
 
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-  createdBy   String?
-  updatedBy   String?
-  
+  mediaNotas Float // 0-10 (não mais nullable)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  createdBy String?
+  updatedBy String?
+
+  @@unique([pilarEmpresaId, periodoAvaliacaoId])
+  @@index([periodoAvaliacaoId])
   @@map("pilares_evolucao")
 }
 
 model AgendaReuniao {
-  id          String   @id @default(uuid())
-  titulo      String
-  descricao   String?
-  dataHora    DateTime
-  duracao     Int?     // em minutos
-  local       String?
-  link        String?
+  id        String   @id @default(uuid())
+  titulo    String
+  descricao String?
+  dataHora  DateTime
+  duracao   Int? // em minutos
+  local     String?
+  link      String?
 
-  usuarioId   String
-  usuario     Usuario  @relation(fields: [usuarioId], references: [id])
-  
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-  createdBy   String?
-  updatedBy   String?
-  
+  usuarioId String
+  usuario   Usuario @relation(fields: [usuarioId], references: [id])
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  createdBy String?
+  updatedBy String?
+
   @@index([usuarioId])
   @@map("agenda_reunioes")
 }
 
 model AuditLog {
-  id          String   @id @default(uuid())
-  
-  usuarioId   String   // ID para referência (se precisar)
-  usuarioNome String   // Nome no momento da ação
+  id String @id @default(uuid())
+
+  usuarioId    String // ID para referência (se precisar)
+  usuarioNome  String // Nome no momento da ação
   usuarioEmail String? // Email no momento da ação (opcional para usuários sem email)
-  
-  entidade    String   // Nome da tabela
-  entidadeId  String   // ID do registro
-  acao        String   // CREATE, UPDATE, DELETE
-  dadosAntes  Json?    // Estado anterior
-  dadosDepois Json?    // Estado posterior
-  
-  createdAt   DateTime @default(now())
-  
+
+  entidade    String // Nome da tabela
+  entidadeId  String // ID do registro
+  acao        String // CREATE, UPDATE, DELETE
+  dadosAntes  Json? // Estado anterior
+  dadosDepois Json? // Estado posterior
+
+  createdAt DateTime @default(now())
+
   @@index([entidade, entidadeId])
   @@index([usuarioId])
   @@map("audit_logs")
+}
+
+// ===== COCKPIT DE PILARES =====
+
+model CockpitPilar {
+  id String @id @default(uuid())
+
+  pilarEmpresaId String       @unique
+  pilarEmpresa   PilarEmpresa @relation(fields: [pilarEmpresaId], references: [id], onDelete: Cascade)
+
+  entradas String?
+  saidas   String?
+  missao   String?
+
+  ativo Boolean @default(true)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  createdBy String?
+  updatedBy String?
+
+  // Relations
+  indicadores          IndicadorCockpit[]
+  processosPrioritarios ProcessoPrioritario[]
+  cargos               CargoCockpit[]
+  acoes                AcaoCockpit[]
+
+  @@map("cockpits_pilares")
+}
+
+model IndicadorCockpit {
+  id String @id @default(uuid())
+
+  cockpitPilarId String
+  cockpitPilar   CockpitPilar @relation(fields: [cockpitPilarId], references: [id], onDelete: Cascade)
+
+  nome      String
+  descricao String?
+
+  tipoMedida    TipoMedidaIndicador
+  statusMedicao StatusMedicaoIndicador
+  melhor        DirecaoIndicador
+
+  responsavelMedicaoId String?
+  responsavelMedicao   Usuario? @relation("ResponsavelMedicaoIndicador", fields: [responsavelMedicaoId], references: [id], onDelete: SetNull)
+
+  ordem Int
+  ativo Boolean @default(true)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  createdBy String?
+  updatedBy String?
+
+  // Relations
+  mesesIndicador IndicadorMensal[]
+  acoes          AcaoCockpit[]
+
+  @@unique([cockpitPilarId, nome])
+  @@index([cockpitPilarId])
+  @@index([responsavelMedicaoId])
+  @@map("indicadores_cockpit")
+}
+
+model IndicadorMensal {
+  id String @id @default(uuid())
+
+  indicadorCockpitId String
+  indicadorCockpit   IndicadorCockpit @relation(fields: [indicadorCockpitId], references: [id], onDelete: Cascade)
+
+  mes Int? // 1-12 (null para resumo anual se necessário)
+  ano Int
+
+  meta       Float?
+  realizado  Float?
+  historico  Float?
+
+  acoesCockpit AcaoCockpit[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  createdBy String?
+  updatedBy String?
+
+  @@unique([indicadorCockpitId, ano, mes])
+  @@index([indicadorCockpitId])
+  @@index([ano, mes])
+  @@map("indicadores_mensais")
+}
+
+model ProcessoPrioritario {
+  id String @id @default(uuid())
+
+  cockpitPilarId String
+  cockpitPilar   CockpitPilar @relation(fields: [cockpitPilarId], references: [id], onDelete: Cascade)
+
+  rotinaEmpresaId String
+  rotinaEmpresa   RotinaEmpresa @relation(fields: [rotinaEmpresaId], references: [id], onDelete: Cascade)
+
+  fluxogramaAcoes ProcessoFluxograma[]
+
+  statusMapeamento  StatusProcesso?
+  statusTreinamento StatusProcesso?
+
+  ordem Int
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  createdBy String?
+  updatedBy String?
+
+  @@unique([cockpitPilarId, rotinaEmpresaId])
+  @@index([cockpitPilarId])
+  @@index([rotinaEmpresaId])
+  @@map("processos_prioritarios")
+}
+
+model ProcessoFluxograma {
+  id String @id @default(uuid())
+
+  processoPrioritarioId String
+  processoPrioritario   ProcessoPrioritario @relation(fields: [processoPrioritarioId], references: [id], onDelete: Cascade)
+
+  descricao String
+  ordem     Int
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  createdBy String?
+  updatedBy String?
+
+  @@index([processoPrioritarioId])
+  @@map("processos_fluxograma")
+}
+
+model CargoCockpit {
+  id String @id @default(uuid())
+
+  cockpitPilarId String
+  cockpitPilar   CockpitPilar @relation(fields: [cockpitPilarId], references: [id], onDelete: Cascade)
+
+  cargo String
+
+  ordem Int
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  createdBy String?
+  updatedBy String?
+
+  // Relations
+  responsaveis CargoCockpitResponsavel[]
+  funcoes FuncaoCargo[]
+
+  @@index([cockpitPilarId])
+  @@map("cargos_cockpit")
+}
+
+model CargoCockpitResponsavel {
+  id String @id @default(uuid())
+
+  cargoCockpitId String
+  cargoCockpit   CargoCockpit @relation(fields: [cargoCockpitId], references: [id], onDelete: Cascade)
+
+  usuarioId String
+  usuario   Usuario @relation(fields: [usuarioId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+
+  @@unique([cargoCockpitId, usuarioId])
+  @@index([cargoCockpitId])
+  @@index([usuarioId])
+  @@map("cargos_cockpit_responsaveis")
+}
+
+model FuncaoCargo {
+  id String @id @default(uuid())
+
+  cargoCockpitId String
+  cargoCockpit   CargoCockpit @relation(fields: [cargoCockpitId], references: [id], onDelete: Cascade)
+
+  descricao     String
+  nivelCritico  Criticidade
+
+  autoAvaliacao      Float?
+  avaliacaoLideranca Float?
+
+  ordem Int
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  createdBy String?
+  updatedBy String?
+
+  @@index([cargoCockpitId])
+  @@map("funcoes_cargo")
+}
+
+model AcaoCockpit {
+  id String @id @default(uuid())
+
+  cockpitPilarId String
+  cockpitPilar   CockpitPilar @relation(fields: [cockpitPilarId], references: [id], onDelete: Cascade)
+
+  indicadorCockpitId String?
+  indicadorCockpit   IndicadorCockpit? @relation(fields: [indicadorCockpitId], references: [id], onDelete: SetNull)
+
+  indicadorMensalId String?
+  indicadorMensal   IndicadorMensal? @relation(fields: [indicadorMensalId], references: [id], onDelete: SetNull)
+
+  // 5 Porquês
+  causa1 String?
+  causa2 String?
+  causa3 String?
+  causa4 String?
+  causa5 String?
+
+  acaoProposta String
+
+  responsavelId String?
+  responsavel   Usuario? @relation("ResponsavelAcaoCockpit", fields: [responsavelId], references: [id], onDelete: SetNull)
+
+  status StatusAcao @default(PENDENTE)
+  prazo  DateTime?
+  dataConclusao DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  createdBy String?
+  updatedBy String?
+
+  @@index([cockpitPilarId])
+  @@index([indicadorCockpitId])
+  @@index([indicadorMensalId])
+  @@index([responsavelId])
+  @@map("acoes_cockpit")
+}
+
+// ===== PERÍODO DE MENTORIA =====
+
+model PeriodoMentoria {
+  id String @id @default(uuid())
+
+  empresaId String
+  empresa   Empresa @relation(fields: [empresaId], references: [id], onDelete: Cascade)
+
+  // Identificação do período
+  numero     Int      // 1, 2, 3... (sequencial por empresa)
+  dataInicio DateTime // Ex: 2026-05-01 (quando contratou)
+  dataFim    DateTime // Ex: 2027-04-30 (calculado: dataInicio + 1 ano)
+
+  // Controle
+  ativo            Boolean   @default(true) // Apenas 1 ativo por empresa
+  dataContratacao  DateTime  @default(now()) // Quando foi contratado
+  dataEncerramento DateTime? // Quando foi encerrado (renovação ou cancelamento)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  createdBy String?
+  updatedBy String?
+
+  // Relations
+  periodosAvaliacao PeriodoAvaliacao[]
+
+  @@unique([empresaId, numero]) // Evita duplicatas
+  @@index([empresaId, ativo]) // Buscar período ativo rapidamente
+  @@map("periodos_mentoria")
 }

@@ -1,0 +1,89 @@
+
+/* Classes de status para ng-select */
+::ng-deep ng-select.bg-danger .ng-select-container {
+  background-color: var(--bs-danger-bg-subtle) !important;
+  border-color: var(--bs-danger) !important;
+  font-size: small;
+}
+
+::ng-deep ng-select.bg-warning .ng-select-container {
+  background-color: var(--bs-warning-bg-subtle) !important;
+  border-color: var(--bs-warning) !important;
+  font-size: small;
+}
+
+::ng-deep ng-select.bg-warning .ng-value-label,
+::ng-deep ng-select.bg-warning .ng-placeholder {
+  color: var(--bs-emphasis-color) !important;
+}
+
+::ng-deep ng-select.bg-success .ng-select-container {
+  background-color: var(--bs-success-bg-subtle) !important;
+  border-color: var(--bs-success) !important;
+  font-size: small;
+}
+
+/* Classes badges para span */
+span.bg-danger {
+  background-color: var(--bs-danger-bg-subtle) !important;
+  border-color: var(--bs-danger) !important;
+  border: 1px solid;
+  color: var(--bs-body-color);
+}
+
+span.bg-warning {
+  background-color: var(--bs-warning-bg-subtle) !important;
+  border-color: var(--bs-warning) !important;
+  border: 1px solid;
+  color: var(--bs-body-color);
+}
+
+span.bg-success {
+  background-color: var(--bs-success-bg-subtle) !important;
+  border-color: var(--bs-success) !important;
+  border: 1px solid;
+  color: var(--bs-body-color);
+}
+
+/* Badge com altura similar aos inputs */
+.badge-altura-input {
+  min-height: 38px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  border-radius: 0;
+}
+
+.fluxograma-toggle {
+  line-height: 1;
+  font-size: 1.2rem;
+}
+
+.fluxograma-toggle .bi-star-fill {
+  text-shadow: 0 0 2px rgba(0, 0, 0, 0.15);
+}
+
+.table {
+  min-width: 760px;
+}
+
+@media (max-width: 768px) {
+  .table {
+    min-width: 680px;
+  }
+
+  .table td,
+  .table th {
+    font-size: 0.85rem;
+  }
+
+  .badge-altura-input {
+    min-height: 32px;
+    font-size: 0.8rem;
+  }
+
+  ::ng-deep ng-select .ng-select-container {
+    min-height: 32px;
+  }
+}

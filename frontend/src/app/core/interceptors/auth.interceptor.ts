@@ -25,12 +25,24 @@ export class AuthInterceptor implements HttpInterceptor {
     // Obter o token do AuthService
     const token = this.authService.getToken();
 
+    // Adicionar headers de segurança
+    const securityHeaders = {
+      'X-Requested-With': 'XMLHttpRequest',
+      'Cache-Control': 'no-cache',
+      'Pragma': 'no-cache'
+    };
+
     // Se houver token, adicionar ao header Authorization
     if (token) {
       request = request.clone({
         setHeaders: {
+          ...securityHeaders,
           Authorization: `Bearer ${token}`
         }
+      });
+    } else {
+      request = request.clone({
+        setHeaders: securityHeaders
       });
     }
 
@@ -38,8 +50,24 @@ export class AuthInterceptor implements HttpInterceptor {
       catchError((error: HttpErrorResponse) => {
         // Se receber erro 401 (Unauthorized)
         if (error.status === 401) {
+          // ⚠️ NÃO tentar refresh em rotas de autenticação
+          const url = request.url.toLowerCase();
+          const skipRefreshUrls = ['/auth/login', '/auth/refresh', '/auth/forgot-password', '/auth/reset-password'];
+          
+          if (skipRefreshUrls.some(skipUrl => url.includes(skipUrl))) {
+            // Apenas propagar o erro sem tentar refresh
+            return throwError(() => error);
+          }
+          
+          // Para outras rotas, tentar refresh token
           return this.handle401Error(request, next);
         }
+        
+        // Se receber erro 429 (Too Many Requests) - silencioso
+        if (error.status === 429) {
+          // Rate limit será tratado pelo backend via headers
+        }
+        
         return throwError(() => error);
       })
     );
@@ -63,9 +91,9 @@ export class AuthInterceptor implements HttpInterceptor {
           return next.handle(this.addToken(request, response.accessToken));
         }),
         catchError((err) => {
+          console.error('[INTERCEPTOR] Refresh token FALHOU, fazendo logout:', err);
           this.isRefreshing = false;
           // Se falhar a renovação, fazer logout
-          console.warn('Falha ao renovar token. Realizando logout.');
           this.authService.logout();
           this.router.navigate(['/auth/login']);
           return throwError(() => err);

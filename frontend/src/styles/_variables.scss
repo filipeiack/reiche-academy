@@ -32,7 +32,7 @@ $cyan:    #0dcaf0 !default;
 $primary:         #8C6E45 !default; 
 $secondary:       #424242 !default; 
 $success:         #5CB870 !default; 
-$info:            #B6915D !default; 
+$info:            #757575 !default; 
 $warning:         #A67C00 !default; 
 $danger:          #C34D38 !default; 
 $light:           #F0F0F0 !default;
@@ -372,7 +372,7 @@ $input-group-addon-padding-x:           .563rem !default;
 // Navs
 $nav-tabs-link-bg:                    var(--#{$prefix}body-bg); // custom variable
 $nav-tabs-link-border-color:          var(--#{$prefix}border-color) var(--#{$prefix}border-color); // custom variable
-$nav-tabs-link-active-bg:             var(--#{$prefix}body-bg) !default;
+$nav-tabs-link-active-bg:             var(--#{$prefix}body-emphasis-color) !default;
 
 
 // Dropdowns

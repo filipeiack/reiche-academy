@@ -1,0 +1,11 @@
+// Sticky headers compartilhados entre componentes
+// Usado em: diagnostico-notas, matriz-indicadores (cockpit-pilares)
+
+.sticky-header-dashboard {
+  top: var(--navbar-height, 60px);
+  position: sticky;
+  z-index: 10;
+  background: var(--bs-app-bg);
+}
+
+

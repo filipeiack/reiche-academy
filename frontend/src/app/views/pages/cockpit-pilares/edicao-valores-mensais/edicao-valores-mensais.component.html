@@ -1,0 +1,242 @@
+<div class="card mb-1">
+  <div class="card-body p-2 px-4">
+    <!-- Cabeçalho -->
+    <div class="d-flex justify-content-between align-items-center valores-header">
+      <h6 class="section-title">
+        <i class="bi bi-calendar-range me-2"></i>
+        Metas e Valores Mensais
+      </h6>
+
+      <!-- Botao Novo Ciclo -->
+      @if (!loading && indicadores.length > 0) {
+
+        <button type="button" data-testid="btn-novo-ciclo-mensal" class="btn btn-primary btn-sm btn-novo-ciclo"
+          [disabled]="!podeCriarNovoCiclo || criandoNovoCiclo" (click)="criarNovoCicloMeses()"
+          [title]="!podeCriarNovoCiclo ? mensagemBotaoCiclo : 'Criar próximos 12 meses para todos os indicadores'">
+          @if (criandoNovoCiclo) {
+          <span class="spinner-border spinner-border-sm me-2" role="status"></span>
+          Criando...
+          } @else {
+          <i class="bi bi-plus-circle me-2"></i>
+          Novo ciclo de 12 meses
+          }
+        </button>
+
+      }
+    </div>
+  </div>
+</div>
+
+<div class="edicao-valores-wrapper" data-testid="valores-section">
+
+  <!-- Loading -->
+  @if (loading) {
+   <div class="text-center py-4" data-testid="loading-indicator">
+    <div class="spinner-border text-primary" role="status">
+      <span class="visually-hidden">Carregando...</span>
+    </div>
+  </div>
+  }
+
+  <!-- Indicadores -->
+  @if (!loading) {
+  @if (indicadores.length === 0) {
+  <div class="alert alert-info" data-testid="no-indicators-message">
+    <i class="bi bi-info-circle me-2"></i>
+    Nenhum indicador criado ainda. Adicione indicadores para começar.
+  </div>
+  } @else {
+  @for (indicador of indicadores; track indicador.id) {
+  <div class="card mb-1" data-testid="indicador-card">
+    <div class="card-body p-3 px-4">
+      <!-- Header do Indicador -->
+      <div class="indicador-header d-flex justify-content-between align-items-flex-start mb-1 gap-2">
+        <div class="flex-grow-1" style="min-width: 0;">
+          <h6 class="mb-0 text-break" data-testid="indicador-nome">
+            <span class="badge bg-primary me-2">{{ $index + 1 }}</span>
+            {{ indicador.nome.toUpperCase() }}
+          </h6>
+          @if (indicador.descricao) {
+          <small class="text-muted ms-2 d-block text-break">({{ indicador.descricao }})</small>
+          }
+        </div>
+
+        <!-- Detalhes do Indicador -->
+        <div class="d-flex flex-nowrap gap-2 detalhes-indicador" style="flex-shrink: 0;">
+
+          <div class="badge bg-light gap-1 p-2">
+            <label class="form-label small text-muted mb-2">Status</label>
+            <div class="fw-bold text-dark">
+              @switch (indicador.statusMedicao) {
+              @case ('MEDIDO_CONFIAVEL') {
+              <span class="badge bg-success w-100">Medido e confiável</span>
+              }
+              @case ('MEDIDO_NAO_CONFIAVEL') {
+              <span class="badge bg-warning w-100">Medido, mas não confiável</span>
+              }
+              @case ('NAO_MEDIDO') {
+              <span class="badge bg-danger w-100">Não é medido ainda</span>
+              }
+              }
+            </div>
+          </div>
+
+          <div class="badge bg-light gap-1 p-2">
+            <label class="form-label small text-muted mb-2">Responsável</label>
+            <div class="fw-bold text-dark">
+               <span data-testid="indicador-responsavel">{{ indicador.responsavelMedicao?.nome || 'Não definido' }}</span>
+            </div>
+          </div>
+
+          <div class="badge bg-light gap-1 p-2 ">
+            <label class="form-label small text-muted mb-2">Melhor</label>
+            <div class="fw-bold text-dark">
+              @if (indicador.melhor === 'MAIOR') {
+              <i class="bi bi-arrow-up text-black"></i>
+              } @else {
+              <i class="bi bi-arrow-down text-black"></i>
+              }
+            </div>
+          </div>
+
+          <div class="badge bg-light gap-1 p-2">
+            <label class="form-label small text-muted mb-2">Tipo</label>
+            <div class="fw-bold text-dark">
+              ({{ getLabelTipoMedida(indicador.tipoMedida) }})
+            </div>
+          </div>
+
+
+        </div>
+      </div>
+
+      <!-- Tabela Mensal -->
+      <!-- Header fixo fora do table-responsive para permitir sticky correto -->
+      <div class="table-header-wrapper">
+        <table class="table table-hover table-sm mb-0" style="table-layout: fixed; width: 100%;">
+          <colgroup>
+            <col style="width: 80px;">
+            <col style="width: 120px;">
+            <col style="width: 120px;">
+            <col style="width: 120px;">
+            <col style="width: 100px;">
+            <col style="width: 100px;">
+            <col style="width: 80px;">
+          </colgroup>
+          <thead class="table-light small">
+            <tr>
+              <th>Mês</th>
+              <th>Histórico</th>
+              <th>Meta</th>
+              <th>Realizado</th>
+              <th class="text-center">Desvio ABS</th>
+              <th class="text-center">Desvio %</th>
+              <th class="text-center">Status</th>
+            </tr>
+          </thead>
+        </table>
+      </div>
+
+      <!-- Corpo da tabela com scroll -->
+      <div class="table-responsive">
+        <table class="table table-hover table-sm" style="table-layout: fixed; width: 100%;" data-testid="valores-table">
+          <colgroup>
+            <col style="width: 80px;">
+            <col style="width: 120px;">
+            <col style="width: 120px;">
+            <col style="width: 120px;">
+            <col style="width: 100px;">
+            <col style="width: 100px;">
+            <col style="width: 80px;">
+          </colgroup>
+          <thead class="table-light small mobile-table-header">
+            <tr>
+              <th>Mês</th>
+              <th>Histórico</th>
+              <th>Meta</th>
+              <th>Realizado</th>
+              <th class="text-center">Desvio ABS</th>
+              <th class="text-center">Desvio %</th>
+              <th class="text-center">Status</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (mes of getMesesOrdenados(indicador); track mes.id) {
+            <tr>
+              <td class="fw-bold">{{ getNomeMes(mes.mes!, mes.ano) }}</td>
+              <td>
+                <input type="number" class="form-control form-control-sm" [value]="mes.historico"
+                  (input)="onValorChange(mes, 'historico', $event)" step="1" data-testid="input-historico" />
+              </td>
+              <td>
+                <input type="number" class="form-control form-control-sm" [value]="mes.meta"
+                  (input)="onValorChange(mes, 'meta', $event)" step="1" data-testid="input-meta" />
+              </td>
+              <td>
+                <input type="number" class="form-control form-control-sm" [value]="mes.realizado"
+                  (input)="onValorChange(mes, 'realizado', $event)" step="1" data-testid="input-realizado" />
+              </td>
+              <td class="text-center bg-gray-100">
+                @if (mes.meta && mes.realizado) {
+                <span [class]="'badge badge-desvio w-100 d-inline-block py-2 bg-' + calcularStatus(indicador, mes)">
+                  {{ calcularDesvioAbsoluto(indicador, mes) | number: '1.0-0' }}
+                </span>
+                } @else {
+                <span class="text-muted">-</span>
+                }
+              </td>
+              <td class="text-center bg-gray-100">
+                @if (mes.meta && mes.realizado) {
+
+                <span [class]="'badge badge-desvio w-100 d-inline-block py-2 bg-' + calcularStatus(indicador, mes)">
+                  {{ calcularDesvio(indicador, mes) | number: '1.1-1' }}%
+                </span>
+
+                } @else {
+                <span class="text-muted">-</span>
+                }
+              </td>
+              <td class="text-center bg-gray-100" style="font-size: 1.5rem;">
+                @if (calcularStatus(indicador, mes); as status) {
+                @switch (status) {
+                @case ('success') {
+                <i class="bi bi-circle-fill text-success"></i>
+                }
+                @case ('warning') {
+                <i class="bi bi-exclamation-triangle-fill text-warning"></i>
+                }
+                @case ('danger') {
+                <i class="bi bi-circle-fill text-danger"></i>
+                }
+                }
+                } @else {
+                <span class="text-muted">-</span>
+                }
+              </td>
+            </tr>
+            }
+          </tbody>
+          <tfoot class="table-light fw-bold">
+            <tr>
+              <td>Total</td>
+              <td class="text-center">{{ calcularTotalHistorico(indicador) | number: '1.0-0' }}</td>
+              <td class="text-center">{{ calcularTotalMeta(indicador) | number: '1.0-0' }}</td>
+              <td class="text-center">{{ calcularTotalRealizado(indicador) | number: '1.0-0' }}</td>
+              <td colspan="3"></td>
+            </tr>
+            <tr>
+              <td>Média</td>
+              <td class="text-center">{{ calcularMediaHistorico(indicador) | number: '1.2-2' }}</td>
+              <td class="text-center">{{ calcularMediaMeta(indicador) | number: '1.2-2' }}</td>
+              <td class="text-center">{{ calcularMediaRealizado(indicador) | number: '1.2-2' }}</td>
+              <td colspan="3"></td>
+            </tr>
+          </tfoot>
+        </table>
+      </div>
+    </div>
+  </div>
+  }
+  }
+  }
+</div>

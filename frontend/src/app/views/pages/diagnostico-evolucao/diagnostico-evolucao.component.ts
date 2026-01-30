@@ -2,7 +2,7 @@ import { Component, OnInit, OnDestroy, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { NgSelectModule } from '@ng-select/ng-select';
-import { NgbAlertModule, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
+import { NgbAlertModule } from '@ng-bootstrap/ng-bootstrap';
 import { TranslatePipe } from '../../../core/pipes/translate.pipe';
 import Swal from 'sweetalert2';
 import { firstValueFrom, Subscription } from 'rxjs';
@@ -11,6 +11,8 @@ import { EmpresasService, Empresa } from '../../../core/services/empresas.servic
 import { EmpresaBasic } from '@app/core/models/auth.model';
 import { AuthService } from '../../../core/services/auth.service';
 import { EmpresaContextService } from '../../../core/services/empresa-context.service';
+import { PeriodosAvaliacaoService } from '../../../core/services/periodos-avaliacao.service';
+import { PeriodoAvaliacao, PeriodoComSnapshots } from '../../../core/models/periodo-avaliacao.model';
 import { Chart, registerables } from 'chart.js';
 import annotationPlugin from 'chartjs-plugin-annotation';
 import { MediaBadgeComponent } from '../../../shared/components/media-badge/media-badge.component';
@@ -27,7 +29,6 @@ Chart.register(...registerables, annotationPlugin);
     NgSelectModule,
     NgbAlertModule,
     TranslatePipe,
-    NgbTooltip,
     MediaBadgeComponent,
     SortableDirective
 ],
@@ -39,6 +40,7 @@ export class DiagnosticoEvolucaoComponent implements OnInit, OnDestroy {
   private empresasService = inject(EmpresasService);
   private authService = inject(AuthService);
   private empresaContextService = inject(EmpresaContextService);
+  private periodosService = inject(PeriodosAvaliacaoService);
 
   empresaLogada: EmpresaBasic | null = null;
   selectedEmpresaId: string | null = null;
@@ -50,26 +52,31 @@ export class DiagnosticoEvolucaoComponent implements OnInit, OnDestroy {
 
   medias: MediaPilar[] = [];
   historico: any[] = []; // Agora armazena histórico de todos os pilares
-  barChart: Chart | null = null;
+  barChart: Chart<'bar', any[], any> | null = null;
+  periodoAtual: PeriodoAvaliacao | null = null;
+  periodoCongelado: PeriodoAvaliacao | null = null; // Último período congelado (para recongelamento)
+  private readonly FILTRO_ULTIMOS_12_MESES = 'ultimos-12-meses';
+  anoFiltro: string = this.FILTRO_ULTIMOS_12_MESES;
+  anosDisponiveis: Array<{ value: string; label: string }> = [];
+  private periodosHistorico: PeriodoComSnapshots[] = [];
 
   canCongelar = false; // ADMINISTRADOR, CONSULTOR, GESTOR
 
   // Ordenação
-  sortColumn: string = '';
-  sortDirection: 'asc' | 'desc' = 'asc';
+  sortColumn: string = 'mediaAtual';
+  sortDirection: 'asc' | 'desc' = 'desc';
 
-  // Paleta de tons de cinza para o gráfico de barras
+  // Paleta de tons de cinza para o gráfico de barras (do claro ao escuro)
   private readonly GRAY_COLORS = [
-    'rgb(44, 62, 80)',    // Cinza muito escuro
-    'rgb(52, 73, 94)',    // Cinza escuro
-    'rgb(69, 90, 100)',   // Cinza médio-escuro
-    'rgb(96, 125, 139)',  // Cinza médio
-    'rgb(120, 144, 156)', // Cinza médio-claro
-    'rgb(149, 165, 166)', // Cinza claro
-    'rgb(176, 190, 197)', // Cinza muito claro
-    'rgb(189, 195, 199)', // Cinza clarinho
-    'rgb(204, 209, 209)', // Cinza bem claro
-    'rgb(220, 221, 225)'  // Cinza quase branco
+    'rgb(204, 204, 204)', // Cinza claro
+    'rgb(189, 189, 189)', // Cinza claro-médio
+    'rgb(170, 170, 170)', // Cinza médio-claro
+    'rgb(150, 150, 150)', // Cinza médio
+    'rgb(130, 130, 130)', // Cinza médio-escuro
+    'rgb(110, 110, 110)', // Cinza escuro-médio
+    'rgb(90, 90, 90)',    // Cinza escuro
+    'rgb(70, 70, 70)',    // Cinza muito escuro
+    'rgb(50, 50, 50)'     // Cinza quase preto
   ];
 
   ngOnInit(): void {
@@ -141,7 +148,10 @@ export class DiagnosticoEvolucaoComponent implements OnInit, OnDestroy {
       next: (data) => {
         this.medias = data;
         this.loading = false;
-        // Carregar histórico de todos os pilares
+        this.anoFiltro = this.FILTRO_ULTIMOS_12_MESES;
+        // Carregar período atual
+        this.loadPeriodoAtual();
+        // Carregar histórico com filtro de ano
         this.loadAllHistorico();
       },
       error: (err: any) => {
@@ -155,46 +165,94 @@ export class DiagnosticoEvolucaoComponent implements OnInit, OnDestroy {
   congelarMedias(): void {
     if (!this.selectedEmpresaId || !this.canCongelar) return;
 
+    // Verificar se há período aberto ou congelado
+    const periodo = this.periodoAtual || this.periodoCongelado;
+    if (!periodo) {
+      this.showToast('Não há período de avaliação. Inicie um período primeiro.', 'warning', 4000);
+      return;
+    }
+
     if (this.medias.length === 0) {
       this.showToast('Não há médias para congelar', 'warning');
       return;
     }
 
+    // Determinar se é congelamento ou recongelamento
+    const isRecongelamento = !periodo.aberto;
+    const titulo = isRecongelamento ? 'Recongelar Médias do Período' : 'Congelar Médias do Período';
+    const textoAcao = isRecongelamento 
+      ? `Deseja atualizar os snapshots do período ${this.getPeriodoMesAno()} com as médias atuais de ${this.medias.length} pilar(es)? Os snapshots anteriores serão substituídos.`
+      : `Deseja congelar as médias de ${this.medias.length} pilar(es) e encerrar o período ${this.getPeriodoMesAno()}?`;
+    const botaoTexto = isRecongelamento ? 'Sim, recongelar' : 'Sim, congelar';
+
     Swal.fire({
-      title: 'Congelar Médias',
-      text: `Deseja salvar/atualizar as médias de ${this.medias.length} pilar(es)? Se já existe registro de hoje, será atualizado.`,
+      title: titulo,
+      text: textoAcao,
       showCancelButton: true,
-      confirmButtonText: 'Sim, salvar',
+      confirmButtonText: botaoTexto,
       cancelButtonText: 'Cancelar',
       confirmButtonColor: '#3085d6'
     }).then((result) => {
-      if (result.isConfirmed && this.selectedEmpresaId) {
+      if (result.isConfirmed && periodo) {
         this.loading = true;
-        this.diagnosticoService.congelarMedias(this.selectedEmpresaId).subscribe({
-          next: (response) => {
-            this.showToast(
-              response.message,
-              'success',
-              4000
-            );
-            this.loading = false;
-            // Recarregar histórico de todos os pilares
-            this.loadAllHistorico();
-          },
-          error: (err: any) => {
-            this.loading = false;
-            this.showToast(
-              err?.error?.message || 'Erro ao congelar médias',
-              'error'
-            );
-          }
-        });
+        
+        // Chamar endpoint apropriado
+        if (isRecongelamento) {
+          this.periodosService.recongelar(periodo.id).subscribe({
+            next: (response) => {
+              const dataRef = new Date(response.periodo.dataReferencia);
+              const mes = (dataRef.getMonth() + 1).toString().padStart(2, '0');
+              const ano = dataRef.getFullYear();
+              this.showToast(
+                `Período ${mes}/${ano} recongelado com sucesso! ${response.resumo.totalSnapshots} snapshots atualizados.`,
+                'success',
+                4000
+              );
+              this.loading = false;
+              // Recarregar histórico
+              this.loadAllHistorico();
+            },
+            error: (err: any) => {
+              this.loading = false;
+              this.showToast(
+                err?.error?.message || 'Erro ao recongelar médias',
+                'error',
+                4000
+              );
+            }
+          });
+        } else {
+          this.periodosService.congelar(periodo.id).subscribe({
+            next: (response) => {
+              const dataRef = new Date(response.periodo.dataReferencia);
+              const mes = (dataRef.getMonth() + 1).toString().padStart(2, '0');
+              const ano = dataRef.getFullYear();
+              this.showToast(
+                `Período ${mes}/${ano} congelado com sucesso! ${response.snapshots.length} snapshots criados.`,
+                'success',
+                4000
+              );
+              this.periodoAtual = null;
+              this.loading = false;
+              // Recarregar histórico
+              this.loadAllHistorico();
+            },
+            error: (err: any) => {
+              this.loading = false;
+              this.showToast(
+                err?.error?.message || 'Erro ao congelar médias',
+                'error',
+                4000
+              );
+            }
+          });
+        }
       }
     });
   }
 
   /**
-   * Carrega histórico de todos os pilares
+   * Carrega histórico de períodos congelados (baseado no novo endpoint)
    */
   private async loadAllHistorico(): Promise<void> {
     if (!this.selectedEmpresaId || this.medias.length === 0) {
@@ -204,26 +262,43 @@ export class DiagnosticoEvolucaoComponent implements OnInit, OnDestroy {
     }
 
     try {
-      // Fazer requisições paralelas para todos os pilares
-      const promises = this.medias.map(media =>
-        firstValueFrom(
-          this.diagnosticoService.buscarHistoricoEvolucao(this.selectedEmpresaId!, media.pilarEmpresaId)
-        ).catch(err => {
-          console.error(`Erro ao carregar histórico do pilar ${media.pilarNome}:`, err);
-          return []; // Retorna array vazio em caso de erro
-        })
+      // Buscar histórico de períodos congelados
+      const periodos = await firstValueFrom(
+        this.periodosService.getHistorico(this.selectedEmpresaId)
       );
 
-      const results = await Promise.all(promises);
+      this.periodosHistorico = periodos || [];
+      this.atualizarAnosDisponiveis(this.periodosHistorico);
+      const periodosFiltrados = this.filtrarPeriodos(this.periodosHistorico);
 
-      // Combinar resultados com informações do pilar
-      this.historico = results
-        .map((data, index) => ({
-          pilarEmpresaId: this.medias[index].pilarEmpresaId,
-          pilarNome: this.medias[index].pilarNome,
-          data: data || []
-        }))
-        .filter(h => h.data.length > 0);
+      // Converter períodos em estrutura de histórico para o chart
+      // Cada período usa sua dataReferencia real
+      this.historico = this.medias.map(media => {
+        const dadosPilar = periodosFiltrados
+          .sort((a, b) => {
+            // Ordenar por dataReferencia
+            const dataA = new Date(a.dataReferencia);
+            const dataB = new Date(b.dataReferencia);
+            return dataA.getTime() - dataB.getTime();
+          })
+          .map(periodo => {
+            // Buscar snapshot do pilar neste período
+            const snapshot = periodo.snapshots?.find(s => s.pilarEmpresaId === media.pilarEmpresaId);
+            return {
+              data: periodo.dataReferencia, // Usar dataReferencia real escolhida pelo admin
+              media: snapshot?.mediaNotas || null,
+              trimestre: periodo.trimestre,
+              ano: periodo.ano
+            };
+          })
+          .filter(d => d.media !== null); // Remover períodos sem snapshot
+
+        return {
+          pilarEmpresaId: media.pilarEmpresaId,
+          pilarNome: media.pilarNome,
+          data: dadosPilar
+        };
+      }).filter(h => h.data.length > 0);
       
       // Pequeno delay para garantir que o DOM foi atualizado
       setTimeout(() => {
@@ -231,9 +306,14 @@ export class DiagnosticoEvolucaoComponent implements OnInit, OnDestroy {
       }, 100);
     } catch (err) {
       console.error('Erro ao carregar histórico de pilares:', err);
-      this.showToast('Erro ao carregar histórico', 'error');
+      const message = (err as any)?.error?.message || 'Erro ao carregar histórico';
+      this.showToast(message, 'error');
       this.historico = [];
       this.destroyBarChart();
+      this.anosDisponiveis = [
+        { value: this.FILTRO_ULTIMOS_12_MESES, label: 'Últimos 12 meses' }
+      ];
+      this.anoFiltro = this.FILTRO_ULTIMOS_12_MESES;
     }
   }
 
@@ -247,40 +327,68 @@ renderBarChart(): void {
     const ctx = document.getElementById('evolucaoBarChart') as HTMLCanvasElement;
     if (!ctx) return;
 
-    // Coletar todas as datas únicas de todos os pilares e ordenar
-    const allDates = new Set<string>();
+    // Labels são os nomes dos pilares
+    const labels = this.historico.map(pilar => pilar.pilarNome.toUpperCase());
+
+    // Configurar largura dinâmica do canvas
+    const larguraMinimaPorPilar = 105; // pixels mínimos por pilar
+    const larguraNecessaria = this.historico.length * larguraMinimaPorPilar;
+    const container = document.getElementById('chartContainer');
+    if (container && this.historico.length > 10) {
+      container.style.width = `${larguraNecessaria}px`;
+    } else if (container) {
+      container.style.width = '100%';
+    }
+
+    // Criar dataset para cada período (mês/ano da dataReferencia real)
+    // Coletar todos os períodos únicos
+    interface PeriodoInfo {
+      mesAno: string; // formato MM/YYYY
+      data: Date;
+    }
+    const periodoMap = new Map<string, PeriodoInfo>();
     this.historico.forEach(pilar => {
-      pilar.data.forEach((item: HistoricoEvolucao) => {
-        allDates.add(new Date(item.createdAt).toLocaleDateString('pt-BR'));
+      pilar.data.forEach((item: any) => {
+        // Extrair mês/ano da dataReferencia real
+        const dataRef = new Date(item.data);
+        const mes = (dataRef.getMonth() + 1).toString().padStart(2, '0');
+        const ano = dataRef.getFullYear();
+        const mesAno = `${mes}/${ano}`;
+        if (!periodoMap.has(mesAno)) {
+          periodoMap.set(mesAno, {
+            mesAno,
+            data: dataRef
+          });
+        }
       });
     });
-    const sortedDates = Array.from(allDates).sort((a, b) => {
-      const dateA = a.split('/').reverse().join('-');
-      const dateB = b.split('/').reverse().join('-');
-      return dateA.localeCompare(dateB);
+    // Ordenar por data
+    const sortedPeriodos = Array.from(periodoMap.values()).sort((a, b) => {
+      return a.data.getTime() - b.data.getTime();
     });
 
-    // Labels são os nomes dos pilares
-    const labels = this.historico.map(pilar => pilar.pilarNome);
-
-    // Criar dataset para cada data
-    const datasets = sortedDates.map((date, index) => {
+    // Criar dataset para cada período
+    const datasets = sortedPeriodos.map((periodo, index) => {
       const colorIndex = index % this.GRAY_COLORS.length;
       const grayColor = this.GRAY_COLORS[colorIndex];
 
-      // Para cada pilar, pegar a média da data correspondente
+      // Para cada pilar, pegar a média do período correspondente
       const data = this.historico.map(pilar => {
-        const item = pilar.data.find((h: HistoricoEvolucao) => 
-          new Date(h.createdAt).toLocaleDateString('pt-BR') === date
-        );
-        return item ? item.mediaNotas : null;
+        const item = pilar.data.find((h: any) => {
+          const dataItem = new Date(h.data);
+          const mesItem = (dataItem.getMonth() + 1).toString().padStart(2, '0');
+          const anoItem = dataItem.getFullYear();
+          const mesAnoItem = `${mesItem}/${anoItem}`;
+          return mesAnoItem === periodo.mesAno;
+        });
+        return item ? item.media : null;
       });
 
       return {
-        label: date,
+        label: periodo.mesAno,
         data: data,
         backgroundColor: grayColor,
-        borderColor: grayColor,
+        borderColor: 'rgba(150, 150, 150)',
         borderWidth: 1,
         barPercentage: 1.05,
         categoryPercentage: 0.75
@@ -297,8 +405,6 @@ renderBarChart(): void {
         id: 'datalabels',
         afterDatasetsDraw: (chart: any) => {
           const ctx = chart.ctx;
-          // Obter a cor do texto do tema atual
-          const textColor = getComputedStyle(document.documentElement).getPropertyValue('--bs-body-color').trim() || '#212121';
           
           chart.data.datasets.forEach((dataset: any, datasetIndex: number) => {
             const meta = chart.getDatasetMeta(datasetIndex);
@@ -306,11 +412,13 @@ renderBarChart(): void {
               meta.data.forEach((bar: any, index: number) => {
                 const data = dataset.data[index];
                 if (data !== null && data !== undefined) {
-                  ctx.fillStyle = textColor;
+                  ctx.fillStyle = '#000000';
                   ctx.font = 'bold 11px Arial';
                   ctx.textAlign = 'center';
-                  ctx.textBaseline = 'bottom';
-                  ctx.fillText(data.toFixed(1), bar.x, bar.y - 5);
+                  ctx.textBaseline = 'middle';
+                  // Calcular posição Y no meio da barra
+                  const yMid = (bar.y + bar.base) / 2;
+                  ctx.fillText(data.toLocaleString('pt-BR', { minimumFractionDigits: 1, maximumFractionDigits: 1 }), bar.x, yMid);
                 }
               });
             }
@@ -330,20 +438,19 @@ renderBarChart(): void {
             max: 10,
             ticks: {
               stepSize: 1
-            },
-            title: {
-              display: true,
-              text: 'Média das Notas'
             }
           },
           x: {
             title: {
               display: true,
-              text: 'Pilar'
+              text: 'PILARES'
             }
           }
         },
         plugins: {
+          datalabels: {
+            display: false // Desabilita labels automáticos do Chart.js (evita duplicação)
+          },
           legend: {
             display: true,
             position: 'top',
@@ -367,7 +474,7 @@ renderBarChart(): void {
                   label += ': ';
                 }
                 if (context.parsed.y !== null) {
-                  label += context.parsed.y.toFixed(2);
+                  label += context.parsed.y.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
                 }
                 return label;
               }
@@ -380,7 +487,7 @@ renderBarChart(): void {
                 type: 'box',
                 yMin: 0,
                 yMax: 6,
-                backgroundColor: 'rgba(195, 77, 56, 0.4)',
+                backgroundColor: 'rgba(195, 77, 56, 0.5)',
                 borderWidth: 0,
                 drawTime: 'beforeDatasetsDraw'
               },
@@ -389,7 +496,7 @@ renderBarChart(): void {
                 type: 'box',
                 yMin: 6,
                 yMax: 8,
-                backgroundColor: 'rgba(166, 124, 0, 0.4)',
+                backgroundColor: 'rgba(166, 124, 0, 0.5)',
                 borderWidth: 0,
                 drawTime: 'beforeDatasetsDraw'
               },
@@ -398,7 +505,7 @@ renderBarChart(): void {
                 type: 'box',
                 yMin: 8,
                 yMax: 10,
-                backgroundColor: 'rgba(92, 184, 112, 0.4)',
+                backgroundColor: 'rgba(92, 184, 112, 0.5)',
                 borderWidth: 0,
                 drawTime: 'beforeDatasetsDraw'
               }
@@ -456,6 +563,22 @@ renderBarChart(): void {
     return sorted;
   }
 
+  /**
+   * Formata data para exibição (dd/MM/yyyy HH:mm)
+   */
+  formatarData(data: string | null | undefined): string {
+    if (!data) return '-';
+    
+    const date = new Date(data);
+    const dia = date.getDate().toString().padStart(2, '0');
+    const mes = (date.getMonth() + 1).toString().padStart(2, '0');
+    const ano = date.getFullYear();
+    const hora = date.getHours().toString().padStart(2, '0');
+    const minuto = date.getMinutes().toString().padStart(2, '0');
+    
+    return `${dia}/${mes}/${ano} ${hora}:${minuto}`;
+  }
+
   private showToast(title: string, icon: 'success' | 'error' | 'info' | 'warning', timer: number = 3000): void {
     Swal.fire({
       toast: true,
@@ -466,5 +589,148 @@ renderBarChart(): void {
       title,
       icon
     });
+  }
+
+  // ====================================================
+  // Métodos de Período de Avaliação
+  // ====================================================
+
+  /**
+   * Carrega o período de avaliação atual (aberto) da empresa
+   */
+  private loadPeriodoAtual(): void {
+    if (!this.selectedEmpresaId) return;
+
+    this.periodosService.getAtual(this.selectedEmpresaId).subscribe({
+      next: (periodo) => {
+        this.periodoAtual = periodo;
+        
+        // Se não há período aberto, carregar o último período congelado para permitir recongelamento
+        if (!periodo) {
+          this.loadUltimoPeriodoCongelado();
+        } else {
+          this.periodoCongelado = null;
+        }
+      },
+      error: (err) => {
+        console.error('Erro ao carregar período atual:', err);
+        this.periodoAtual = null;
+        // Tentar carregar último período congelado
+        this.loadUltimoPeriodoCongelado();
+      }
+    });
+  }
+
+  private loadUltimoPeriodoCongelado(): void {
+    if (!this.selectedEmpresaId) return;
+
+    this.periodosService.getHistorico(this.selectedEmpresaId).subscribe({
+      next: (periodos) => {
+        // Pegar o último período congelado (mais recente)
+        if (periodos && periodos.length > 0) {
+          // Ordenar por data de referência decrescente
+          const periodosOrdenados = periodos.sort((a, b) => {
+            return new Date(b.dataReferencia).getTime() - new Date(a.dataReferencia).getTime();
+          });
+          this.periodoCongelado = periodosOrdenados[0];
+        } else {
+          this.periodoCongelado = null;
+        }
+      },
+      error: (err) => {
+        console.error('Erro ao carregar último período congelado:', err);
+        this.periodoCongelado = null;
+      }
+    });
+  }
+
+  /**
+   * Gera lista de anos disponíveis para o filtro (últimos 5 anos a partir do ano atual)
+   */
+  private atualizarAnosDisponiveis(periodos: PeriodoComSnapshots[]): void {
+    const anosUnicos = Array.from(new Set(periodos.map(p => p.ano))).sort((a, b) => b - a);
+
+    this.anosDisponiveis = [
+      { value: this.FILTRO_ULTIMOS_12_MESES, label: 'Últimos 12 meses' },
+      ...anosUnicos.map(ano => ({ value: ano.toString(), label: ano.toString() }))
+    ];
+
+    if (!this.anoFiltro || (this.anoFiltro !== this.FILTRO_ULTIMOS_12_MESES && !anosUnicos.includes(Number(this.anoFiltro)))) {
+      this.anoFiltro = this.FILTRO_ULTIMOS_12_MESES;
+    }
+  }
+
+  private filtrarPeriodos(periodos: PeriodoComSnapshots[]): PeriodoComSnapshots[] {
+    const periodosFechados = periodos.filter(p => !p.aberto);
+
+    if (this.anoFiltro === this.FILTRO_ULTIMOS_12_MESES) {
+      const limite = new Date();
+      limite.setMonth(limite.getMonth() - 12);
+      return periodosFechados.filter(p => new Date(p.dataReferencia) >= limite);
+    }
+
+    if (this.anoFiltro) {
+      const ano = Number(this.anoFiltro);
+      if (!Number.isNaN(ano)) {
+        return periodosFechados.filter(p => p.ano === ano);
+      }
+    }
+
+    return periodosFechados;
+  }
+
+  /**
+   * Callback quando usuário muda o filtro de ano
+   */
+  onAnoChange(): void {
+    if (this.periodosHistorico.length > 0) {
+      this.atualizarAnosDisponiveis(this.periodosHistorico);
+      const periodosFiltrados = this.filtrarPeriodos(this.periodosHistorico);
+
+      this.historico = this.medias
+        .map(media => {
+          const dadosPilar = periodosFiltrados
+            .sort((a, b) => {
+              const dataA = new Date(a.dataReferencia);
+              const dataB = new Date(b.dataReferencia);
+              return dataA.getTime() - dataB.getTime();
+            })
+            .map(periodo => {
+              const snapshot = periodo.snapshots?.find(s => s.pilarEmpresaId === media.pilarEmpresaId);
+              return {
+                data: periodo.dataReferencia,
+                media: snapshot?.mediaNotas || null,
+                trimestre: periodo.trimestre,
+                ano: periodo.ano
+              };
+            })
+            .filter(d => d.media !== null);
+
+          return {
+            pilarEmpresaId: media.pilarEmpresaId,
+            pilarNome: media.pilarNome,
+            data: dadosPilar
+          };
+        })
+        .filter(h => h.data.length > 0);
+
+      setTimeout(() => {
+        this.renderBarChart();
+      }, 100);
+    } else {
+      this.loadAllHistorico();
+    }
+  }
+
+  /**
+   * Retorna texto formatado do período atual (mês/ano) para exibição no botão
+   */
+  getPeriodoMesAno(): string {
+    const periodo = this.periodoAtual || this.periodoCongelado;
+    if (!periodo) return '';
+    const dataRef = new Date(periodo.dataReferencia);
+    const mes = (dataRef.getMonth() + 1).toString().padStart(2, '0');
+    const ano = dataRef.getFullYear();
+    return `${mes}/${ano}`;
   }
 }

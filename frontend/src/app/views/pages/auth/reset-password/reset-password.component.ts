@@ -22,6 +22,8 @@ export class ResetPasswordComponent implements OnInit {
   success = false;
   errorMessage = '';
   token = '';
+  showNewPassword = false;
+  showConfirmPassword = false;
 
   form = this.fb.group({
     novaSenha: ['', [
@@ -60,6 +62,14 @@ export class ResetPasswordComponent implements OnInit {
     if (strength <= 2) return 'fraca';
     if (strength === 3) return 'média';
     return 'forte';
+  }
+
+  toggleNewPasswordVisibility(): void {
+    this.showNewPassword = !this.showNewPassword;
+  }
+
+  toggleConfirmPasswordVisibility(): void {
+    this.showConfirmPassword = !this.showConfirmPassword;
   }
 
   onSubmit(): void {

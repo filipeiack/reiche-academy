@@ -24,9 +24,18 @@ Em caso de conflito, a ordem de autoridade é:
   Nenhum agente pode atuar fora deste fluxo sem aprovação humana explícita.
 
 ### Nível 2: Agentes
-- **`/.github/agents/`**  
+- **`/.github/agents/`** (v2.0 - 4 agentes consolidados)
   Define escopo, ferramentas, restrições e responsabilidades de cada agente.
   Agentes não podem executar ações fora de suas definições.
+  
+  **Agentes oficiais (v2.0):**
+  - 0-System_Engineer.md (meta-governança: 3 modos)
+  - 1-Business_Analyst.md (extração + validação de regras)
+  - 2-DEV_Agent_Enhanced.md (implementação + auto-validação de padrões)
+  - 3-QA_Engineer.md (testes unitários + E2E independentes)
+  
+  **Histórico v1.0:** `/docs/history/agents-v1/` (7 agentes - arquivado)  
+  **ADR:** ADR-008 (consolidação 7→4 agentes)
 
 ### Nível 3: Regras de Negócio
 - **`/docs/business-rules/`**  
@@ -46,7 +55,7 @@ Em caso de conflito, a ordem de autoridade é:
 ### Nível 6: Convenções
 - **`/docs/conventions/`**  
   Padrões de código, naming, estrutura de pastas, formatação.
-  Pattern Enforcer valida contra estas convenções.
+  Dev Agent Enhanced valida padrões durante implementação (auto-validação).
 
 ### Nível 7: Handoffs (Execução)
 - **`/docs/handoffs/`**  

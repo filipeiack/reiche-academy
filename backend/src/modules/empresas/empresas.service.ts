@@ -5,6 +5,7 @@ import { UpdateEmpresaDto } from './dto/update-empresa.dto';
 import { AuditService } from '../audit/audit.service';
 import { RequestUser } from '../../common/interfaces/request-user.interface';
 import { PilaresEmpresaService } from '../pilares-empresa/pilares-empresa.service';
+import { RotinasEmpresaService } from '../pilares-empresa/rotinas-empresa.service';
 
 @Injectable()
 export class EmpresasService {
@@ -12,6 +13,7 @@ export class EmpresasService {
     private prisma: PrismaService, 
     private audit: AuditService,
     private pilaresEmpresaService: PilaresEmpresaService,
+    private rotinasEmpresaService: RotinasEmpresaService,
   ) {}
 
   /**
@@ -85,7 +87,7 @@ export class EmpresasService {
 
         // Para cada rotina template do pilar, criar snapshot (RotinaEmpresa)
         for (const rotinaTemplate of pilarTemplate.rotinas) {
-          await this.pilaresEmpresaService.createRotinaEmpresa(
+          await this.rotinasEmpresaService.createRotinaEmpresa(
             created.id,
             pilarEmpresa.id,
             { rotinaTemplateId: rotinaTemplate.id },
@@ -99,7 +101,7 @@ export class EmpresasService {
   }
 
   async findAll() {
-    return this.prisma.empresa.findMany({
+    const empresas = await this.prisma.empresa.findMany({
       where: { ativo: true },
       include: {
         _count: {
@@ -108,9 +110,20 @@ export class EmpresasService {
             pilares: true,
           },
         },
+        periodosMentoria: {
+          where: { ativo: true },
+          take: 1,
+        },
       },
       orderBy: { nome: 'asc' },
     });
+
+    // Mapear para incluir periodoMentoriaAtivo
+    return empresas.map((empresa: any) => ({
+      ...empresa,
+      periodoMentoriaAtivo: empresa.periodosMentoria[0] || null,
+      periodosMentoria: undefined, // Remover array original
+    }));
   }
 
   async findAllByEmpresa(empresaId: string) {
@@ -128,7 +141,7 @@ export class EmpresasService {
     });
   }
 
-  async findOne(id: string) {
+  async findOne(id: string, requestUser?: RequestUser) {
     const empresa = await this.prisma.empresa.findUnique({
       where: { id },
       include: {
@@ -157,6 +170,10 @@ export class EmpresasService {
 
     if (!empresa) {
       throw new NotFoundException('Empresa não encontrada');
+    }
+
+    if (requestUser) {
+      this.validateTenantAccess(empresa, requestUser, 'visualizar');
     }
 
     return empresa;
@@ -306,8 +323,8 @@ export class EmpresasService {
     });
 
     return result
-      .map(r => r.tipoNegocio)
-      .filter((tipo): tipo is string => tipo !== null);
+      .map((r: any) => r.tipoNegocio)
+      .filter((tipo: any): tipo is string => tipo !== null);
   }
 
   async updateLogo(id: string, logoUrl: string, userId: string, requestUser: RequestUser) {

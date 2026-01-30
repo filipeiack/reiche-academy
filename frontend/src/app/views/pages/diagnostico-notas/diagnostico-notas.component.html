@@ -1,4 +1,4 @@
-<div id="headerEmpresa" class="sticky-header-empresa mb-1">
+<div id="headerDashboard" class="sticky-header-dashboard mb-1">
     <div class="mb-2 align-items-center d-flex justify-content-between flex-wrap">
         <nav aria-label="breadcrumb">
             <ol class="breadcrumb breadcrumb-arrow">
@@ -11,29 +11,33 @@
             </ol>
         </nav>
 
-        @if (selectedEmpresaId) {
-        <div id="savingBar" class="d-flex align-items-center gap-3">
+         @if (selectedEmpresaId) {
+         <div id="savingBar" class="d-flex align-items-center gap-3" data-testid="saving-bar">
+
             @if (savingCount > 0) {
-            <div class="saving-indicator">
-                <div class="spinner-border spinner-border-sm" role="status">
-                    <span class="visually-hidden">{{ 'COMMON.SAVING' | translate }}...</span>
-                </div>
-                <span>{{ 'DIAGNOSTICO.SAVING_CHANGES' | translate }}</span>
-            </div>
+                 <div class="saving-indicator" data-testid="saving-indicator">
+                 <div class="spinner-border spinner-border-sm" role="status">
+                     <span class="visually-hidden">{{ 'COMMON.SAVING' | translate }}...</span>
+                 </div>
+                 <span>{{ 'DIAGNOSTICO.SAVING_CHANGES' | translate }}</span>
+             </div>
             } @else if (lastSaveTime) {
-            <div class="last-save-info">
-                <i class="feather icon-check-circle text-success icon-sm"></i>
-                <span class="text-muted small">Salvo por último às: {{ getLastSaveTimeFormatted() }}</span>
+             <div class="last-save-info" data-testid="last-save-info">
+                 <i class="feather icon-check-circle text-success icon-sm"></i>
+                 <span class="text-muted small">Salvo por último às: {{ getLastSaveTimeFormatted() }}</span>
+             </div>
+            }
+
+            <!-- Badge indicador de período de avaliação ativo -->
+            @if (periodoAtual) {
+            <div class="badge bg-light text-dark small d-flex align-items-center gap-1 px-3 py-2">
+                <i class="feather icon-calendar icon-sm"></i>
+                <span>{{ getPeriodoAtualTexto() }}</span>
             </div>
             }
 
-            <button type="button" class="btn btn-sm btn-primary" (click)="forceSaveAll()"
-                [disabled]="savingCount > 0 || !hasUnsavedChanges()">
-                <i class="feather icon-save icon-sm"></i>
-                Salvar Tudo
-            </button>
-
-            @if (selectedEmpresaId) {
+            <!-- Menu Dropdown de Ações -->
+            @if (selectedEmpresaId && !isReadOnlyPerfil) {
             <div class="ms-2">
                 <div ngbDropdown class="mb-2">
                     <a class="no-dropdown-toggle-icon" ngbDropdownToggle id="dropdownMenuButton">
@@ -41,9 +45,29 @@
                     </a>
                     <div ngbDropdownMenu aria-labelledby="dropdownMenuButton">
                         <a ngbDropdownItem class="d-flex align-items-center gap-1"
-                            (click)="abrirModalPilares(); $event.preventDefault()">
+                            (click)="abrirModalIniciarPeriodo(); $event.preventDefault()"
+                            [class.disabled]="periodoAtual !== null">
+                            <i class="feather icon-play-circle icon-sm"></i>
+                            <span class="">Iniciar Avaliação Trimestral</span>
+                        </a>
+                        <a ngbDropdownItem class="d-flex align-items-center gap-1"
+                            (click)="forceSaveAll(); $event.preventDefault()"
+                            [class.disabled]="savingCount > 0 || !hasUnsavedChanges()">
+                            <i class="feather icon-save icon-sm"></i>
+                            <span class="">Salvar Tudo</span>
+                        </a>
+
+                        <div class="dropdown-divider"></div>
+                        
+                        <a ngbDropdownItem class="d-flex align-items-center gap-1"
+                            (click)="abrirDrawerAdicionarPilar(); $event.preventDefault()">
+                            <i class="feather icon-plus icon-sm"></i>
+                            <span class="">Adicionar Pilar</span>
+                        </a>
+                        <a ngbDropdownItem class="d-flex align-items-center gap-1"
+                            (click)="abrirDrawerEditarPilares(); $event.preventDefault()">
                             <i class="feather icon-edit icon-sm"></i>
-                            <span class="">Gerenciar Pilares</span>
+                            <span class="">Editar Pilares</span>
                         </a>
                     </div>
                 </div>
@@ -55,6 +79,7 @@
 </div>
 
 
+
 <!-- Conteúdo principal -->
 @if (!loading && !error && selectedEmpresaId && pilares.length > 0) {
 
@@ -62,14 +87,16 @@
     <!-- Accordion de Pilares -->
     @for (pilar of pilares; track pilar.id; let i = $index) {
     <div class="card mb-1" data-testid="pilar-accordion">
-        <div class="card-header sticky-header-pilar mb-0 collapsed">
+        <div class="card-header sticky-header-card mb-0 collapsed">
             <div class="pilar-header">
                 <div class="d-flex align-items-center gap-2">
-                    <button class="btn btn-link p-0 d-flex align-items-center" type="button" (click)="togglePilar(i)">
+                    <button class="btn btn-link p-0 d-flex align-items-center" type="button" (click)="togglePilar(i)"
+                        data-testid="pilar-toggle-button">
                         <i [ngClass]="pilarExpandido[i] ? 'feather icon-chevron-up' : 'feather icon-chevron-down'"></i>
-                        <span class="fw-bold text-muted">{{ ('PILARES.PILAR' | translate).toUpperCase() }} {{
-                            pilar.nome.toUpperCase()
-                            }}</span>
+                        <span class="fw-bold text-muted" data-testid="pilar-accordion-nome">
+                            {{ ('PILARES.PILAR' | translate).toUpperCase() }}
+                            {{ pilar.nome.toUpperCase() }}
+                        </span>
                     </button>
                 </div>
 
@@ -94,31 +121,49 @@
                     }
 
                     <div ngbDropdown class="w-30px">
-                    @if (pilarExpandido[i]) {
-                    <div ngbDropdown class="mb-2">
-                        <a class="no-dropdown-toggle-icon btn btn-link" ngbDropdownToggle id="dropdownMenuButton">
-                            <i class="feather icon-more-horizontal"></i>
-                        </a>
-                        <div ngbDropdownMenu aria-labelledby="dropdownMenuButton">
-                            <a ngbDropdownItem class="d-flex align-items-center gap-1"
-                                (click)="abrirModalResponsavel(pilar); $event.preventDefault()">
-                                <i class="feather icon-user icon-sm"></i>
-                                <span class="">Definir Responsável</span>
+                        @if (pilarExpandido[i] && !isReadOnlyPerfil) {
+                        <div ngbDropdown class="mb-2">
+                            <a class="no-dropdown-toggle-icon btn btn-link" ngbDropdownToggle id="dropdownMenuButton"
+                                data-testid="pilar-actions-toggle">
+                                <i class="feather icon-more-horizontal"></i>
                             </a>
-                            <a ngbDropdownItem class="d-flex align-items-center gap-1"
-                                (click)="abrirModalNovaRotina(pilar); $event.preventDefault()">
-                                <i class="feather icon-plus-circle icon-sm"></i>
-                                <span class="">Adicionar Rotina</span>
-                            </a>
-                            <a ngbDropdownItem class="d-flex align-items-center gap-1"
-                                (click)="abrirModalEditarRotinas(pilar); $event.preventDefault()">
-                                <i class="feather icon-edit icon-sm"></i>
-                                <span class="">Gerenciar Rotinas</span>
-                            </a>
+                            <div ngbDropdownMenu aria-labelledby="dropdownMenuButton">
+                                 <a ngbDropdownItem class="d-flex align-items-center gap-1" data-testid="btn-definir-responsavel"
+                                     (click)="abrirModalResponsavel(pilar); $event.preventDefault()">
+                                     <i class="feather icon-user icon-sm"></i>
+                                     <span class="">Definir Responsável</span>
+                                 </a>
 
+                                 <div class="dropdown-divider"></div>
+
+                                 <a ngbDropdownItem class="d-flex align-items-center gap-1" data-testid="btn-adicionar-rotina"
+                                     (click)="abrirDrawerAdicionarRotina(pilar); $event.preventDefault()">
+                                     <i class="feather icon-plus icon-sm"></i>
+                                     <span class="">Adicionar Rotina</span>
+                                 </a>
+                                 <a ngbDropdownItem class="d-flex align-items-center gap-1" data-testid="btn-editar-rotinas"
+                                     (click)="abrirDrawerEditarRotinas(pilar); $event.preventDefault()">
+                                     <i class="feather icon-edit icon-sm"></i>
+                                     <span class="">Editar Rotinas</span>
+                                 </a>
+
+                                <div class="dropdown-divider"></div>
+
+                                <!-- Botão Cockpit -->
+                                 <a ngbDropdownItem class="d-flex align-items-center gap-1" data-testid="btn-navegar-cockpit"
+                                     (click)="navegarParaCockpit(pilar); $event.preventDefault()">
+                                     @if (pilar.cockpit) {
+                                     <i class="feather icon-target icon-sm text-success"></i>
+                                     <span class="">Abrir Cockpit</span>
+                                     } @else {
+                                     <i class="feather icon-plus icon-sm text-warning"></i>
+                                     <span class="">Criar Cockpit</span>
+                                     }
+                                 </a>
+
+                            </div>
                         </div>
-                    </div>
-                    }
+                        }
                     </div>
                 </div>
             </div>
@@ -160,6 +205,7 @@
                                         {{ 'DIAGNOSTICO.CRITICIDADE' | translate }} <span class="text-danger">*</span>
                                     </label>
                                     <ng-select [id]="'criticidade-' + rotina.id" [items]="criticidadeOptions"
+                                        data-testid="rotina-criticidade-select"
                                         bindLabel="label" bindValue="value" [ngModel]="getCriticidadeAtual(rotina)"
                                         (ngModelChange)="onNotaChange(rotina, getNotaAtual(rotina), $event)"
                                         placeholder="{{ 'DIAGNOSTICO.SELECT_CRITICIDADE' | translate }}"
@@ -174,6 +220,7 @@
                                         {{ 'DIAGNOSTICO.NOTA' | translate }} <span class="text-danger">*</span>
                                     </label>
                                     <input type="number" [id]="'nota-' + rotina.id" class="form-control" min="0"
+                                        data-testid="rotina-nota-input"
                                         max="10" step="1" [value]="getNotaAtual(rotina)"
                                         (input)="onNotaChange(rotina, $any($event.target).value, getCriticidadeAtual(rotina))"
                                         placeholder="0 - 10" [ngClass]="getNotaClass(getNotaAtual(rotina))" />
@@ -213,44 +260,77 @@
 
 <!-- Error -->
 @else if (error && !loading) {
-<ngb-alert type="danger" [dismissible]="false">
-    <i class="feather icon-alert-circle"></i>
+<div class="alert alert-danger" role="alert">
+    <i data-feather="alert-triangle" class="me-2"></i>
     {{ error }}
-</ngb-alert>
+</div>
 }
 
 <!-- Estado vazio -->
 @else if (!loading && !error && pilares.length === 0 && selectedEmpresaId) {
-<div class="empty-state">
-    <p>{{ 'DIAGNOSTICO.NO_PILARES' | translate }}</p>
+<div class="alert alert-danger" role="alert">
+    <i data-feather="alert-triangle" class="me-2"></i>
+    <span>{{ 'DIAGNOSTICO.NO_PILARES' | translate }}</span>
 </div>
 }
 
 @else if (!loading && !error && !selectedEmpresaId && !isAdmin) {
-<div class="empty-state">
-    <p>{{ 'DIAGNOSTICO.NO_EMPRESA_ASSOCIATED' | translate }}</p>
+<div class="alert alert-danger" role="alert">
+    <i data-feather="alert-triangle" class="me-2"></i>
+    <span>{{ 'DIAGNOSTICO.NO_EMPRESA_ASSOCIATED' | translate }}</span>
 </div>
 }
 
 @else if (!selectedEmpresaId && isAdmin) {
-<div class="empty-state">
-    <p>{{ 'DIAGNOSTICO.SELECT_EMPRESA_PLACEHOLDER' | translate }}</p>
+<div class="alert alert-danger" role="alert">
+    <i data-feather="alert-triangle" class="me-2"></i>
+    <span>{{ 'DIAGNOSTICO.SELECT_EMPRESA_PLACEHOLDER' | translate }}</span>
 </div>
 }
 
-<!-- Modal para gerenciar pilares -->
-<app-pilares-empresa-modal [empresaId]="selectedEmpresaId || ''" [isPerfilCliente]="isReadOnlyPerfil"
-    (pilaresModificados)="onPilaresModificados()">
-</app-pilares-empresa-modal>
+<!-- Modal para iniciar período de avaliação -->
+@if (showIniciarPeriodoModal) {
+<div class="modal fade show d-block" tabindex="-1" role="dialog" style="background: rgba(0,0,0,0.5);">
+    <div class="modal-dialog modal-dialog-centered" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="feather icon-calendar me-2"></i>
+                    Iniciar Nova Avaliação Trimestral
+                </h5>
+                <button type="button" class="btn-close" (click)="fecharModalIniciarPeriodo()"></button>
+            </div>
+            <div class="modal-body">
+                <p class="text-muted mb-3">
+                    Selecione a data de referência para o novo período de avaliação.
+                </p>
 
-<!-- Modal para definir responsável -->
-<app-responsavel-pilar-modal [empresaId]="selectedEmpresaId || ''" (responsavelAtualizado)="onResponsavelAtualizado()">
-</app-responsavel-pilar-modal>
+                <div class="mb-3">
+                    <label for="dataReferencia" class="form-label">Data de Referência *</label>
+                    <input type="date" class="form-control" id="dataReferencia" [(ngModel)]="dataReferenciaPeriodo"
+                        required>
 
-<!-- Modal para criar nova rotina -->
-<app-nova-rotina-modal [empresaId]="selectedEmpresaId || ''" (rotinaCriada)="onRotinaCriada()">
-</app-nova-rotina-modal>
+                </div>
 
-<!-- Modal para gerenciar rotinas do pilar -->
-<app-rotinas-pilar-modal (rotinasModificadas)="onRotinasModificadas()">
-</app-rotinas-pilar-modal>
+                <div class="alert alert-info mb-0">
+                    <i class="feather icon-info me-2"></i>
+                    <small>
+                        O intervalo mínimo entre períodos é de <strong>90 dias</strong>,
+                        calculado com base nas datas de referência escolhidas.
+                    </small>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" (click)="fecharModalIniciarPeriodo()">
+                    Cancelar
+                </button>
+                <button type="button" class="btn btn-primary" (click)="confirmarIniciarPeriodo()"
+                    [disabled]="!dataReferenciaPeriodo">
+                    <i class="feather icon-check me-2"></i>
+                    Iniciar Período
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+}

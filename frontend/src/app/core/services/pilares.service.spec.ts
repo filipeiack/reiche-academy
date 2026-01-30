@@ -17,7 +17,6 @@ describe('PilaresService', () => {
     nome: 'Estratégia',
     descricao: 'Pilar estratégico',
     ordem: 1,
-    modelo: true,
     ativo: true,
     createdAt: '2024-12-22T00:00:00Z',
     updatedAt: '2024-12-22T00:00:00Z',
@@ -29,7 +28,6 @@ describe('PilaresService', () => {
     id: 'pilar-2',
     nome: 'Inovação',
     descricao: 'Pilar customizado',
-    modelo: false,
     ativo: true,
     createdAt: '2024-12-22T00:00:00Z',
     updatedAt: '2024-12-22T00:00:00Z',
@@ -119,12 +117,10 @@ describe('PilaresService', () => {
         nome: 'Marketing',
         descricao: 'Pilar de marketing',
         ordem: 2,
-        modelo: true, // GAP-1: Campo modelo
       };
 
       service.create(dto).subscribe((pilar) => {
         expect(pilar.nome).toBe('Marketing');
-        expect(pilar.modelo).toBe(true);
         expect(pilar.ordem).toBe(2);
       });
 
@@ -138,11 +134,9 @@ describe('PilaresService', () => {
       const dto: CreatePilarDto = {
         nome: 'Sustentabilidade',
         descricao: 'Pilar sustentável',
-        modelo: false,
       };
 
       service.create(dto).subscribe((pilar) => {
-        expect(pilar.modelo).toBe(false);
         expect(pilar.ordem).toBeUndefined();
       });
 
@@ -171,18 +165,16 @@ describe('PilaresService', () => {
     it('deve atualizar pilar (GAP-2)', () => {
       const dto: UpdatePilarDto = {
         nome: 'Estratégia Atualizada',
-        modelo: false, // GAP-2: Pode alterar modelo
       };
 
       service.update('pilar-1', dto).subscribe((pilar) => {
         expect(pilar.nome).toBe('Estratégia Atualizada');
-        expect(pilar.modelo).toBe(false);
       });
 
       const req = httpMock.expectOne(`${apiUrl}/pilar-1`);
       expect(req.request.method).toBe('PATCH');
       expect(req.request.body).toEqual(dto);
-      req.flush({ ...mockPilarPadrao, nome: 'Estratégia Atualizada', modelo: false });
+      req.flush({ ...mockPilarPadrao, nome: 'Estratégia Atualizada' });
     });
 
     it('deve atualizar apenas descrição', () => {
@@ -263,7 +255,6 @@ describe('PilaresService', () => {
 
       expect(pilar.id).toBeDefined();
       expect(pilar.nome).toBeDefined();
-      expect(pilar.modelo).toBeDefined();
       expect(pilar.ativo).toBeDefined();
       expect(pilar.createdAt).toBeDefined();
       expect(pilar.updatedAt).toBeDefined();
@@ -283,11 +274,6 @@ describe('PilaresService', () => {
 
       expect(pilar.descricao).toBeUndefined();
       expect(pilar.ordem).toBeUndefined();
-    });
-
-    it('campo modelo deve ser boolean', () => {
-      expect(typeof mockPilarPadrao.modelo).toBe('boolean');
-      expect(typeof mockPilarCustomizado.modelo).toBe('boolean');
     });
 
     it('campo ordem deve ser number ou undefined', () => {
@@ -316,12 +302,10 @@ describe('PilaresService', () => {
         nome: 'Teste',
         descricao: 'Descrição',
         ordem: 5,
-        modelo: true,
       };
 
       expect(dto.descricao).toBe('Descrição');
       expect(dto.ordem).toBe(5);
-      expect(dto.modelo).toBe(true);
     });
   });
 
@@ -330,15 +314,6 @@ describe('PilaresService', () => {
       const dto: UpdatePilarDto = {};
 
       expect(Object.keys(dto).length).toBe(0);
-    });
-
-    it('deve permitir atualizar apenas modelo (GAP-2)', () => {
-      const dto: UpdatePilarDto = {
-        modelo: false,
-      };
-
-      expect(dto.modelo).toBe(false);
-      expect(dto.nome).toBeUndefined();
     });
 
     it('deve permitir atualizar campo ativo', () => {

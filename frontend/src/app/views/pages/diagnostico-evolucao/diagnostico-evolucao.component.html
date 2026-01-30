@@ -1,5 +1,5 @@
-<div id="headerEmpresa" class="mb-0">
-    <div class="mb-0 align-items-center d-flex justify-content-between flex-wrap">
+<div id="headerEmpresa" class="mb-1">
+    <div class="mb-2 align-items-center d-flex justify-content-between flex-wrap">
         <nav aria-label="breadcrumb">
             <ol class="breadcrumb breadcrumb-arrow">
                 <li class="breadcrumb-item">
@@ -10,6 +10,17 @@
                 </li>
             </ol>
         </nav>
+
+        <!-- Botão Congelar/Recongelar -->
+        @if (canCongelar) {
+        <button type="button"
+            [class]="periodoAtual ? 'btn btn-primary btn-sm' : 'btn btn-outline-primary btn-sm'"
+            (click)="congelarMedias()" [disabled]="!periodoAtual && medias.length === 0"
+            data-testid="btn-congelar-medias">
+            <i class="bi bi-arrow-bar-down"></i>
+            <span class="ms-1">Atualizar Médias</span>
+        </button>
+        }
     </div>
 </div>
 
@@ -17,21 +28,37 @@
 @if (!loading && !error && selectedEmpresaId && medias.length > 0) {
 <!-- Tabela de Pilares com Médias -->
 <div class="card mb-2">
-    <div class="card-body">
-        <div class="table-responsive" style="max-width: 80%; margin: 0 auto;">
-            <table class="table table-striped">
-                <thead>
+    <div class="card-body py-2">
+        <div class="table-responsive" style="max-width: 90%; margin: 0 auto;" data-testid="medias-table">
+            <table class="table table-sm mb-0">
+                <thead class="table-light">
                     <tr>
-                        <th>{{ 'PILARES.PILAR' | translate }}</th>
-                        <th sortable="mediaAtual" (sort)="onSort($event)" class="text-center">{{ 'EVOLUCAO.MEDIA_ATUAL' | translate }}</th>
+                        <th class="py-2 w-100">{{ 'PILARES.PILAR' | translate }}</th>
+                        <th sortable="mediaAtual" [direction]="sortColumn === 'mediaAtual' ? sortDirection : ''"
+                            (sort)="onSort($event)" class="text-center py-2">{{ 'EVOLUCAO.MEDIA_ATUAL'
+                            | translate }}</th>
+                        <th class="text-center py-2">Última Atualização</th>
                     </tr>
                 </thead>
                 <tbody>
                     @for (media of getSortedMedias(); track media.pilarEmpresaId) {
                     <tr>
-                        <td>{{ media.pilarNome }}</td>
-                        <td class="text-center">
+                        <td class="py-2">
+                            <i class="feather icon-layers me-1"></i>
+                            {{ media.pilarNome.toUpperCase() }}
+                        </td>
+                        <td class="text-center py-2">
                             <app-media-badge [media]="media.mediaAtual" [justMedia]="true"></app-media-badge>
+                        </td>
+                        <td class="text-center py-2">
+                            <small class="text-muted">
+                                @if (media.ultimaAtualizacao) {
+                                <i class="feather icon-clock me-1"></i>
+                                {{ formatarData(media.ultimaAtualizacao) }}
+                                } @else {
+                                <span class="text-muted">-</span>
+                                }
+                            </small>
                         </td>
                     </tr>
                     }
@@ -44,28 +71,34 @@
 <!-- Gráfico de Colunas por Data -->
 <div class="card">
     <div class="card-body">
-        <div class="d-flex justify-content-between align-items-center mb-3">
-            <h5 class="card-title mb-0">{{ 'EVOLUCAO.GRAFICO_TITLE' | translate }}</h5>
-            <!-- Botão Congelar -->
-            @if (canCongelar) {
-            <button type="button" class="btn btn-primary" ngbTooltip="{{('EVOLUCAO.CONGELAR_DESC' | translate)}}"
-                (click)="congelarMedias()" [disabled]="medias.length === 0">
-                <i class="feather icon-archive"></i>
-                {{ 'EVOLUCAO.CONGELAR_BTN' | translate }}
-            </button>
-            }
+        <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+            <div class="d-flex align-items-center gap-3">
+                <h5 class="card-title mb-0">{{ 'EVOLUCAO.GRAFICO_TITLE' | translate }}</h5>
+            </div>
+            <!-- Filtro de Ano -->
+            <ng-select [(ngModel)]="anoFiltro" (ngModelChange)="onAnoChange()" [items]="anosDisponiveis"
+                bindLabel="label" bindValue="value" [clearable]="false" [searchable]="false"
+                placeholder="Filtrar por ano" class="ng-select-sm ng-select-primary-border" style="width: 170px;"
+                data-testid="ano-filtro-select">
+            </ng-select>
+
+
         </div>
         <p class="text-muted small mb-3">
             <i class="feather icon-info me-1"></i>
-            Cada pilar exibe suas médias congeladas ao longo do tempo
+            Cada pilar exibe suas médias congeladas por período (mês/ano do trimestre)
         </p>
 
-        <div>
-            <canvas id="evolucaoBarChart"></canvas>
+        <div style="overflow-x: auto; overflow-y: hidden;" data-testid="chart-container">
+            <div id="chartContainer" style="min-width: 100%; position: relative;"
+                data-testid="evolucao-chart-container">
+                <canvas id="evolucaoBarChart"></canvas>
+            </div>
         </div>
 
         @if (historico.length === 0) {
-        <div class="empty-state" style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);">
+        <div class="empty-state" style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);"
+            data-testid="no-historico-message">
             <i class="feather icon-bar-chart-2"></i>
             <p>{{ 'EVOLUCAO.NO_HISTORICO' | translate }}</p>
         </div>
@@ -76,7 +109,7 @@
 
 <!-- Loading -->
 @else if (loading) {
-<div class="text-center py-5">
+<div class="text-center py-5" data-testid="loading-indicator">
     <div class="spinner-border text-primary" role="status">
         <span class="visually-hidden">{{ 'COMMON.LOADING' | translate }}...</span>
     </div>
@@ -85,29 +118,30 @@
 
 <!-- Error -->
 @else if (error && !loading) {
-<ngb-alert type="danger" [dismissible]="false">
-    <i class="feather icon-alert-circle"></i>
+<div class="alert alert-danger" role="alert" data-testid="error-message">
+    <i data-feather="alert-triangle" class="me-2"></i>
     {{ error }}
-</ngb-alert>
+</div>
 }
 
 <!-- Estado vazio -->
 @else if (!loading && !error && medias.length === 0 && selectedEmpresaId) {
-<div class="empty-state">
-    <i class="feather icon-folder"></i>
-    <p>{{ 'EVOLUCAO.NO_MEDIAS' | translate }}</p>
+<div class="alert alert-danger" role="alert">
+    <i data-feather="alert-triangle" class="me-2"></i>
+    <span>{{ 'EVOLUCAO.NO_MEDIAS' | translate }}</span>
 </div>
 }
 
 @else if (!loading && !error && !selectedEmpresaId && !isAdmin) {
-<div class="empty-state">
-    <i class="feather icon-alert-circle"></i>
-    <p>{{ 'EVOLUCAO.NO_EMPRESA_ASSOCIATED' | translate }}</p>
+<div class="alert alert-danger" role="alert" data-testid="no-empresa-message">
+    <i data-feather="alert-triangle" class="me-2"></i>
+    {{ 'EVOLUCAO.NO_EMPRESA_ASSOCIATED' | translate }}
 </div>
 }
 
 @else if (!selectedEmpresaId && isAdmin) {
-<div class="empty-state">
-    <p>{{ 'EVOLUCAO.SELECT_EMPRESA_PLACEHOLDER' | translate }}</p>
+<div class="alert alert-danger" role="alert" data-testid="select-empresa-message">
+    <i data-feather="alert-triangle" class="me-2"></i>
+    {{ 'EVOLUCAO.SELECT_EMPRESA_PLACEHOLDER' | translate }}
 </div>
 }

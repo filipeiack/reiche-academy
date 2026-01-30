@@ -1,0 +1,1 @@
+// Migrado para frontend/e2e/auth/auth.smoke.spec.ts

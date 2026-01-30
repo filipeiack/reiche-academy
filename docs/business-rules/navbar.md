@@ -80,6 +80,81 @@ A Navbar implementa:
 - `isPerfilCliente()` retorna `true` se `perfil.codigo` ∈ {GESTOR, COLABORADOR, LEITURA}  
 - Usado para lógica condicional de UI (ex.: rótulos e navegação)
 
+### 3.6 Regras Propostas (aguardando implementação)
+
+#### R-NAV-011: Borda primária no ng-select da navbar
+
+**Contexto**
+Navbar do frontend quando o seletor de empresa (ng-select) é exibido.
+
+**Descrição**
+O seletor de empresa na navbar deve ter borda com a cor primária do tema, reforçando o estado interativo e alinhando com a identidade visual.
+
+**Condição**
+Quando o `ng-select` de empresa estiver presente na navbar (perfil ADMINISTRADOR).
+
+**Comportamento Esperado**
+- O campo `ng-select` na navbar deve exibir borda na cor primária.
+- A mudança é exclusivamente visual (sem impacto em lógica, dados ou permissões).
+
+**Cenários**
+
+**Happy Path**
+- Admin acessa a aplicação e vê o `ng-select` de empresa com borda na cor primária.
+
+**Casos de Erro**
+- Se o seletor não estiver presente, nenhuma alteração visual é aplicada.
+
+**Restrições**
+- Não altera comportamento de seleção, valores ou validações.
+- Não deve introduzir estilos globais conflitantes com outros `ng-select` fora da navbar.
+
+**Impacto Técnico Estimado**
+- Frontend: ajustes de estilo no componente da navbar (HTML/SCSS), aplicando classe ou estilo específico ao `ng-select`.
+
+---
+
+#### R-NAV-012: Admin deve ver dados da empresa selecionada na navbar
+
+**Contexto**
+Navbar do frontend quando o perfil é ADMINISTRADOR e existe seleção de empresa no combo.
+
+**Descrição**
+Ao selecionar uma empresa no combo da navbar, o ADMINISTRADOR deve visualizar ao lado do combo os mesmos dados exibidos para perfis cliente.
+
+**Condição**
+Quando o usuário possui perfil ADMINISTRADOR e seleciona uma empresa no `ng-select` da navbar.
+
+**Comportamento Esperado**
+- Exibir, ao lado do combo, os mesmos dados de empresa apresentados no perfil cliente da navbar.
+- Campos exibidos:
+  - Nome da empresa
+  - CNPJ (com máscara)
+  - Localização (cidade/estado), quando disponível
+  - Período de mentoria (status do período ativo, com intervalo de datas quando disponível)
+- Se a seleção for limpa, o bloco de dados deve ser ocultado.
+
+**Cenários**
+
+**Happy Path**
+- Admin seleciona uma empresa no combo.
+- O bloco lateral exibe nome, CNPJ e localização, seguindo o mesmo formato do perfil cliente.
+
+**Casos de Erro**
+- Se a empresa selecionada não possuir CNPJ ou localização, apenas os campos disponíveis são exibidos.
+- Se não houver período de mentoria ativo, exibir status equivalente a "Sem mentoria".
+- Se não houver empresa selecionada, não exibir o bloco de dados.
+
+**Restrições**
+- Apenas ADMINISTRADOR visualiza o combo e o bloco de dados associado.
+- Não altera permissões de acesso, apenas exibe informações já acessíveis ao ADMIN.
+- O status do período de mentoria deve seguir o padrão já definido para exibição de período ativo/inexistente.
+
+**Impacto Técnico Estimado**
+- Frontend: navbar component (template e lógica de exibição) para compor o bloco de dados ao lado do combo.
+- Dependência de dados da empresa selecionada (lista carregada pelo contexto global).
+- Dependência de dados do período de mentoria ativo da empresa (se disponível).
+
 ---
 
 ## 4. Validações
@@ -130,3 +205,4 @@ click hamburger
 - Manipulação direta de DOM (`document.querySelector`) pode falhar em ambientes sem DOM ou SSR.
 - Não há persistência do tema no localStorage neste componente (delegado ao serviço).
 - Redirecionamento por `loginUrl` assume rota registrada na app; ausência pode levar a página não encontrada.
+- As regras propostas R-NAV-011 e R-NAV-012 aguardam implementação.

@@ -28,7 +28,7 @@ export const nonColaboradorGuard: CanActivateFn = (route, state) => {
   
   // Verificar se perfil existe
   if (!currentUser.perfil) {
-    router.navigate(['/dashboard']);
+    router.navigate(['/diagnostico-notas']);
     return false;
   }
   
@@ -38,7 +38,7 @@ export const nonColaboradorGuard: CanActivateFn = (route, state) => {
 
   // COLABORADOR não tem acesso ao CRUD de usuários
   if (perfilCodigo === 'COLABORADOR') {
-    router.navigate(['/dashboard']);
+    router.navigate(['/diagnostico-notas']);
     return false;
   }
 

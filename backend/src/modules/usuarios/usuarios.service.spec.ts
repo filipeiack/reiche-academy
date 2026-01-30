@@ -3,6 +3,7 @@ import { ForbiddenException, ConflictException, NotFoundException } from '@nestj
 import { UsuariosService } from './usuarios.service';
 import { PrismaService } from '../../common/prisma/prisma.service';
 import { AuditService } from '../audit/audit.service';
+import { JwtService } from '@nestjs/jwt';
 import * as argon2 from 'argon2';
 
 /**
@@ -77,6 +78,12 @@ describe('UsuariosService - Validação Completa de Regras de Negócio', () => {
           provide: AuditService,
           useValue: {
             log: jest.fn(),
+          },
+        },
+        {
+          provide: JwtService,
+          useValue: {
+            verify: jest.fn(),
           },
         },
       ],

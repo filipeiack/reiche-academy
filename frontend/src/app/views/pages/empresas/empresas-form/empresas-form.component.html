@@ -1,22 +1,57 @@
-<nav aria-label="breadcrumb">
-    <ol class="breadcrumb breadcrumb-arrow mb-1">
-        <li class="breadcrumb-item">
-            <i class="feather icon-briefcase"></i>
-        </li>
-        <li class="breadcrumb-item">
-            {{ 'MENU.EMPRESAS' | translate }}
-        </li>
-        <li class="breadcrumb-item active" aria-current="page">
-            @if (isEditMode && wizardStep === 1) {
-            {{ 'COMPANIES.EDIT' | translate }}
-            } @else if (!isEditMode && wizardStep === 1) {
-            {{ 'COMPANIES.CREATE' | translate }}
-            } @else if (wizardStep === 2) {
-            Configuração de Usuários e Pilares
+<div class="mb-2 align-items-center gap-2 d-flex justify-content-between flex-wrap">
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb breadcrumb-arrow mb-1">
+            <li class="breadcrumb-item">
+                <i class="feather icon-briefcase"></i>
+            </li>
+            <li class="breadcrumb-item">
+                {{ 'MENU.EMPRESAS' | translate }}
+            </li>
+            <li class="breadcrumb-item active" aria-current="page">
+                @if (isEditMode && wizardStep === 1) {
+                {{ 'COMPANIES.EDIT' | translate }}
+                } @else if (!isEditMode && wizardStep === 1) {
+                {{ 'COMPANIES.CREATE' | translate }}
+                } @else if (wizardStep === 2) {
+                Configuração de Usuários e Pilares
+                }
+            </li>
+        </ol>
+    </nav>
+
+    <!-- Buttons -->
+    <div class="d-flex gap-2">
+
+        <button type="button" data-testid="cancel-empresa-button" (click)="handleCancel()"
+            class="btn btn-outline-secondary">
+            {{ 'BUTTONS.CANCEL' | translate }}
+        </button>
+        
+        <button type="submit" form="empresaForm" data-testid="submit-empresa-button" class="btn btn-primary"
+            [disabled]="loading || form.invalid">
+            @if (loading) {
+            <span class="spinner-border spinner-border-sm me-2" role="status"></span>
             }
-        </li>
-    </ol>
-</nav>
+            @if (isEditMode) {
+            {{ 'BUTTONS.UPDATE' | translate }}
+            } @else {
+            <i class="feather icon-arrow-right me-1"></i>
+            Próximo: Usuários e Pilares
+            }
+        </button>
+
+        <!-- Botões de Ação da Etapa 2 (apenas se não estiver em modo edição puro) -->
+        @if (wizardStep === 2) {
+
+        <button type="button" (click)="concluirCadastro()" class="btn btn-success">
+            <i class="feather icon-check me-1"></i>
+            Concluir Cadastro
+        </button>
+        }
+
+    </div>
+
+</div>
 
 <!-- Indicador de Etapas do Wizard (somente em modo criação) -->
 @if (!isEditMode || (isEditMode && wizardStep === 2)) {
@@ -65,7 +100,7 @@
 
     <!-- ETAPA 1: Dados Básicos + Logo -->
     @if (isEditMode || wizardStep === 1) {
-    <form [formGroup]="form" (ngSubmit)="onSubmit()">
+    <form id="empresaForm" [formGroup]="form" (ngSubmit)="onSubmit()">
         <div class="card" data-testid="wizard-step-1">
             <div class="card-body">
                 <div class="row">
@@ -120,9 +155,9 @@
                                     <label class="form-label" for="estado">{{ 'COMPANIES.ESTADO' | translate }}
                                         <span class="text-danger">*</span></label>
                                     <ng-select [items]="estadosList" [searchable]="true" [clearable]="false"
-                                                placeholder="{{ 'COMMON.SELECT' | translate }}" formControlName="estado"
-                                                [class.is-invalid]="isFieldInvalid('estado')">
-                                            </ng-select>
+                                        placeholder="{{ 'COMMON.SELECT' | translate }}" formControlName="estado"
+                                        [class.is-invalid]="isFieldInvalid('estado')">
+                                    </ng-select>
                                     @if (isFieldInvalid('estado')) {
                                     <div class="invalid-feedback d-block">{{ getFieldError('estado') }}</div>
                                     }
@@ -136,10 +171,10 @@
                                     <label class="form-label" for="tipoNegocio">{{ 'COMPANIES.TIPO_NEGOCIO' |
                                         translate }}</label>
                                     <ng-select [items]="tiposNegocioList" [addTag]="true" [searchable]="true"
-                                                [clearable]="true" placeholder="Digite para buscar ou criar novo..."
-                                                formControlName="tipoNegocio"
-                                                [class.is-invalid]="isFieldInvalid('tipoNegocio')">
-                                            </ng-select>
+                                        [clearable]="true" placeholder="Digite para buscar ou criar novo..."
+                                        formControlName="tipoNegocio"
+                                        [class.is-invalid]="isFieldInvalid('tipoNegocio')">
+                                    </ng-select>
                                     @if (isFieldInvalid('tipoNegocio')) {
                                     <div class="invalid-feedback d-block">
                                         {{ getFieldError('tipoNegocio') }}
@@ -167,21 +202,7 @@
                         </div>
 
                         <div class="form-footer d-flex justify-content-end gap-2">
-                            <button type="button" (click)="handleCancel()" class="btn btn-outline-secondary">{{
-                                'BUTTONS.CANCEL'
-                                | translate
-                                }}</button>
-                            <button type="submit" class="btn btn-primary" [disabled]="loading || form.invalid">
-                                @if (loading) {
-                                <span class="spinner-border spinner-border-sm me-2" role="status"></span>
-                                }
-                                @if (isEditMode) {
-                                {{ 'BUTTONS.UPDATE' | translate }}
-                                } @else {
-                                <i class="feather icon-arrow-right me-1"></i>
-                                Próximo: Usuários e Pilares
-                                }
-                            </button>
+
                         </div>
                     </div>
 
@@ -235,8 +256,109 @@
     </form>
     }
 
-    <!-- ETAPA 2: Gestão de Usuários e Pilares -->
+    <!-- ETAPA 2: Período de Mentoria, Usuários e Pilares -->
     @if (wizardStep === 2 || isEditMode) {
+
+    <!-- Período de Mentoria -->
+    <div class="card mt-1" data-testid="wizard-step-2-mentoria">
+        <div class="card-header">
+            <h3 class="card-title mb-0">
+                <i class="feather icon-calendar me-2"></i>
+                Período de Mentoria
+            </h3>
+        </div>
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-6">
+                    <label class="form-label">
+                        Data de Início da Mentoria
+                        @if (!isEditMode) {
+                        <span class="text-danger">*</span>
+                        }
+                    </label>
+                    <input type="date" class="form-control"
+                        [value]="dataInicioMentoria ? (dataInicioMentoria | date:'yyyy-MM-dd') : ''"
+                        (change)="onDataInicioChange($event)" [disabled]="!!periodoAtivo" />
+                    <small class="text-muted">Defina quando a consultoria iniciará</small>
+                </div>
+
+                <div class="col-md-6">
+                    <label class="form-label">Data de Término (Calculado Automaticamente)</label>
+                    <input type="text" class="form-control" [value]="calcularDataFim() | date:'dd/MM/yyyy'" disabled />
+                    <small class="text-muted">1 ano após o início</small>
+                </div>
+            </div>
+
+            @if (periodoAtivo) {
+            <div class="alert alert-info mt-3 mb-0">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <strong>Período {{ periodoAtivo.numero }} Ativo</strong><br>
+                        <small>{{ formatarDataPeriodo(periodoAtivo.dataInicio) }} - {{
+                            formatarDataPeriodo(periodoAtivo.dataFim) }}</small>
+                    </div>
+                    <button type="button" class="btn btn-sm btn-warning" (click)="renovarPeriodo()">
+                        <i class="feather icon-refresh-cw me-1"></i>
+                        Renovar Mentoria
+                    </button>
+                </div>
+            </div>
+            } @else if (isEditMode) {
+            <div class="alert alert-warning mt-3 mb-0">
+                <div class="d-flex justify-content-between align-items-center">
+                    <span>Nenhum período de mentoria ativo</span>
+                    <button type="button" class="btn btn-sm btn-primary" (click)="criarPeriodo()"
+                        [disabled]="!dataInicioMentoria">
+                        <i class="feather icon-plus me-1"></i>
+                        Criar Período
+                    </button>
+                </div>
+            </div>
+            }
+
+            <!-- Lista de Períodos de Mentoria -->
+            @if (periodosMentoria.length > 0) {
+            <div class="mt-3">
+                <h6 class="mb-2">Histórico de Períodos</h6>
+                <div class="table-responsive">
+                    <table class="table table-sm table-hover">
+                        <thead class="table-light">
+                            <tr>
+                                <th style="width: 10%;">Período</th>
+                                <th style="width: 20%;">Início</th>
+                                <th style="width: 20%;">Fim</th>
+                                <th style="width: 25%;">Contratação</th>
+                                <th style="width: 25%;">Encerramento</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @for (periodo of periodosMentoria; track periodo.id) {
+                            <tr [class.table-success]="periodo.ativo">
+                                <td class="text-center">
+                                    <span class="badge" [class.bg-success]="periodo.ativo"
+                                        [class.bg-secondary]="!periodo.ativo">
+                                        {{ periodo.numero }}
+                                    </span>
+                                </td>
+                                <td>{{ periodo.dataInicio | date:'dd/MM/yyyy' }}</td>
+                                <td>{{ periodo.dataFim | date:'dd/MM/yyyy' }}</td>
+                                <td>{{ periodo.dataContratacao | date:'dd/MM/yyyy HH:mm' }}</td>
+                                <td>
+                                    @if (periodo.dataEncerramento) {
+                                    {{ periodo.dataEncerramento | date:'dd/MM/yyyy HH:mm' }}
+                                    } @else {
+                                    <span class="text-muted">—</span>
+                                    }
+                                </td>
+                            </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            }
+        </div>
+    </div>
 
     <!-- Gestão de Usuários -->
     <div class="card mt-1" data-testid="wizard-step-2">
@@ -286,8 +408,8 @@
             <!-- Lista de usuários associados -->
             @if (usuariosAssociados.length > 0) {
             <div class="table-responsive">
-                <table class="table table-hover">
-                    <thead>
+                <table class="table table-hover table-sm">
+                    <thead class="table-light">
                         <tr>
                             <th>Usuário</th>
                             <th>Cargo</th>
@@ -374,9 +496,8 @@
                 @for (pilarEmpresa of pilaresAssociados; track pilarEmpresa.id; let idx = $index) {
                 <div class="pilar-item card mb-2" cdkDrag>
                     <div class="card-body p-2">
-                        <div class="d-flex align-items-center gap-2">
-                            <i class="feather icon-menu drag-handle" cdkDragHandle
-                                ngbTooltip="Arrastar para reordenar"></i>
+                        <div class="d-flex align-items-center gap-2" cdkDragHandle>
+                            <i class="bi bi-grip-vertical drag-handle" ngbTooltip="Arrastar para reordenar"></i>
                             <span class="badge bg-secondary small">{{ pilarEmpresa.ordem }}</span>
                             <span class="flex-grow-1 small">{{ pilarEmpresa.nome }}</span>
                             <button type="button" class="btn btn-icon text-danger"
@@ -397,16 +518,10 @@
         </div>
     </div>
 
-    <!-- Botões de Ação da Etapa 2 (apenas se não estiver em modo edição puro) -->
+    
     @if (wizardStep === 2) {
     <div class="card mt-3">
         <div class="card-body">
-            <div class="d-flex justify-content-end gap-2">
-                <button type="button" (click)="concluirCadastro()" class="btn btn-success">
-                    <i class="feather icon-check me-1"></i>
-                    Concluir Cadastro
-                </button>
-            </div>
             <small class="text-muted d-block mt-2">
                 <i class="feather icon-info me-1"></i>
                 Usuários e pilares são salvos automaticamente conforme você os adiciona.

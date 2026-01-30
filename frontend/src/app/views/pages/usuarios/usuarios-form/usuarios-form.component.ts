@@ -123,7 +123,7 @@ export class UsuariosFormComponent implements OnInit {
 
   private getRedirectUrl(): string {
     // Perfis de cliente vão para o dashboard
-    return this.isPerfilCliente ? '/dashboard' : '/usuarios';
+    return this.isPerfilCliente ? '/diagnostico-notas' : '/usuarios';
   }
 
   handleCancel(): void {
@@ -154,6 +154,11 @@ export class UsuariosFormComponent implements OnInit {
     }
 
     if (this.isEditMode && this.usuarioId) {
+      if (!this.isValidUuid(this.usuarioId)) {
+        this.showToast('Usuário inválido', 'error');
+        this.router.navigate([this.getRedirectUrl()]);
+        return;
+      }
       this.loadUsuario(this.usuarioId);
       // Senha é opcional ao editar, mas se preenchida deve ser forte
       this.form.get('senha')?.setValidators([
@@ -213,7 +218,7 @@ export class UsuariosFormComponent implements OnInit {
       },
       error: (error) => {
         console.error('Erro ao carregar perfis:', error);
-        this.showToast('Erro ao carregar perfis', 'error');
+        this.showToast(error?.error?.message || 'Erro ao carregar perfis', 'error');
       }
     });
   }
@@ -236,6 +241,11 @@ export class UsuariosFormComponent implements OnInit {
     });
   }
 
+  private isValidUuid(value: string): boolean {
+    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+    return uuidRegex.test(value);
+  }
+
   loadUsuario(id: string): void {
     this.loading = true;
     this.usersService.getById(id).subscribe({
@@ -256,6 +266,9 @@ export class UsuariosFormComponent implements OnInit {
       error: (err) => {
         this.showToast(err?.error?.message || 'Erro ao carregar usuário', 'error');
         this.loading = false;
+        if (!this.modalMode) {
+          this.router.navigate([this.getRedirectUrl()]);
+        }
       }
     });
   }

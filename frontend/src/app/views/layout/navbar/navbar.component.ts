@@ -10,6 +10,7 @@ import { AuthService } from '../../../core/services/auth.service';
 import { EmpresasService, Empresa } from '../../../core/services/empresas.service';
 import { EmpresaContextService } from '../../../core/services/empresa-context.service';
 import { TranslatePipe } from '../../../core/pipes/translate.pipe';
+import { CnpjPipe } from '../../../core/pipes/cnpj.pipe';
 import { UserAvatarComponent } from '../../../shared/components/user-avatar/user-avatar.component';
 import { Usuario } from '../../../core/models/auth.model';
 
@@ -23,6 +24,7 @@ import { Usuario } from '../../../core/models/auth.model';
     FormsModule,
     NgSelectModule,
     TranslatePipe,
+    CnpjPipe,
     UserAvatarComponent
   ],
   templateUrl: './navbar.component.html',
@@ -42,6 +44,7 @@ export class NavbarComponent implements OnInit {
   // Empresa context
   empresas: Empresa[] = [];
   selectedEmpresaId: string | null = null;
+  selectedEmpresa: Empresa | null = null;
   isAdmin = false;
 
   get hasEmpresa(): boolean {
@@ -100,6 +103,14 @@ export class NavbarComponent implements OnInit {
     // Subscribe to empresa context
     this.empresaContextService.selectedEmpresaId$.subscribe(empresaId => {
       this.selectedEmpresaId = empresaId;
+      this.updateSelectedEmpresa();
+    });
+
+    // Subscribe to empresa changes (criação/atualização)
+    this.empresasService.empresaChanged$.subscribe(() => {
+      if (this.isAdmin) {
+        this.loadEmpresas();
+      }
     });
   }
 
@@ -163,6 +174,8 @@ export class NavbarComponent implements OnInit {
         if (empresaContextId) {
           this.selectedEmpresaId = empresaContextId;
         }
+
+        this.updateSelectedEmpresa();
       },
       error: (err) => {
         console.error('Erro ao carregar empresas:', err);
@@ -170,12 +183,42 @@ export class NavbarComponent implements OnInit {
     });
   }
 
+  private updateSelectedEmpresa(): void {
+    if (!this.selectedEmpresaId) {
+      this.selectedEmpresa = null;
+      return;
+    }
+
+    this.selectedEmpresa = this.empresas.find(empresa => empresa.id === this.selectedEmpresaId) || null;
+  }
+
   /**
-   * Quando admin seleciona uma empresa
+   * Quando admin seleciona uma empresa ou limpa seleção
    */
   onEmpresaChange(event: any): void {
     const empresaId = typeof event === 'string' ? event : event?.id || this.selectedEmpresaId;
+    
+    // Se empresaId for null/undefined, limpar contexto
+    if (!empresaId) {
+      this.empresaContextService.clearSelectedEmpresa();
+      return;
+    }
+    
+    // Atualizar contexto de empresa
     this.empresaContextService.setSelectedEmpresa(empresaId);
+    
+    // Se já está na página de diagnósticos, NÃO navegar
+    // O componente reage automaticamente ao contexto via selectedEmpresaId$
+    const currentUrl = this.router.url;
+    
+    if (!currentUrl.includes('/diagnostico-notas')) {
+      // Navegar para a página de diagnósticos
+      setTimeout(() => {
+        this.router.navigate(['/diagnostico-notas']).catch(err => {
+          console.error('[NAVBAR] Erro ao navegar para diagnósticos:', err);
+        });
+      }, 100);
+    }
   }
 
   /**
@@ -197,9 +240,52 @@ export class NavbarComponent implements OnInit {
 
   getEmpresaLocalizacao(): string {
     if (!this.currentUser?.empresa) return '';
-    return typeof this.currentUser.empresa === 'object' 
-      ? this.currentUser.empresa.cidade + '/' + this.currentUser.empresa.estado
-      : '';
+    if (typeof this.currentUser.empresa !== 'object') return '';
+    
+    const { cidade, estado } = this.currentUser.empresa;
+    if (!cidade && !estado) return '';
+    if (!cidade) return estado || '';
+    if (!estado) return cidade;
+    
+    return `${cidade}/${estado}`;
+  }
+
+  getSelectedEmpresaCnpj(): string {
+    return this.selectedEmpresa?.cnpj || '';
+  }
+
+  getSelectedEmpresaLocalizacao(): string {
+    if (!this.selectedEmpresa) return '';
+
+    const { cidade, estado } = this.selectedEmpresa;
+    if (!cidade && !estado) return '';
+    if (!cidade) return estado || '';
+    if (!estado) return cidade;
+
+    return `${cidade}/${estado}`;
+  }
+
+  getSelectedEmpresaPeriodoMentoriaLabel(): string {
+    const periodoMentoria = this.selectedEmpresa?.periodoMentoriaAtivo || this.currentUser?.empresa?.periodoMentoriaAtivo;
+    if (!periodoMentoria) return 'Sem mentoria';
+
+    return `Período ${periodoMentoria.numero} Ativo`;
+  }
+
+  getSelectedEmpresaPeriodoMentoriaInterval(): string {
+    const periodoMentoria = this.selectedEmpresa?.periodoMentoriaAtivo || this.currentUser?.empresa?.periodoMentoriaAtivo;
+    if (!periodoMentoria) return '';
+
+    const dataInicio = new Date(periodoMentoria.dataInicio);
+    const dataFim = new Date(periodoMentoria.dataFim);
+    const meses = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'];
+
+    const mesInicio = meses[dataInicio.getMonth()];
+    const anoInicio = dataInicio.getFullYear().toString().slice(-2);
+    const mesFim = meses[dataFim.getMonth()];
+    const anoFim = dataFim.getFullYear().toString().slice(-2);
+
+    return `${mesInicio}/${anoInicio} - ${mesFim}/${anoFim}`;
   }
 
   /**

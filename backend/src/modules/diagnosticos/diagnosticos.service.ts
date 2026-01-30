@@ -61,6 +61,12 @@ export class DiagnosticosService {
             cargo: true,
           },
         },
+        cockpit: {
+          select: {
+            id: true,
+            pilarEmpresaId: true,
+          },
+        },
         rotinasEmpresa: {
           where: {
             ativo: true,
@@ -216,17 +222,26 @@ export class DiagnosticosService {
 
     // Calcular médias
     const medias = pilares
-      .map((pilar) => {
+      .map((pilar: any) => {
         const notasValidas = pilar.rotinasEmpresa
-          .map((re) => re.notas[0]?.nota)
-          .filter((nota) => nota !== null && nota !== undefined);
+          .map((re: any) => re.notas[0]?.nota)
+          .filter((nota: any) => nota !== null && nota !== undefined);
 
         if (notasValidas.length === 0) {
           return null; // Não retornar pilares sem notas
         }
 
-        const soma = notasValidas.reduce((acc, nota) => acc + nota, 0);
+        const soma = notasValidas.reduce((acc: any, nota: any) => acc + nota, 0);
         const mediaAtual = soma / notasValidas.length;
+
+        // Encontrar a data de atualização mais recente entre todas as notas do pilar
+        const datasAtualizacao = pilar.rotinasEmpresa
+          .map((re: any) => re.notas[0]?.updatedAt)
+          .filter((data: any) => data !== null && data !== undefined);
+        
+        const ultimaAtualizacao = datasAtualizacao.length > 0
+          ? new Date(Math.max(...datasAtualizacao.map((d: any) => new Date(d).getTime())))
+          : null;
 
         return {
           pilarEmpresaId: pilar.id,
@@ -235,130 +250,25 @@ export class DiagnosticosService {
           mediaAtual: Number(mediaAtual.toFixed(2)),
           totalRotinasAvaliadas: notasValidas.length,
           totalRotinas: pilar.rotinasEmpresa.length,
+          ultimaAtualizacao,
         };
       })
-      .filter((media) => media !== null);
+      .filter((media: any) => media !== null);
 
     return medias;
   }
 
   /**
+   * @deprecated Este método foi substituído pelo sistema de Períodos de Avaliação Trimestral.
+   * Use PeriodosAvaliacaoService.congelar() para criar snapshots vinculados a períodos.
+   * 
    * Congelar médias atuais na tabela PilarEvolucao
    * Cria snapshots históricos das médias ou atualiza se já existe registro hoje
    */
   async congelarMedias(empresaId: string, user: RequestUser) {
-    // Validar acesso multi-tenant
-    if (user.perfil?.codigo !== 'ADMINISTRADOR' && user.empresaId !== empresaId) {
-      throw new ForbiddenException('Você não pode acessar dados de outra empresa');
-    }
-
-    // Validar perfil autorizado
-    if (!['ADMINISTRADOR', 'CONSULTOR', 'GESTOR'].includes(user.perfil?.codigo)) {
-      throw new ForbiddenException('Apenas gestores podem congelar médias');
-    }
-
-    // Calcular médias atuais SEMPRE baseado nos dados da tabela
-    const medias = await this.calcularMediasPilares(empresaId, user);
-
-    if (medias.length === 0) {
-      throw new BadRequestException('Não há médias para congelar');
-    }
-
-    // Obter data de hoje (início e fim do dia)
-    const hoje = new Date();
-    hoje.setHours(0, 0, 0, 0);
-    const fimDia = new Date(hoje);
-    fimDia.setHours(23, 59, 59, 999);
-
-    let criados = 0;
-    let atualizados = 0;
-
-    // Para cada pilar, verificar se já existe registro de hoje
-    const evolucoes = await Promise.all(
-      medias.map(async (media) => {
-        // Buscar registro de hoje para este pilar
-        const registroHoje = await this.prisma.pilarEvolucao.findFirst({
-          where: {
-            pilarEmpresaId: media.pilarEmpresaId,
-            createdAt: {
-              gte: hoje,
-              lte: fimDia,
-            },
-          },
-        });
-
-        let evolucao;
-
-        if (registroHoje) {
-          // Atualizar registro existente de hoje
-          evolucao = await this.prisma.pilarEvolucao.update({
-            where: { id: registroHoje.id },
-            data: {
-              mediaNotas: media.mediaAtual,
-              updatedBy: user.id,
-              updatedAt: new Date(),
-            },
-          });
-          atualizados++;
-
-          // Auditoria de UPDATE
-          await this.audit.log({
-            usuarioId: user.id,
-            usuarioNome: user.nome || '',
-            usuarioEmail: user.email || '',
-            entidade: 'PilarEvolucao',
-            entidadeId: evolucao.id,
-            acao: 'UPDATE',
-            dadosAntes: {
-              mediaNotas: registroHoje.mediaNotas,
-            },
-            dadosDepois: {
-              pilarEmpresaId: evolucao.pilarEmpresaId,
-              mediaNotas: evolucao.mediaNotas,
-            },
-          });
-        } else {
-          // Criar novo registro
-          evolucao = await this.prisma.pilarEvolucao.create({
-            data: {
-              pilarEmpresaId: media.pilarEmpresaId,
-              mediaNotas: media.mediaAtual,
-              createdBy: user.id,
-              updatedBy: user.id,
-            },
-          });
-          criados++;
-
-          // Auditoria de CREATE
-          await this.audit.log({
-            usuarioId: user.id,
-            usuarioNome: user.nome || '',
-            usuarioEmail: user.email || '',
-            entidade: 'PilarEvolucao',
-            entidadeId: evolucao.id,
-            acao: 'CREATE',
-            dadosDepois: {
-              pilarEmpresaId: evolucao.pilarEmpresaId,
-              mediaNotas: evolucao.mediaNotas,
-            },
-          });
-        }
-
-        return evolucao;
-      }),
+    throw new BadRequestException(
+      'Este endpoint está deprecado. Use POST /periodos-avaliacao/:id/congelar para criar snapshots de médias vinculados a períodos trimestrais. Consulte a documentação do novo sistema de períodos.'
     );
-
-    return {
-      message: criados > 0 && atualizados > 0 
-        ? `${criados} pilar(es) criado(s) e ${atualizados} atualizado(s) com sucesso`
-        : criados > 0 
-          ? `${criados} pilar(es) congelado(s) com sucesso`
-          : `${atualizados} pilar(es) atualizado(s) com sucesso`,
-      totalPilaresCongelados: evolucoes.length,
-      criados,
-      atualizados,
-      data: new Date(),
-    };
   }
 
   /**
@@ -399,7 +309,7 @@ export class DiagnosticosService {
       },
     });
 
-    return historico.map((item) => ({
+    return historico.map((item: any) => ({
       id: item.id,
       mediaNotas: item.mediaNotas,
       createdAt: item.createdAt,

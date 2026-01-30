@@ -1,0 +1,170 @@
+<div id="headerDashboard" class="sticky-header-dashboard mb-1" data-testid="cockpit-header">
+
+  <div class="mb-2 align-items-center d-flex justify-content-between flex-wrap cockpit-header-row">
+    <!-- Breadcrumb -->
+    <nav aria-label="breadcrumb">
+      <ol class="breadcrumb breadcrumb-arrow">
+        <li class="breadcrumb-item">
+          <i class="bi bi-speedometer2"></i>
+        </li>
+        <!-- <li class="breadcrumb-item">
+            <a href="javascript:void(0)" (click)="voltar()">Dashboard Empresa</a>
+          </li> -->
+        <li class="breadcrumb-item active fw-bold" aria-current="page">
+          COCKPIT: {{ cockpit?.pilarEmpresa?.nome }}
+        </li>
+      </ol>
+    </nav>
+
+    <!-- Feedback de salvamento centralizado -->
+    <div id="feedbackSaveCockpit" class="d-flex justify-content-end align-items-center mb-2" data-testid="feedback-save">
+      @if (saveFeedback.saving) {
+      <div class="text-warning small">
+        <span class="spinner-border spinner-border-sm me-1"></span>
+        Salvando {{ saveFeedback.context }}...
+      </div>
+      } @else if (saveFeedback.lastSaveTime) {
+      <div class="text-success small">
+        <i class="bi bi-check-circle me-1"></i>
+        {{ saveFeedback.context }} salvo em {{ saveFeedback.lastSaveTime | date: 'HH:mm:ss' }}
+      </div>
+      }
+    </div>
+  </div>
+</div>
+
+<!-- Dashboard -->
+@if (cockpit && !loading && !error) {
+
+<div class="row px-3">
+  <!-- Tabs -->
+  <ul class="nav nav-tabs mb-2 cockpit-tabs" role="tablist">
+    <li class="nav-item" role="presentation">
+      <button class="nav-link" data-testid="tab-contexto" [class.active]="activeTab === 'contexto'" (click)="setActiveTab('contexto')"
+        type="button">
+        <i class="bi bi-info-circle me-1"></i>
+        Contexto
+      </button>
+    </li>
+    <li class="nav-item" role="presentation">
+      <button class="nav-link" data-testid="tab-indicadores" [class.active]="activeTab === 'indicadores'" (click)="setActiveTab('indicadores')"
+        type="button">
+        <i class="bi bi-bar-chart me-1"></i>
+        Indicadores
+      </button>
+    </li>
+    <li class="nav-item" role="presentation">
+      <button class="nav-link" data-testid="tab-graficos" [class.active]="activeTab === 'graficos'" (click)="setActiveTab('graficos')"
+        type="button">
+        <i class="bi bi-graph-up me-1"></i>
+        Gráficos
+      </button>
+    </li>
+    <li class="nav-item" role="presentation">
+      <button class="nav-link" data-testid="tab-processos" [class.active]="activeTab === 'processos'" (click)="setActiveTab('processos')"
+        type="button">
+        <i class="bi bi-list-check me-1"></i>
+        Processos
+      </button>
+    </li>
+    <li class="nav-item" role="presentation">
+      <button class="nav-link" data-testid="tab-cargos-funcoes" [class.active]="activeTab === 'cargos-funcoes'" (click)="setActiveTab('cargos-funcoes')"
+        type="button">
+        <i class="bi bi-people me-1"></i>
+        Cargos e Funções
+      </button>
+    </li>
+    <li class="nav-item" role="presentation">
+      <button class="nav-link" data-testid="tab-plano-acao" [class.active]="activeTab === 'plano-acao'" (click)="setActiveTab('plano-acao')"
+        type="button">
+        <i class="bi bi-clipboard-check me-1"></i>
+        Plano de Ação
+      </button>
+    </li>
+  </ul>
+
+  <!-- Tab Content -->
+  <div class="tab-content p-0 w-100">
+    <!-- Contexto -->
+    @if (activeTab === 'contexto') {
+    <div class="card">
+      <div class="card-body">
+        <h5 class="card-title cockpit-tab-title">
+          <i class="bi bi-info-circle me-2"></i>
+          Informações Importantes
+        </h5>
+
+        <div class="mb-3">
+          <label class="form-label">ENTRADAS:</label>
+          <textarea class="form-control" [(ngModel)]="entradas" (ngModelChange)="onContextoChange()" rows="3"
+            placeholder="Ex: Pedidos de clientes, solicitações de propostas comerciais, leads qualificados do marketing"
+            data-testid="contexto-entradas"></textarea>
+        </div>
+
+        <div class="mb-3">
+          <label class="form-label">SAÍDAS:</label>
+          <textarea class="form-control" [(ngModel)]="saidas" (ngModelChange)="onContextoChange()" rows="3"
+            placeholder="Ex: Propostas comerciais enviadas, contratos assinados, relatórios de performance"
+            data-testid="contexto-saidas"></textarea>
+        </div>
+
+        <div class="mb-3">
+          <label class="form-label">MISSÃO DO PILAR:</label>
+          <textarea class="form-control" [(ngModel)]="missao" (ngModelChange)="onContextoChange()" rows="3"
+            placeholder="Ex: Maximizar o faturamento via canal indireto, mantendo alta qualidade no atendimento e reduzindo inadimplência"
+            data-testid="contexto-missao"></textarea>
+        </div>
+      </div>
+    </div>
+    }
+
+    <!-- Indicadores -->
+    @if (activeTab === 'indicadores') {
+    <app-matriz-indicadores [cockpitId]="cockpit.id" data-testid="indicadores-panel"></app-matriz-indicadores>
+    }
+
+    <!-- Gráficos -->
+    @if (activeTab === 'graficos') {
+    <app-grafico-indicadores 
+      [cockpitId]="cockpit.id"
+      [empresaId]="cockpit.pilarEmpresa?.empresaId || ''"
+      data-testid="grafico-panel">
+    </app-grafico-indicadores>
+    }
+
+    <!-- Processos -->
+    @if (activeTab === 'processos') {
+    <app-matriz-processos [cockpitId]="cockpit.id" data-testid="processos-panel"></app-matriz-processos>
+    }
+
+    <!-- Cargos e Funções -->
+    @if (activeTab === 'cargos-funcoes') {
+    <app-matriz-cargos-funcoes [cockpitId]="cockpit.id" data-testid="cargos-funcoes-panel"></app-matriz-cargos-funcoes>
+    }
+
+    <!-- Plano de Ação -->
+    @if (activeTab === 'plano-acao') {
+    <app-plano-acao-especifico [cockpitId]="cockpit.id" data-testid="plano-acao-panel"></app-plano-acao-especifico>
+    }
+  </div>
+</div>
+
+}
+
+<!-- Loading -->
+@if (loading) {
+<div class="text-center py-5" data-testid="cockpit-loading-indicator">
+  <div class="spinner-border text-primary" role="status">
+    <span class="visually-hidden">Carregando...</span>
+  </div>
+  <p class="mt-3 text-muted">Carregando cockpit...</p>
+</div>
+}
+
+<!-- Error -->
+@if (error && !loading) {
+<div class="alert alert-danger" role="alert" data-testid="cockpit-error-message">
+  <i data-feather="alert-triangle" class="me-2"></i>
+  {{ error }}
+</div>
+}

@@ -98,4 +98,27 @@ export class EmpresaContextService {
     const user = this.authService.getCurrentUser();
     return user?.perfil?.codigo === 'ADMINISTRADOR';
   }
+
+  /**
+   * Sincroniza a empresa selecionada na combo com a empresa de um recurso específico.
+   * Usado quando admin acessa URL direta de recurso vinculado a empresa (ex: cockpit).
+   * 
+   * @param empresaId ID da empresa do recurso acessado
+   */
+  syncEmpresaFromResource(empresaId: string): void {
+    const user = this.authService.getCurrentUser();
+    const isAdmin = user?.perfil?.codigo === 'ADMINISTRADOR';
+
+    // Apenas admin pode ter empresa selecionada diferente
+    if (!isAdmin) {
+      return;
+    }
+
+    const currentSelected = this.selectedEmpresaIdSubject.value;
+    
+    // Se a empresa do recurso é diferente da selecionada, atualiza
+    if (currentSelected !== empresaId) {
+      this.setSelectedEmpresa(empresaId);
+    }
+  }
 }

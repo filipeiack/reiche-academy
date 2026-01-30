@@ -15,9 +15,8 @@ import { PilaresEmpresaService } from './pilares-empresa.service';
 import { ReordenarPilaresDto } from './dto/reordenar-pilares.dto';
 import { VincularPilaresDto } from './dto/vincular-pilares.dto';
 import { DefinirResponsavelDto } from './dto/definir-responsavel.dto';
-import { ReordenarRotinasDto } from './dto/reordenar-rotinas.dto';
 import { CreatePilarEmpresaDto } from './dto/create-pilar-empresa.dto';
-import { CreateRotinaEmpresaDto } from '../rotinas/dto/create-rotina-empresa.dto';
+import { UpdatePilarEmpresaDto } from './dto/update-pilar-empresa.dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../auth/guards/roles.guard';
 import { Roles } from '../auth/decorators/roles.decorator';
@@ -118,65 +117,23 @@ export class PilaresEmpresaController {
     );
   }
 
-  @Get(':pilarEmpresaId/rotinas')
-  @Roles('ADMINISTRADOR', 'CONSULTOR', 'GESTOR', 'COLABORADOR', 'LEITURA')
-  @ApiOperation({ summary: 'Listar rotinas vinculadas a um pilar da empresa' })
-  @ApiResponse({ status: 200, description: 'Lista de rotinas do pilar ordenada' })
-  listarRotinas(
+  @Patch(':pilarEmpresaId')
+  @Roles('ADMINISTRADOR', 'GESTOR')
+  @ApiOperation({ summary: 'Atualizar nome do pilar da empresa' })
+  @ApiResponse({ status: 200, description: 'Pilar atualizado com sucesso' })
+  @ApiResponse({ status: 403, description: 'Acesso negado (multi-tenant)' })
+  @ApiResponse({ status: 404, description: 'Pilar não encontrado' })
+  @ApiResponse({ status: 409, description: 'Nome duplicado para esta empresa' })
+  updatePilarEmpresa(
     @Param('empresaId') empresaId: string,
     @Param('pilarEmpresaId') pilarEmpresaId: string,
+    @Body() dto: UpdatePilarEmpresaDto,
     @Request() req: ExpressRequest & { user: any },
   ) {
-    return this.pilaresEmpresaService.listarRotinas(empresaId, pilarEmpresaId, req.user);
-  }
-
-  @Post(':pilarEmpresaId/rotinas')
-  @Roles('ADMINISTRADOR', 'GESTOR')
-  @ApiOperation({ summary: 'Criar rotina personalizada para pilar (Snapshot Pattern: template OU nome próprio)' })
-  @ApiResponse({ status: 201, description: 'Rotina criada com sucesso (snapshot de template ou rotina customizada)' })
-  @ApiResponse({ status: 400, description: 'XOR violation: deve fornecer rotinaTemplateId OU nome (nunca ambos, nunca nenhum)' })
-  @ApiResponse({ status: 403, description: 'Acesso negado (multi-tenant)' })
-  @ApiResponse({ status: 404, description: 'Pilar ou template não encontrados' })
-  @ApiResponse({ status: 409, description: 'Nome duplicado para este pilar' })
-  createRotinaEmpresa(
-    @Param('empresaId') empresaId: string,
-    @Param('pilarEmpresaId') pilarEmpresaId: string,
-    @Body() dto: CreateRotinaEmpresaDto,
-    @Request() req: ExpressRequest & { user: any },
-  ) {
-    return this.pilaresEmpresaService.createRotinaEmpresa(empresaId, pilarEmpresaId, dto, req.user);
-  }
-
-  @Delete('rotinas/:rotinaEmpresaId')
-  @Roles('ADMINISTRADOR', 'GESTOR')
-  @ApiOperation({ summary: 'Remover uma rotina de um pilar (hard delete com cascade audit)' })
-  @ApiResponse({ status: 200, description: 'Rotina removida com sucesso' })
-  @ApiResponse({ status: 403, description: 'Acesso negado (multi-tenant)' })
-  @ApiResponse({ status: 404, description: 'Rotina não encontrada' })
-  deleteRotinaEmpresa(
-    @Param('empresaId') empresaId: string,
-    @Param('rotinaEmpresaId') rotinaEmpresaId: string,
-    @Request() req: ExpressRequest & { user: any },
-  ) {
-    return this.pilaresEmpresaService.deleteRotinaEmpresa(empresaId, rotinaEmpresaId, req.user);
-  }
-
-  @Patch(':pilarEmpresaId/rotinas/reordenar')
-  @Roles('ADMINISTRADOR', 'GESTOR')
-  @ApiOperation({ summary: 'Reordenar rotinas de um pilar da empresa' })
-  @ApiResponse({ status: 200, description: 'Rotinas reordenadas com sucesso' })
-  @ApiResponse({ status: 403, description: 'Acesso negado (multi-tenant)' })
-  @ApiResponse({ status: 404, description: 'Pilar ou rotinas não encontrados' })
-  reordenarRotinas(
-    @Param('empresaId') empresaId: string,
-    @Param('pilarEmpresaId') pilarEmpresaId: string,
-    @Body() dto: ReordenarRotinasDto,
-    @Request() req: ExpressRequest & { user: any },
-  ) {
-    return this.pilaresEmpresaService.reordenarRotinas(
-      empresaId,
-      pilarEmpresaId,
-      dto.ordens,
+    return this.pilaresEmpresaService.updatePilarEmpresa(
+      empresaId, 
+      pilarEmpresaId, 
+      dto, 
       req.user
     );
   }

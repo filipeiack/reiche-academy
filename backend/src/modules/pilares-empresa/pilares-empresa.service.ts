@@ -4,14 +4,13 @@ import { RequestUser } from '../../common/interfaces/request-user.interface';
 import { AuditService } from '../audit/audit.service';
 import { CreatePilarEmpresaDto } from './dto/create-pilar-empresa.dto';
 import { UpdatePilarEmpresaDto } from './dto/update-pilar-empresa.dto';
-import { CreateRotinaEmpresaDto } from '../rotinas/dto/create-rotina-empresa.dto';
 
 @Injectable()
 export class PilaresEmpresaService {
   constructor(
     private prisma: PrismaService,
     private audit: AuditService,
-  ) {}
+  ) { }
 
   /**
    * Valida acesso multi-tenant
@@ -31,7 +30,8 @@ export class PilaresEmpresaService {
   /**
    * Listar pilares ativos de uma empresa
    * Ordenados por PilarEmpresa.ordem (per-company ordering)
-   * Filtra pilares inativos (cascata lógica - Decisão 4)
+   * Retorna todos os pilares-empresa ativos, independente do status do template
+   * (pilares customizados e pilares baseados em templates)
    */
   async findByEmpresa(empresaId: string, user: RequestUser) {
     this.validateTenantAccess(empresaId, user);
@@ -40,7 +40,6 @@ export class PilaresEmpresaService {
       where: {
         empresaId,
         ativo: true,
-        pilarTemplate: { ativo: true }, // Filtro de cascata lógica
       },
       include: {
         pilarTemplate: {
@@ -81,7 +80,7 @@ export class PilaresEmpresaService {
     });
 
     if (existingPilaresEmpresa.length !== idsToUpdate.length) {
-      const foundIds = existingPilaresEmpresa.map(p => p.id);
+      const foundIds = existingPilaresEmpresa.map((p: any) => p.id);
       const missingIds = idsToUpdate.filter(id => !foundIds.includes(id));
       throw new NotFoundException(
         `Pilares não encontrados nesta empresa: ${missingIds.join(', ')}`,
@@ -196,87 +195,63 @@ export class PilaresEmpresaService {
   }
 
   /**
-   * Listar rotinas de um pilar da empresa
+   * Atualizar nome do pilar da empresa
    */
-  async listarRotinas(
+  async updatePilarEmpresa(
     empresaId: string,
     pilarEmpresaId: string,
+    dto: UpdatePilarEmpresaDto,
     user: RequestUser,
   ) {
     this.validateTenantAccess(empresaId, user);
 
-    // Validar que o PilarEmpresa pertence à empresa
+    // Buscar PilarEmpresa para validar existência e pertencimento à empresa
     const pilarEmpresa = await this.prisma.pilarEmpresa.findUnique({
       where: { id: pilarEmpresaId },
     });
 
-    if (!pilarEmpresa || pilarEmpresa.empresaId !== empresaId) {
-      throw new NotFoundException('Pilar não encontrado nesta empresa');
+    if (!pilarEmpresa) {
+      throw new NotFoundException('Vínculo pilar-empresa não encontrado');
     }
 
-    // Buscar rotinas vinculadas
-    const rotinas = await this.prisma.rotinaEmpresa.findMany({
-      where: { pilarEmpresaId },
-      orderBy: { ordem: 'asc' },
-    });
-
-    return rotinas;
-  }
-
-
-
-
-
-  /**
-   * Reordenar rotinas de um pilar da empresa
-   */
-  async reordenarRotinas(
-    empresaId: string,
-    pilarEmpresaId: string,
-    ordens: Array<{ id: string; ordem: number }>,
-    user: RequestUser,
-  ) {
-    this.validateTenantAccess(empresaId, user);
-
-    // Validar que o PilarEmpresa pertence à empresa
-    const pilarEmpresa = await this.prisma.pilarEmpresa.findUnique({
-      where: { id: pilarEmpresaId },
-    });
-
-    if (!pilarEmpresa || pilarEmpresa.empresaId !== empresaId) {
-      throw new NotFoundException('Pilar não encontrado nesta empresa');
-    }
-
-    // Validar que todos os IDs pertencem ao pilarEmpresa
-    const idsToUpdate = ordens.map(item => item.id);
-    const existingRotinas = await this.prisma.rotinaEmpresa.findMany({
-      where: {
-        id: { in: idsToUpdate },
-        pilarEmpresaId,
-      },
-      select: { id: true },
-    });
-
-    if (existingRotinas.length !== idsToUpdate.length) {
-      const foundIds = existingRotinas.map(r => r.id);
-      const missingIds = idsToUpdate.filter(id => !foundIds.includes(id));
-      throw new NotFoundException(
-        `Rotinas não encontradas neste pilar: ${missingIds.join(', ')}`,
+    // Validar que o PilarEmpresa pertence à empresa correta
+    if (pilarEmpresa.empresaId !== empresaId) {
+      throw new ForbiddenException(
+        'Este pilar não pertence à empresa especificada',
       );
     }
 
-    // Atualizar ordens em transação
-    const updates = ordens.map((item) =>
-      this.prisma.rotinaEmpresa.update({
-        where: { id: item.id },
-        data: {
-          ordem: item.ordem,
-          updatedBy: user.id,
+    // Se nome fornecido, validar unicidade por empresa
+    if (dto.nome) {
+      const nomeExistente = await this.prisma.pilarEmpresa.findFirst({
+        where: {
+          empresaId,
+          nome: dto.nome,
+          ativo: true,
+          id: { not: pilarEmpresaId }, // Excluir o próprio registro
         },
-      }),
-    );
+      });
 
-    await this.prisma.$transaction(updates);
+      if (nomeExistente) {
+        throw new ConflictException(
+          `Já existe um pilar com o nome "${dto.nome}" nesta empresa`,
+        );
+      }
+    }
+
+    // Atualizar pilar
+    const updated = await this.prisma.pilarEmpresa.update({
+      where: { id: pilarEmpresaId },
+      data: {
+        nome: dto.nome,
+        responsavelId: dto.responsavelId,
+        updatedBy: user.id,
+      },
+      include: {
+        pilarTemplate: true,
+        responsavel: true,
+      },
+    });
 
     // Auditoria
     const userRecord = await this.prisma.usuario.findUnique({ where: { id: user.id } });
@@ -284,13 +259,20 @@ export class PilaresEmpresaService {
       usuarioId: user.id,
       usuarioNome: userRecord?.nome ?? '',
       usuarioEmail: userRecord?.email ?? '',
-      entidade: 'rotinas_empresa',
+      entidade: 'pilares_empresa',
       entidadeId: pilarEmpresaId,
       acao: 'UPDATE',
-      dadosDepois: { acao: 'reordenar_rotinas', ordens },
+      dadosAntes: { 
+        nome: pilarEmpresa.nome,
+        responsavelId: pilarEmpresa.responsavelId 
+      },
+      dadosDepois: { 
+        nome: dto.nome ?? pilarEmpresa.nome,
+        responsavelId: dto.responsavelId ?? pilarEmpresa.responsavelId
+      },
     });
 
-    return { message: 'Rotinas reordenadas com sucesso' };
+    return updated;
   }
 
   /**
@@ -333,12 +315,12 @@ export class PilaresEmpresaService {
     });
 
     const templateIdsExistentes = pilaresExistentes
-      .map(p => p.pilarTemplateId)
-      .filter((id): id is string => id !== null);
+      .map((p: any) => p.pilarTemplateId)
+      .filter((id: any): id is string => id !== null);
 
     // Filtrar templates a serem criados (evitar duplicatas)
     const templatesParaCriar = templates.filter(
-      t => !templateIdsExistentes.includes(t.id),
+      (t: any) => !templateIdsExistentes.includes(t.id),
     );
 
     // Calcular próxima ordem para pilares
@@ -375,7 +357,7 @@ export class PilaresEmpresaService {
       if (template.rotinas && template.rotinas.length > 0) {
         for (let i = 0; i < template.rotinas.length; i++) {
           const rotinaTemplate = template.rotinas[i];
-          
+
           await this.prisma.rotinaEmpresa.create({
             data: {
               rotinaTemplateId: rotinaTemplate.id,
@@ -538,11 +520,11 @@ export class PilaresEmpresaService {
     }
 
     // Coletar dados para auditoria ANTES da deleção
-    const rotinasParaAuditoria = pilarEmpresa.rotinasEmpresa.map(rotina => ({
+    const rotinasParaAuditoria = pilarEmpresa.rotinasEmpresa.map((rotina: any) => ({
       id: rotina.id,
       nome: rotina.nome,
       notasCount: rotina.notas.length,
-      notas: rotina.notas.map(nota => ({
+      notas: rotina.notas.map((nota: any) => ({
         id: nota.id,
         nota: nota.nota,
         criticidade: nota.criticidade,
@@ -570,7 +552,7 @@ export class PilaresEmpresaService {
         empresaId: pilarEmpresa.empresaId,
         pilarTemplateId: pilarEmpresa.pilarTemplateId,
         rotinasDeletadas: rotinasParaAuditoria.length,
-        notasDeletadas: rotinasParaAuditoria.reduce((sum, r) => sum + r.notasCount, 0),
+        notasDeletadas: rotinasParaAuditoria.reduce((sum: any, r: any) => sum + r.notasCount, 0),
       },
       dadosDepois: null,
     });
@@ -584,9 +566,9 @@ export class PilaresEmpresaService {
         entidade: 'rotinas_empresa',
         entidadeId: rotina.id,
         acao: 'DELETE',
-        dadosAntes: { 
-          id: rotina.id, 
-          nome: rotina.nome, 
+        dadosAntes: {
+          id: rotina.id,
+          nome: rotina.nome,
           pilarEmpresaId,
           notasDeletadas: rotina.notasCount,
         },
@@ -614,7 +596,7 @@ export class PilaresEmpresaService {
     }
 
     const totalRotinas = rotinasParaAuditoria.length;
-    const totalNotas = rotinasParaAuditoria.reduce((sum, r) => sum + r.notasCount, 0);
+    const totalNotas = rotinasParaAuditoria.reduce((sum: any, r: any) => sum + r.notasCount, 0);
 
     let message = 'Pilar removido com sucesso';
     if (totalRotinas > 0 || totalNotas > 0) {
@@ -625,155 +607,5 @@ export class PilaresEmpresaService {
     }
 
     return { message };
-  }
-
-  /**
-   * R-ROTEMP-001: Criar RotinaEmpresa snapshot
-   * XOR: rotinaTemplateId OU nome
-   */
-  async createRotinaEmpresa(
-    empresaId: string,
-    pilarEmpresaId: string,
-    dto: CreateRotinaEmpresaDto,
-    user: RequestUser,
-  ) {
-    this.validateTenantAccess(empresaId, user);
-
-    // Validar PilarEmpresa pertence à empresa
-    const pilarEmpresa = await this.prisma.pilarEmpresa.findFirst({
-      where: {
-        id: pilarEmpresaId,
-        empresaId,
-      },
-    });
-
-    if (!pilarEmpresa) {
-      throw new NotFoundException('Pilar não encontrado nesta empresa');
-    }
-
-    let nome: string;
-
-    // XOR validation
-    if (dto.rotinaTemplateId) {
-      // Copiar dados do template
-      const template = await this.prisma.rotina.findUnique({
-        where: { id: dto.rotinaTemplateId },
-      });
-
-      if (!template) {
-        throw new NotFoundException('Template de rotina não encontrado');
-      }
-
-      nome = template.nome;
-    } else {
-      // Usar dados customizados
-      nome = dto.nome!;
-    }
-
-    // Validar nome único no pilar
-    const existing = await this.prisma.rotinaEmpresa.findFirst({
-      where: {
-        pilarEmpresaId,
-        nome,
-      },
-    });
-
-    if (existing) {
-      throw new ConflictException('Já existe uma rotina com este nome neste pilar');
-    }
-
-    // Calcular ordem (auto-increment)
-    const ultimaRotina = await this.prisma.rotinaEmpresa.findFirst({
-      where: { pilarEmpresaId },
-      orderBy: { ordem: 'desc' },
-      select: { ordem: true },
-    });
-
-    const proximaOrdem = ultimaRotina ? ultimaRotina.ordem + 1 : 1;
-
-    // Criar snapshot
-    const rotinaEmpresa = await this.prisma.rotinaEmpresa.create({
-      data: {
-        rotinaTemplateId: dto.rotinaTemplateId ?? null,
-        nome,
-        pilarEmpresaId,
-        ordem: proximaOrdem,
-        createdBy: user.id,
-      },
-      include: {
-        rotinaTemplate: true,
-        pilarEmpresa: { include: { empresa: true } },
-      },
-    });
-
-    // Auditoria
-    const userRecord = await this.prisma.usuario.findUnique({ where: { id: user.id } });
-    await this.audit.log({
-      usuarioId: user.id,
-      usuarioNome: userRecord?.nome ?? '',
-      usuarioEmail: userRecord?.email ?? '',
-      entidade: 'rotinas_empresa',
-      entidadeId: rotinaEmpresa.id,
-      acao: 'CREATE',
-      dadosAntes: null,
-      dadosDepois: {
-        ...rotinaEmpresa,
-        isCustom: !dto.rotinaTemplateId,
-      },
-    });
-
-    return rotinaEmpresa;
-  }
-
-  /**
-   * R-ROTEMP-004: Deletar RotinaEmpresa
-   * Hard delete com auditoria
-   */
-  async deleteRotinaEmpresa(
-    empresaId: string,
-    rotinaEmpresaId: string,
-    user: RequestUser,
-  ) {
-    this.validateTenantAccess(empresaId, user);
-
-    // Buscar rotina para validação e auditoria
-    const rotinaEmpresa = await this.prisma.rotinaEmpresa.findFirst({
-      where: {
-        id: rotinaEmpresaId,
-        pilarEmpresa: { empresaId },
-      },
-      include: {
-        pilarEmpresa: { select: { empresaId: true, nome: true } },
-      },
-    });
-
-    if (!rotinaEmpresa) {
-      throw new NotFoundException('Rotina não encontrada nesta empresa');
-    }
-
-    // Hard delete
-    await this.prisma.rotinaEmpresa.delete({
-      where: { id: rotinaEmpresaId },
-    });
-
-    // Auditoria
-    const userRecord = await this.prisma.usuario.findUnique({ where: { id: user.id } });
-    await this.audit.log({
-      usuarioId: user.id,
-      usuarioNome: userRecord?.nome ?? '',
-      usuarioEmail: userRecord?.email ?? '',
-      entidade: 'rotinas_empresa',
-      entidadeId: rotinaEmpresaId,
-      acao: 'DELETE',
-      dadosAntes: {
-        id: rotinaEmpresa.id,
-        nome: rotinaEmpresa.nome,
-        pilarEmpresaId: rotinaEmpresa.pilarEmpresaId,
-        rotinaTemplateId: rotinaEmpresa.rotinaTemplateId,
-      },
-      dadosDepois: null,
-    });
-
-    return { message: 'Rotina removida com sucesso' };
   }
 }

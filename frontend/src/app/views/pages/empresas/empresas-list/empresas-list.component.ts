@@ -5,6 +5,7 @@ import { RouterLink } from '@angular/router';
 import { NgbPaginationModule, NgbAlertModule, NgbOffcanvas, NgbOffcanvasModule } from '@ng-bootstrap/ng-bootstrap';
 import Swal from 'sweetalert2';
 import { TranslatePipe } from '../../../../core/pipes/translate.pipe';
+import { CnpjPipe } from '../../../../core/pipes/cnpj.pipe';
 import { EmpresasService, Empresa } from '../../../../core/services/empresas.service';
 import { SortableDirective, SortEvent } from '../../../../shared/directives/sortable.directive';
 import { environment } from '../../../../../environments/environment';
@@ -17,6 +18,7 @@ import { environment } from '../../../../../environments/environment';
     FormsModule,
     RouterLink,
     TranslatePipe,
+    CnpjPipe,
     NgbPaginationModule,
     NgbAlertModule,
     SortableDirective,
@@ -50,6 +52,19 @@ export class EmpresasListComponent implements OnInit {
   // Offcanvas de detalhes
   selectedEmpresa: Empresa | null = null;
   loadingDetails = false;
+
+  formatarPeriodo(periodo: any): string {
+    const dataInicio = new Date(periodo.dataInicio);
+    const dataFim = new Date(periodo.dataFim);
+    const meses = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'];
+    
+    const mesInicio = meses[dataInicio.getMonth()];
+    const anoInicio = dataInicio.getFullYear().toString().slice(-2);
+    const mesFim = meses[dataFim.getMonth()];
+    const anoFim = dataFim.getFullYear().toString().slice(-2);
+    
+    return `${mesInicio}/${anoInicio} - ${mesFim}/${anoFim}`;
+  }
 
   ngOnInit(): void {
     this.loadEmpresas();
@@ -236,7 +251,7 @@ export class EmpresasListComponent implements OnInit {
         this.selectedEmpresa = empresa; 
         this.loadingDetails = false; 
       },
-      error: () => { this.loadingDetails = false; this.showToast('Erro ao carregar detalhes', 'error'); }
+      error: (err) => { this.loadingDetails = false; this.showToast(err?.error?.message || 'Erro ao carregar detalhes', 'error'); }
     });
   }
 }

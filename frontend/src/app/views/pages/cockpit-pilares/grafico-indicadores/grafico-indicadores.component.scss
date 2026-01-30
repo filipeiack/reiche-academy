@@ -1,0 +1,107 @@
+// Chart container (necessário para dimensionamento do gráfico)
+.chart-container {
+  position: relative;
+  height: 300px;
+  width: 100%;
+}
+
+.grafico-filtro-wrapper {
+  width: 100%;
+  max-width: 200px;
+  min-width: 0;
+}
+
+.grafico-filtro-select {
+  width: 100%;
+  font-size: 0.875rem;
+  max-width: 100%;
+  min-width: 0;
+}
+
+@media (max-width: 768px) {
+  .grafico-header {
+    flex-direction: column;
+    align-items: stretch !important;
+    gap: 0.5rem;
+    width: 100%;
+  }
+
+  .grafico-filtro-wrapper {
+    max-width: 100%;
+    min-width: 0;
+  }
+
+  .grafico-filtro-select {
+    max-width: 100%;
+    display: block;
+    min-width: 0;
+  }
+
+  .grafico-filtros {
+    flex-direction: column;
+  }
+
+  .grafico-filtros .ng-select-indicador {
+    min-width: 75% !important;
+    max-width: 76% !important;
+  }
+
+  .grafico-detalhes {
+    flex-wrap: wrap !important;
+    width: 100%;
+    gap: 0.5rem;
+    flex-shrink: 1 !important;
+  }
+
+  .grafico-detalhes .badge {
+    flex: 1 1 48%;
+    min-width: 140px;
+    font-size: 0.8rem;
+  }
+
+  .chart-container {
+    height: 260px;
+  }
+}
+
+@media (max-width: 576px) {
+  .grafico-detalhes .badge {
+    flex: 1 1 100%;
+    min-width: 0;
+  }
+}
+
+/* Classes badges para span */
+span.bg-danger {
+  background-color: var(--bs-danger-bg-subtle) !important;
+  border-color: var(--bs-danger) !important;
+  border: 1px solid;
+  color: var(--bs-body-color);
+}
+
+span.bg-warning {
+  background-color: var(--bs-warning-bg-subtle) !important;
+  border-color: var(--bs-warning) !important;
+  border: 1px solid;
+  color: var(--bs-body-color);
+}
+
+span.bg-success {
+  background-color: var(--bs-success-bg-subtle) !important;
+  border-color: var(--bs-success) !important;
+  border: 1px solid;
+  color: var(--bs-body-color);
+}
+
+/* Borda primary para ng-select */
+::ng-deep ng-select.ng-select-primary-border .ng-select-container {
+  border-color: var(--bs-primary) !important;
+}
+
+::ng-deep ng-select.ng-select-indicador .ng-select-container {
+  min-height: 56px;
+  height: auto;
+  align-items: flex-start;
+  padding-top: 6px;
+  padding-bottom: 6px;
+}
