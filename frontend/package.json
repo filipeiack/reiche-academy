@@ -79,6 +79,7 @@
     "@types/feather-icons": "^4.29.4",
     "@types/jasmine": "~5.1.0",
     "@types/sortablejs": "^1.15.8",
+    "baseline-browser-mapping": "^2.9.19",
     "jasmine-core": "~5.2.0",
     "karma": "~6.4.0",
     "karma-chrome-launcher": "~3.2.0",

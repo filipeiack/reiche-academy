@@ -25,6 +25,9 @@ CMD ["npm", "start", "--", "--host", "0.0.0.0", "--poll=2000"]
 # Build stage
 FROM base AS builder
 
+# Build configuration (production | staging)
+ARG BUILD_CONFIGURATION=production
+
 # Copy package files
 COPY package*.json ./
 
@@ -35,7 +38,7 @@ RUN npm ci
 COPY . .
 
 # Build application
-RUN npm run build -- --configuration production
+RUN npm run build -- --configuration $BUILD_CONFIGURATION
 
 # Production stage with Nginx
 FROM nginx:alpine AS production
