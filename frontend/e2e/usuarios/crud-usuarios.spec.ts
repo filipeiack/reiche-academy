@@ -31,7 +31,7 @@ import {
  * Agente: QA_E2E_Interface
  */
 
-test.describe.skip('LEGACY: CRUD de Usuários @usuarios @crud @medium @legacy', () => {
+test.describe('LEGACY: CRUD de Usuários @usuarios @crud @medium @legacy', () => {
   
   test.describe('Listagem e Busca (READ)', () => {
     test('deve buscar usuários por nome', async ({ page }) => {

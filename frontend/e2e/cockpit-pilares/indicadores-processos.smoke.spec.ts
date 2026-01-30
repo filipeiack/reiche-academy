@@ -110,10 +110,6 @@ const abrirTabProcessos = async (page: any) => {
 test.describe('@cockpit smoke - indicadores e processos', () => {
   test('GESTOR cria indicador com campos obrigatórios', async ({ page }) => {
     const cockpitOk = await acessarPrimeiroCockpit(page, TEST_USERS.gestorEmpresaA);
-    if (!cockpitOk) {
-      test.skip();
-      return;
-    }
 
     await abrirTabIndicadores(page);
 
@@ -176,10 +172,6 @@ test.describe('@cockpit smoke - indicadores e processos', () => {
 
   test('GESTOR remove indicador (soft delete)', async ({ page }) => {
     const cockpitOk = await acessarPrimeiroCockpit(page, TEST_USERS.gestorEmpresaA);
-    if (!cockpitOk) {
-      test.skip();
-      return;
-    }
 
     await abrirTabIndicadores(page);
 
@@ -203,10 +195,6 @@ test.describe('@cockpit smoke - indicadores e processos', () => {
     await expect(row).toBeVisible({ timeout: 10000 });
 
     const deleteBtn = row.locator('[data-testid="delete-indicador-button"]').first();
-    if (!(await deleteBtn.isVisible().catch(() => false))) {
-      test.skip();
-      return;
-    }
 
     await deleteBtn.click();
     const confirmButton = page.locator('button:has-text("Sim, remover"), .swal2-confirm').first();
@@ -219,24 +207,12 @@ test.describe('@cockpit smoke - indicadores e processos', () => {
 
   test('GESTOR atualiza status de mapeamento', async ({ page }) => {
     const cockpitOk = await acessarPrimeiroCockpit(page, TEST_USERS.gestorEmpresaA);
-    if (!cockpitOk) {
-      test.skip();
-      return;
-    }
 
     await abrirTabProcessos(page);
 
     const primeiraLinha = page.locator('[data-testid="processos-table"] tbody tr').first();
-    if ((await primeiraLinha.count()) === 0) {
-      test.skip();
-      return;
-    }
 
     const statusSelect = primeiraLinha.locator('ng-select').first();
-    if (!(await statusSelect.isVisible().catch(() => false))) {
-      test.skip();
-      return;
-    }
 
     await statusSelect.click();
     const optionMapeado = page.locator('.ng-option').filter({ hasText: 'MAPEADO' }).first();
@@ -252,30 +228,14 @@ test.describe('@cockpit smoke - indicadores e processos', () => {
 
   test('GESTOR limpa status de mapeamento (valor vazio)', async ({ page }) => {
     const cockpitOk = await acessarPrimeiroCockpit(page, TEST_USERS.gestorEmpresaA);
-    if (!cockpitOk) {
-      test.skip();
-      return;
-    }
 
     await abrirTabProcessos(page);
 
     const primeiraLinha = page.locator('[data-testid="processos-table"] tbody tr').first();
-    if ((await primeiraLinha.count()) === 0) {
-      test.skip();
-      return;
-    }
 
     const statusSelect = primeiraLinha.locator('ng-select').first();
-    if (!(await statusSelect.isVisible().catch(() => false))) {
-      test.skip();
-      return;
-    }
 
     const clearButton = statusSelect.locator('.ng-clear-wrapper, .ng-clear').first();
-    if (!(await clearButton.isVisible().catch(() => false))) {
-      test.skip();
-      return;
-    }
 
     await clearButton.click();
     await expect(statusSelect.locator('.ng-value')).toHaveCount(0);

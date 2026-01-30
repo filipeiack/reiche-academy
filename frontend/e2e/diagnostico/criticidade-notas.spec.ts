@@ -25,22 +25,22 @@ import {
  * Versão: 1.0
  */
 
-test.describe.skip('LEGACY: Diagnóstico - Preenchimento Criticidade e Notas por ADMINISTRADOR @diagnostico @regression @medium @legacy', () => {
+test.describe('LEGACY: Diagnóstico - Preenchimento Criticidade e Notas por ADMINISTRADOR @diagnostico @regression @medium @legacy', () => {
 
   // NOTA: Testes migrados para criticidade-notas.smoke.spec.ts
 });
 
-test.describe.skip('LEGACY: Diagnóstico - Preenchimento Criticidade e Notas por GESTOR @diagnostico @legacy', () => {
+test.describe('LEGACY: Diagnóstico - Preenchimento Criticidade e Notas por GESTOR @diagnostico @legacy', () => {
 
   // NOTA: Testes migrados para criticidade-notas.smoke.spec.ts
 });
 
-test.describe.skip('LEGACY: Diagnóstico - Preenchimento Criticidade e Notas por COLABORADOR @diagnostico @legacy', () => {
+test.describe('LEGACY: Diagnóstico - Preenchimento Criticidade e Notas por COLABORADOR @diagnostico @legacy', () => {
 
   // NOTA: Testes migrados para criticidade-notas.smoke.spec.ts
 });
 
-test.describe.skip('LEGACY: Diagnóstico - Criar Rotina e Preencher Criticidade/Nota @diagnostico @legacy', () => {
+test.describe('LEGACY: Diagnóstico - Criar Rotina e Preencher Criticidade/Nota @diagnostico @legacy', () => {
 
   // NOTA: Testes migrados para criticidade-notas.smoke.spec.ts
 });

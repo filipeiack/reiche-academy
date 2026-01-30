@@ -26,8 +26,8 @@ import {
  * Versão: 2.0 - Ajustado conforme handoff DEV-to-QA-E2E-pilares-rotinas-rbac-v1
  */
 
-test.describe.skip('LEGACY: Gestão de Pilares - Modal Gerenciar Pilares @pilares @regression @medium @legacy', () => {
+test.describe('LEGACY: Gestão de Pilares - Modal Gerenciar Pilares @pilares @regression @medium @legacy', () => {
 });
 
-test.describe.skip('LEGACY: Gestão de Pilares - Definir Responsável @pilares @legacy', () => {
+test.describe('LEGACY: Gestão de Pilares - Definir Responsável @pilares @legacy', () => {
 });

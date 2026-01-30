@@ -12,7 +12,7 @@ import { test, expect, login, navigateTo, selectEmpresa, TEST_USERS } from './fi
  * - Testar RBAC (COLABORADOR não deve ter acesso ao modal)
  */
 
-test.describe.skip('LEGACY: Modal Gerenciar Pilares - Funcionalidades Completas @pilares @regression @high @legacy', () => {
+test.describe('LEGACY: Modal Gerenciar Pilares - Funcionalidades Completas @pilares @regression @high @legacy', () => {
 
   test.beforeEach(async ({ page }) => {
     // Todos os testes precisam da empresa selecionada

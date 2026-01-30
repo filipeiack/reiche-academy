@@ -7,7 +7,7 @@ import { test, expect, login, TEST_USERS } from './fixtures';
  * baseados nos dados reais do seed
  */
 
-test.describe.skip('LEGACY: Cockpit - Funcionalidades Completas @cockpit @regression @high @legacy', () => {
+test.describe('LEGACY: Cockpit - Funcionalidades Completas @cockpit @regression @high @legacy', () => {
   
   test.beforeEach(async ({ page }) => {
     await login(page, TEST_USERS.gestorEmpresaA);

@@ -10,6 +10,7 @@ import {
   UseInterceptors,
   UploadedFile,
   BadRequestException,
+  ParseUUIDPipe,
   Request,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
@@ -64,7 +65,7 @@ export class UsuariosController {
   @ApiResponse({ status: 200, description: 'Usuário encontrado com sucesso' })
   @ApiResponse({ status: 404, description: 'Usuário não encontrado' })
   @ApiResponse({ status: 403, description: 'Sem permissão para visualizar usuário de outra empresa' })
-  findOne(@Param('id') id: string, @Request() req: { user: RequestUser }) {
+  findOne(@Param('id', new ParseUUIDPipe({ version: '4' })) id: string, @Request() req: { user: RequestUser }) {
     return this.usuariosService.findById(id, req.user);
   }
 
@@ -75,7 +76,7 @@ export class UsuariosController {
   @ApiResponse({ status: 404, description: 'Usuário não encontrado' })
   @ApiResponse({ status: 409, description: 'Email já cadastrado por outro usuário' })
   @ApiResponse({ status: 403, description: 'Sem permissão para editar campos privilegiados ou perfil superior' })
-  update(@Param('id') id: string, @Body() updateUsuarioDto: UpdateUsuarioDto, @Request() req: { user: RequestUser }) {
+  update(@Param('id', new ParseUUIDPipe({ version: '4' })) id: string, @Body() updateUsuarioDto: UpdateUsuarioDto, @Request() req: { user: RequestUser }) {
     return this.usuariosService.update(id, updateUsuarioDto, req.user);
   }
 
@@ -84,7 +85,7 @@ export class UsuariosController {
   @ApiOperation({ summary: 'Deletar usuário permanentemente' })
   @ApiResponse({ status: 200, description: 'Usuário deletado com sucesso' })
   @ApiResponse({ status: 404, description: 'Usuário não encontrado' })
-  remove(@Param('id') id: string, @Request() req: { user: RequestUser }) {
+  remove(@Param('id', new ParseUUIDPipe({ version: '4' })) id: string, @Request() req: { user: RequestUser }) {
     return this.usuariosService.hardDelete(id, req.user);
   }
 
@@ -93,7 +94,7 @@ export class UsuariosController {
   @ApiOperation({ summary: 'Inativar usuário' })
   @ApiResponse({ status: 200, description: 'Usuário inativado com sucesso' })
   @ApiResponse({ status: 404, description: 'Usuário não encontrado' })
-  inactivate(@Param('id') id: string, @Request() req: { user: RequestUser }) {
+  inactivate(@Param('id', new ParseUUIDPipe({ version: '4' })) id: string, @Request() req: { user: RequestUser }) {
     return this.usuariosService.remove(id, req.user);
   }
 
@@ -139,7 +140,7 @@ export class UsuariosController {
     }),
   )
   async uploadProfilePhoto(
-    @Param('id') id: string,
+    @Param('id', new ParseUUIDPipe({ version: '4' })) id: string,
     @UploadedFile() file: Express.Multer.File,
     @Request() req: { user: RequestUser },
   ) {
@@ -157,7 +158,7 @@ export class UsuariosController {
   @ApiResponse({ status: 200, description: 'Foto deletada com sucesso' })
   @ApiResponse({ status: 404, description: 'Usuário não encontrado' })
   @ApiResponse({ status: 403, description: 'Sem permissão para deletar foto de outro usuário' })
-  async deleteProfilePhoto(@Param('id') id: string, @Request() req: { user: RequestUser }) {
+  async deleteProfilePhoto(@Param('id', new ParseUUIDPipe({ version: '4' })) id: string, @Request() req: { user: RequestUser }) {
     return this.usuariosService.deleteProfilePhoto(id, req.user);
   }
 }

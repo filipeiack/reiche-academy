@@ -1,6 +1,6 @@
 import { test, expect } from '@playwright/test';
 
-test.describe.skip('LEGACY: Gestão de Indicadores @cockpit @indicadores @high @legacy', () => {
+test.describe('LEGACY: Gestão de Indicadores @cockpit @indicadores @high @legacy', () => {
   test.beforeEach(async ({ page }) => {
     // Navegar para a página de gestão de indicadores
     await page.goto('/cockpit-pilares/123/indicadores');
@@ -248,7 +248,7 @@ test.describe.skip('LEGACY: Gestão de Indicadores @cockpit @indicadores @high @
   });
 });
 
-test.describe.skip('LEGACY: Gestão de Indicadores - Performance @cockpit @indicadores @high @legacy', () => {
+test.describe('LEGACY: Gestão de Indicadores - Performance @cockpit @indicadores @high @legacy', () => {
   test('deve carregar página rapidamente', async ({ page }) => {
     const startTime = Date.now();
     

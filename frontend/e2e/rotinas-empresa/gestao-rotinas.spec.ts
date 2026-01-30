@@ -42,7 +42,7 @@ const getDrawerFooter = (page: Page) =>
  * Versão: 2.0 - Ajustado conforme handoff DEV-to-QA-E2E-pilares-rotinas-rbac-v1
  */
 
-test.describe.skip('LEGACY: Gestão de Rotinas - Gerenciar Rotinas Modal @rotinas @legacy', () => {
+test.describe('LEGACY: Gestão de Rotinas - Gerenciar Rotinas Modal @rotinas @legacy', () => {
   
   test('COLABORADOR não deve ver botão Gerenciar Rotinas', async ({ page }) => {
     await login(page, TEST_USERS['colaborador']);

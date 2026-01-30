@@ -256,6 +256,9 @@ export class UsuariosFormComponent implements OnInit {
       error: (err) => {
         this.showToast(err?.error?.message || 'Erro ao carregar usuário', 'error');
         this.loading = false;
+        if (!this.modalMode) {
+          this.router.navigate([this.getRedirectUrl()]);
+        }
       }
     });
   }

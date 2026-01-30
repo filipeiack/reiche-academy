@@ -29,7 +29,7 @@ import {
  * Agente: QA_E2E_Interface
  */
 
-test.describe.skip('LEGACY: Wizard de Criação de Empresas @empresas @critical @medium @legacy', () => {
+test.describe('LEGACY: Wizard de Criação de Empresas @empresas @critical @medium @legacy', () => {
   let createdEmpresaId: string | null = null;
 
   test.beforeEach(async ({ page }) => {

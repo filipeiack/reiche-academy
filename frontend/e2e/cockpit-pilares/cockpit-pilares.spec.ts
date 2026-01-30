@@ -262,7 +262,7 @@ async function encontrarEClicarPrimeiroCockpit(page: Page): Promise<string> {
 // Fonte: /docs/business-rules/cockpit-processos-prioritarios.md
 // =================================================================
 
-test.describe.skip('LEGACY: [COCKPIT] Criação com Auto-vinculação de Rotinas @cockpit @regression @high @legacy', () => {
+test.describe('LEGACY: [COCKPIT] Criação com Auto-vinculação de Rotinas @cockpit @regression @high @legacy', () => {
   test('deve criar cockpit e auto-vincular rotinas ativas do pilar', async ({ page }) => {
     await login(page, TEST_USERS['gestorEmpresaA']);
     const pilarNome = await criarPilarSeNecessario(page);
@@ -314,7 +314,7 @@ test.describe.skip('LEGACY: [COCKPIT] Criação com Auto-vinculação de Rotinas
 // Fonte: /docs/business-rules/cockpit-multi-tenant-seguranca.md
 // =================================================================
 
-test.describe.skip('LEGACY: [MULTI-TENANT] Validações de Acesso por Perfil @cockpit @security @high @legacy', () => {
+test.describe('LEGACY: [MULTI-TENANT] Validações de Acesso por Perfil @cockpit @security @high @legacy', () => {
   test('GESTOR não deve acessar cockpit de outra empresa', async ({ page }) => {
     await login(page, TEST_USERS.gestorEmpresaA);
     
@@ -378,7 +378,7 @@ test.describe.skip('LEGACY: [MULTI-TENANT] Validações de Acesso por Perfil @co
 // TESTES: Performance e Usabilidade (Opcional)
 // =================================================================
 
-test.describe.skip('LEGACY: [PERFORMANCE] Carregamento e Responsividade @cockpit @performance @high @legacy', () => {
+test.describe('LEGACY: [PERFORMANCE] Carregamento e Responsividade @cockpit @performance @high @legacy', () => {
   test('deve carregar Matriz de Indicadores em menos de 5 segundos', async ({ page }) => {
     await login(page, TEST_USERS.gestorEmpresaA);
     

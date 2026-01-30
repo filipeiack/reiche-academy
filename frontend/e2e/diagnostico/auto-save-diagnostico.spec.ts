@@ -27,19 +27,19 @@ import {
  * Data: 2026-01-09
  */
 
-test.describe.skip('LEGACY: Diagnóstico - Acesso e Navegação @diagnostico @regression @high @legacy', () => {
+test.describe('LEGACY: Diagnóstico - Acesso e Navegação @diagnostico @regression @high @legacy', () => {
   
   // NOTA: Teste migrado para auto-save.smoke.spec.ts
 
   // NOTA: Testes migrados para auto-save.smoke.spec.ts
 });
 
-test.describe.skip('LEGACY: Diagnóstico - Estrutura de Dados @diagnostico @legacy', () => {
+test.describe('LEGACY: Diagnóstico - Estrutura de Dados @diagnostico @legacy', () => {
 
   // NOTA: Testes migrados para auto-save.smoke.spec.ts
 });
 
-test.describe.skip('LEGACY: Diagnóstico - Preenchimento de Notas @diagnostico @legacy', () => {
+test.describe('LEGACY: Diagnóstico - Preenchimento de Notas @diagnostico @legacy', () => {
 
   // NOTA: Teste migrado para auto-save.smoke.spec.ts
 
@@ -47,7 +47,7 @@ test.describe.skip('LEGACY: Diagnóstico - Preenchimento de Notas @diagnostico @
   // NOTA: Testes migrados para auto-save.smoke.spec.ts
 });
 
-test.describe.skip('LEGACY: Diagnóstico - Validações @diagnostico @legacy', () => {
+test.describe('LEGACY: Diagnóstico - Validações @diagnostico @legacy', () => {
   
 
   // NOTA: Testes migrados para auto-save.smoke.spec.ts
