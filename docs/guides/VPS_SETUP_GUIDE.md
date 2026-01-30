@@ -111,6 +111,12 @@ Este projeto inclui scripts para facilitar deploy e manutenção:
 
 Realiza o setup completo do VPS em uma execução.
 
+
+```bash
+ssh root@76.13.66.10
+# Senha: Reiche@c@d3m1
+```
+
 ```bash
 cd /opt/reiche-academy
 bash scripts/deploy-vps.sh
