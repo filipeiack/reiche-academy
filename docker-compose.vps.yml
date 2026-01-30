@@ -1,8 +1,6 @@
 # Docker Compose - MESMO VPS (Staging + Produção)
 # Uso: docker compose -f docker-compose.vps.yml up -d
 
-version: '3.8'
-
 services:
   # =============================================================
   # BANCO DE DADOS COMPARTILHADO (Staging + Produção)
@@ -178,6 +176,8 @@ services:
       context: ./frontend
       dockerfile: Dockerfile
       target: production
+      args:
+        BUILD_CONFIGURATION: production
     container_name: reiche-frontend-prod
     restart: always
     environment:
@@ -208,6 +208,8 @@ services:
       context: ./frontend
       dockerfile: Dockerfile
       target: production
+      args:
+        BUILD_CONFIGURATION: staging
     container_name: reiche-frontend-staging
     restart: always
     environment:

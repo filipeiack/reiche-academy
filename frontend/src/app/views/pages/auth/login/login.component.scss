@@ -29,6 +29,17 @@
   }
 }
 
+.env-indicator {
+  font-size: 0.65rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--bs-secondary-color, #6c757d);
+  opacity: 0.6;
+  margin-top: -6px;
+  margin-bottom: 14px;
+  user-select: none;
+}
+
 .logo-wrapper {
   text-align: center;
 

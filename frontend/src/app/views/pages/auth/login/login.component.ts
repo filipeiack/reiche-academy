@@ -29,6 +29,7 @@ export class LoginComponent implements OnInit {
   logoUrl = 'assets/images/logo_reiche_academy.png'; // Logo padrão
   currentTheme = 'dark';
   showPassword = false;
+  environmentLabel = (environment.environmentName || 'DESCONHECIDO').toUpperCase();
 
   private readonly REMEMBER_EMAIL_KEY = 'remember_email';
 

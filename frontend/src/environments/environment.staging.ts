@@ -1,9 +1,9 @@
 export const environment = {
-  production: true,
+  production: false,
   apiUrl: '/api',
   backendUrl: '',
-  environmentName: 'PRODUÇÃO',
-  
+  environmentName: 'STAGING',
+
   // Configurações de UI/UX
   debounceTime: 800, // ms - delay para auto-save em formulários
 };
