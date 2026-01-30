@@ -24,22 +24,14 @@ test.describe('@diagnostico smoke - criticidade e notas', () => {
 
     const primeiroPilar = page.locator('[data-testid="pilar-accordion"]').first();
     const pilarExists = (await primeiroPilar.count()) > 0;
-    if (!pilarExists) {
-      test.skip();
-      return;
-    }
-
+    
     const header = primeiroPilar.locator('[data-testid="pilar-toggle-button"]').first();
     await header.click();
     await page.waitForTimeout(500);
 
     const primeiraRotina = primeiroPilar.locator('[data-testid="rotina-row"]').first();
     const rotinaExists = (await primeiraRotina.count()) > 0;
-    if (!rotinaExists) {
-      test.skip();
-      return;
-    }
-
+    
     const campoCriticidade = primeiraRotina.locator('[data-testid="rotina-criticidade-select"]').first();
     await campoCriticidade.click();
     await page.waitForTimeout(300);
@@ -74,22 +66,14 @@ test.describe('@diagnostico smoke - criticidade e notas', () => {
 
     const primeiroPilar = page.locator('[data-testid="pilar-accordion"]').first();
     const pilarExists = (await primeiroPilar.count()) > 0;
-    if (!pilarExists) {
-      test.skip();
-      return;
-    }
-
+    
     const header = primeiroPilar.locator('[data-testid="pilar-toggle-button"]').first();
     await header.click();
     await page.waitForTimeout(500);
 
     const primeiraRotina = primeiroPilar.locator('[data-testid="rotina-row"]').first();
     const rotinaExists = (await primeiraRotina.count()) > 0;
-    if (!rotinaExists) {
-      test.skip();
-      return;
-    }
-
+    
     const campoCriticidade = primeiraRotina.locator('[data-testid="rotina-criticidade-select"]').first();
     await campoCriticidade.click();
     await page.waitForTimeout(300);
@@ -124,22 +108,14 @@ test.describe('@diagnostico smoke - criticidade e notas', () => {
 
     const primeiroPilar = page.locator('[data-testid="pilar-accordion"]').first();
     const pilarExists = (await primeiroPilar.count()) > 0;
-    if (!pilarExists) {
-      test.skip();
-      return;
-    }
-
+    
     const header = primeiroPilar.locator('[data-testid="pilar-toggle-button"]').first();
     await header.click();
     await page.waitForTimeout(500);
 
     const primeiraRotina = primeiroPilar.locator('[data-testid="rotina-row"]').first();
     const rotinaExists = (await primeiraRotina.count()) > 0;
-    if (!rotinaExists) {
-      test.skip();
-      return;
-    }
-
+    
     const campoCriticidade = primeiraRotina.locator('[data-testid="rotina-criticidade-select"]').first();
     await campoCriticidade.click();
     await page.waitForTimeout(300);
@@ -174,10 +150,6 @@ test.describe('@diagnostico smoke - criticidade e notas', () => {
 
     const primeiroPilar = page.locator('[data-testid="pilar-accordion"]').first();
     const pilarExists = (await primeiroPilar.count()) > 0;
-    if (!pilarExists) {
-      test.skip();
-      return;
-    }
 
     const header = primeiroPilar.locator('[data-testid="pilar-toggle-button"]').first();
     await header.click();
@@ -185,11 +157,7 @@ test.describe('@diagnostico smoke - criticidade e notas', () => {
 
     const primeiraRotina = primeiroPilar.locator('[data-testid="rotina-row"]').first();
     const rotinaExists = (await primeiraRotina.count()) > 0;
-    if (!rotinaExists) {
-      test.skip();
-      return;
-    }
-
+    
     const campoCriticidade = primeiraRotina.locator('[data-testid="rotina-criticidade-select"]').first();
     const campoNota = primeiraRotina.locator('[data-testid="rotina-nota-input"]').first();
 
@@ -208,11 +176,7 @@ test.describe('@diagnostico smoke - criticidade e notas', () => {
 
     const primeiroPilar = page.locator('[data-testid="pilar-accordion"]').first();
     const pilarExists = (await primeiroPilar.count()) > 0;
-    if (!pilarExists) {
-      test.skip();
-      return;
-    }
-
+    
     const header = primeiroPilar.locator('[data-testid="pilar-toggle-button"]').first();
     await header.click();
     await page.waitForTimeout(500);
@@ -241,11 +205,7 @@ test.describe('@diagnostico smoke - criticidade e notas', () => {
 
 
     const rotinas = primeiroPilar.locator('[data-testid="rotina-row"]');
-    if ((await rotinas.count()) === 0) {
-      test.skip();
-      return;
-    }
-
+    
     let rotinaAlvo = rotinas.filter({ hasText: nomeRotina }).first();
     if (!(await rotinaAlvo.isVisible().catch(() => false))) {
       rotinaAlvo = rotinas.last();
@@ -281,11 +241,7 @@ test.describe('@diagnostico smoke - criticidade e notas', () => {
 
     const primeiroPilar = page.locator('[data-testid="pilar-accordion"]').first();
     const pilarExists = (await primeiroPilar.count()) > 0;
-    if (!pilarExists) {
-      test.skip();
-      return;
-    }
-
+    
     const header = primeiroPilar.locator('[data-testid="pilar-toggle-button"]').first();
     await header.click();
     await page.waitForTimeout(500);
@@ -315,11 +271,7 @@ test.describe('@diagnostico smoke - criticidade e notas', () => {
     
 
     const rotinas = primeiroPilar.locator('[data-testid="rotina-row"]');
-    if ((await rotinas.count()) === 0) {
-      test.skip();
-      return;
-    }
-
+    
     let rotinaAlvo = rotinas.filter({ hasText: nomeRotina }).first();
     if (!(await rotinaAlvo.isVisible().catch(() => false))) {
       rotinaAlvo = rotinas.last();

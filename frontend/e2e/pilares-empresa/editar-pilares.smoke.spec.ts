@@ -79,11 +79,6 @@ test.describe('@pilares smoke - definir responsável via drawer', () => {
     const firstPilarAccordion = page.locator('[data-testid="pilar-accordion"]').first();
     const pilarCount = await firstPilarAccordion.count();
 
-    if (pilarCount === 0) {
-      test.skip();
-      return;
-    }
-
     const firstPilarButton = firstPilarAccordion.locator('button.btn-link').first();
     await firstPilarButton.waitFor({ state: 'visible', timeout: 10000 });
     await firstPilarButton.click();
@@ -110,11 +105,6 @@ test.describe('@pilares smoke - definir responsável via drawer', () => {
 
     const firstPilarAccordion = page.locator('[data-testid="pilar-accordion"]').first();
     const pilarCount = await firstPilarAccordion.count();
-
-    if (pilarCount === 0) {
-      test.skip();
-      return;
-    }
 
     const firstPilarButton = firstPilarAccordion.locator('button.btn-link').first();
     await firstPilarButton.waitFor({ state: 'visible', timeout: 10000 });
@@ -143,11 +133,6 @@ test.describe('@pilares smoke - definir responsável via drawer', () => {
 
     const firstPilarAccordion = page.locator('[data-testid="pilar-accordion"]').first();
     const pilarCount = await firstPilarAccordion.count();
-
-    if (pilarCount === 0) {
-      test.skip();
-      return;
-    }
 
     const firstPilarButton = firstPilarAccordion.locator('button.btn-link').first();
     await firstPilarButton.click();
@@ -187,11 +172,6 @@ test.describe('@pilares smoke - definir responsável via drawer', () => {
 
     const firstPilarAccordion = page.locator('[data-testid="pilar-accordion"]').first();
     const pilarCount = await firstPilarAccordion.count();
-
-    if (pilarCount === 0) {
-      test.skip();
-      return;
-    }
 
     const firstPilarButton = firstPilarAccordion.locator('button.btn-link').first();
     await firstPilarButton.click();
@@ -309,10 +289,6 @@ test.describe('@pilares smoke - ações no drawer de edição', () => {
 
     const pilarItems = page.locator('.pilar-item');
     const pilarCount = await pilarItems.count();
-    if (pilarCount === 0) {
-      test.skip();
-      return;
-    }
 
     const deleteButtons = page.locator('.offcanvas-body [data-testid="delete-cargo-button"]');
     await expect(deleteButtons).toHaveCount(pilarCount);
@@ -338,10 +314,6 @@ test.describe('@pilares smoke - ações no drawer de edição', () => {
 
     const pilarItems = page.locator('.pilar-item');
     const pilarCount = await pilarItems.count();
-    if (pilarCount === 0) {
-      test.skip();
-      return;
-    }
 
     await expect(pilarItems.first()).toBeVisible({ timeout: 5000 });
   });

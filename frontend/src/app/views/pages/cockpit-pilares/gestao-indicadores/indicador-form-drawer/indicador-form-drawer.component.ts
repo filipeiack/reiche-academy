@@ -23,7 +23,7 @@ import { StatusMedicaoUtil } from '@core/utils/status-medicao.util';
   template: `
     <div class="d-flex flex-column h-100">
       <div class="offcanvas-header border-bottom flex-shrink-0">
-        <h5 class="offcanvas-title">
+        <h5 class="offcanvas-title" data-testid="indicador-drawer-title">
           <i class="bi bi-bar-chart me-2"></i>
           {{ isEditMode ? 'Editar Indicador' : 'Novo Indicador' }}
         </h5>
@@ -41,6 +41,7 @@ import { StatusMedicaoUtil } from '@core/utils/status-medicao.util';
             type="text"
             class="form-control"
             formControlName="nome"
+            data-testid="indicador-nome-input"
             placeholder="Ex: Ticket médio de vendas"
             [class.is-invalid]="form.get('nome')?.invalid && form.get('nome')?.touched"
           />
@@ -57,6 +58,7 @@ import { StatusMedicaoUtil } from '@core/utils/status-medicao.util';
           <select
             class="form-select"
             formControlName="tipoMedida"
+            data-testid="indicador-tipo-select"
             [class.is-invalid]="form.get('tipoMedida')?.invalid && form.get('tipoMedida')?.touched"
           >
             <option [value]="null">Selecione...</option>
@@ -72,7 +74,7 @@ import { StatusMedicaoUtil } from '@core/utils/status-medicao.util';
         <!-- Status de Medição -->
         <div class="mb-3">
           <label class="form-label">Status de Medição</label>
-          <select class="form-select" formControlName="statusMedicao">
+          <select class="form-select" formControlName="statusMedicao" data-testid="indicador-status-select">
             @for (status of statusMedicao; track status.value) {
             <option [value]="status.value">{{ status.label }}</option>
             }
@@ -109,7 +111,7 @@ import { StatusMedicaoUtil } from '@core/utils/status-medicao.util';
               [value]="DirecaoIndicador.MAIOR"
               id="melhor-maior"
             />
-            <label class="btn btn-outline-secondary" for="melhor-maior">
+            <label class="btn btn-outline-secondary" for="melhor-maior" data-testid="indicador-melhor-maior">
               <i class="bi bi-arrow-up me-1"></i>
               Maior é melhor
             </label>
@@ -121,7 +123,7 @@ import { StatusMedicaoUtil } from '@core/utils/status-medicao.util';
               [value]="DirecaoIndicador.MENOR"
               id="melhor-menor"
             />
-            <label class="btn btn-outline-secondary" for="melhor-menor">
+            <label class="btn btn-outline-secondary" for="melhor-menor" data-testid="indicador-melhor-menor">
               <i class="bi bi-arrow-down me-1"></i>
               Menor é melhor
             </label>
@@ -134,6 +136,7 @@ import { StatusMedicaoUtil } from '@core/utils/status-medicao.util';
           <textarea
             class="form-control"
             formControlName="descricao"
+            data-testid="indicador-descricao-textarea"
             rows="4"
             placeholder="Informações adicionais sobre este indicador..."
           ></textarea>
@@ -144,13 +147,14 @@ import { StatusMedicaoUtil } from '@core/utils/status-medicao.util';
 
     <div class="offcanvas-footer border-top p-3 flex-shrink-0 bg-light">
       <div class="d-flex gap-2 justify-content-end">
-        <button type="button" class="btn btn-secondary" (click)="fechar()">
+        <button type="button" class="btn btn-secondary" (click)="fechar()" data-testid="indicador-cancel">
           Cancelar
         </button>
         <button
           type="button"
           class="btn btn-primary"
           (click)="salvar()"
+          data-testid="indicador-submit"
           [disabled]="form.invalid || saving"
         >
           @if (saving) {
