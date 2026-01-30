@@ -6,24 +6,20 @@ import { BehaviorSubject } from 'rxjs';
 })
 export class ThemeModeService {
 
-  readonly currentTheme = new BehaviorSubject<string>('dark');
+  readonly currentTheme = new BehaviorSubject<string>('light');
   
   constructor() {
 
     // Change the theme based on whether there is a 'theme' parameter in the query string.
     const urlParams = new URLSearchParams(window.location.search);
     const themeParam = urlParams.get('theme');
-    if ( (themeParam === 'light') || (themeParam === 'dark')) {
-      this.toggleTheme(themeParam);
+    if (this.isValidTheme(themeParam)) {
+      this.applyTheme(themeParam);
+      return;
     }
 
-    // Set initial localStorage 'theme' value to 'dark' if 'null'
-    if (this.getStoredTheme() === null) {
-      this.setStoredTheme('dark');
-    }
-    
-    // Set the initial theme.
-    this.setTheme(this.getPreferredTheme());
+    const preferredTheme = this.getPreferredTheme();
+    this.applyTheme(preferredTheme);
   }
 
   getStoredTheme = () => localStorage.getItem('theme');
@@ -31,16 +27,25 @@ export class ThemeModeService {
 
   getPreferredTheme = () => {
     const storedTheme = this.getStoredTheme();
-    if (storedTheme) {
+    if (this.isValidTheme(storedTheme)) {
       return storedTheme;
     }
 
-    return 'dark'; // Tema padrão
+    return 'light'; // Tema padrão
   }
 
   setTheme = (theme: string) => {
     this.currentTheme.next(theme);
     document.documentElement.setAttribute('data-bs-theme', theme);
+  }
+
+  private applyTheme(theme: string): void {
+    this.setStoredTheme(theme);
+    this.setTheme(theme);
+  }
+
+  private isValidTheme(theme: string | null): theme is 'light' | 'dark' {
+    return theme === 'light' || theme === 'dark';
   }
 
   toggleTheme(theme: string) {
