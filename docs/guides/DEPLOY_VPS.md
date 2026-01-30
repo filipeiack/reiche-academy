@@ -55,6 +55,21 @@ docker compose -f docker-compose.vps.yml exec -T backend-staging npm run seed
 docker compose -f docker-compose.vps.yml exec -T backend-prod npm run seed
 ```
 
+### Manutenção por ambiente
+```bash
+# Health check (staging)
+bash scripts/maintenance-vps.sh health staging
+
+# Backup (produção)
+bash scripts/maintenance-vps.sh backup prod
+
+# Logs (todos)
+bash scripts/maintenance-vps.sh logs all
+
+# Update (staging)
+bash scripts/maintenance-vps.sh update staging
+```
+
 ### Reiniciar serviços
 ```bash
 # Apenas staging
@@ -93,10 +108,12 @@ docker inspect reiche-backend-staging | grep -A 10 Health
 ```bash
 # Staging
 docker compose -f docker-compose.vps.yml build --no-cache backend-staging
+cp nginx/nginx.staging.conf nginx/nginx.conf
 docker compose -f docker-compose.vps.yml up -d backend-staging
 
 # Produção
 docker compose -f docker-compose.vps.yml build --no-cache backend-prod
+cp nginx/nginx.prod.conf nginx/nginx.conf
 docker compose -f docker-compose.vps.yml up -d backend-prod
 ```
 

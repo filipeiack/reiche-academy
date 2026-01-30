@@ -127,9 +127,9 @@ echo "🔨 [6/8] Fazendo build das imagens Docker ($ENVIRONMENT)..."
 echo "⏳ Isto pode levar alguns minutos..."
 
 if [ "$ENVIRONMENT" == "staging" ]; then
-    docker compose -f docker-compose.vps.yml build --no-cache backend-staging
+    docker compose -f docker-compose.vps.yml build --no-cache backend-staging frontend-staging
 else
-    docker compose -f docker-compose.vps.yml build --no-cache backend-prod
+    docker compose -f docker-compose.vps.yml build --no-cache backend-prod frontend-prod
 fi
 
 # ============================================================================
@@ -139,9 +139,17 @@ echo ""
 echo "▶️  [7/8] Iniciando serviço ($ENVIRONMENT)..."
 
 if [ "$ENVIRONMENT" == "staging" ]; then
-    docker compose -f docker-compose.vps.yml up -d backend-staging postgres-staging redis-staging
+    echo "🧩 Usando nginx config de STAGING..."
+    cp nginx/nginx.staging.conf nginx/nginx.conf
 else
-    docker compose -f docker-compose.vps.yml up -d backend-prod postgres-prod redis-prod
+    echo "🧩 Usando nginx config de PRODUÇÃO..."
+    cp nginx/nginx.prod.conf nginx/nginx.conf
+fi
+
+if [ "$ENVIRONMENT" == "staging" ]; then
+    docker compose -f docker-compose.vps.yml up -d --no-deps postgres redis backend-staging frontend-staging nginx
+else
+    docker compose -f docker-compose.vps.yml up -d --no-deps postgres redis backend-prod frontend-prod nginx
 fi
 
 # Aguardar serviços estarem prontos

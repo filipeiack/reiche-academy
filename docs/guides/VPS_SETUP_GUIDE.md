@@ -128,10 +128,10 @@ bash scripts/deploy-vps.sh staging
 - ✅ Instala Docker e Docker Compose (se necessário)
 - ✅ Clona/atualiza repositório GitHub
 - ✅ Configura variáveis de ambiente
-- ✅ Faz build de todas as imagens
-- ✅ Inicia todos os serviços
-- ✅ Executa migrations
-- ✅ Carrega dados iniciais (seeds)
+- ✅ Faz build do backend + frontend do ambiente escolhido
+- ✅ Inicia apenas os serviços necessários do ambiente
+- ✅ Executa migrations e seeds do ambiente escolhido
+- ✅ Aplica nginx.conf correto (staging ou produção)
 
 **Tempo estimado**: 20-30 minutos (primeira execução)
 
@@ -156,13 +156,13 @@ bash scripts/maintenance-vps.sh
 8) 🚪 Sair
 ```
 
-**Uso Direto:**
+**Uso Direto (com ambiente):**
 ```bash
-bash scripts/maintenance-vps.sh health    # Health check
-bash scripts/maintenance-vps.sh backup    # Fazer backup
-bash scripts/maintenance-vps.sh logs      # Ver logs com erros
-bash scripts/maintenance-vps.sh update    # Atualizar código
-bash scripts/maintenance-vps.sh restart   # Reiniciar serviços
+bash scripts/maintenance-vps.sh health staging   # Health check (staging)
+bash scripts/maintenance-vps.sh backup prod      # Backup (produção)
+bash scripts/maintenance-vps.sh logs all         # Logs (todos)
+bash scripts/maintenance-vps.sh update staging   # Atualizar código (staging)
+bash scripts/maintenance-vps.sh restart prod     # Reiniciar serviços (produção)
 ```
 
 **Automação com Cron:**
@@ -250,11 +250,11 @@ node -e "console.log(require('crypto').randomBytes(64).toString('hex'))"
 ### **5. Build e Start**
 
 ```bash
-# Build de todas as imagens
-docker compose -f docker-compose.vps.yml build
+# Build apenas do ambiente desejado
+docker compose -f docker-compose.vps.yml build backend-staging frontend-staging
 
-# Subir serviços
-docker compose -f docker-compose.vps.yml up -d
+# Subir apenas o ambiente desejado
+docker compose -f docker-compose.vps.yml up -d --no-deps backend-staging frontend-staging nginx
 
 # Verificar status
 docker compose -f docker-compose.vps.yml ps
@@ -323,8 +323,11 @@ cp /etc/letsencrypt/live/staging.reicheacademy.cloud/fullchain.pem \
 cp /etc/letsencrypt/live/staging.reicheacademy.cloud/privkey.pem \
    nginx/ssl/staging.reicheacademy.cloud.key
 
-# Editar nginx.conf e descomentar seções HTTPS
-nano nginx/nginx.conf
+# Editar nginx.conf correto e descomentar seções HTTPS
+# Staging:
+nano nginx/nginx.staging.conf
+# Produção:
+nano nginx/nginx.prod.conf
 
 # Reiniciar Nginx
 docker compose -f docker-compose.vps.yml start nginx
@@ -412,7 +415,8 @@ git pull origin staging
 
 # Rebuild apenas staging
 docker compose -f docker-compose.vps.yml build backend-staging frontend-staging
-docker compose -f docker-compose.vps.yml up -d --no-deps backend-staging frontend-staging
+cp nginx/nginx.staging.conf nginx/nginx.conf
+docker compose -f docker-compose.vps.yml up -d --no-deps backend-staging frontend-staging nginx
 
 # Migrations staging
 docker compose -f docker-compose.vps.yml exec backend-staging npm run migration:prod
@@ -447,7 +451,8 @@ git pull origin main
 
 # Rebuild produção
 docker compose -f docker-compose.vps.yml build backend-prod frontend-prod
-docker compose -f docker-compose.vps.yml up -d --no-deps backend-prod frontend-prod
+cp nginx/nginx.prod.conf nginx/nginx.conf
+docker compose -f docker-compose.vps.yml up -d --no-deps backend-prod frontend-prod nginx
 
 # Migrations produção
 docker compose -f docker-compose.vps.yml exec backend-prod npm run migration:prod

@@ -12,6 +12,7 @@ set -e
 VPS_DIR="/opt/reiche-academy"
 BACKUP_DIR="$VPS_DIR/backups"
 LOG_FILE="$VPS_DIR/maintenance.log"
+ENVIRONMENT=""
 
 # Cores para output
 RED='\033[0;31m'
@@ -37,6 +38,20 @@ log_warning() {
     echo -e "${YELLOW}[$(date +'%Y-%m-%d %H:%M:%S')] ⚠️  $1${NC}" | tee -a "$LOG_FILE"
 }
 
+validate_environment() {
+    if [[ "$ENVIRONMENT" != "staging" && "$ENVIRONMENT" != "prod" && "$ENVIRONMENT" != "all" ]]; then
+        log_error "Ambiente inválido: $ENVIRONMENT"
+        echo "Uso: $0 {health|backup|logs|update|restart} [staging|prod|all]"
+        exit 1
+    fi
+}
+
+prompt_environment() {
+    read -p "Ambiente (staging/prod/all) [all]: " ENVIRONMENT
+    ENVIRONMENT=${ENVIRONMENT:-all}
+    validate_environment
+}
+
 # ============================================================================
 # HEALTH CHECK
 # ============================================================================
@@ -50,12 +65,26 @@ health_check() {
     
     # Verificar containers
     log "Verificando status dos containers..."
-    if docker compose -f docker-compose.vps.yml ps | grep -q "Exit"; then
-        log_error "Algum container está em estado EXIT!"
-        docker compose -f docker-compose.vps.yml ps
-        return 1
+    if [ "$ENVIRONMENT" == "prod" ]; then
+        if docker compose -f docker-compose.vps.yml ps backend-prod frontend-prod nginx postgres redis | grep -q "Exit"; then
+            log_error "Algum container de PRODUÇÃO está em estado EXIT!"
+            docker compose -f docker-compose.vps.yml ps backend-prod frontend-prod nginx postgres redis
+            return 1
+        fi
+    elif [ "$ENVIRONMENT" == "staging" ]; then
+        if docker compose -f docker-compose.vps.yml ps backend-staging frontend-staging nginx postgres redis | grep -q "Exit"; then
+            log_error "Algum container de STAGING está em estado EXIT!"
+            docker compose -f docker-compose.vps.yml ps backend-staging frontend-staging nginx postgres redis
+            return 1
+        fi
+    else
+        if docker compose -f docker-compose.vps.yml ps | grep -q "Exit"; then
+            log_error "Algum container está em estado EXIT!"
+            docker compose -f docker-compose.vps.yml ps
+            return 1
+        fi
     fi
-    log_success "Todos os containers estão rodando"
+    log_success "Containers OK para $ENVIRONMENT"
     
     # Verificar disco
     log "Verificando espaço em disco..."
@@ -73,11 +102,33 @@ health_check() {
     
     # Health check do backend
     log "Verificando saúde do backend..."
-    if curl -s http://localhost/api/health > /dev/null; then
-        log_success "Backend respondendo corretamente"
+    if [ "$ENVIRONMENT" == "prod" ]; then
+        if curl -s -H "Host: app.reicheacademy.cloud" http://localhost/api/health > /dev/null; then
+            log_success "Backend produção respondendo corretamente"
+        else
+            log_error "Backend produção não está respondendo!"
+            return 1
+        fi
+    elif [ "$ENVIRONMENT" == "staging" ]; then
+        if curl -s -H "Host: staging.reicheacademy.cloud" http://localhost/api/health > /dev/null; then
+            log_success "Backend staging respondendo corretamente"
+        else
+            log_error "Backend staging não está respondendo!"
+            return 1
+        fi
     else
-        log_error "Backend não está respondendo!"
-        return 1
+        if curl -s -H "Host: app.reicheacademy.cloud" http://localhost/api/health > /dev/null; then
+            log_success "Backend produção respondendo corretamente"
+        else
+            log_error "Backend produção não está respondendo!"
+            return 1
+        fi
+        if curl -s -H "Host: staging.reicheacademy.cloud" http://localhost/api/health > /dev/null; then
+            log_success "Backend staging respondendo corretamente"
+        else
+            log_error "Backend staging não está respondendo!"
+            return 1
+        fi
     fi
     
     # Verificar conectividade do banco
@@ -117,23 +168,25 @@ backup_database() {
     
     TIMESTAMP=$(date +%Y%m%d_%H%M%S)
     
-    # Backup Produção
-    log "Fazendo backup do banco PRODUÇÃO..."
-    BACKUP_PROD="$BACKUP_DIR/prod_$TIMESTAMP.sql.gz"
-    docker compose -f docker-compose.vps.yml exec -T postgres \
-        pg_dump -U reiche_admin reiche_academy_prod | gzip > "$BACKUP_PROD"
+    if [ "$ENVIRONMENT" == "prod" ] || [ "$ENVIRONMENT" == "all" ]; then
+        log "Fazendo backup do banco PRODUÇÃO..."
+        BACKUP_PROD="$BACKUP_DIR/prod_$TIMESTAMP.sql.gz"
+        docker compose -f docker-compose.vps.yml exec -T postgres \
+            pg_dump -U reiche_admin reiche_academy_prod | gzip > "$BACKUP_PROD"
+        
+        SIZE=$(du -h "$BACKUP_PROD" | cut -f1)
+        log_success "Backup PRODUÇÃO criado: prod_$TIMESTAMP.sql.gz (Size: $SIZE)"
+    fi
     
-    SIZE=$(du -h "$BACKUP_PROD" | cut -f1)
-    log_success "Backup PRODUÇÃO criado: prod_$TIMESTAMP.sql.gz (Size: $SIZE)"
-    
-    # Backup Staging
-    log "Fazendo backup do banco STAGING..."
-    BACKUP_STAGING="$BACKUP_DIR/staging_$TIMESTAMP.sql.gz"
-    docker compose -f docker-compose.vps.yml exec -T postgres \
-        pg_dump -U reiche_admin reiche_academy_staging | gzip > "$BACKUP_STAGING"
-    
-    SIZE=$(du -h "$BACKUP_STAGING" | cut -f1)
-    log_success "Backup STAGING criado: staging_$TIMESTAMP.sql.gz (Size: $SIZE)"
+    if [ "$ENVIRONMENT" == "staging" ] || [ "$ENVIRONMENT" == "all" ]; then
+        log "Fazendo backup do banco STAGING..."
+        BACKUP_STAGING="$BACKUP_DIR/staging_$TIMESTAMP.sql.gz"
+        docker compose -f docker-compose.vps.yml exec -T postgres \
+            pg_dump -U reiche_admin reiche_academy_staging | gzip > "$BACKUP_STAGING"
+        
+        SIZE=$(du -h "$BACKUP_STAGING" | cut -f1)
+        log_success "Backup STAGING criado: staging_$TIMESTAMP.sql.gz (Size: $SIZE)"
+    fi
     
     # Limpar backups antigos (manter últimos 7 dias)
     log "Limpando backups antigos (manter últimos 7 dias)..."
@@ -159,15 +212,17 @@ check_logs() {
     
     log "Procurando por erros nos últimos 100 linhas de logs..."
     
-    # Backend Produção
-    echo ""
-    echo -e "${YELLOW}Backend Produção:${NC}"
-    docker compose -f docker-compose.vps.yml logs --tail=50 backend-prod | grep -i error || echo "Nenhum erro encontrado"
+    if [ "$ENVIRONMENT" == "prod" ] || [ "$ENVIRONMENT" == "all" ]; then
+        echo ""
+        echo -e "${YELLOW}Backend Produção:${NC}"
+        docker compose -f docker-compose.vps.yml logs --tail=50 backend-prod | grep -i error || echo "Nenhum erro encontrado"
+    fi
     
-    # Backend Staging
-    echo ""
-    echo -e "${YELLOW}Backend Staging:${NC}"
-    docker compose -f docker-compose.vps.yml logs --tail=50 backend-staging | grep -i error || echo "Nenhum erro encontrado"
+    if [ "$ENVIRONMENT" == "staging" ] || [ "$ENVIRONMENT" == "all" ]; then
+        echo ""
+        echo -e "${YELLOW}Backend Staging:${NC}"
+        docker compose -f docker-compose.vps.yml logs --tail=50 backend-staging | grep -i error || echo "Nenhum erro encontrado"
+    fi
     
     # Nginx
     echo ""
@@ -186,11 +241,22 @@ update_code() {
     
     cd "$VPS_DIR"
     
-    log "Verificando atualizações do repositório..."
-    git fetch origin main
+    if [ "$ENVIRONMENT" == "all" ]; then
+        log_error "Update requer ambiente específico (staging ou prod)"
+        return 1
+    fi
+    
+    if [ "$ENVIRONMENT" == "staging" ]; then
+        BRANCH="staging"
+    else
+        BRANCH="main"
+    fi
+    
+    log "Verificando atualizações do repositório ($BRANCH)..."
+    git fetch origin "$BRANCH"
     
     LOCAL=$(git rev-parse HEAD)
-    REMOTE=$(git rev-parse origin/main)
+    REMOTE=$(git rev-parse origin/$BRANCH)
     
     if [ "$LOCAL" != "$REMOTE" ]; then
         log_warning "Há atualizações disponíveis"
@@ -204,19 +270,38 @@ update_code() {
             backup_database
             
             log "Atualizando código..."
-            git reset --hard origin/main
+            git reset --hard origin/$BRANCH
             
             log "Fazendo rebuild dos containers..."
-            docker compose -f docker-compose.vps.yml build
+            if [ "$ENVIRONMENT" == "staging" ]; then
+                docker compose -f docker-compose.vps.yml build backend-staging frontend-staging
+            else
+                docker compose -f docker-compose.vps.yml build backend-prod frontend-prod
+            fi
             
+            if [ "$ENVIRONMENT" == "staging" ]; then
+                log "Aplicando nginx config de STAGING..."
+                cp nginx/nginx.staging.conf nginx/nginx.conf
+            else
+                log "Aplicando nginx config de PRODUÇÃO..."
+                cp nginx/nginx.prod.conf nginx/nginx.conf
+            fi
+
             log "Reiniciando serviços..."
-            docker compose -f docker-compose.vps.yml up -d
+            if [ "$ENVIRONMENT" == "staging" ]; then
+                docker compose -f docker-compose.vps.yml up -d --no-deps backend-staging frontend-staging nginx
+            else
+                docker compose -f docker-compose.vps.yml up -d --no-deps backend-prod frontend-prod nginx
+            fi
             
             sleep 10
             
             log "Executando migrations..."
-            docker compose -f docker-compose.vps.yml exec -T backend-prod npm run migration:prod
-            docker compose -f docker-compose.vps.yml exec -T backend-staging npm run migration:prod
+            if [ "$ENVIRONMENT" == "staging" ]; then
+                docker compose -f docker-compose.vps.yml exec -T backend-staging npm run migration:prod
+            else
+                docker compose -f docker-compose.vps.yml exec -T backend-prod npm run migration:prod
+            fi
             
             log_success "Atualização concluída!"
         else
@@ -242,8 +327,16 @@ restart_services() {
     
     case $service in
         all)
-            log "Reiniciando todos os serviços..."
-            docker compose -f docker-compose.vps.yml restart
+            if [ "$ENVIRONMENT" == "prod" ]; then
+                log "Reiniciando serviços de PRODUÇÃO..."
+                docker compose -f docker-compose.vps.yml restart backend-prod frontend-prod nginx postgres redis
+            elif [ "$ENVIRONMENT" == "staging" ]; then
+                log "Reiniciando serviços de STAGING..."
+                docker compose -f docker-compose.vps.yml restart backend-staging frontend-staging nginx postgres redis
+            else
+                log "Reiniciando todos os serviços..."
+                docker compose -f docker-compose.vps.yml restart
+            fi
             ;;
         *)
             log "Reiniciando $service..."
@@ -276,11 +369,11 @@ show_menu() {
     read -p "Escolha uma opção (1-8): " option
     
     case $option in
-        1) health_check ;;
-        2) backup_database ;;
-        3) check_logs ;;
-        4) update_code ;;
-        5) restart_services ;;
+        1) prompt_environment; health_check ;;
+        2) prompt_environment; backup_database ;;
+        3) prompt_environment; check_logs ;;
+        4) prompt_environment; update_code ;;
+        5) prompt_environment; restart_services ;;
         6) 
             echo ""
             docker compose -f docker-compose.vps.yml ps
@@ -318,6 +411,8 @@ mkdir -p "$BACKUP_DIR"
 if [ $# -eq 0 ]; then
     show_menu
 else
+    ENVIRONMENT=${2:-all}
+    validate_environment
     # Executar comando específico
     case $1 in
         health) health_check ;;
@@ -326,14 +421,14 @@ else
         update) update_code ;;
         restart) restart_services ;;
         *) 
-            echo "Uso: $0 {health|backup|logs|update|restart}"
+            echo "Uso: $0 {health|backup|logs|update|restart} [staging|prod|all]"
             echo ""
             echo "Exemplos:"
-            echo "  $0 health          - Health check"
-            echo "  $0 backup          - Fazer backup"
-            echo "  $0 logs            - Ver logs"
-            echo "  $0 update          - Atualizar código"
-            echo "  $0 restart         - Reiniciar serviços"
+            echo "  $0 health staging  - Health check (staging)"
+            echo "  $0 backup prod     - Fazer backup (produção)"
+            echo "  $0 logs all        - Ver logs (todos)"
+            echo "  $0 update staging  - Atualizar código (staging)"
+            echo "  $0 restart prod    - Reiniciar serviços (prod)"
             echo "  $0                 - Menu interativo"
             exit 1
             ;;

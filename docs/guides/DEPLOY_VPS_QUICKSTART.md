@@ -33,7 +33,7 @@ git checkout staging
 # Para produção: usar branch main
 # git checkout main
 
-bash scripts/deploy-vps.sh
+bash scripts/deploy-vps.sh staging
 ```
 
 ### **3. Configurar DNS**
@@ -92,6 +92,7 @@ git pull origin staging
 
 # Rebuild staging
 docker compose -f docker-compose.vps.yml build backend-staging frontend-staging
+cp nginx/nginx.staging.conf nginx/nginx.conf
 docker compose -f docker-compose.vps.yml up -d --no-deps backend-staging frontend-staging
 docker compose -f docker-compose.vps.yml exec backend-staging npm run migration:prod
 ```
@@ -110,6 +111,7 @@ git pull origin main
 
 # Rebuild produção
 docker compose -f docker-compose.vps.yml build backend-prod frontend-prod
+cp nginx/nginx.prod.conf nginx/nginx.conf
 docker compose -f docker-compose.vps.yml up -d --no-deps backend-prod frontend-prod
 docker compose -f docker-compose.vps.yml exec backend-prod npm run migration:prod
 ```
@@ -117,13 +119,13 @@ docker compose -f docker-compose.vps.yml exec backend-prod npm run migration:pro
 ### **Comandos Gerais**
 ```bash
 # Health check
-bash scripts/maintenance-vps.sh health
+bash scripts/maintenance-vps.sh health staging
 
 # Backup
-bash scripts/maintenance-vps.sh backup
+bash scripts/maintenance-vps.sh backup prod
 
 # Ver logs
-bash scripts/maintenance-vps.sh logs
+bash scripts/maintenance-vps.sh logs all
 ```
 
 ---
