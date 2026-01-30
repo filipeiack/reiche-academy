@@ -51,7 +51,7 @@ export class MatrizCargosFuncoesComponent implements OnInit {
           },
           error: (err) => {
             console.error('Erro ao carregar cargos:', err);
-            this.showToast('Erro ao carregar cargos', 'error');
+            this.showToast(err?.error?.message || 'Erro ao carregar cargos', 'error');
             this.cargos = [];
             this.loading = false;
           },
@@ -121,7 +121,7 @@ export class MatrizCargosFuncoesComponent implements OnInit {
       },
       error: (err) => {
         console.error('Erro ao remover cargo:', err);
-        this.showToast('Erro ao remover cargo', 'error');
+        this.showToast(err?.error?.message || 'Erro ao remover cargo', 'error');
       },
     });
   }
@@ -150,7 +150,8 @@ export class MatrizCargosFuncoesComponent implements OnInit {
       this.showToast('Ordem dos cargos atualizada', 'success');
     } catch (error) {
       console.error('Erro ao reordenar cargos:', error);
-      this.showToast('Erro ao reordenar cargos', 'error');
+      const message = (error as any)?.error?.message || 'Erro ao reordenar cargos';
+      this.showToast(message, 'error');
     }
   }
 
@@ -212,7 +213,7 @@ export class MatrizCargosFuncoesComponent implements OnInit {
       },
       error: (err) => {
         console.error('Erro ao remover função:', err);
-        this.showToast('Erro ao remover função', 'error');
+        this.showToast(err?.error?.message || 'Erro ao remover função', 'error');
       },
     });
   }
@@ -246,7 +247,8 @@ export class MatrizCargosFuncoesComponent implements OnInit {
       this.showToast('Ordem das funções atualizada', 'success');
     } catch (error) {
       console.error('Erro ao reordenar funções:', error);
-      this.showToast('Erro ao reordenar funções', 'error');
+      const message = (error as any)?.error?.message || 'Erro ao reordenar funções';
+      this.showToast(message, 'error');
     }
   }
 

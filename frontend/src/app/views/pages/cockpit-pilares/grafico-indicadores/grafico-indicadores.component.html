@@ -1,25 +1,27 @@
 <div class="card">
   <div class="card-body">
     <!-- Titulo -->
-    <div class="cockpit-tab-header d-flex justify-content-between align-items-center">
+    <div class="cockpit-tab-header d-flex justify-content-between align-items-center grafico-header">
       <h5 class="card-title cockpit-tab-title">
         <i class="bi bi-graph-up me-2"></i>
         Gráfico de Indicadores
       </h5>
 
       <!-- R-GRAF-001: Seletor de Filtro (Últimos 12 meses + Anos) -->
-      <ng-select id="filtroSelect" class="ng-select-primary-border" style="width: 200px; font-size: 0.875rem;"
-        [(ngModel)]="selectedFiltro"
-        (ngModelChange)="onFiltroChange($event)" [items]="opcoesAnos" bindValue="value" placeholder="Filtro"
-        [clearable]="false" data-testid="filtro-select">
-        <ng-template ng-label-tmp let-item="item">
-          <small>{{ getFiltroLabel(item) }}</small>
-        </ng-template>
-      </ng-select>
+      <div class="grafico-filtro-wrapper">
+        <ng-select id="filtroSelect" class="ng-select-primary-border grafico-filtro-select"
+          [(ngModel)]="selectedFiltro"
+          (ngModelChange)="onFiltroChange($event)" [items]="opcoesAnos" bindValue="value" placeholder="Filtro"
+          [clearable]="false" data-testid="filtro-select">
+          <ng-template ng-label-tmp let-item="item">
+            <small>{{ getFiltroLabel(item) }}</small>
+          </ng-template>
+        </ng-select>
+      </div>
     </div>
 
     <!-- Seletor e Detalhes -->
-    <div class="mb-2 d-flex gap-3 align-items-start">
+    <div class="mb-2 d-flex gap-3 align-items-start grafico-filtros">
 
       <!-- Seletor de Indicador -->
       <div class="flex-fill">
@@ -50,7 +52,7 @@
       <!-- Detalhes do Indicador -->
 
       @if (indicador) {
-      <div class="d-flex flex-nowrap gap-2" style="flex-shrink: 0;">
+      <div class="d-flex flex-nowrap gap-2 grafico-detalhes" style="flex-shrink: 0;">
 
         <div class="badge bg-light gap-1 p-2 flex-fill">
           <label class="form-label small text-muted mb-2">Status</label>

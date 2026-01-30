@@ -188,7 +188,8 @@ export class EdicaoValoresMensaisComponent implements OnInit, OnChanges, OnDestr
       },
       error: (err: unknown) => {
         console.error('Erro ao salvar valor mensal:', err);
-        alert('Erro ao salvar. Tente novamente.');
+        const message = (err as any)?.error?.message || 'Erro ao salvar. Tente novamente.';
+        alert(message);
         this.savingCount--;
         if (this.savingCount === 0) {
           this.saveFeedbackService.reset();

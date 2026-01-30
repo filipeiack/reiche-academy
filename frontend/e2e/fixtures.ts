@@ -35,6 +35,7 @@ export type TestUser = {
  * - gestor@empresa-a.com (GESTOR)
  * - gestor@empresa-b.com (GESTOR)
  * - colab@empresa-a.com (COLABORADOR)
+ * - leitura@empresa-a.com (LEITURA)
  */
 export const TEST_USERS: Record<string, TestUser> = {
   admin: {
@@ -72,6 +73,12 @@ export const TEST_USERS: Record<string, TestUser> = {
     perfil: 'COLABORADOR',
     empresaId: 'empresa-a-id',
   },
+  leituraEmpresaA: {
+    email: 'leitura@empresa-a.com',
+    senha: 'Admin@123',
+    perfil: 'LEITURA',
+    empresaId: 'empresa-a-id',
+  },
 };
 
 /**
@@ -82,6 +89,7 @@ export const PROTECTED_TEST_USER_EMAILS = [
   'gestor@empresa-a.com',
   'gestor@empresa-b.com',
   'colab@empresa-a.com',
+  'leitura@empresa-a.com',
 ];
 
 /**

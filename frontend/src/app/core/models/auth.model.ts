@@ -1,4 +1,4 @@
-import { EstadoBrasil } from "../services/empresas.service";
+import { EstadoBrasil, PeriodoMentoria } from "../services/empresas.service";
 
 export interface LoginRequest {
   email: string;
@@ -18,6 +18,7 @@ export interface EmpresaBasic {
   cnpj: string;
   cidade?: string;
   estado?: EstadoBrasil;
+  periodoMentoriaAtivo?: PeriodoMentoria | null;
   logoUrl?: string | null;
 }
 

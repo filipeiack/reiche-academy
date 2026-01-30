@@ -141,7 +141,7 @@ export class EmpresasService {
     });
   }
 
-  async findOne(id: string) {
+  async findOne(id: string, requestUser?: RequestUser) {
     const empresa = await this.prisma.empresa.findUnique({
       where: { id },
       include: {
@@ -170,6 +170,10 @@ export class EmpresasService {
 
     if (!empresa) {
       throw new NotFoundException('Empresa não encontrada');
+    }
+
+    if (requestUser) {
+      this.validateTenantAccess(empresa, requestUser, 'visualizar');
     }
 
     return empresa;

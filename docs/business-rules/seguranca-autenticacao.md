@@ -239,12 +239,52 @@ Argon2 é vencedor do Password Hashing Competition (2015), resistente a ataques 
 
 ---
 
+### RN-SEC-001.8: CSRF Não Implementado (Arquitetura JWT Stateless)
+
+**Descrição:**  
+> Sistema NÃO implementa proteção CSRF (Cross-Site Request Forgery).
+
+**Justificativa Técnica:**
+- JWT armazenado em `localStorage`/`sessionStorage` (não em cookies)
+- JWT transmitido via header `Authorization: Bearer {token}` (requer JavaScript explícito)
+- CSRF explora envio **automático** de cookies — JWT não é enviado automaticamente
+- Site malicioso cross-origin **não pode** forçar navegador a incluir header `Authorization`
+- CORS já protege requisições cross-origin
+
+**Proteções Equivalentes:**
+- ✅ CORS: Bloqueia requisições de origens não autorizadas
+- ✅ JWT Signature: Valida autenticidade do token
+- ✅ Token Expiration: Limita janela de ataque
+- ✅ XSS Prevention: Sanitização global (ADR-011), CSP, DomSanitizer
+
+**Condição de Mudança:**
+- ⚠️ **SE** sistema migrar para cookies de autenticação no futuro
+- ⚠️ **ENTÃO** proteção CSRF DEVE ser implementada obrigatoriamente
+- ⚠️ **PROIBIDO** usar cookies para autenticação sem CSRF
+
+**Teste:**
+- Testes E2E **não** validam CSRF (arquitetura não requer)
+- Ver comentário em `security-adversarial.smoke.spec.ts`
+
+**Documentação ADR:**  
+Ver **ADR-013** para análise completa de riscos e alternativas consideradas.
+
+**Referências OWASP:**
+- [JWT Cheat Sheet - Token Storage](https://cheatsheetseries.owasp.org/cheatsheets/JSON_Web_Token_for_Java_Cheat_Sheet.html)
+- [CSRF Prevention - Custom Request Headers](https://cheatsheetseries.owasp.org/cheatsheets/Cross-Site_Request_Forgery_Prevention_Cheat_Sheet.html)
+
+**Status:** ✅ Decisão Arquitetural Documentada  
+**Data:** 2026-01-30
+
+---
+
 ## 📚 Referências
 
 - [OWASP Authentication Cheat Sheet](https://cheatsheetseries.owasp.org/cheatsheets/Authentication_Cheat_Sheet.html)
 - [JWT Best Practices](https://datatracker.ietf.org/doc/html/rfc8725)
 - [Argon2 Specification](https://github.com/P-H-C/phc-winner-argon2)
 - **ADR-010:** Justificativa de Single Session Policy
+- **ADR-013:** CSRF Desnecessário em Arquitetura JWT Stateless
 
 ---
 

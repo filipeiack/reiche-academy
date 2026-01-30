@@ -14,6 +14,7 @@ import { SweetAlert2Module } from '@sweetalert2/ngx-sweetalert2';
 import { provideHighlightOptions } from 'ngx-highlightjs';
 import { TranslateService } from './core/services/translate.service';
 import { AuthInterceptor } from './core/interceptors/auth.interceptor';
+import { ForbiddenInterceptor } from './core/interceptors/forbidden.interceptor';
 import { NgSelectConfig } from '@ng-select/ng-select';
 
 const highlightOptions = {
@@ -55,6 +56,11 @@ export const appConfig: ApplicationConfig = {
     {
       provide: HTTP_INTERCEPTORS,
       useClass: AuthInterceptor,
+      multi: true
+    },
+    {
+      provide: HTTP_INTERCEPTORS,
+      useClass: ForbiddenInterceptor,
       multi: true
     },
     {

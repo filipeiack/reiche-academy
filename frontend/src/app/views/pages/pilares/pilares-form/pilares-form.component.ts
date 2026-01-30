@@ -71,7 +71,7 @@ export class PilaresFormComponent implements OnInit {
         this.loading = false;
       },
       error: (err) => {
-        this.showToast('Erro ao carregar pilar', 'error');
+        this.showToast(err?.error?.message || 'Erro ao carregar pilar', 'error');
         this.loading = false;
         this.router.navigate(['/pilares']);
       }

@@ -28,6 +28,7 @@ export class LoginComponent implements OnInit {
   empresa: Empresa | null = null;
   logoUrl = 'assets/images/logo_reiche_academy.png'; // Logo padrão
   currentTheme = 'dark';
+  showPassword = false;
 
   private readonly REMEMBER_EMAIL_KEY = 'remember_email';
 
@@ -123,6 +124,10 @@ export class LoginComponent implements OnInit {
     } else {
       localStorage.removeItem(this.REMEMBER_EMAIL_KEY);
     }
+  }
+
+  togglePasswordVisibility(): void {
+    this.showPassword = !this.showPassword;
   }
 
   onLoggedin(e: Event) {

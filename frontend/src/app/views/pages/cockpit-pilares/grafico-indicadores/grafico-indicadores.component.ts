@@ -227,7 +227,7 @@ export class GraficoIndicadoresComponent implements OnInit, OnChanges {
       },
       error: (err) => {
         console.error('Erro ao carregar indicadores:', err);
-        this.error = 'Erro ao carregar indicadores';
+        this.error = err?.error?.message || 'Erro ao carregar indicadores';
         this.loading = false;
       }
     });
@@ -269,8 +269,9 @@ export class GraficoIndicadoresComponent implements OnInit, OnChanges {
       },
       error: (err: unknown) => {
         console.error('Erro ao carregar dados do gráfico:', err);
-        this.error =
+        const message = (err as any)?.error?.message ||
           'Erro ao carregar dados do gráfico. Tente novamente mais tarde.';
+        this.error = message;
         this.loading = false;
       },
     });

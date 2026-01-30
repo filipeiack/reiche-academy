@@ -36,7 +36,9 @@ import { Usuario } from '@core/models/auth.model';
         </div> -->
         <div class="row g-2">
           <div class="col-md-12">
-            <label class="form-label">Indicador</label>
+            <label class="form-label">
+              Indicador <span class="text-danger">*</span>
+            </label>
             <ng-select
               class="ng-select-indicador"
               formControlName="indicadorId"
@@ -64,7 +66,9 @@ import { Usuario } from '@core/models/auth.model';
             </ng-select>
           </div>
           <div class="col-md-6">
-            <label class="form-label">Mês de Análise</label>
+            <label class="form-label">
+              Mês de Análise <span class="text-danger">*</span>
+            </label>
             <ng-select
               formControlName="indicadorMensalId"
               [items]="mesesDisponiveis"
@@ -125,7 +129,9 @@ import { Usuario } from '@core/models/auth.model';
           </div>
           
           <div class="col-md-6">
-            <label class="form-label">Prazo</label>
+            <label class="form-label">
+              Prazo <span class="text-danger">*</span>
+            </label>
             <input type="date" class="form-control" formControlName="prazo" />
           </div>
 
@@ -135,7 +141,9 @@ import { Usuario } from '@core/models/auth.model';
           </div>
 
           <div class="col-md-12">
-            <label class="form-label">Ação Proposta</label>
+            <label class="form-label">
+              Ação Proposta <span class="text-danger">*</span>
+            </label>
             <textarea class="form-control" rows="2" formControlName="acaoProposta" maxlength="500"></textarea>
           </div>
 
@@ -305,7 +313,7 @@ export class AcaoFormDrawerComponent implements OnInit {
       error: (err) => {
         console.error('Erro ao salvar ação:', err);
         this.saving = false;
-        this.showToast('Erro ao salvar ação', 'error');
+        this.showToast(err?.error?.message || 'Erro ao salvar ação', 'error');
       },
     });
   }

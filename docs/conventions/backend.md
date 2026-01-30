@@ -1118,6 +1118,64 @@ ThrottlerModule.forRoot([
 
 ---
 
+## 13. Segurança - Cookies e CSRF
+
+### ⚠️ PROIBIDO: Cookies para Autenticação
+
+**Regra Obrigatória:**
+
+> ❌ **NUNCA** usar cookies para armazenar tokens de autenticação (JWT ou refresh tokens)
+> ❌ **NUNCA** aceitar autenticação via cookies (session-based auth)
+> ✅ **SEMPRE** usar header `Authorization: Bearer {token}`
+
+**Justificativa:**
+
+Sistema usa **JWT stateless** em headers HTTP. Esta arquitetura elimina necessidade de proteção CSRF (Cross-Site Request Forgery), pois:
+
+1. JWT em `localStorage`/`sessionStorage` não é enviado automaticamente pelo navegador
+2. Atacante cross-origin não pode forçar navegador a incluir header `Authorization`
+3. CORS já bloqueia requisições de origens não autorizadas
+
+**Se Cookies Forem Introduzidos:**
+
+⚠️ **OBRIGATÓRIO** implementar proteção CSRF:
+- Gerar tokens CSRF por sessão
+- Validar tokens em todas as mutações (POST/PATCH/DELETE)
+- Criar ADR justificando mudança arquitetural
+- Atualizar testes de segurança
+
+**Exemplo de Violação (NÃO FAZER):**
+
+```typescript
+// ❌ PROIBIDO
+@Post('login')
+async login(@Body() dto: LoginDto, @Res() res: Response) {
+  const tokens = await this.authService.login(dto);
+  res.cookie('access_token', tokens.accessToken, { httpOnly: true });
+  return res.json({ success: true });
+}
+```
+
+**Padrão Correto (FAZER):**
+
+```typescript
+// ✅ CORRETO
+@Post('login')
+async login(@Body() dto: LoginDto) {
+  return this.authService.login(dto); // Cliente armazena em localStorage
+}
+```
+
+**Documentação:**
+- ADR-013: CSRF Desnecessário em Arquitetura JWT Stateless
+- RN-SEC-001.8: CSRF Não Implementado
+
+**Validação:**
+- Testes E2E NÃO esperam proteção CSRF
+- CI DEVE falhar se cookies de autenticação forem introduzidos sem CSRF
+
+---
+
 ## Resumo - Consistência do Backend
 
 | Aspecto | Consistência | Notas |

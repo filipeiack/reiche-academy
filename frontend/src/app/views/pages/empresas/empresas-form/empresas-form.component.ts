@@ -634,7 +634,7 @@ export class EmpresasFormComponent implements OnInit {
       },
       (err) => {
         console.error('Erro ao associar usuários pendentes:', err);
-        this.showToast('Erro ao associar alguns usuários. Verifique em modo edição.', 'warning');
+        this.showToast(err?.error?.message || 'Erro ao associar alguns usuários. Verifique em modo edição.', 'warning');
       }
     );
   }
@@ -815,7 +815,7 @@ export class EmpresasFormComponent implements OnInit {
       },
       error: (err) => {
         console.error('Erro ao reordenar pilares:', err);
-        this.showToast('Erro ao reordenar pilares. Recarregue a página.', 'error');
+        this.showToast(err?.error?.message || 'Erro ao reordenar pilares. Recarregue a página.', 'error');
         // Recarregar lista original em caso de erro
         if (this.empresaId) {
           this.loadPilaresAssociados(this.empresaId);
@@ -840,7 +840,7 @@ export class EmpresasFormComponent implements OnInit {
       },
       error: (err) => {
         console.error('Erro ao associar pilares pendentes:', err);
-        this.showToast('Erro ao associar alguns pilares. Verifique em modo edição.', 'warning');
+        this.showToast(err?.error?.message || 'Erro ao associar alguns pilares. Verifique em modo edição.', 'warning');
       }
     });
   }

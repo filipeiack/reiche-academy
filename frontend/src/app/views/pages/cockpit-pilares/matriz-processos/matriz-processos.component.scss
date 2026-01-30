@@ -63,3 +63,27 @@ span.bg-success {
 .fluxograma-toggle .bi-star-fill {
   text-shadow: 0 0 2px rgba(0, 0, 0, 0.15);
 }
+
+.table {
+  min-width: 760px;
+}
+
+@media (max-width: 768px) {
+  .table {
+    min-width: 680px;
+  }
+
+  .table td,
+  .table th {
+    font-size: 0.85rem;
+  }
+
+  .badge-altura-input {
+    min-height: 32px;
+    font-size: 0.8rem;
+  }
+
+  ::ng-deep ng-select .ng-select-container {
+    min-height: 32px;
+  }
+}

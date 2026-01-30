@@ -1,5 +1,6 @@
 import { Component, EventEmitter, Input, Output, inject, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { HttpErrorResponse } from '@angular/common/http';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { NgSelectModule } from '@ng-select/ng-select';
 import { NgbActiveOffcanvas } from '@ng-bootstrap/ng-bootstrap';
@@ -225,9 +226,9 @@ export class CargoFormDrawerComponent implements OnInit {
         this.saving = false;
         this.activeOffcanvas.close();
       },
-      error: (err) => {
+      error: (err: HttpErrorResponse) => {
         console.error('Erro ao salvar cargo:', err);
-        this.showToast('Erro ao salvar cargo', 'error');
+        this.showToast(err?.error?.message || 'Erro ao salvar cargo', 'error');
         this.saving = false;
       },
     });

@@ -1,7 +1,7 @@
 <div class="card mb-1">
   <div class="card-body p-2 px-4">
     <!-- Cabeçalho -->
-    <div class="d-flex justify-content-between align-items-center">
+    <div class="d-flex justify-content-between align-items-center valores-header">
       <h6 class="section-title">
         <i class="bi bi-calendar-range me-2"></i>
         Metas e Valores Mensais
@@ -10,7 +10,7 @@
       <!-- Botao Novo Ciclo -->
       @if (!loading && indicadores.length > 0) {
 
-        <button type="button" data-testid="btn-novo-ciclo-mensal" class="btn btn-primary btn-sm"
+        <button type="button" data-testid="btn-novo-ciclo-mensal" class="btn btn-primary btn-sm btn-novo-ciclo"
           [disabled]="!podeCriarNovoCiclo || criandoNovoCiclo" (click)="criarNovoCicloMeses()"
           [title]="!podeCriarNovoCiclo ? mensagemBotaoCiclo : 'Criar próximos 12 meses para todos os indicadores'">
           @if (criandoNovoCiclo) {
@@ -149,6 +149,17 @@
             <col style="width: 100px;">
             <col style="width: 80px;">
           </colgroup>
+          <thead class="table-light small mobile-table-header">
+            <tr>
+              <th>Mês</th>
+              <th>Histórico</th>
+              <th>Meta</th>
+              <th>Realizado</th>
+              <th class="text-center">Desvio ABS</th>
+              <th class="text-center">Desvio %</th>
+              <th class="text-center">Status</th>
+            </tr>
+          </thead>
           <tbody>
             @for (mes of getMesesOrdenados(indicador); track mes.id) {
             <tr>

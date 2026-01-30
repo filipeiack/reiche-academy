@@ -212,9 +212,7 @@ test.describe('@security smoke - adversarial frontend', () => {
   });
 
   test('LEITURA não deve conseguir editar dados', async ({ page }) => {
-    const leituraUser = (TEST_USERS as Record<string, { email: string; senha: string } | undefined>).leitura;
-
-    await login(page, leituraUser);
+    await login(page, TEST_USERS.leituraEmpresaA);
     await page.goto('/usuarios');
 
     const editButtons = await page.locator('button:has-text("Editar"), button:has-text("Modificar")').count();
@@ -860,85 +858,22 @@ test.describe('@security smoke - adversarial frontend', () => {
     expect(userRateLimitHit).toBeTruthy();
   });
 
-  test('exige CSRF token em requisições POST', async ({ page }) => {
-    await login(page, TEST_USERS.admin);
-
-    const response = await page.evaluate(async () => {
-      try {
-        const result = await fetch('/api/usuarios', {
-          method: 'POST',
-          headers: {
-            'Authorization': `Bearer ${localStorage.getItem('access_token')}`,
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify({
-            nome: 'Test User',
-            email: 'test@test.com',
-            senha: 'Senha@123',
-            perfilId: 'COLABORADOR'
-          })
-        });
-        return {
-          status: result.status,
-          statusText: result.statusText
-        };
-      } catch (error) {
-        return {
-          error: error.message
-        };
-      }
-    });
-
-    if (response.status) {
-      expect(response.status).toBe(403);
-    }
-  });
-
-  test('valida CSRF token correto', async ({ page }) => {
-    await login(page, TEST_USERS.admin);
-    await page.goto('/usuarios/novo');
-
-    const csrfToken = await page.evaluate(() => {
-      const token = document.querySelector('input[name*="csrf"], input[name*="_token"], meta[name="csrf-token"]');
-      return token?.getAttribute('value') || token?.getAttribute('content');
-    });
-
-    if (csrfToken) {
-      const response = await page.evaluate(async (invalidToken) => {
-        try {
-          const result = await fetch('/api/usuarios', {
-            method: 'POST',
-            headers: {
-              'Authorization': `Bearer ${localStorage.getItem('access_token')}`,
-              'Content-Type': 'application/json',
-              'X-CSRF-Token': invalidToken
-            },
-            body: JSON.stringify({
-              nome: 'Test User',
-              email: 'test@test.com',
-              senha: 'Senha@123',
-              perfilId: 'COLABORADOR'
-            })
-          });
-          return {
-            status: result.status,
-            statusText: result.statusText
-          };
-        } catch (error) {
-          return {
-            error: error.message
-          };
-        }
-      }, 'invalid-csrf-token');
-
-      if (response.status) {
-        expect(response.status).toBe(403);
-      }
-    } else {
-      console.log('⚠️ Nenhum CSRF token encontrado');
-      test.skip();
-    }
-  });
+  /**
+   * CSRF Protection: NOT IMPLEMENTED (ADR-013)
+   * 
+   * Rationale: Sistema usa JWT stateless em Authorization headers.
+   * CSRF só é risco quando autenticação usa cookies (enviados automaticamente).
+   * JWT em localStorage/sessionStorage requer JavaScript explícito - atacante
+   * cross-origin não pode forçar navegador a incluir header Authorization.
+   * 
+   * Proteções existentes:
+   * - CORS bloqueia requisições cross-origin
+   * - JWT signature validation
+   * - Token expiration
+   * 
+   * Se cookies forem introduzidos no futuro, CSRF DEVE ser implementado.
+   * Ver: /docs/adr/ADR-013-csrf-desnecessario-jwt-stateless.md
+   */
 
   test('não expõe dados sensíveis no DOM', async ({ page }) => {
     await login(page, TEST_USERS.admin);

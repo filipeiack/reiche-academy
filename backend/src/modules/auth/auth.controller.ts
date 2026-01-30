@@ -18,7 +18,7 @@ export class AuthController {
   @UseGuards(LocalAuthGuard)
   @Post('login')
   @HttpCode(200)
-  @Throttle({ default: { limit: 1000, ttl: 60000 } }) // DEV: 1000 tentativas em 1 minuto para testes
+  @Throttle({ default: { limit: 5, ttl: 900000 } })
   @ApiOperation({ summary: 'Autenticar usuário' })
   @ApiResponse({ status: 200, description: 'Login realizado com sucesso' })
   async login(@Request() req: ExpressRequest & { user: any }, @Body() loginDto: LoginDto) {
@@ -45,7 +45,7 @@ export class AuthController {
 
   @Post('forgot-password')
   @HttpCode(200)
-  @Throttle({ default: { limit: 1000, ttl: 60000 } }) // DEV: 1000 tentativas em 1 minuto para testes
+  @Throttle({ default: { limit: 3, ttl: 3600000 } })
   @ApiOperation({ summary: 'Solicitar reset de senha' })
   @ApiResponse({ status: 200, description: 'Email de recuperação enviado' })
   async forgotPassword(@Body() dto: ForgotPasswordDto) {
@@ -54,7 +54,7 @@ export class AuthController {
 
   @Post('reset-password')
   @HttpCode(200)
-  @Throttle({ default: { limit: 1000, ttl: 60000 } }) // DEV: 1000 tentativas em 1 minuto para testes
+  @Throttle({ default: { limit: 3, ttl: 3600000 } })
   @ApiOperation({ summary: 'Redefinir senha com token' })
   @ApiResponse({ status: 200, description: 'Senha alterada com sucesso' })
   @ApiResponse({ status: 400, description: 'Token inválido ou expirado' })

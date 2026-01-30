@@ -114,7 +114,8 @@ export class PilaresEmpresaFormComponent implements OnInit {
     }
       
     } catch (error) {
-      this.showToast('Erro ao salvar a ordem dos pilares. Tente novamente', 'error');
+      const message = (error as any)?.error?.message || 'Erro ao salvar a ordem dos pilares. Tente novamente';
+      this.showToast(message, 'error');
     }
   }
 

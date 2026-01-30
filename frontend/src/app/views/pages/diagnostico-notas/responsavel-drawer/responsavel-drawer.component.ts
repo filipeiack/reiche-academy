@@ -132,7 +132,7 @@ export class ResponsavelDrawerComponent implements OnInit {
       },
       error: (err) => {
         console.error('Erro ao carregar perfis:', err);
-        this.showToast('Erro ao carregar perfis do sistema', 'error');
+        this.showToast(err?.error?.message || 'Erro ao carregar perfis do sistema', 'error');
       }
     });
   }
@@ -152,7 +152,7 @@ export class ResponsavelDrawerComponent implements OnInit {
       },
       error: (err) => {
         console.error('Erro ao carregar usuários:', err);
-        this.showToast('Erro ao carregar usuários da empresa', 'error');
+        this.showToast(err?.error?.message || 'Erro ao carregar usuários da empresa', 'error');
         this.loading = false;
       }
     });

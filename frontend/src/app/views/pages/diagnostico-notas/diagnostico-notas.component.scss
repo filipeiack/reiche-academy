@@ -147,3 +147,204 @@ input.bg-success {
   background-color: var(--bs-success-bg-subtle) !important;
   border-color: var(--bs-success) !important;
 }
+
+/* ========== RESPONSIVIDADE MOBILE ========== */
+
+@media (max-width: 991px) {
+  // Header do dashboard - empilhar elementos verticalmente
+  #headerDashboard {
+    .mb-2 {
+      flex-direction: column !important;
+      align-items: flex-start !important;
+      gap: 1rem;
+    }
+  }
+
+  // Barra de salvamento - empilhar badges e indicadores
+  #savingBar {
+    flex-direction: column !important;
+    align-items: flex-start !important;
+    width: 100%;
+    gap: 0.5rem !important;
+
+    .badge {
+      width: 100%;
+      justify-content: center;
+    }
+
+    .saving-indicator,
+    .last-save-info {
+      width: 100%;
+      justify-content: center;
+    }
+  }
+
+  // Cabeçalho do pilar - empilhar informações
+  .pilar-header {
+    flex-direction: column;
+    align-items: flex-start !important;
+    gap: 1rem;
+    width: 100%;
+
+    > div:first-child {
+      width: 100%;
+    }
+
+    .ms-auto {
+      margin-left: 0 !important;
+      width: 100%;
+      flex-wrap: wrap;
+      gap: 0.5rem !important;
+    }
+
+    .badge {
+      flex: 1 1 auto;
+      min-width: fit-content;
+    }
+  }
+
+  // Dropdown de ações do pilar
+  .w-30px {
+    width: auto !important;
+    margin-top: 0.5rem;
+  }
+}
+
+@media (max-width: 768px) {
+  // Ajustes mais agressivos para mobile pequeno
+  .card-header.sticky-header-card {
+    padding: 0.75rem !important;
+  }
+
+  .pilar-header {
+    .btn {
+      font-size: 0.9rem;
+
+      i {
+        font-size: 1.25rem !important;
+      }
+    }
+
+    .ms-auto {
+      justify-content: flex-start;
+    }
+
+    .badge {
+      font-size: 0.75rem;
+      padding: 0.35em 0.65em;
+    }
+  }
+
+  // Rotinas - empilhar campos
+  [data-testid="rotina-row"] {
+    .col-md-8,
+    .col-md-4 {
+      width: 100%;
+      margin-bottom: 0.5rem;
+    }
+
+    .col-md-7,
+    .col-md-5 {
+      width: 100%;
+      margin-bottom: 0.5rem;
+    }
+
+    .row.align-items-center {
+      row-gap: 0.5rem;
+    }
+  }
+
+  // Alert de responsável
+  ngb-alert {
+    font-size: 0.85rem;
+    padding: 0.5rem;
+
+    i {
+      font-size: 1rem;
+    }
+  }
+
+  // Breadcrumb menor
+  .breadcrumb {
+    font-size: 0.85rem;
+    margin-bottom: 0.5rem;
+  }
+}
+
+@media (max-width: 576px) {
+  // Ajustes para telas muito pequenas
+  #headerDashboard {
+    padding: 0.5rem;
+
+    .breadcrumb {
+      font-size: 0.8rem;
+    }
+  }
+
+  .pilar-header {
+    .btn span {
+      font-size: 0.85rem;
+    }
+
+    .badge {
+      font-size: 0.7rem;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      max-width: 100%;
+    }
+  }
+
+  // Campos de rotina em coluna única
+  [data-testid="rotina-row"] {
+    .col-md-12 {
+      padding-left: 0.5rem;
+      padding-right: 0.5rem;
+    }
+
+    .row > div {
+      width: 100%;
+      margin-bottom: 0.5rem;
+    }
+  }
+
+  // Labels menores
+  .form-label,
+  .form-label-xs {
+    font-size: 0.7rem;
+  }
+
+  // Inputs e selects com altura reduzida
+  .form-control,
+  ::ng-deep ng-select .ng-select-container {
+    font-size: 0.875rem;
+  }
+
+  // Dropdown de ações mais compacto
+  .dropdown-item {
+    font-size: 0.85rem;
+    padding: 0.5rem 1rem;
+
+    i {
+      font-size: 0.9rem;
+    }
+  }
+
+  // Empty state mais compacto
+  .empty-state {
+    padding: 2rem 0.5rem;
+
+    i {
+      font-size: 2rem;
+    }
+
+    p {
+      font-size: 0.95rem;
+    }
+  }
+
+  // Card body com menos padding
+  .card-body {
+    padding: 0.75rem;
+  }
+}

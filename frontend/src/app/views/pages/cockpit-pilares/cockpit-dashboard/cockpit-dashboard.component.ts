@@ -121,8 +121,10 @@ export class CockpitDashboardComponent implements OnInit, OnDestroy {
       },
       error: (err: unknown) => {
         console.error('Erro ao carregar cockpit:', err);
-        this.error = 'Erro ao carregar cockpit. Tente novamente.';
+        const message = (err as any)?.error?.message || 'Erro ao carregar cockpit. Tente novamente.';
+        this.error = message;
         this.loading = false;
+        this.router.navigate(['/diagnostico-notas']);
       },
     });
   }

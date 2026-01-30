@@ -145,7 +145,7 @@ export class PilarAddDrawerComponent implements OnInit {
       error: (err) => {
         console.error('Erro ao carregar pilares:', err);
         this.loadingPilares = false;
-        this.showToast('Erro ao carregar pilares', 'error');
+        this.showToast(err?.error?.message || 'Erro ao carregar pilares', 'error');
       }
     });
   }

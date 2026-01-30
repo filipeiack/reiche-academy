@@ -140,8 +140,17 @@
                                     {{ "AUTH.PASSWORD" | translate }}
                                     <span class="text-danger">*</span>
                                 </label>
-                                <input type="password" class="form-control" [class.is-invalid]="isFieldInvalid('senha')"
-                                    id="senha" formControlName="senha" placeholder="Ex: Senha123@" />
+                                <div class="input-group">
+                                    <input [type]="showPassword ? 'text' : 'password'" class="form-control"
+                                        [class.is-invalid]="isFieldInvalid('senha')" id="senha"
+                                        formControlName="senha" placeholder="Ex: Senha123@" />
+                                    <button type="button" class="btn btn-outline-secondary"
+                                        (click)="togglePasswordVisibility()"
+                                        [attr.aria-label]="showPassword ? 'Ocultar senha' : 'Mostrar senha'">
+                                        <i class="feather" [class.icon-eye]="showPassword"
+                                            [class.icon-eye-off]="!showPassword"></i>
+                                    </button>
+                                </div>
                                 <small class="text-muted d-block mt-1">
                                     <i class="feather icon-info"></i>
                                     Mín. 8 caracteres com maiúscula, minúscula, número e especial (&#64;$!%*?&)
@@ -163,6 +172,12 @@
                                         [class.is-invalid]="isFieldInvalid('senha')" id="senhaEdit"
                                         formControlName="senha"
                                         placeholder="Deixe em branco para manter a senha atual" />
+                                    <button type="button" class="btn btn-outline-secondary"
+                                        (click)="togglePasswordVisibility()"
+                                        [attr.aria-label]="showPassword ? 'Ocultar senha' : 'Mostrar senha'">
+                                        <i class="feather" [class.icon-eye]="showPassword"
+                                            [class.icon-eye-off]="!showPassword"></i>
+                                    </button>
                                 </div>
                                 <small class="form-text text-muted d-block mt-1">
                                     <i class="feather icon-info"></i>

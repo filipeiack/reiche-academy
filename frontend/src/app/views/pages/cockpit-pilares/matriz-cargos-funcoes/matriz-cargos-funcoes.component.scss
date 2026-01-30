@@ -15,10 +15,36 @@
   font-weight: 600;
 }
 
+.table {
+  min-width: 640px;
+}
+
 // Mobile: manter apenas nome e ação na tabela
 @media (max-width: 768px) {
+  .cargos-header,
+  .funcoes-header {
+    flex-direction: column;
+    align-items: stretch !important;
+    gap: 0.5rem;
+  }
+
+  .btn-add-cargo,
+  .btn-add-funcao {
+    width: 100%;
+  }
+
   .col-mobile-hide {
     display: none;
+  }
+
+  .cargo-responsaveis {
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    gap: 0.5rem;
+  }
+
+  .table {
+    min-width: 520px;
   }
 }
 

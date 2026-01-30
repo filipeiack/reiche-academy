@@ -130,7 +130,7 @@ export class PlanoAcaoEspecificoComponent implements OnInit {
       },
       error: (err) => {
         console.error('Erro ao remover ação:', err);
-        this.showToast('Erro ao remover ação', 'error');
+        this.showToast(err?.error?.message || 'Erro ao remover ação', 'error');
       },
     });
   }

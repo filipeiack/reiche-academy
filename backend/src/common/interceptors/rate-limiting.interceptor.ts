@@ -54,6 +54,9 @@ export class RateLimitingInterceptor implements NestInterceptor {
     if (path.includes('/auth/forgot')) {
       return this.rateLimitService.limits.auth.forgot;
     }
+    if (path.includes('/auth/reset')) {
+      return this.rateLimitService.limits.auth.reset;
+    }
 
     // Sensitive operations (POST, PUT, DELETE, PATCH)
     if (['POST', 'PUT', 'DELETE', 'PATCH'].includes(method)) {

@@ -251,7 +251,7 @@ export class EmpresasListComponent implements OnInit {
         this.selectedEmpresa = empresa; 
         this.loadingDetails = false; 
       },
-      error: () => { this.loadingDetails = false; this.showToast('Erro ao carregar detalhes', 'error'); }
+      error: (err) => { this.loadingDetails = false; this.showToast(err?.error?.message || 'Erro ao carregar detalhes', 'error'); }
     });
   }
 }

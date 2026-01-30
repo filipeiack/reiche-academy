@@ -306,7 +306,8 @@ export class DiagnosticoEvolucaoComponent implements OnInit, OnDestroy {
       }, 100);
     } catch (err) {
       console.error('Erro ao carregar histórico de pilares:', err);
-      this.showToast('Erro ao carregar histórico', 'error');
+      const message = (err as any)?.error?.message || 'Erro ao carregar histórico';
+      this.showToast(message, 'error');
       this.historico = [];
       this.destroyBarChart();
       this.anosDisponiveis = [
@@ -437,10 +438,6 @@ renderBarChart(): void {
             max: 10,
             ticks: {
               stepSize: 1
-            },
-            title: {
-              display: true,
-              text: 'MÉDIAS'
             }
           },
           x: {

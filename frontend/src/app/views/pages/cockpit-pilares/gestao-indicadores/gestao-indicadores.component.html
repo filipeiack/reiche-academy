@@ -1,13 +1,13 @@
 <div class="gestao-indicadores-wrapper">
   <!-- Cabeçalho -->
-  <div class="cockpit-tab-header d-flex justify-content-between align-items-center">
+  <div class="cockpit-tab-header d-flex justify-content-between align-items-center gestao-indicadores-header">
     <h5 class="card-title cockpit-tab-title">
       <i class="bi bi-bar-chart me-2"></i>
       Matriz de Indicadores
     </h5>
 
     <button 
-      class="btn btn-primary btn-sm" 
+      class="btn btn-primary btn-sm btn-novo-indicador" 
       data-testid="btn-novo-indicador" 
       (click)="abrirDrawerNovo()">
       <i class="bi bi-plus-circle me-1"></i>
@@ -28,10 +28,10 @@
       <thead class="table-light small">
         <tr>
           <th>Nome</th>
-          <th style="max-width: 80px;">Medida</th>
-          <th style="max-width: 90px;">Status</th>
-          <th>Responsável</th>
-          <th class="text-center" style="width: 60px;">Melhor</th>
+          <th class="col-mobile-hide" style="max-width: 80px;">Medida</th>
+          <th class="col-mobile-hide" style="max-width: 90px;">Status</th>
+          <th class="col-mobile-hide">Responsável</th>
+          <th class="text-center col-mobile-hide" style="width: 60px;">Melhor</th>
           <th class="text-center" style="width: 100px;">Ações</th>
         </tr>
       </thead>
@@ -49,12 +49,12 @@
           </td>
 
           <!-- Tipo de Medida -->
-          <td class="small">
+          <td class="small col-mobile-hide">
             {{ getTipoMedidaLabel(indicador.tipoMedida) }}
           </td>
 
           <!-- Status de Medição -->
-          <td class="small">
+          <td class="small col-mobile-hide">
             @if (indicador.statusMedicao) {
             <span 
               class="badge w-100" 
@@ -65,12 +65,12 @@
           </td>
 
           <!-- Responsável -->
-          <td class="small">
+          <td class="small col-mobile-hide">
             {{ getResponsavelNome(indicador.responsavelMedicaoId) }}
           </td>
 
           <!-- Melhor (Direção) -->
-          <td class="text-center">
+          <td class="text-center col-mobile-hide">
             @if (indicador.melhor === 'MAIOR') {
             <i class="bi bi-arrow-up text-black" style="font-size: 1.25rem;" title="Maior é melhor"></i>
             } @else {

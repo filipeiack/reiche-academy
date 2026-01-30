@@ -203,7 +203,7 @@ export class RotinaEditDrawerComponent implements OnInit {
       },
       error: (err: any) => {
         console.error('Erro ao carregar rotinas:', err);
-        this.showToast('Erro ao carregar rotinas', 'error');
+        this.showToast(err?.error?.message || 'Erro ao carregar rotinas', 'error');
         this.loading = false;
       }
     });
@@ -299,7 +299,8 @@ export class RotinaEditDrawerComponent implements OnInit {
       this.rotinasModificadas.emit();
     } catch (error) {
       console.error('Erro ao salvar ordem:', error);
-      this.showToast('Erro ao salvar ordem', 'error');
+      const message = (error as any)?.error?.message || 'Erro ao salvar ordem';
+      this.showToast(message, 'error');
     }
   }
 

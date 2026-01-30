@@ -126,7 +126,7 @@ export class AdicionarPilarModalComponent implements OnInit {
       error: (err) => {
         console.error('Erro ao carregar pilares:', err);
         this.loading = false;
-        this.showToast('Erro ao carregar pilares', 'error');
+        this.showToast(err?.error?.message || 'Erro ao carregar pilares', 'error');
       }
     });
   }

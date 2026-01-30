@@ -1,6 +1,6 @@
 <div id="headerDashboard" class="sticky-header-dashboard mb-1" data-testid="cockpit-header">
 
-  <div class="mb-2 align-items-center d-flex justify-content-between flex-wrap">
+  <div class="mb-2 align-items-center d-flex justify-content-between flex-wrap cockpit-header-row">
     <!-- Breadcrumb -->
     <nav aria-label="breadcrumb">
       <ol class="breadcrumb breadcrumb-arrow">
@@ -38,7 +38,7 @@
 
 <div class="row px-3">
   <!-- Tabs -->
-  <ul class="nav nav-tabs mb-2" role="tablist">
+  <ul class="nav nav-tabs mb-2 cockpit-tabs" role="tablist">
     <li class="nav-item" role="presentation">
       <button class="nav-link" data-testid="tab-contexto" [class.active]="activeTab === 'contexto'" (click)="setActiveTab('contexto')"
         type="button">

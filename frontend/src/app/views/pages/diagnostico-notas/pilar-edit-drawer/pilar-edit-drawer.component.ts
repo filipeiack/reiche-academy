@@ -193,7 +193,7 @@ export class PilarEditDrawerComponent implements OnInit {
       },
       error: (err) => {
         console.error('Erro ao carregar pilares:', err);
-        this.showToast('Erro ao carregar pilares', 'error');
+        this.showToast(err?.error?.message || 'Erro ao carregar pilares', 'error');
         this.loading = false;
       }
     });
@@ -289,7 +289,8 @@ export class PilarEditDrawerComponent implements OnInit {
       this.pilaresModificados.emit();
     } catch (error) {
       console.error('Erro ao salvar ordem:', error);
-      this.showToast('Erro ao salvar ordem', 'error');
+      const message = (error as any)?.error?.message || 'Erro ao salvar ordem';
+      this.showToast(message, 'error');
     }
   }
 

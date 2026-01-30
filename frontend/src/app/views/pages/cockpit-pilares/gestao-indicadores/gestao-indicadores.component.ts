@@ -63,7 +63,7 @@ export class GestaoIndicadoresComponent implements OnInit {
       },
       error: (err) => {
         console.error('Erro ao carregar indicadores:', err);
-        this.showToast('Erro ao carregar indicadores', 'error');
+        this.showToast(err?.error?.message || 'Erro ao carregar indicadores', 'error');
         this.loading = false;
       },
     });
@@ -207,7 +207,7 @@ export class GestaoIndicadoresComponent implements OnInit {
       },
       error: (err) => {
         console.error('Erro ao remover indicador:', err);
-        this.showToast('Erro ao remover indicador', 'error');
+        this.showToast(err?.error?.message || 'Erro ao remover indicador', 'error');
       },
     });
   }
@@ -246,7 +246,8 @@ export class GestaoIndicadoresComponent implements OnInit {
       this.indicadorAtualizado.emit();
     } catch (error) {
       console.error('Erro ao atualizar ordem:', error);
-      this.showToast('Erro ao reordenar indicadores', 'error');
+      const message = (error as any)?.error?.message || 'Erro ao reordenar indicadores';
+      this.showToast(message, 'error');
     }
   }
 

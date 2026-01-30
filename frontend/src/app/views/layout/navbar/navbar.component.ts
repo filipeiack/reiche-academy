@@ -266,17 +266,18 @@ export class NavbarComponent implements OnInit {
   }
 
   getSelectedEmpresaPeriodoMentoriaLabel(): string {
-    if (!this.selectedEmpresa) return '';
-    if (!this.selectedEmpresa.periodoMentoriaAtivo) return 'Sem mentoria';
+    const periodoMentoria = this.selectedEmpresa?.periodoMentoriaAtivo || this.currentUser?.empresa?.periodoMentoriaAtivo;
+    if (!periodoMentoria) return 'Sem mentoria';
 
-    return `Período ${this.selectedEmpresa.periodoMentoriaAtivo.numero} Ativo`;
+    return `Período ${periodoMentoria.numero} Ativo`;
   }
 
   getSelectedEmpresaPeriodoMentoriaInterval(): string {
-    if (!this.selectedEmpresa?.periodoMentoriaAtivo) return '';
+    const periodoMentoria = this.selectedEmpresa?.periodoMentoriaAtivo || this.currentUser?.empresa?.periodoMentoriaAtivo;
+    if (!periodoMentoria) return '';
 
-    const dataInicio = new Date(this.selectedEmpresa.periodoMentoriaAtivo.dataInicio);
-    const dataFim = new Date(this.selectedEmpresa.periodoMentoriaAtivo.dataFim);
+    const dataInicio = new Date(periodoMentoria.dataInicio);
+    const dataFim = new Date(periodoMentoria.dataFim);
     const meses = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'];
 
     const mesInicio = meses[dataInicio.getMonth()];

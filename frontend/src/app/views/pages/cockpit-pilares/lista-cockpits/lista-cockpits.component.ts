@@ -42,7 +42,7 @@ export class ListaCockpitsComponent implements OnInit {
       },
       error: (err) => {
         console.error('Erro ao carregar cockpits:', err);
-        this.error = 'Erro ao carregar cockpits. Tente novamente.';
+        this.error = err?.error?.message || 'Erro ao carregar cockpits. Tente novamente.';
         this.loading = false;
       },
     });

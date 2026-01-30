@@ -164,8 +164,9 @@ export class CriarCockpitDrawerComponent {
         },
         error: (err: unknown) => {
           console.error('Erro ao criar cockpit:', err);
-          this.error = 'Erro ao criar cockpit. Tente novamente.';
-          this.showToast('Erro ao criar cockpit', 'error');
+          const message = (err as any)?.error?.message || 'Erro ao criar cockpit. Tente novamente.';
+          this.error = message;
+          this.showToast(message, 'error');
           this.loading = false;
         },
       });

@@ -170,7 +170,7 @@ export class FuncaoFormDrawerComponent {
       },
       error: (err) => {
         console.error('Erro ao salvar função:', err);
-        this.showToast('Erro ao salvar função', 'error');
+        this.showToast(err?.error?.message || 'Erro ao salvar função', 'error');
         this.saving = false;
       },
     });
