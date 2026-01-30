@@ -83,19 +83,15 @@
   }
 }
 
-/* Garante que as setas de incremento/decremento sempre apareçam */
 input[type=number]::-webkit-inner-spin-button,
 input[type=number]::-webkit-outer-spin-button {
     opacity: 1;
 }
 
-/* Para Firefox, a aparência é 'number-input' por padrão. 
-   Não é necessário CSS extra para mantê-lo sempre visível. */
 input[type=number] {
     -moz-appearance: number-input; 
 }
 
-/* Garantir mesma altura para ng-select e input */
 ::ng-deep ng-select .ng-select-container {
   min-height: calc(1.5em + 0.75rem + 2px);
   height: calc(1.5em + 0.75rem + 2px);
@@ -111,7 +107,6 @@ input[type=number].form-control {
   padding: 0.375rem 0.75rem;
 }
 
-/* Classes de criticidade para ng-select */
 ::ng-deep ng-select.bg-danger .ng-select-container {
   background-color: var(--bs-danger-bg-subtle) !important;
   border-color: var(--bs-danger) !important;
@@ -132,7 +127,6 @@ input[type=number].form-control {
   border-color: var(--bs-success) !important;
 }
 
-/* Classes de nota para input */
 input.bg-danger {
   background-color: var(--bs-danger-bg-subtle) !important;
   border-color: var(--bs-danger) !important;
@@ -148,10 +142,7 @@ input.bg-success {
   border-color: var(--bs-success) !important;
 }
 
-/* ========== RESPONSIVIDADE MOBILE ========== */
-
 @media (max-width: 991px) {
-  // Header do dashboard - empilhar elementos verticalmente
   #headerDashboard {
     .mb-2 {
       flex-direction: column !important;
@@ -160,7 +151,6 @@ input.bg-success {
     }
   }
 
-  // Barra de salvamento - empilhar badges e indicadores
   #savingBar {
     flex-direction: column !important;
     align-items: flex-start !important;
@@ -179,7 +169,6 @@ input.bg-success {
     }
   }
 
-  // Cabeçalho do pilar - empilhar informações
   .pilar-header {
     flex-direction: column;
     align-items: flex-start !important;
@@ -203,7 +192,6 @@ input.bg-success {
     }
   }
 
-  // Dropdown de ações do pilar
   .w-30px {
     width: auto !important;
     margin-top: 0.5rem;
@@ -211,7 +199,6 @@ input.bg-success {
 }
 
 @media (max-width: 768px) {
-  // Ajustes mais agressivos para mobile pequeno
   .card-header.sticky-header-card {
     padding: 0.75rem !important;
   }
@@ -235,7 +222,6 @@ input.bg-success {
     }
   }
 
-  // Rotinas - empilhar campos
   [data-testid="rotina-row"] {
     .col-md-8,
     .col-md-4 {
@@ -254,7 +240,6 @@ input.bg-success {
     }
   }
 
-  // Alert de responsável
   ngb-alert {
     font-size: 0.85rem;
     padding: 0.5rem;
@@ -264,7 +249,6 @@ input.bg-success {
     }
   }
 
-  // Breadcrumb menor
   .breadcrumb {
     font-size: 0.85rem;
     margin-bottom: 0.5rem;
@@ -272,7 +256,6 @@ input.bg-success {
 }
 
 @media (max-width: 576px) {
-  // Ajustes para telas muito pequenas
   #headerDashboard {
     padding: 0.5rem;
 
@@ -295,7 +278,6 @@ input.bg-success {
     }
   }
 
-  // Campos de rotina em coluna única
   [data-testid="rotina-row"] {
     .col-md-12 {
       padding-left: 0.5rem;
@@ -308,19 +290,16 @@ input.bg-success {
     }
   }
 
-  // Labels menores
   .form-label,
   .form-label-xs {
     font-size: 0.7rem;
   }
 
-  // Inputs e selects com altura reduzida
   .form-control,
   ::ng-deep ng-select .ng-select-container {
     font-size: 0.875rem;
   }
 
-  // Dropdown de ações mais compacto
   .dropdown-item {
     font-size: 0.85rem;
     padding: 0.5rem 1rem;
@@ -330,7 +309,6 @@ input.bg-success {
     }
   }
 
-  // Empty state mais compacto
   .empty-state {
     padding: 2rem 0.5rem;
 
@@ -343,7 +321,6 @@ input.bg-success {
     }
   }
 
-  // Card body com menos padding
   .card-body {
     padding: 0.75rem;
   }
