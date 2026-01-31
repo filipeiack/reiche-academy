@@ -22,7 +22,7 @@ export class ForgotPasswordComponent implements OnInit {
   loading = false;
   success = false;
   errorMessage = '';
-  currentTheme = 'dark';
+  currentTheme = 'light';
   logoUrl = 'assets/images/logo_reiche_academy_light.png';
 
   form = this.fb.group({

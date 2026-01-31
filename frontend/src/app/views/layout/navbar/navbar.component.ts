@@ -32,7 +32,7 @@ import { Usuario } from '../../../core/models/auth.model';
 })
 export class NavbarComponent implements OnInit {
 
-  currentTheme: string = 'dark';
+  currentTheme: string = 'light';
   translateService = inject(TranslateService);
   authService = inject(AuthService);
   empresasService = inject(EmpresasService);
