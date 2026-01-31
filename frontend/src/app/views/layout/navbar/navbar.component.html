@@ -39,11 +39,11 @@
         }
         @if (getSelectedEmpresaLocalizacao()) {
         <span class="text-muted fs-11px">{{ getSelectedEmpresaLocalizacao() }}
-          @if (getSelectedEmpresaPeriodoMentoriaInterval()) {
-            <i class="bi bi-square " style="font-size: 8px;"></i>
-            <span class="text-muted"> Mentoria: {{ getSelectedEmpresaPeriodoMentoriaInterval() }}</span>
-          }
         </span>
+        @if (getSelectedEmpresaPeriodoMentoriaInterval()) {
+          <!-- <i class="bi bi-circle " style="font-size: 8px;"></i> -->
+          <span class="text-muted"> Mentoria: {{ getSelectedEmpresaPeriodoMentoriaInterval() }}</span>
+        }
         }
         <!-- @if (getSelectedEmpresaPeriodoMentoriaLabel()) {
         <span class="text-muted fs-11px">{{ getSelectedEmpresaPeriodoMentoriaLabel() }}</span>
@@ -66,11 +66,11 @@
         @if (getEmpresaLocalizacao()) {
         <span class="text-muted fs-12px">
           {{ getEmpresaLocalizacao() }} 
-          @if (getSelectedEmpresaPeriodoMentoriaInterval()) {
-            <i class="bi bi-square " style="font-size: 8px;"></i>
-            <span class="text-muted"> Mentoria: {{ getSelectedEmpresaPeriodoMentoriaInterval() }}</span>
-          }
         </span>
+        @if (getSelectedEmpresaPeriodoMentoriaInterval()) {
+          <!-- <i class="bi bi-square " style="font-size: 8px;"></i> -->
+          <span class="text-muted"> Mentoria: {{ getSelectedEmpresaPeriodoMentoriaInterval() }}</span>
+        }
         }
 
         
