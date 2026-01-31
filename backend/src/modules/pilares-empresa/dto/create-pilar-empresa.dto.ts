@@ -23,6 +23,6 @@ export class CreatePilarEmpresaDto {
   })
   @ValidateIf((o) => !o.pilarTemplateId)
   @IsNotEmpty({ message: 'Nome é obrigatório para pilares customizados' })
-  @Length(2, 200, { message: 'Nome deve ter entre 2 e 200 caracteres' })
+  @Length(2, 60, { message: 'Nome deve ter entre 2 e 60 caracteres' })
   nome?: string;
 }

@@ -27,15 +27,47 @@ Este diretório contém **handoffs** — documentos que passam contexto e decis�
 <agente>-v<versão>.md
 
 Agentes:
-- reviewer    (Business Rules Reviewer)
-- dev         (Dev Agent)
-- pattern     (Pattern Enforcer)
-- qa-unit     (QA Unitário Estrito)
-- qa-e2e      (QA E2E Interface)
+- system-engineer (System Engineer - meta-nível, arquitetura)
+- reviewer        (Business Rules Reviewer)
+- dev             (Dev Agent)
+- pattern         (Pattern Enforcer)
+- qa-unit         (QA Unitário Estrito)
+- qa-e2e          (QA E2E Interface)
 
 Versão:
 - v1, v2, v3... (incrementa apenas em idas e vindas)
 ```
+
+---
+
+## Tipos de Handoffs
+
+### Handoffs Regulares (Dev → Pattern → QA)
+Fluxo padrão de implementação de features:
+```
+<feature-name>/
+  ├── reviewer-v1.md       (opcional - se houver revisão prévia)
+  ├── dev-v1.md           (primeira implementação)
+  ├── pattern-v1.md       (validação de padrões)
+  ├── dev-v2.md           (correções, se pattern-v1 = NÃO CONFORME)
+  ├── pattern-v2.md       (revalidação)
+  ├── qa-unit-v2.md       (testes unitários, se pattern-v2 = CONFORME)
+  └── qa-e2e-v2.md        (testes E2E finais)
+```
+
+### Handoffs de System Engineer (Meta-Nível)
+Mudanças arquiteturais, novos módulos, governança:
+```
+<feature-name>/
+  ├── system-engineer-v1.md           (especificação + instruções para Dev)
+  ├── SYSTEM_ENGINEERING_CHANGE_REPORT.md  (relatório de impacto)
+  └── README.md                       (navegação do handoff)
+```
+
+**Diferenças:**
+- System Engineer **não entra no fluxo regular** (Pattern → QA)
+- Handoff é **ponto de entrada** para Dev Agent iniciar implementação
+- Após Dev implementar, **fluxo regular** continua (dev → pattern → qa)
 
 ---
 
@@ -102,6 +134,12 @@ graph LR
 ---
 
 ## Responsabilidades por Agente
+
+### System Engineer (Meta-Nível)
+- **Cria:** `system-engineer-v1.md`, `SYSTEM_ENGINEERING_CHANGE_REPORT.md`, ADRs
+- **Lê:** FLOW.md, DOCUMENTATION_AUTHORITY.md, definições de agentes
+- **Atua quando:** Nova feature arquitetural, mudança de governança, criação/modificação de agentes
+- **Não atua:** Em PRs de código, implementação regular
 
 ### Reviewer
 - **Cria:** `reviewer-v1.md` (sempre v1, apenas análise inicial)
@@ -222,4 +260,15 @@ mv /docs/handoffs/feature-antiga/ /docs/handoffs-archive/
 ---
 
 **Estrutura mantida pelo System Engineer**  
-**Última atualização:** 2026-01-09
+**Última atualização:** 2026-01-15
+
+---
+
+## Features Ativas
+
+### Cockpit de Pilares (Fase 1 - MVP)
+📂 [cockpit-pilares/](./cockpit-pilares/)  
+**Status:** 🟢 READY FOR IMPLEMENTATION  
+**Handoff:** [system-engineer-v1.md](./cockpit-pilares/system-engineer-v1.md)  
+**ADR:** [ADR-003](../adr/ADR-003-cockpit-pilares-architecture.md)  
+**Próximo agente:** Dev Agent

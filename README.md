@@ -104,15 +104,20 @@ reiche-academy/
 
 ## 📚 Documentação
 
-- [Contexto do Projeto](/docs/CONTEXT.md)
-- [Convenções do Projeto](/docs/conventions/README.md) - Padrões reais observados no código
-  - [Backend](/docs/conventions/backend.md)
-  - [Frontend](/docs/conventions/frontend.md)
-  - [Testes](/docs/conventions/testing.md)
-  - [Naming](/docs/conventions/naming.md)
-  - [Git](/docs/conventions/git.md)
-- [Instruções Copilot](.github/copilot-instructions.md)
-- [Planilhas Originais](planilhas/)
+- **[Guias de Configuração](docs/guides/)** - Setup, Docker, Git, Deploy VPS
+- **[Referência Técnica](docs/reference/)** - Contexto do projeto, documentação de funcionalidades
+- **[Regras de Negócio](docs/business-rules/)** - Regras normativas do sistema
+- **[Arquitetura](docs/architecture/)** - Estrutura técnica e diagramas
+- **[Convenções](docs/conventions/)** - Padrões de código
+  - [Backend](docs/conventions/backend.md)
+  - [Frontend](docs/conventions/frontend.md)
+  - [Testes](docs/conventions/testing.md)
+  - [Naming](docs/conventions/naming.md)
+  - [Git](docs/conventions/git.md)
+- **[ADRs](docs/adr/)** - Decisões arquiteturais registradas
+- **[FLOW.md](docs/FLOW.md)** - Fluxo oficial de desenvolvimento
+- **[Instruções Copilot](.github/copilot-instructions.md)**
+- **[Planilhas Originais](planilhas/)**
 
 ## ⚠️ Limitações das Convenções Atuais
 

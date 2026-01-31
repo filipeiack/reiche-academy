@@ -6,7 +6,7 @@ import { BehaviorSubject } from 'rxjs';
 })
 export class ThemeModeService {
 
-  readonly currentTheme = new BehaviorSubject<string>('dark');
+  readonly currentTheme = new BehaviorSubject<string>('light');
   
   constructor() {
 
@@ -17,9 +17,9 @@ export class ThemeModeService {
       this.toggleTheme(themeParam);
     }
 
-    // Set initial localStorage 'theme' value to 'dark' if 'null'
+    // Set initial localStorage 'theme' value to 'light' if 'null'
     if (this.getStoredTheme() === null) {
-      this.setStoredTheme('dark');
+      this.setStoredTheme('light');
     }
     
     // Set the initial theme.
@@ -35,7 +35,7 @@ export class ThemeModeService {
       return storedTheme;
     }
 
-    return 'dark'; // Tema padrão
+    return 'light'; // Tema padrão
   }
 
   setTheme = (theme: string) => {

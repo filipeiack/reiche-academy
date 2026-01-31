@@ -8,10 +8,12 @@ services:
       POSTGRES_USER: reiche
       POSTGRES_PASSWORD: reiche_dev_2024
       POSTGRES_DB: reiche_academy
+      TZ: America/Sao_Paulo
     ports:
       - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
+      - ./scripts/init-timezone.sql:/docker-entrypoint-initdb.d/01-timezone.sql
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U reiche"]
       interval: 10s
@@ -58,6 +60,7 @@ services:
       CORS_ORIGIN: http://localhost:4200
       THROTTLE_TTL: 60
       THROTTLE_LIMIT: 10
+      TZ: America/Sao_Paulo
     ports:
       - "3000:3000"
     volumes:
@@ -83,6 +86,7 @@ services:
     restart: unless-stopped
     environment:
       API_URL: http://localhost:3000
+      TZ: America/Sao_Paulo
     ports:
       - "4200:4200"
     volumes:

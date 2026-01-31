@@ -1,17 +1,37 @@
-<!-- Breadcrumb -->
-<nav aria-label="breadcrumb">
-  <ol class="breadcrumb breadcrumb-arrow mb-1">
-    <li class="breadcrumb-item">
-      <i class="feather icon-repeat"></i>      
-    </li>
-    <li class="breadcrumb-item">
-      Rotinas
-    </li>
-    <li class="breadcrumb-item active" aria-current="page">
-      {{ isEditMode ? 'Editar' : 'Adicionar' }} Rotina
-    </li>
-  </ol>
-</nav>
+<div class="mb-2 align-items-center gap-2 d-flex justify-content-between flex-wrap">
+  <!-- Breadcrumb -->
+  <nav aria-label="breadcrumb">
+    <ol class="breadcrumb breadcrumb-arrow mb-1">
+      <li class="breadcrumb-item">
+        <i class="feather icon-repeat"></i>
+      </li>
+      <li class="breadcrumb-item">
+        Rotinas
+      </li>
+      <li class="breadcrumb-item active" aria-current="page">
+        {{ isEditMode ? 'Editar' : 'Adicionar' }} Rotina
+      </li>
+    </ol>
+  </nav>
+
+  <!-- Buttons -->
+  <div class="d-flex gap-2">
+    <button type="button" data-testid="cancel-rotina-button" (click)="handleCancel()" class="btn btn-outline-secondary">
+      {{ 'BUTTONS.CANCEL' | translate }}
+    </button>
+    <button type="submit" form="rotinaForm" data-testid="submit-rotina-button" class="btn btn-primary"
+      [disabled]="loading || submitting || form.invalid">
+      @if (loading || submitting) {
+      <span class="spinner-border spinner-border-sm me-2" role="status"></span>
+      } @if (isEditMode) {
+      {{ "BUTTONS.UPDATE" | translate }}
+      } @else {
+      {{ "BUTTONS.CREATE" | translate }}
+      }
+    </button>
+
+  </div>
+</div>
 
 <!-- Form -->
 <div class="card-body">
@@ -24,16 +44,17 @@
   } @else {
   <div class="row">
     <div class="col-md-8">
-      <form [formGroup]="form" (ngSubmit)="onSubmit()">
+      <form id="rotinaForm" [formGroup]="form" (ngSubmit)="onSubmit()">
         <div class="card">
           <div class="card-body">
-            
+
             <!-- Pilar -->
             <div class="mb-3">
               <label for="pilarId" class="form-label">
                 Pilar <span class="text-danger">*</span>
               </label>
-              <select #pilarIdSelect class="form-select" id="pilarId" formControlName="pilarId" [class.is-invalid]="pilarIdInvalid">
+              <select #pilarIdSelect class="form-select" id="pilarId" formControlName="pilarId"
+                [class.is-invalid]="pilarIdInvalid">
                 <option value="">Selecione um pilar</option>
                 <option *ngFor="let pilar of pilares" [value]="pilar.id">
                   {{ pilar.nome }}
@@ -46,7 +67,7 @@
                 Pilar é obrigatório
               </div>
             </div>
-            
+
             <!-- Rotina -->
             <div class="mb-3">
               <label for="nome" class="form-label">
@@ -67,7 +88,7 @@
               </div>
             </div>
 
-            
+
             <!-- Descrição -->
             <div class="mb-3">
               <label for="descricao" class="form-label">Explicação da Rotina</label>
@@ -84,81 +105,17 @@
               </div>
             </div>
 
-            <!-- Ordem comentada por enquanto-->
-            <!-- <div class="mb-3">
-              <label for="ordem" class="form-label">Ordem</label>
-              <input type="number" class="form-control" id="ordem" formControlName="ordem"
-                [class.is-invalid]="ordemInvalid" placeholder="1" min="1">
-              <div class="form-text">
-                Ordem de exibição dentro do pilar (opcional)
-              </div>
-              <div class="invalid-feedback" *ngIf="ordemInvalid">
-                <span *ngIf="form.get('ordem')?.errors?.['min']">
-                  Ordem deve ser no mínimo 1
-                </span>
-              </div>
-            </div> -->
-
-            <!-- Modelo -->
-            <!-- <div class="mb-3">
-              <div class="form-check form-switch">
-                <input class="form-check-input" type="checkbox" id="modelo"
-                                        formControlName="modelo">
-                <label class="form-check-label" for="modelo">
-                  Rotina Padrão
-                </label>
-              </div>
-              <div class="form-text">
-                Rotinas modelo são auto-associadas a novas empresas
-              </div>
-            </div> -->
           </div>
         </div>
 
-        <!-- Botões -->
+
         <div class="form-footer mt-4 d-flex justify-content-end gap-2">
-          <button type="button" (click)="handleCancel()" class="btn btn-outline-secondary">
-            {{ 'BUTTONS.CANCEL' | translate }}
-          </button>
-          <button type="submit" class="btn btn-primary" [disabled]="loading || submitting || form.invalid">
-            @if (loading || submitting) {
-            <span class="spinner-border spinner-border-sm me-2" role="status"></span>
-            }
-            @if (isEditMode) {
-            {{ 'BUTTONS.UPDATE' | translate }}
-            } @else {
-            {{ 'BUTTONS.CREATE' | translate }}
-            }
-          </button>
+
         </div>
       </form>
     </div>
 
-    <!-- Help Card -->
-    <div class="col-lg-4">
-      <div class="card">
-        <div class="card-body">
-          <h5 class="card-title">
-            <i class="bi bi-info-circle me-2"></i>
-            Informações
-          </h5>
-          <p class="card-text text-muted small">
-            Rotinas são atividades ou processos vinculados a pilares específicos.
-          </p>
-          <hr>
-          <h6 class="small fw-bold">Campos Obrigatórios</h6>
-          <ul class="small text-muted">
-            <li>Nome (2-200 caracteres)</li>
-            <li>Pilar</li>
-          </ul>
-          <h6 class="small fw-bold mt-3">Rotinas Modelo</h6>
-          <p class="small text-muted mb-0">
-            Quando marcada como "modelo", a rotina será automaticamente
-            associada a novas empresas que vincularem este pilar.
-          </p>
-        </div>
-      </div>
-    </div>
+
   </div>
   }
 </div>

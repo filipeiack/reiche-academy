@@ -7,58 +7,80 @@
     </div>
 
     <!-- Seletor de Empresa (Admin) ou Exibição (Cliente) -->
-    <div class="empresa-selector-wrapper">
+    <div class="empresa-selector-wrapper d-flex gap-3 align-items-center w-100">
       @if (isAdmin) {
       <!-- Admin: combo para selecionar empresa -->
-      <ng-select data-testid="empresa-select" id="empresaNavbarSelect" [items]="empresas" bindLabel="nome" bindValue="id"
-        [(ngModel)]="selectedEmpresaId" (change)="onEmpresaChange($event)" placeholder="Selecione uma empresa..."
-        [clearable]="false" class="empresa-navbar-select">
+      <ng-select data-testid="empresa-select" id="empresaNavbarSelect" [items]="empresas" bindLabel="nome"
+        bindValue="id" [(ngModel)]="selectedEmpresaId" (change)="onEmpresaChange($event)"
+        placeholder="Selecione uma empresa..." [clearable]="true"
+        class="empresa-navbar-select ng-select-primary-border">
         <ng-template ng-option-tmp let-item="item">
           <div>
             <strong>{{ item.nome }}</strong>
             @if (item.cnpj) {
             <br />
-            <small class="text-muted">{{ item.cnpj }}</small>
+            <small class="text-muted">{{ item.cnpj | cnpj }}</small>
             }
           </div>
         </ng-template>
       </ng-select>
+
+      @if (selectedEmpresa) {
+      <!-- <div class="d-flex align-items-center gap-2">
+        <i class="feather icon-briefcase"></i>
+        <span class="h3 mb-0">
+          {{ selectedEmpresa.nome }}
+        </span>
+      </div> -->
+
+      <div class="d-flex flex-column gap-1 justify-content-center col-mobile-hide empresa-detalhes" style="width: 40%;">
+        @if (getSelectedEmpresaCnpj()) {
+        <span class="text-muted fs-11px">{{ getSelectedEmpresaCnpj() | cnpj }}</span>
+        }
+        @if (getSelectedEmpresaLocalizacao()) {
+        <span class="text-muted fs-11px">{{ getSelectedEmpresaLocalizacao() }}
+        </span>
+        @if (getSelectedEmpresaPeriodoMentoriaInterval()) {
+          <!-- <i class="bi bi-circle " style="font-size: 8px;"></i> -->
+          <span class="text-muted fs-11px"> Mentoria: {{ getSelectedEmpresaPeriodoMentoriaInterval() }}</span>
+        }
+        }
+        <!-- @if (getSelectedEmpresaPeriodoMentoriaLabel()) {
+        <span class="text-muted fs-11px">{{ getSelectedEmpresaPeriodoMentoriaLabel() }}</span>
+        } -->
+      </div>
+      }
       } @else if (currentUser?.empresa) {
 
-      <div class="d-flex gap-3 align-items-center">
+      <div class="d-flex align-items-center gap-2">
         <i class="feather icon-briefcase"></i>
-        <span class="h3">
+        <span class="h3 mb-0">
           {{ getEmpresaNomeUsuario() }}
         </span>
+      </div>
 
-        <div class="d-flex flex-column gap-1">
+      <div class="d-flex flex-column gap-1 justify-content-center col-mobile-hide empresa-detalhes">
+        @if (getEmpresaCnpj()) {
+        <span class="text-muted fs-11px">{{ getEmpresaCnpj() | cnpj }}</span>
+        }
+        @if (getEmpresaLocalizacao()) {
+        <span class="text-muted fs-11px">
+          {{ getEmpresaLocalizacao() }} 
+        </span>
+        @if (getSelectedEmpresaPeriodoMentoriaInterval()) {
+          <!-- <i class="bi bi-square " style="font-size: 8px;"></i> -->
+          <span class="text-muted fs-11px"> Mentoria: {{ getSelectedEmpresaPeriodoMentoriaInterval() }}</span>
+        }
+        }
 
-          @if (getEmpresaCnpj()) {
-          <span class="text-muted fs-12px">{{ getEmpresaCnpj() }}</span>
-          }
-          @if (getEmpresaLocalizacao()) {
-          <span class="text-muted fs-12px">{{ getEmpresaLocalizacao() }}</span>
-          }
-        </div>
-
+        
       </div>
       }
     </div>
 
-    <ul class="navbar-nav">
-      <li class="theme-switcher-wrapper nav-item">
-        <input type="checkbox" (change)="onThemeCheckboxChange($event)" value="" id="theme-switcher">
-        <label for="theme-switcher">
-          <div class="box">
-            <div class="ball"></div>
-            <div class="icons">
-              <i class="feather icon-sun"></i>
-              <i class="feather icon-moon"></i>
-            </div>
-          </div>
-        </label>
-      </li>
-      <li class="nav-item" ngbDropdown>
+    <ul class="navbar-nav ">
+      <!-- Seletor de Idioma -->
+      <li class="nav-item col-mobile-hide" ngbDropdown>
         <a class="nav-link" ngbDropdownToggle id="languageDropdown" role="button">
           <img [src]="currentLanguage?.flag" class="w-20px" [title]="currentLanguage?.code"
             [alt]="currentLanguage?.code">
@@ -75,7 +97,21 @@
           }
         </div>
       </li>
-      <li class="nav-item nav-notifications" ngbDropdown>
+      <!-- Seletor de Tema -->
+      <li class="theme-switcher-wrapper nav-item">
+        <input type="checkbox" (change)="onThemeCheckboxChange($event)" value="" id="theme-switcher">
+        <label for="theme-switcher">
+          <div class="box">
+            <div class="ball"></div>
+            <div class="icons">
+              <i class="feather icon-sun"></i>
+              <i class="feather icon-moon"></i>
+            </div>
+          </div>
+        </label>
+      </li>
+      <!-- Notificações -->
+      <!-- <li class="nav-item nav-notifications" ngbDropdown>
         <a class="nav-link" ngbDropdownToggle id="notificationDropdown">
           <i class="link-icon feather icon-bell"></i>
           <div class="indicator">
@@ -143,7 +179,8 @@
             <a href="" (click)="false">View all</a>
           </div>
         </div>
-      </li>
+      </li> -->
+      <!-- Perfil do Usuário -->
       <li class="nav-item nav-profile" ngbDropdown>
         <a class="nav-link" ngbDropdownToggle id="profileDropdown">
           <app-user-avatar [nome]="currentUser?.nome" [fotoUrl]="currentUser?.fotoUrl" size="small">

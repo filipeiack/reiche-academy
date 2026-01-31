@@ -1,28 +1,47 @@
 @if (!modalMode) {
-<nav aria-label="breadcrumb">
-    <ol class="breadcrumb breadcrumb-dot mb-1">
-        <li class="breadcrumb-item">
-            <i class="feather icon-users"></i>            
-        </li>
-        <li class="breadcrumb-item">
-            {{ "MENU.USUARIOS" | translate }}
-        </li>
-        <li class="breadcrumb-item active" aria-current="page">
-            @if (isEditMode) {
-            {{ "USERS.EDIT" | translate }}
+<div class="mb-2 align-items-center gap-2 d-flex justify-content-between flex-wrap">
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb breadcrumb-dot mb-1">
+            <li class="breadcrumb-item">
+                <i class="feather icon-users"></i>
+            </li>
+            <li class="breadcrumb-item">
+                {{ "MENU.USUARIOS" | translate }}
+            </li>
+            <li class="breadcrumb-item active" aria-current="page">
+                @if (isEditMode) {
+                {{ "USERS.EDIT" | translate }}
+                } @else {
+                {{ "USERS.CREATE" | translate }}
+                }
+            </li>
+        </ol>
+    </nav>
+
+    <!-- Buttons -->
+    <div class="d-flex gap-2">
+        <button type="button" data-testid="cancel-usuario-button" (click)="handleCancel()" class="btn btn-outline-secondary">
+            {{ "BUTTONS.CANCEL" | translate }}
+        </button>
+        <button type="submit" form="usuarioForm" data-testid="submit-usuario-button" class="btn btn-primary" [disabled]="loading || form.invalid">
+            @if (loading) {
+            <span class="spinner-border spinner-border-sm me-2" role="status"></span>
+            } @if (isEditMode) {
+            {{ "BUTTONS.UPDATE" | translate }}
             } @else {
-            {{ "USERS.CREATE" | translate }}
+            {{ "BUTTONS.CREATE" | translate }}
             }
-        </li>
-    </ol>
-</nav>
+        </button>
+    </div>
+
+</div>
 }
 
 <div class="card-body">
     <div class="row">
         <div [ngClass]="!modalMode ? 'col-md-8' : 'col-md-12'">
             <!-- Form Card -->
-            <form [formGroup]="form" (ngSubmit)="onSubmit()">
+            <form id="usuarioForm" [formGroup]="form" (ngSubmit)="onSubmit()" autocomplete="off">
                 <div class="card mb-3">
                     <div class="card-body">
 
@@ -69,12 +88,26 @@
                             <!-- Cargo -->
                             <div class="col-md-8 mb-3">
                                 <label class="form-label" for="cargo">{{ "USERS.CARGO" | translate }}</label>
-                                <input type="text" class="form-control" [class.is-invalid]="isFieldInvalid('cargo')"
-                                    id="cargo" formControlName="cargo" placeholder="Ex: Diretor Financeiro" />
-                                @if (isFieldInvalid('cargo')) {
-                                <div class="invalid-feedback d-block">
-                                    {{ getFieldError("cargo") }}
+                                @if (loadingCargosCockpit) {
+                                <div class="form-control d-flex align-items-center gap-2">
+                                    <span class="spinner-border spinner-border-sm" role="status"></span>
+                                    <span class="text-muted">{{ "COMMON.LOADING" | translate }}</span>
                                 </div>
+                                } @else {
+                                @if (cargosCockpit.length > 0) {
+                                <ul class="list-unstyled mb-0">
+                                    @for (cargo of cargosCockpit; track cargo.cargo + '-' + cargo.pilar) {
+                                    <li class="d-flex align-items-center gap-2 mb-1">
+                                        <i class="feather icon-briefcase"></i>
+                                        <span>{{ cargo.cargo }} — {{ cargo.pilar }}</span>
+                                    </li>
+                                    }
+                                </ul>
+                                } @else {
+                                <div class="form-control-plaintext text-muted">
+                                    {{ "USERS.CARGO_PENDING" | translate }}
+                                </div>
+                                }
                                 }
                             </div>
 
@@ -99,13 +132,13 @@
                                 }
                             </div>
                         </div>
-                        
+
                         <!-- Email -->
                         <div class="mb-3">
-                            <label class="form-label" for="email">{{ "USERS.EMAIL" | translate }}
+                            <label class="form-label" for="emailInputUsuario">{{ "USERS.EMAIL" | translate }}
                                 <span class="text-danger">*</span></label>
                             <input type="email" class="form-control" [class.is-invalid]="isFieldInvalid('email')"
-                                id="email" formControlName="email" placeholder="Ex: joao@reiche.com" />
+                                id="emailInputUsuario" formControlName="email" placeholder="Ex: joao@reiche.com" autocomplete="off" />
                             @if (isFieldInvalid('email')) {
                             <div class="invalid-feedback d-block">
                                 {{ getFieldError("email") }}
@@ -116,37 +149,63 @@
                         <div class="row">
                             <!-- Senha -->
                             <div class="mb-3">
-                            @if (!isEditMode) {
-                                <label class="form-label" for="senha">{{ "AUTH.PASSWORD" | translate }}
-                                    <span class="text-danger">*</span></label>
-                                <input type="password" class="form-control" [class.is-invalid]="isFieldInvalid('senha')"
-                                    id="senha" formControlName="senha" placeholder="Mínimo 6 caracteres" />
-                                @if (isFieldInvalid('senha')) {
-                                <div class="invalid-feedback d-block">
-                                    {{ getFieldError("senha") }}
-                                </div>
-                                }
-                            
-                            } @else {
-                            <!-- Senha (modo edição - opcional) -->
-                                <label class="form-label" for="senhaEdit">{{ "AUTH.PASSWORD" | translate }}
-                                    <span class="text-muted">({{ "COMMON.OPTIONAL" | translate }})</span></label>
+                                @if (!isEditMode) {
+                                <label class="form-label" for="senhaInputUsuario">
+                                    {{ "AUTH.PASSWORD" | translate }}
+                                    <span class="text-danger">*</span>
+                                </label>
                                 <div class="input-group">
                                     <input [type]="showPassword ? 'text' : 'password'" class="form-control"
-                                        [class.is-invalid]="isFieldInvalid('senha')" id="senhaEdit" formControlName="senha"
-                                        placeholder="Deixe em branco para manter a senha atual" />
+                                        [class.is-invalid]="isFieldInvalid('senha')" id="senhaInputUsuario"
+                                        formControlName="senha" placeholder="Ex: Senha123@" autocomplete="new-password" />
+                                    <button type="button" class="btn btn-outline-secondary"
+                                        (click)="togglePasswordVisibility()"
+                                        [attr.aria-label]="showPassword ? 'Ocultar senha' : 'Mostrar senha'">
+                                        <i class="feather" [class.icon-eye]="showPassword"
+                                            [class.icon-eye-off]="!showPassword"></i>
+                                    </button>
                                 </div>
-                                <small class="form-text text-muted d-block mt-1">
-                                    Deixe em branco para manter a senha atual. Mínimo 6 caracteres.
+                                <small class="text-muted d-block mt-1">
+                                    <i class="feather icon-info"></i>
+                                    Mín. 8 caracteres com maiúscula, minúscula, número e especial (&#64;$!%*?&)
                                 </small>
                                 @if (isFieldInvalid('senha')) {
                                 <div class="invalid-feedback d-block">
                                     {{ getFieldError("senha") }}
                                 </div>
-                            }
-                            }
+                                }
+
+                                } @else {
+                                <!-- Senha (modo edição - opcional) -->
+                                <label class="form-label" for="senhaInputUsuarioEdit">
+                                    {{ "AUTH.PASSWORD" | translate }}
+                                    <span class="text-muted">({{ "COMMON.OPTIONAL" | translate }})</span>
+                                </label>
+                                <div class="input-group">
+                                    <input [type]="showPassword ? 'text' : 'password'" class="form-control"
+                                        [class.is-invalid]="isFieldInvalid('senha')" id="senhaInputUsuarioEdit"
+                                        formControlName="senha"
+                                        placeholder="Deixe em branco para manter a senha atual" autocomplete="new-password" />
+                                    <button type="button" class="btn btn-outline-secondary"
+                                        (click)="togglePasswordVisibility()"
+                                        [attr.aria-label]="showPassword ? 'Ocultar senha' : 'Mostrar senha'">
+                                        <i class="feather" [class.icon-eye]="showPassword"
+                                            [class.icon-eye-off]="!showPassword"></i>
+                                    </button>
+                                </div>
+                                <small class="form-text text-muted d-block mt-1">
+                                    <i class="feather icon-info"></i>
+                                    Deixe em branco para manter a senha atual. Se preencher: mín. 8 caracteres com
+                                    maiúscula, minúscula, número e especial (&#64;$!%*?&)
+                                </small>
+                                @if (isFieldInvalid('senha')) {
+                                <div class="invalid-feedback d-block">
+                                    {{ getFieldError("senha") }}
+                                </div>
+                                }
+                                }
                             </div>
-                        </div>                        
+                        </div>
                         }
                     </div>
                 </div>
@@ -162,8 +221,7 @@
                             </label>
                             <ng-select [items]="empresas" bindLabel="nome" bindValue="id"
                                 placeholder="Busque por empresa..." formControlName="empresaId" [searchable]="true"
-                                [clearable]="!shouldDisableEmpresaField"
-                                [disabled]="shouldDisableEmpresaField"
+                                [clearable]="!shouldDisableEmpresaField" [disabled]="shouldDisableEmpresaField"
                                 [loading]="loadingEmpresas">
                                 <ng-template ng-option-tmp let-item="item">
                                     <div>
@@ -179,7 +237,7 @@
                             </ng-select>
                             @if (shouldDisableEmpresaField) {
                             <small class="text-muted d-block mt-2">
-                                <i class="feather icon-info"></i> 
+                                <i class="feather icon-info"></i>
                                 A associação com a empresa não pode ser alterada.
                             </small>
                             } @else {
@@ -197,32 +255,14 @@
                             <i class="feather icon-info me-2"></i>
                             <strong>Administrador Geral</strong><br>
                             <small>
-                                Usuários com perfil ADMINISTRADOR são administradores gerais do sistema e não são associados a nenhuma empresa específica. 
+                                Usuários com perfil ADMINISTRADOR são administradores gerais do sistema e não são
+                                associados a nenhuma empresa específica.
                                 Eles podem selecionar qualquer empresa para trabalhar através do seletor no navbar.
                             </small>
                         </div>
                     </div>
                 </div>
                 }
-
-                <!-- Form Actions -->
-                <!-- Buttons -->
-                <div class="form-footer mt-4 d-flex justify-content-end gap-2">
-                    <button type="button" (click)="handleCancel()" class="btn btn-outline-secondary">
-                        {{ "BUTTONS.CANCEL" | translate }}
-                    </button>
-                    <button type="submit" class="btn btn-primary" [disabled]="loading || form.invalid">
-                        @if (loading) {
-                        <span class="spinner-border spinner-border-sm me-2" role="status">
-                            <span class="visually-hidden">Loading...</span>
-                        </span>
-                        } @if (isEditMode) {
-                        {{ "BUTTONS.UPDATE" | translate }}
-                        } @else {
-                        {{ "BUTTONS.CREATE" | translate }}
-                        }
-                    </button>
-                </div>
             </form>
         </div>
 
@@ -277,35 +317,72 @@
                     <h3 class="card-title">{{ "COMMON.INSTRUCTIONS" | translate }}</h3>
                 </div>
                 <div class="card-body">
-                    <p class="text-muted mb-2">
+                    <p class="text-muted mb-3">
                         @if (isEditMode) {
-                        {{ 'USERS.INFO.EDIT' | translate }}
+                        Atualize as informações do usuário conforme necessário. Campos obrigatórios estão marcados com
+                        *.
                         } @else {
-                        {{ 'USERS.INFO.CREATE' | translate }}
+                        Preencha as informações para criar um novo usuário no sistema. Campos obrigatórios estão
+                        marcados com *.
                         }
                     </p>
 
                     <hr class="my-3">
-                    
-                    <h6 class="mb-2">{{ 'USERS.INFO.PROFILES_TITLE' | translate }}</h6>
-                    <ul class="small text-muted mb-2">
-                        <li><strong>{{ 'USERS.INFO.ADMIN' | translate }}:</strong> {{ 'USERS.INFO.ADMIN_DESC' | translate }}</li>
-                        <li><strong>{{ 'USERS.INFO.MANAGER' | translate }}:</strong> {{ 'USERS.INFO.MANAGER_DESC' | translate }}</li>
-                        <li><strong>{{ 'USERS.INFO.COLLABORATOR' | translate }}:</strong> {{ 'USERS.INFO.COLLABORATOR_DESC' | translate }}</li>
-                        <li><strong>{{ 'USERS.INFO.READONLY' | translate }}:</strong> {{ 'USERS.INFO.READONLY_DESC' | translate }}</li>
+
+                    <h6 class="mb-2">
+                        <i class="feather icon-shield me-1"></i>
+                        Perfis de Acesso
+                    </h6>
+                    <ul class="small text-muted mb-3">
+                        <li><strong>Administrador:</strong> Acesso completo ao sistema, gerencia todas as empresas e
+                            usuários</li>
+                        <li><strong>Consultor:</strong> Pode visualizar e editar dados de diagnósticos em múltiplas
+                            empresas</li>
+                        <li><strong>Gestor:</strong> Gerencia dados completos da sua empresa, incluindo usuários e
+                            pilares</li>
+                        <li><strong>Colaborador:</strong> Pode visualizar e editar informações básicas da empresa</li>
+                        <li><strong>Leitura:</strong> Apenas visualização, sem permissão de edição</li>
                     </ul>
-                    
-                    <h6 class="mb-2 mt-3">{{ 'USERS.INFO.FIELDS_GUIDE' | translate }}</h6>
-                    <ul class="small text-muted mb-2">
-                        <li><strong>{{ 'USERS.INFO.AVATAR' | translate }}:</strong> {{ 'USERS.INFO.AVATAR_TIP' | translate }}</li>
-                        <li><strong>{{ 'USERS.INFO.PASSWORD' | translate }}:</strong> {{ 'USERS.INFO.PASSWORD_TIP' | translate }}</li>
-                        <li><strong>{{ 'USERS.INFO.COMPANY' | translate }}:</strong> {{ 'USERS.INFO.COMPANY_TIP' | translate }}</li>
+
+                    <h6 class="mb-2 mt-3">
+                        <i class="feather icon-key me-1"></i>
+                        Requisitos de Senha
+                    </h6>
+                    <div class="alert alert-info p-2 mb-3">
+                        <small>
+                            <strong>A senha deve conter no mínimo:</strong>
+                            <ul class="mb-1 mt-2">
+                                <li>8 caracteres</li>
+                                <li>1 letra maiúscula (A-Z)</li>
+                                <li>1 letra minúscula (a-z)</li>
+                                <li>1 número (0-9)</li>
+                                <li>1 caractere especial (&#64;$!%*?&)</li>
+                            </ul>
+                            <strong>Exemplos válidos:</strong> <code>Segura$99</code>
+                        </small>
+                    </div>
+
+                    <h6 class="mb-2 mt-3">
+                        <i class="feather icon-info me-1"></i>
+                        Dicas Importantes
+                    </h6>
+                    <ul class="small text-muted mb-3">
+                        <li><strong>Avatar:</strong> Clique em "Upload" para adicionar uma foto do perfil (JPG, PNG ou
+                            WebP até 5MB)</li>
+                        @if (isEditMode) {
+                        <li><strong>Alterar Senha:</strong> Deixe o campo em branco para manter a senha atual</li>
+                        }
+                        <li><strong>Empresa:</strong> Administradores não são vinculados a empresas específicas e podem
+                            acessar todas</li>
+                        <li><strong>Telefone:</strong> Formato automático aplicado durante digitação</li>
                     </ul>
-                    
+
                     <div class="alert alert-warning p-2 mb-0">
                         <small>
-                            <strong>{{ 'USERS.INFO.SECURITY' | translate }}:</strong>
-                            {{ 'USERS.INFO.SECURITY_DESC' | translate }}
+                            <i class="feather icon-alert-triangle me-1"></i>
+                            <strong>Segurança:</strong>
+                            Senhas são criptografadas e nunca são exibidas no sistema. Use senhas fortes e únicas para
+                            cada usuário.
                         </small>
                     </div>
                 </div>

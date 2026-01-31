@@ -1,0 +1,178 @@
+@if (loading) {
+<div class="text-center py-4">
+  <div class="spinner-border text-primary" role="status"></div>
+  <p class="mt-2 text-muted">Carregando cargos...</p>
+</div>
+} @else {
+<div class="card mb-2">
+  <div class="card-body">
+    <div class="cockpit-tab-header d-flex justify-content-between align-items-center cargos-header">
+      <h5 class="card-title cockpit-tab-title">
+        <i class="bi bi-people me-2"></i>
+        Matriz de Cargos e Responsáveis
+      </h5>
+      <button class="btn btn-sm btn-primary btn-add-cargo" (click)="abrirDrawerNovoCargo()">
+        <i class="bi bi-plus-circle me-1"></i>
+        Adicionar Cargo
+      </button>
+    </div>
+
+    @if (cargos.length === 0) {
+    <div class="text-muted">Nenhum cargo cadastrado.</div>
+    } @else {
+    <div class="table-responsive">
+      <table class="table table-sm align-middle">
+        <thead class="table-light small">
+          <tr>
+            <th class="w-100">Cargo</th>
+            <th class="col-mobile-hide">Nomes</th>
+            <th class="text-center">Ações</th>
+          </tr>
+        </thead>
+        <tbody cdkDropList (cdkDropListDropped)="onCargoDrop($event)">
+          @for (cargo of cargos; track cargo.id) {
+          <tr cdkDrag>
+            <td class="fw-semibold" style="cursor: move;">
+              <i class="bi bi-grip-vertical"></i>
+              {{ cargo.cargo }}
+            </td>
+            <td class="col-mobile-hide">
+              <div class="d-flex flex-wrap align-items-center gap-2">
+                @if (cargo.responsaveis?.length) {
+                @for (responsavel of cargo.responsaveis; track responsavel.id) {
+                <span class="badge bg-light text-dark">
+                  {{ responsavel.usuario?.nome || '—' }}
+                </span>
+                }
+                } @else {
+                <span class="text-muted">-</span>
+                }
+              </div>
+            </td>
+            <td class="text-center">
+              <button data-testid="edit-cargo-button" class="btn btn-icon text-secondary" (click)="editarCargo(cargo)"
+                [title]="'BUTTONS.EDIT' | translate">
+                <i class="feather icon-edit"></i>
+              </button>
+              <button data-testid="delete-cargo-button" class="btn btn-icon text-danger" (click)="deleteCargo(cargo)"
+                [title]="'BUTTONS.DELETE' | translate">
+                <i class="feather icon-trash-2"></i>
+              </button>
+            </td>
+          </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+    }
+  </div>
+</div>
+
+<div class="card mb-2">
+  <div class="card-body">
+    <div class="cockpit-tab-header d-flex justify-content-between align-items-center">
+      <h5 class="card-title cockpit-tab-title">
+        <i class="bi bi-list-task me-2"></i>
+        Funções por Cargo
+      </h5>
+    </div>
+    @if (cargos.length === 0) {
+    <div class="text-muted">Cadastre um cargo para adicionar funções.</div>
+    }
+  </div>
+</div>
+
+@if (cargos.length > 0) {
+@for (cargo of cargos; track cargo.id) {
+<div class="card mb-2">
+  <div class="card-header p-2">
+    <button type="button" class="btn btn-link text-start cargo-toggle" (click)="toggleCargo(cargo.id)">
+      <div class="d-flex align-items-center justify-content-between gap-3">
+        <div class="d-flex align-items-center gap-2">
+          <i class="bi" [ngClass]="isCargoExpanded(cargo.id) ? 'bi-chevron-up' : 'bi-chevron-down'"></i>
+          <strong>{{ cargo.cargo }}</strong>
+        </div>
+        <div class="cargo-responsaveis ms-auto d-flex align-items-center gap-3">
+          @if (cargo.responsaveis?.length) {
+          @for (responsavel of cargo.responsaveis; track responsavel.id) {
+          <span class="badge bg-light text-dark">
+            {{ responsavel.usuario?.nome || '—' }}
+          </span>
+          }
+          } @else {
+          <span class="text-muted">-</span>
+          }
+        </div>
+      </div>
+    </button>
+  </div>
+
+  @if (isCargoExpanded(cargo.id)) {
+  <div class="card-body">
+    <div class="cockpit-tab-header d-flex justify-content-end funcoes-header">
+      <h5 class="me-auto cockpit-tab-title">Lista de Funções do cargo {{ cargo.cargo }}</h5>
+      <button class="btn btn-sm btn-primary btn-add-funcao" (click)="abrirDrawerNovaFuncao(cargo)">
+        <i class="bi bi-plus-circle me-1"></i>
+        Adicionar Função
+      </button>
+    </div>
+    <div class="table-responsive">
+      @if (!cargo.funcoes || cargo.funcoes.length === 0) {
+      <div class="text-muted">Nenhuma função cadastrada ainda.</div>
+      } @else {
+
+      <table class="table table-sm align-middle">
+        <thead class="table-light small">
+          <tr>
+            <th>Descrição</th>
+            <th class="col-mobile-hide" style="width: 100px;">Criticidade</th>
+            <th class="col-mobile-hide" style="width: 100px;">Auto-Avaliação</th>
+            <th class="col-mobile-hide" style="width: 120px;">Avaliação Liderança</th>
+            <th class="text-center" style="width: 100px;">Ações</th>
+          </tr>
+        </thead>
+        <tbody cdkDropList (cdkDropListDropped)="onFuncaoDrop(cargo, $event)">
+          @for (funcao of cargo.funcoes; track funcao.id) {
+          <tr cdkDrag>
+            <td style="cursor: move;">
+              <i class="bi bi-grip-vertical"></i>
+              {{ funcao.descricao }}
+            </td>
+            <td class="col-mobile-hide">
+              <span class="badge w-100" [class]="getCriticidadeClass(funcao.nivelCritico)">
+                {{ funcao.nivelCritico }}
+              </span>
+            </td>
+            <td class="col-mobile-hide text-center">{{ funcao.autoAvaliacao ?? '—' }}</td>
+            <td class="col-mobile-hide text-center">{{ funcao.avaliacaoLideranca ?? '—' }}</td>
+            <td class="text-center">
+              <button data-testid="edit-cargo-button" class="btn btn-icon text-secondary"
+                (click)="editarFuncao(cargo, funcao)" [title]="'BUTTONS.EDIT' | translate">
+                <i class="feather icon-edit"></i>
+              </button>
+              <button data-testid="delete-cargo-button" class="btn btn-icon text-danger"
+                (click)="deleteFuncao(cargo, funcao)" [title]="'BUTTONS.DELETE' | translate">
+                <i class="feather icon-trash-2"></i>
+              </button>
+            </td>
+          </tr>
+          }
+        </tbody>
+        <tfoot class="table-light small col-mobile-hide">
+          <tr>
+            <td colspan="2" class="text-end fw-semibold">Médias</td>
+            <td class="text-center">{{ getMediaAuto(cargo) ?? '—' }}</td>
+            <td class="text-center">{{ getMediaLideranca(cargo) ?? '—' }}</td>
+            <td></td>
+          </tr>
+        </tfoot>
+      </table>
+      }
+    </div>
+  </div>
+  }
+</div>
+}
+}
+
+}

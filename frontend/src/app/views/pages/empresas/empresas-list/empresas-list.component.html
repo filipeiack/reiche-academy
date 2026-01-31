@@ -10,8 +10,8 @@
     </ol>
   </nav>
 
-  <button id="btnNovaEmpresa" type="button" class="btn btn-primary btn-icon-text btn-xs" [routerLink]="['/empresas/nova']">
-    <i class="feather icon-plus btn-icon-prepend"></i>
+  <button id="btnNovaEmpresa" type="button" class="btn btn-primary btn-sm" [routerLink]="['/empresas/nova']">
+    <i class="bi bi-plus-circle btn-icon-prepend"></i>
     {{ 'COMPANIES.ADD' | translate }}
   </button>
 </div>
@@ -20,7 +20,7 @@
   <div class="col-md-12 stretch-card">
     <div class="card">
       <div class="card-body">
-        <div class="row">
+        <div class="row mb-3">
           <div class="col-md-6">
             <div class="input-icon search-inline">
               <span class="input-icon-addon">
@@ -30,15 +30,15 @@
             </div>
           </div>
 
-          <div class="col-md-6 text-end">
+          <!-- <div class="col-md-6 text-end">
             @if (selectedCount > 0) {
-            <ngb-alert id="empresaBarBtn" class="alert-custom-primary" [dismissible]="false">
+            
               <button type="button" class="btn btn-xs btn-outline-danger" (click)="deleteSelected()">
                 {{ 'BUTTONS.DELETE_SELECTED' | translate }} ({{ selectedCount }})
               </button>
-            </ngb-alert>
+            
             }
-          </div>
+          </div> -->
         </div>
 
         <div class="row">
@@ -50,18 +50,15 @@
           </div>
           } @else {
           <div class="table-responsive">
-            <table class="table table-hover table-striped mb-2">
-              <thead>
+            <table class="table table-hover table-sm mb-2">
+              <thead class="table-light">
                 <tr>
-                  <th>
+                  <!-- <th>
                     <input class="form-check-input" type="checkbox" [(ngModel)]="headerCheckboxChecked" (change)="toggleHeaderCheckbox()">
-                  </th>
+                  </th> -->
                   <th scope="col" sortable="nome" (sort)="onSort($event)" class="w-100">{{ 'COMPANIES.NAME' | translate }}</th>
-                  <th scope="col" sortable="cnpj" (sort)="onSort($event)">{{ 'COMPANIES.CNPJ' | translate }}</th>
-                  <!-- <th scope="col" sortable="cidade" (sort)="onSort($event)">{{ 'COMPANIES.CIDADE' | translate }}</th> -->
-                  <th scope="col" sortable="estado" (sort)="onSort($event)">{{ 'COMPANIES.ESTADO' | translate }}</th>
                   <th scope="col">{{ 'COMPANIES.USUARIOS_COUNT' | translate }}</th>
-                  <!-- <th scope="col">{{ 'COMPANIES.PILARES_COUNT' | translate }}</th> -->
+                  <th scope="col">Mentoria</th>
                   <th>{{ 'COMMON.STATUS' | translate }}</th>
                   <th>{{ 'COMMON.ACTIONS' | translate }}</th>
                 </tr>
@@ -69,15 +66,28 @@
               <tbody>
                 @for (empresa of paginatedEmpresas; track empresa.id) {
                 <tr>
-                  <td>
+                  <!-- <td>
                     <input class="form-check-input" type="checkbox" [checked]="isSelected(empresa.id)" (change)="toggleSelection(empresa.id)">
+                  </td> -->
+                  <td style="max-width: 600px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
+                    <div >{{ empresa.nome.toUpperCase() }}</div>
+                    <small class="text-muted">{{ empresa.cnpj | cnpj }} {{ empresa.estado }}</small>
                   </td>
-                  <td>{{ empresa.nome }}</td>
-                  <td class="text-muted">{{ empresa.cnpj }}</td>
-                  <!-- <td class="text-muted">{{ empresa.cidade }}</td> -->
-                  <td class="text-muted">{{ empresa.estado }}</td>
                   <td class="text-muted">{{ empresa._count?.usuarios ?? 0 }}</td>
-                  <!-- <td class="text-muted">{{ empresa._count?.pilares ?? 0 }}</td> -->
+                  <td>
+                    @if (empresa.periodoMentoriaAtivo) {
+                    <span class="badge bg-success">
+                      <i class="feather icon-check-circle me-1"></i>
+                      Período {{ empresa.periodoMentoriaAtivo.numero }}
+                      <small class="d-block mt-1">{{ formatarPeriodo(empresa.periodoMentoriaAtivo) }}</small>
+                    </span>
+                    } @else {
+                    <span class="badge bg-secondary">
+                      <i class="feather icon-x-circle me-1"></i>
+                      Sem mentoria
+                    </span>
+                    }
+                  </td>
                   <td class="text-muted">
                     {{ empresa.ativo ? ('COMMON.ACTIVE' | translate) : ('COMMON.INACTIVE' | translate) }}
                   </td>
@@ -97,7 +107,7 @@
                 </tr>
                 } @empty {
                 <tr>
-                  <td colspan="9" class="border-bottom text-center text-muted py-4">
+                  <td colspan="6" class="border-bottom text-center text-muted py-4">
                     {{ 'COMMON.NO_DATA' | translate }}
                   </td>
                 </tr>
@@ -146,7 +156,7 @@
     <div class="mb-4">
       <h4 class="mb-1">{{ selectedEmpresa.nome }}</h4>
       <p class="text-muted mb-1">{{ selectedEmpresa.cidade }}, {{ selectedEmpresa.estado }}</p>
-      <p class="text-muted">{{ selectedEmpresa.cnpj }}</p>
+      <p class="text-muted">CNPJ: {{ selectedEmpresa.cnpj | cnpj }}</p>
       <span class="badge" [ngClass]="{ 'bg-success': selectedEmpresa.ativo, 'bg-danger': !selectedEmpresa.ativo }">
         {{ selectedEmpresa.ativo ? ('COMMON.ACTIVE' | translate) : ('COMMON.INACTIVE' | translate) }}
       </span>

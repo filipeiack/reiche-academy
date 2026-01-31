@@ -1,22 +1,29 @@
-import { Component, OnInit, OnDestroy, ViewChild, inject } from '@angular/core';
+import { Component, OnInit, OnDestroy, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { NgbAlertModule, NgbProgressbar } from '@ng-bootstrap/ng-bootstrap';
+import { Router } from '@angular/router';
+import { NgbAlertModule, NgbOffcanvas } from '@ng-bootstrap/ng-bootstrap';
 import { NgSelectModule } from '@ng-select/ng-select';
 import Swal from 'sweetalert2';
 import { Subject, Subscription, debounceTime, distinctUntilChanged } from 'rxjs';
+import { environment } from '@environments/environment';
 import { TranslatePipe } from '../../../core/pipes/translate.pipe';
 import { DiagnosticoNotasService, PilarEmpresa, RotinaEmpresa, UpdateNotaRotinaDto } from '../../../core/services/diagnostico-notas.service';
 import { EmpresasService, Empresa } from '../../../core/services/empresas.service';
 import { AuthService } from '../../../core/services/auth.service';
 import { EmpresaContextService } from '../../../core/services/empresa-context.service';
 import { EmpresaBasic } from '@app/core/models/auth.model';
+import { PeriodosAvaliacaoService } from '../../../core/services/periodos-avaliacao.service';
+import { PeriodoAvaliacao } from '../../../core/models/periodo-avaliacao.model';
 import { NgbDropdownModule } from '@ng-bootstrap/ng-bootstrap';
-import { PilaresEmpresaModalComponent } from '../empresas/pilares-empresa-modal/pilares-empresa-modal.component';
-import { ResponsavelPilarModalComponent } from './responsavel-pilar-modal/responsavel-pilar-modal.component';
-import { NovaRotinaModalComponent } from './nova-rotina-modal/nova-rotina-modal.component';
-import { RotinasPilarModalComponent } from './rotinas-pilar-modal/rotinas-pilar-modal.component';
+import { ResponsavelDrawerComponent } from './responsavel-drawer/responsavel-drawer.component';
 import { MediaBadgeComponent } from '../../../shared/components/media-badge/media-badge.component';
+import { PilarAddDrawerComponent } from './pilar-add-drawer/pilar-add-drawer.component';
+import { PilarEditDrawerComponent } from './pilar-edit-drawer/pilar-edit-drawer.component';
+import { RotinaAddDrawerComponent } from './rotina-add-drawer/rotina-add-drawer.component';
+import { RotinaEditDrawerComponent } from './rotina-edit-drawer/rotina-edit-drawer.component';
+import { CriarCockpitDrawerComponent } from './criar-cockpit-drawer/criar-cockpit-drawer.component';
+import { OFFCANVAS_SIZE } from '@core/constants/ui.constants';
 
 interface AutoSaveQueueItem {
   rotinaEmpresaId: string;
@@ -34,11 +41,6 @@ interface AutoSaveQueueItem {
     NgbDropdownModule,
     NgSelectModule,
     TranslatePipe,
-    //NgbProgressbar,
-    PilaresEmpresaModalComponent,
-    ResponsavelPilarModalComponent,
-    NovaRotinaModalComponent,
-    RotinasPilarModalComponent,
     MediaBadgeComponent
 ],
   templateUrl: './diagnostico-notas.component.html',
@@ -49,11 +51,9 @@ export class DiagnosticoNotasComponent implements OnInit, OnDestroy {
   private empresasService = inject(EmpresasService);
   private authService = inject(AuthService);
   private empresaContextService = inject(EmpresaContextService);
-
-  @ViewChild(PilaresEmpresaModalComponent) pilaresModal!: PilaresEmpresaModalComponent;
-  @ViewChild(ResponsavelPilarModalComponent) responsavelModal!: ResponsavelPilarModalComponent;
-  @ViewChild(NovaRotinaModalComponent) novaRotinaModal!: NovaRotinaModalComponent;
-  @ViewChild(RotinasPilarModalComponent) rotinasPilarModal!: RotinasPilarModalComponent;
+  private periodosService = inject(PeriodosAvaliacaoService);
+  private router = inject(Router);
+  private offcanvasService = inject(NgbOffcanvas);
 
   pilares: PilarEmpresa[] = [];
   empresaLogada: EmpresaBasic | null = null;
@@ -61,8 +61,12 @@ export class DiagnosticoNotasComponent implements OnInit, OnDestroy {
   isAdmin = false;
   loading = false;
   error = '';
+  periodoAtual: PeriodoAvaliacao | null = null;
+  showIniciarPeriodoModal = false;
+  dataReferenciaPeriodo: string = '';
   
   private empresaContextSubscription?: Subscription;
+  private savedScrollPosition: number = 0;
 
   get isReadOnlyPerfil(): boolean {
     const user = this.authService.getCurrentUser();
@@ -74,6 +78,53 @@ export class DiagnosticoNotasComponent implements OnInit, OnDestroy {
   
   // Controle de accordion manual
   pilarExpandido: { [key: number]: boolean } = {};
+
+  /**
+   * Retorna a chave do sessionStorage para o estado de expansão
+   */
+  private getSessionStorageKey(): string {
+    return `diagnostico_pilares_expandidos_${this.selectedEmpresaId}`;
+  }
+
+  /**
+   * Salva o estado de expansão no sessionStorage
+   */
+  private saveExpandedState(): void {
+    if (!this.selectedEmpresaId) return;
+    try {
+      sessionStorage.setItem(this.getSessionStorageKey(), JSON.stringify(this.pilarExpandido));
+    } catch (error) {
+      console.warn('Erro ao salvar estado de expansão:', error);
+    }
+  }
+
+  /**
+   * Restaura o estado de expansão do sessionStorage
+   */
+  private restoreExpandedState(): void {
+    if (!this.selectedEmpresaId) return;
+    try {
+      const savedState = sessionStorage.getItem(this.getSessionStorageKey());
+      if (savedState) {
+        this.pilarExpandido = JSON.parse(savedState);
+      }
+    } catch (error) {
+      console.warn('Erro ao restaurar estado de expansão:', error);
+      this.pilarExpandido = {};
+    }
+  }
+
+  /**
+   * Limpa o estado de expansão do sessionStorage
+   */
+  private clearExpandedState(): void {
+    if (!this.selectedEmpresaId) return;
+    try {
+      sessionStorage.removeItem(this.getSessionStorageKey());
+    } catch (error) {
+      console.warn('Erro ao limpar estado de expansão:', error);
+    }
+  }
 
   // Auto-save
   private autoSaveSubject = new Subject<AutoSaveQueueItem>();
@@ -87,23 +138,34 @@ export class DiagnosticoNotasComponent implements OnInit, OnDestroy {
 
   // Opções de criticidade
   criticidadeOptions = [
-    { value: 'BAIXO', label: 'BAIXO' },
-    { value: 'MEDIO', label: 'MEDIO' },
-    { value: 'ALTO', label: 'ALTO' },
+    { value: 'BAIXA', label: 'BAIXA' },
+    { value: 'MEDIA', label: 'MÉDIA' },
+    { value: 'ALTA', label: 'ALTA' },
   ];
 
   ngOnInit(): void {
+    // Primeiro, verificar o perfil do usuário
     this.checkUserPerfil();
+    
+    // Depois, configurar auto-save
     this.setupAutoSave();
     
     // Subscrever às mudanças no contexto de empresa
     this.empresaContextSubscription = this.empresaContextService.selectedEmpresaId$.subscribe(empresaId => {
       if (this.isAdmin && empresaId !== this.selectedEmpresaId) {
+        // Limpar estado de expansão da empresa anterior
+        if (this.selectedEmpresaId) {
+          this.clearExpandedState();
+        }
+        
         this.selectedEmpresaId = empresaId;
+        this.error = ''; // Limpar erro anterior
+        
         if (empresaId) {
           this.loadDiagnostico();
         } else {
           this.pilares = [];
+          this.error = 'Selecione uma empresa para visualizar diagnósticos';
         }
       }
     });
@@ -112,6 +174,8 @@ export class DiagnosticoNotasComponent implements OnInit, OnDestroy {
   ngOnDestroy(): void {
     this.autoSaveSubscription?.unsubscribe();
     this.empresaContextSubscription?.unsubscribe();
+    // Limpar estado de expansão ao sair da tela
+    this.clearExpandedState();
   }
 
   private checkUserPerfil(): void {
@@ -126,9 +190,14 @@ export class DiagnosticoNotasComponent implements OnInit, OnDestroy {
 
     if (this.isAdmin) {
       // Admin: usar empresa do contexto global (selecionada no navbar)
-      this.selectedEmpresaId = this.empresaContextService.getEmpresaId();
+      const contextEmpresaId = this.empresaContextService.getEmpresaId();
+      this.selectedEmpresaId = contextEmpresaId || null;
+      
       if (this.selectedEmpresaId) {
         this.loadDiagnostico();
+      } else {
+        // Sem empresa selecionada no contexto, aguardar seleção na navbar
+        this.error = 'Selecione uma empresa para visualizar diagnósticos';
       }
     } else if (user.empresaId) {
       // Perfil cliente: usar empresa do usuário logado
@@ -141,8 +210,15 @@ export class DiagnosticoNotasComponent implements OnInit, OnDestroy {
     }
   }
 
-  private loadDiagnostico(): void {
-    if (!this.selectedEmpresaId) return;
+  private loadDiagnostico(preserveScroll: boolean = false): void {
+    if (!this.selectedEmpresaId) {
+      return;
+    }
+
+    // Salvar posição de scroll se solicitado
+    if (preserveScroll) {
+      this.savedScrollPosition = window.pageYOffset || document.documentElement.scrollTop;
+    }
 
     this.loading = true;
     this.error = '';
@@ -154,16 +230,56 @@ export class DiagnosticoNotasComponent implements OnInit, OnDestroy {
     this.diagnosticoService.getDiagnosticoByEmpresa(this.selectedEmpresaId).subscribe({
       next: (data) => {
         this.pilares = data;
-        // Inicializar todos como encolhidos
-        this.pilarExpandido = {};
-        data.forEach((_, index) => {
-          this.pilarExpandido[index] = false;
-        });
+        
+        // Sincronizar empresa selecionada na navbar com a primeira empresa dos pilares
+        if (data.length > 0 && data[0].empresaId) {
+          this.empresaContextService.syncEmpresaFromResource(data[0].empresaId);
+        }
+        
+        // Restaurar estado de expansão salvo ou inicializar todos como encolhidos
+        const savedState = this.pilarExpandido;
+        this.restoreExpandedState();
+        
+        // Se não há estado salvo, inicializar todos como fechados
+        if (Object.keys(this.pilarExpandido).length === 0) {
+          this.pilarExpandido = {};
+          data.forEach((_, index) => {
+            this.pilarExpandido[index] = false;
+          });
+        }
+        
         this.loading = false;
+        
+        // Carregar período atual após carregar pilares
+        this.loadPeriodoAtual();
+        
+        // Restaurar posição de scroll se foi salva
+        if (preserveScroll && this.savedScrollPosition > 0) {
+          setTimeout(() => {
+            window.scrollTo({
+              top: this.savedScrollPosition,
+              behavior: 'auto'
+            });
+            this.savedScrollPosition = 0;
+          }, 50);
+        }
       },
       error: (err: any) => {
-        this.error = err?.error?.message || 'Erro ao carregar diagnóstico';
+        console.error('[DIAGNOSTICO] Erro ao carregar diagnóstico:', {
+          status: err?.status,
+          message: err?.error?.message,
+          error: err
+        });
+        
         this.loading = false;
+        
+        // Se for erro de autenticação (401), deixar o interceptor lidar com logout
+        if (err?.status === 401) {
+          return;
+        }
+        
+        // Outros erros
+        this.error = err?.error?.message || 'Erro ao carregar dashboard da empresa';
       }
     });
   }
@@ -173,76 +289,131 @@ export class DiagnosticoNotasComponent implements OnInit, OnDestroy {
    */
   togglePilar(index: number): void {
     this.pilarExpandido[index] = !this.pilarExpandido[index];
+    this.saveExpandedState();
   }
 
   /**
-   * Abre o modal de gerenciamento de pilares
-   */
-  abrirModalPilares(): void {
-    if (this.pilaresModal && this.selectedEmpresaId) {
-      this.pilaresModal.open();
-    }
-  }
-
-  /**
-   * Callback quando pilares são modificados no modal
+   * Callback quando pilares são modificados
    */
   onPilaresModificados(): void {
-    // Recarregar diagnóstico para refletir mudanças nos pilares
     if (this.selectedEmpresaId) {
-      this.loadDiagnostico();
+      this.loadDiagnostico(true);
     }
   }
 
   /**
-   * Abre o modal de definição de responsável
+   * Abrir drawer para adicionar novo pilar customizado
+   */
+  abrirDrawerAdicionarPilar(): void {
+    if (!this.selectedEmpresaId) return;
+
+    const offcanvasRef = this.offcanvasService.open(PilarAddDrawerComponent, {
+      position: 'end',
+      backdrop: 'static',
+      panelClass: OFFCANVAS_SIZE.MEDIUM
+    });
+
+    const component = offcanvasRef.componentInstance as PilarAddDrawerComponent;
+    component.empresaId = this.selectedEmpresaId;
+    component.pilarAdicionado.subscribe(() => {
+      this.loadDiagnostico(true);
+    });
+  }
+
+  /**
+   * Abrir drawer para editar pilares (nome + reordenação)
+   */
+  abrirDrawerEditarPilares(): void {
+    if (!this.selectedEmpresaId) return;
+
+    const offcanvasRef = this.offcanvasService.open(PilarEditDrawerComponent, {
+      position: 'end',
+      backdrop: 'static',
+      panelClass: OFFCANVAS_SIZE.MEDIUM
+    });
+
+    const component = offcanvasRef.componentInstance as PilarEditDrawerComponent;
+    component.empresaId = this.selectedEmpresaId;
+    component.pilaresModificados.subscribe(() => {
+      this.loadDiagnostico(true);
+    });
+  }
+
+  /**
+   * Abre o drawer de definição de responsável
    */
   abrirModalResponsavel(pilarEmpresa: PilarEmpresa): void {
-    if (this.responsavelModal) {
-      this.responsavelModal.open(pilarEmpresa);
-    }
+    if (!this.selectedEmpresaId) return;
+
+    const offcanvasRef = this.offcanvasService.open(ResponsavelDrawerComponent, {
+      position: 'end',
+      backdrop: 'static',
+      panelClass: OFFCANVAS_SIZE.DEFAULT
+    });
+
+    const component = offcanvasRef.componentInstance as ResponsavelDrawerComponent;
+    component.empresaId = this.selectedEmpresaId;
+    component.pilarEmpresa = pilarEmpresa;
+    component.responsavelAtualizado.subscribe(() => {
+      this.loadDiagnostico(true);
+    });
   }
 
   /**
    * Callback quando responsável é atualizado
    */
   onResponsavelAtualizado(): void {
-    // Recarregar diagnóstico para refletir mudanças no responsável
     if (this.selectedEmpresaId) {
-      this.loadDiagnostico();
+      this.loadDiagnostico(true);
     }
   }
 
   /**
-   * Abre o modal de nova rotina customizada
+   * Abrir drawer para adicionar nova rotina
    */
-  abrirModalNovaRotina(pilarEmpresa: PilarEmpresa): void {
-    if (this.novaRotinaModal) {
-      this.novaRotinaModal.open(pilarEmpresa);
-    }
+  abrirDrawerAdicionarRotina(pilarEmpresa: PilarEmpresa): void {
+    if (!this.selectedEmpresaId) return;
+
+    const offcanvasRef = this.offcanvasService.open(RotinaAddDrawerComponent, {
+      position: 'end',
+      backdrop: 'static',
+      panelClass: OFFCANVAS_SIZE.MEDIUM
+    });
+
+    const component = offcanvasRef.componentInstance as RotinaAddDrawerComponent;
+    component.empresaId = this.selectedEmpresaId;
+    component.pilarEmpresa = pilarEmpresa as any;
+    component.rotinaCriada.subscribe(() => {
+      this.loadDiagnostico(true);
+    });
   }
 
   /**
-   * Abre o modal de gerenciamento de rotinas do pilar
+   * Abrir drawer para editar rotinas (nome + reordenação)
    */
-  abrirModalEditarRotinas(pilarEmpresa: PilarEmpresa): void {
-    if (this.rotinasPilarModal && this.selectedEmpresaId) {
-      this.rotinasPilarModal.empresaId = this.selectedEmpresaId;
-      this.rotinasPilarModal.pilarEmpresaId = pilarEmpresa.id;
-      this.rotinasPilarModal.pilarNome = pilarEmpresa.nome;
-      this.rotinasPilarModal.pilarId = pilarEmpresa.pilarTemplateId ?? '';
-      this.rotinasPilarModal.rotinasEmpresa = [...pilarEmpresa.rotinasEmpresa];
-      this.rotinasPilarModal.open();
-    }
+  abrirDrawerEditarRotinas(pilarEmpresa: PilarEmpresa): void {
+    if (!this.selectedEmpresaId) return;
+
+    const offcanvasRef = this.offcanvasService.open(RotinaEditDrawerComponent, {
+      position: 'end',
+      backdrop: 'static',
+      panelClass: OFFCANVAS_SIZE.MEDIUM
+    });
+
+    const component = offcanvasRef.componentInstance as RotinaEditDrawerComponent;
+    component.empresaId = this.selectedEmpresaId;
+    component.pilarEmpresa = pilarEmpresa as any;
+    component.rotinasModificadas.subscribe(() => {
+      this.loadDiagnostico(true);
+    });
   }
 
   /**
    * Callback quando rotina é criada
    */
   onRotinaCriada(): void {
-    // Recarregar diagnóstico para refletir nova rotina
     if (this.selectedEmpresaId) {
-      this.loadDiagnostico();
+      this.loadDiagnostico(true);
     }
   }
 
@@ -250,20 +421,19 @@ export class DiagnosticoNotasComponent implements OnInit, OnDestroy {
    * Callback quando rotinas do pilar são modificadas
    */
   onRotinasModificadas(): void {
-    // Recarregar diagnóstico para refletir mudanças
+    // Recarregar dashboard da empresa para refletir mudanças
     if (this.selectedEmpresaId) {
-      this.loadDiagnostico();
+      this.loadDiagnostico(true);
     }
   }
 
   /**
-   * Configura o auto-save com debounce de 1000ms
+   * Configura o auto-save com debounce configurado
    */
   private setupAutoSave(): void {
-    console.log('🔧 Configurando auto-save subject...');
     this.autoSaveSubscription = this.autoSaveSubject
       .pipe(
-        debounceTime(1000), // Aguarda 1000ms após última alteração
+        debounceTime(environment.debounceTime), // Aguarda após última alteração
         distinctUntilChanged((prev, curr) => 
           prev.rotinaEmpresaId === curr.rotinaEmpresaId &&
           prev.data.nota === curr.data.nota &&
@@ -271,29 +441,23 @@ export class DiagnosticoNotasComponent implements OnInit, OnDestroy {
         )
       )
       .subscribe((item) => {
-        console.log('⏰ Debounce completado, executando save...');
         this.executeSave(item);
       });
-    console.log('✅ Auto-save configurado com sucesso');
   }
 
   /**
    * Chamado quando nota ou criticidade é alterada
    */
   onNotaChange(rotinaEmpresa: RotinaEmpresa, nota: any, criticidade: string | null): void {
-    console.log('🔄 onNotaChange chamado:', { 
-      rotinaEmpresaId: rotinaEmpresa.id, 
-      nota, 
-      notaType: typeof nota,
-      criticidade 
-    });
-    
     // Converter nota para número se vier como string
     const notaConverted = nota === '' || nota === null || nota === undefined ? null : Number(nota);
-    
+
     // Buscar ou criar cache para esta rotina
-    const cached = this.notasCache.get(rotinaEmpresa.id) || { nota: this.getNotaAtual(rotinaEmpresa), criticidade: this.getCriticidadeAtual(rotinaEmpresa) };
-    
+    const cached = this.notasCache.get(rotinaEmpresa.id) ?? {
+      nota: this.getNotaAtual(rotinaEmpresa),
+      criticidade: this.getCriticidadeAtual(rotinaEmpresa)
+    };
+
     // Atualizar cache com novo valor
     if (notaConverted !== null && notaConverted !== undefined) {
       cached.nota = notaConverted;
@@ -301,18 +465,15 @@ export class DiagnosticoNotasComponent implements OnInit, OnDestroy {
     if (criticidade !== null && criticidade !== undefined) {
       cached.criticidade = criticidade;
     }
-    
+
     // Salvar no cache
     this.notasCache.set(rotinaEmpresa.id, cached);
-    
+
     const notaFinal = cached.nota;
     const criticidadeFinal = cached.criticidade;
 
-    console.log('📊 Valores finais (com cache):', { notaFinal, criticidadeFinal, cached });
-
     // Validar campos obrigatórios (silenciosamente - aguarda usuário preencher ambos)
     if (notaFinal === null || notaFinal === undefined || !criticidadeFinal) {
-      console.log('⏸️ Aguardando campos completos');
       return;
     }
 
@@ -325,10 +486,8 @@ export class DiagnosticoNotasComponent implements OnInit, OnDestroy {
 
     const dto: UpdateNotaRotinaDto = {
       nota: notaNum,
-      criticidade: criticidadeFinal as 'ALTO' | 'MEDIO' | 'BAIXO',
+      criticidade: criticidadeFinal as 'ALTA' | 'MEDIA' | 'BAIXA',
     };
-
-    console.log('➕ Adicionando à fila de auto-save:', dto);
 
     // Adicionar à fila de auto-save
     this.autoSaveSubject.next({
@@ -342,12 +501,10 @@ export class DiagnosticoNotasComponent implements OnInit, OnDestroy {
    * Executa o save no backend
    */
   private executeSave(item: AutoSaveQueueItem): void {
-    console.log('💾 Salvando nota:', item);
     this.savingCount++;
 
     this.diagnosticoService.upsertNotaRotina(item.rotinaEmpresaId, item.data).subscribe({
       next: (response) => {
-        console.log('✅ Nota salva com sucesso:', response);
         this.savingCount--;
         // Atualizar timestamp do último salvamento
         this.lastSaveTime = new Date();
@@ -430,7 +587,6 @@ export class DiagnosticoNotasComponent implements OnInit, OnDestroy {
         } else {
           rotina.notas = [nota];
         }
-        console.log('🔄 Dados locais atualizados:', { rotinaEmpresaId, nota });
         break;
       }
     }
@@ -441,11 +597,11 @@ export class DiagnosticoNotasComponent implements OnInit, OnDestroy {
    */
   getCriticidadeClass(criticidade: string | null): string {
     switch (criticidade) {
-      case 'ALTO':
+      case 'ALTA':
         return 'bg-danger';
-      case 'MEDIO':
+      case 'MEDIA':
         return 'bg-warning';
-      case 'BAIXO':
+      case 'BAIXA':
         return 'bg-success';
       default:
         return '';
@@ -559,8 +715,6 @@ export class DiagnosticoNotasComponent implements OnInit, OnDestroy {
       this.showToast('Não há alterações pendentes', 'info', 2000);
       return;
     }
-
-    console.log('💾 Forçando salvamento de todas as alterações pendentes...');
     
     // Coletar todos os itens do cache
     const itemsToSave: AutoSaveQueueItem[] = [];
@@ -571,7 +725,7 @@ export class DiagnosticoNotasComponent implements OnInit, OnDestroy {
           rotinaEmpresaId,
           data: {
             nota: value.nota,
-            criticidade: value.criticidade as 'ALTO' | 'MEDIO' | 'BAIXO'
+            criticidade: value.criticidade as 'ALTA' | 'MEDIA' | 'BAIXA'
           },
           retryCount: 0
         });
@@ -601,5 +755,109 @@ export class DiagnosticoNotasComponent implements OnInit, OnDestroy {
       title,
       icon
     });
+  }
+
+  // ====================================================
+  // Métodos de Período de Avaliação
+  // ====================================================
+
+  /**
+   * Carrega o período de avaliação atual (aberto) da empresa
+   */
+  private loadPeriodoAtual(): void {
+    if (!this.selectedEmpresaId) return;
+
+    this.periodosService.getAtual(this.selectedEmpresaId).subscribe({
+      next: (periodo) => {
+        this.periodoAtual = periodo;
+      },
+      error: (err) => {
+        console.error('Erro ao carregar período atual:', err);
+        this.periodoAtual = null;
+      }
+    });
+  }
+
+  /**
+   * Abre modal para iniciar novo período de avaliação
+   */
+  abrirModalIniciarPeriodo(): void {
+    // Sugerir data atual como referência
+    const hoje = new Date();
+    
+    // Formatar como YYYY-MM-DD para input type="date"
+    this.dataReferenciaPeriodo = hoje.toISOString().split('T')[0];
+    this.showIniciarPeriodoModal = true;
+  }
+
+  /**
+   * Fecha modal de iniciar período
+   */
+  fecharModalIniciarPeriodo(): void {
+    this.showIniciarPeriodoModal = false;
+    this.dataReferenciaPeriodo = '';
+  }
+
+  /**
+   * Confirma criação do novo período de avaliação
+   */
+  confirmarIniciarPeriodo(): void {
+    if (!this.selectedEmpresaId || !this.dataReferenciaPeriodo) {
+      this.showToast('Data de referência é obrigatória', 'error');
+      return;
+    }
+
+    // Backend calculará trimestre e ano baseado na dataReferencia
+    this.periodosService.iniciar(this.selectedEmpresaId, this.dataReferenciaPeriodo).subscribe({
+      next: (periodo) => {
+        this.periodoAtual = periodo;
+        this.fecharModalIniciarPeriodo();
+        const dataRef = new Date(periodo.dataReferencia);
+        const mes = (dataRef.getMonth() + 1).toString().padStart(2, '0');
+        const ano = dataRef.getFullYear();
+        this.showToast(`Período ${mes}/${ano} iniciado com sucesso!`, 'success');
+      },
+      error: (err) => {
+        const mensagem = err?.error?.message || 'Erro ao iniciar período de avaliação';
+        this.showToast(mensagem, 'error', 5000);
+      }
+    });
+  }
+
+  /**
+   * Retorna texto formatado do período atual para exibição no badge
+   */
+  getPeriodoAtualTexto(): string {
+    if (!this.periodoAtual) return '';
+    const dataRef = new Date(this.periodoAtual.dataReferencia);
+    const mes = (dataRef.getMonth() + 1).toString().padStart(2, '0');
+    const ano = dataRef.getFullYear();
+    return `Avaliação ${mes}/${ano} em andamento`;
+  }
+
+  /**
+   * Navegar para cockpit do pilar (criar se não existir)
+   */
+  async navegarParaCockpit(pilar: PilarEmpresa): Promise<void> {
+    // Verificar se cockpit já existe
+    if (pilar.cockpit?.id) {
+      // Se existe, redirecionar para dashboard
+      this.router.navigate(['/cockpits', pilar.cockpit.id, 'dashboard']);
+    } else {
+      // Se não existe, abrir drawer para criar
+      if (!this.selectedEmpresaId) return;
+
+      const offcanvasRef = this.offcanvasService.open(CriarCockpitDrawerComponent, {
+        position: 'end',
+        backdrop: 'static',
+        panelClass: OFFCANVAS_SIZE.MEDIUM
+      });
+
+      const component = offcanvasRef.componentInstance as CriarCockpitDrawerComponent;
+      component.pilar = pilar;
+      component.cockpitCriado.subscribe(() => {
+        this.loadDiagnostico(true);
+      });
+    }
   }
 }

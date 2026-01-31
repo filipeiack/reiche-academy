@@ -3,7 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router, ActivatedRoute } from '@angular/router';
 import Swal from 'sweetalert2';
-import { UsersService, CreateUsuarioDto, UpdateUsuarioDto } from '../../../../core/services/users.service';
+import { UsersService, CreateUsuarioDto, UpdateUsuarioDto, UsuarioCargoCockpit } from '../../../../core/services/users.service';
 import { Usuario } from '../../../../core/models/auth.model';
 import { UserProfileService } from '../../../../core/services/user-profile.service';
 import { AuthService } from '../../../../core/services/auth.service';
@@ -40,7 +40,6 @@ export class UsuariosFormComponent implements OnInit {
     nome: ['', [Validators.required, Validators.minLength(2)]],
     telefone: [''],
     email: ['', [Validators.required, Validators.email]],
-    cargo: ['', []],
     perfilId: ['', Validators.required],
     empresaId: [''],
     senha: ['', []], // Validadores adicionados dinamicamente no ngOnInit
@@ -62,6 +61,8 @@ export class UsuariosFormComponent implements OnInit {
 
   perfis: PerfilUsuario[] = [];
   empresas: Empresa[] = [];
+  cargosCockpit: UsuarioCargoCockpit[] = [];
+  loadingCargosCockpit = false;
 
   get senhaRequired(): boolean {
     return !this.isEditMode;
@@ -123,7 +124,7 @@ export class UsuariosFormComponent implements OnInit {
 
   private getRedirectUrl(): string {
     // Perfis de cliente vão para o dashboard
-    return this.isPerfilCliente ? '/dashboard' : '/usuarios';
+    return this.isPerfilCliente ? '/diagnostico-notas' : '/usuarios';
   }
 
   handleCancel(): void {
@@ -154,6 +155,11 @@ export class UsuariosFormComponent implements OnInit {
     }
 
     if (this.isEditMode && this.usuarioId) {
+      if (!this.isValidUuid(this.usuarioId)) {
+        this.showToast('Usuário inválido', 'error');
+        this.router.navigate([this.getRedirectUrl()]);
+        return;
+      }
       this.loadUsuario(this.usuarioId);
       // Senha é opcional ao editar, mas se preenchida deve ser forte
       this.form.get('senha')?.setValidators([
@@ -213,7 +219,7 @@ export class UsuariosFormComponent implements OnInit {
       },
       error: (error) => {
         console.error('Erro ao carregar perfis:', error);
-        this.showToast('Erro ao carregar perfis', 'error');
+        this.showToast(error?.error?.message || 'Erro ao carregar perfis', 'error');
       }
     });
   }
@@ -236,6 +242,11 @@ export class UsuariosFormComponent implements OnInit {
     });
   }
 
+  private isValidUuid(value: string): boolean {
+    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+    return uuidRegex.test(value);
+  }
+
   loadUsuario(id: string): void {
     this.loading = true;
     this.usersService.getById(id).subscribe({
@@ -246,16 +257,33 @@ export class UsuariosFormComponent implements OnInit {
           nome: usuario.nome,
           telefone: usuario.telefone || '',
           email: usuario.email,
-          cargo: usuario.cargo,
           perfilId: typeof usuario.perfil === 'object' ? usuario.perfil.id : usuario.perfil,
           empresaId: usuario.empresaId || null,
           ativo: usuario.ativo
         });
+        this.loadCargosCockpit(usuario.id);
         this.loading = false;
       },
       error: (err) => {
         this.showToast(err?.error?.message || 'Erro ao carregar usuário', 'error');
         this.loading = false;
+        if (!this.modalMode) {
+          this.router.navigate([this.getRedirectUrl()]);
+        }
+      }
+    });
+  }
+
+  private loadCargosCockpit(usuarioId: string): void {
+    this.loadingCargosCockpit = true;
+    this.usersService.getCargosCockpitByUsuario(usuarioId).subscribe({
+      next: (cargos) => {
+        this.cargosCockpit = cargos;
+        this.loadingCargosCockpit = false;
+      },
+      error: () => {
+        this.cargosCockpit = [];
+        this.loadingCargosCockpit = false;
       }
     });
   }
@@ -283,9 +311,6 @@ export class UsuariosFormComponent implements OnInit {
       }
       if (this.form.get('telefone')?.dirty) {
         updateData.telefone = formValue.telefone || '';
-      }
-      if (this.form.get('cargo')?.dirty) {
-        updateData.cargo = formValue.cargo || '';
       }
 
       // Campos privilegiados - enviar apenas se foram alterados
@@ -341,7 +366,6 @@ export class UsuariosFormComponent implements OnInit {
         nome: formValue.nome || '',
         telefone: formValue.telefone || '',
         email: formValue.email || '',
-        cargo: formValue.cargo || '',
         perfilId: formValue.perfilId || '',
         senha: formValue.senha || '',
         // ADMINISTRADOR nunca pode ter empresa associada

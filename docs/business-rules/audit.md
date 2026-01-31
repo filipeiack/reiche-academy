@@ -398,55 +398,50 @@ async log(params: {
 
 ---
 
-### 6.6. Logs de Auth Não Implementados
+### 6.6. Logs de Auth Parciais (logout/reset ausentes)
 
-**Status:** ❌ NÃO IMPLEMENTADO
+**Status:** ⚠️ PARCIAL
 
 **Descrição:**
-- Módulo Auth não usa AuditService
-- Login/logout não são auditados via AuditLog
-- Apenas LoginHistory (entidade separada) registra logins
+- LoginHistory registra tentativas de login (sucesso/falha)
+- Logout não é registrado
+- Reset de senha não é registrado
 
 **Comportamento atual:**
-- LoginHistory registra tentativas de login (sucesso/falha)
-- Logout não é registrado em lugar nenhum
-- Password reset não é auditado
+- LoginHistory registra apenas tentativas de login
 
 **TODO:**
-- Definir se login/logout devem usar AuditLog
-- Ou manter LoginHistory separado (pode ser correto)
-- Auditar password reset (ação crítica)
+- Registrar logout em LoginHistory
+- Registrar reset de senha em LoginHistory
+- Definir como identificar o tipo de evento (login/logout/reset)
 
 ---
 
-### 6.7. Rotinas Não Auditam Reordenação
+### 6.7. Períodos de Mentoria Sem Auditoria
 
 **Status:** ❌ NÃO AUDITADO
 
 **Descrição:**
-- Método `reordenarPorPilar()` não registra auditoria
-- Mudanças de ordem não são rastreadas
+- PeriodosMentoriaService não chama AuditService
+- Criação e renovação não geram AuditLog
 
 **TODO:**
-- Adicionar auditoria em reordenação
-- Registrar uma entrada para toda a operação (não uma por rotina)
-
-**Observação:**
-- Mesmo problema em Pilares (`reordenar()` não auditado)
+- Registrar auditoria em CREATE e UPDATE (renovação)
+- Padronizar `entidade` conforme regra de padronização
 
 ---
 
-### 6.8. Empresas Não Auditam Vinculação de Pilares
+### 6.8. Padronização de `entidade` Inconsistente
 
-**Status:** ⚠️ AUDITORIA PARCIAL
+**Status:** ⚠️ INCONSISTENTE
 
 **Descrição:**
-- Criação/deleção de PilarEmpresa não é auditada
-- Apenas operações diretas em Empresa são auditadas
+- `entidade` varia entre nomes de tabela e nomes de classe
+- Consultas de auditoria ficam inconsistentes
 
 **TODO:**
-- Definir se vinculação de pilares deve ser auditada
-- Se sim, adicionar chamada a audit.log()
+- Padronizar `entidade` para nomes de tabela (snake_case, @@map)
+- Revisar todas as chamadas a audit.log
 
 ---
 
@@ -502,6 +497,18 @@ async log(params: {
 
 ---
 
+### 6.12. Exceção: Refresh Tokens Sem Auditoria
+
+**Status:** ✅ DEFINIDO (EXCEÇÃO)
+
+**Descrição:**
+- Operações em `refresh_tokens` não exigem AuditLog
+
+**Observação:**
+- Exceção explícita aprovada pelo negócio
+
+---
+
 ## 7. Sumário de Regras
 
 | ID | Descrição | Status |
@@ -513,8 +520,9 @@ async log(params: {
 
 **Ausências críticas:**
 - ❌ Nenhum endpoint de consulta
-- ❌ Auditoria de login/logout
-- ❌ Auditoria de reordenação (pilares/rotinas)
+- ❌ Auditoria de logout e reset de senha (LoginHistory)
+- ❌ Auditoria em Períodos de Mentoria
+- ⚠️ Padronização de `entidade` inconsistente
 - ❌ Política de retenção de dados
 - ⚠️ DTO não utilizado (código morto)
 - ⚠️ Busca de usuário duplicada em todos os módulos
@@ -602,8 +610,8 @@ await this.audit.log({
 - ✅ Logo upload
 - ✅ Logo delete
 
-**Operações não auditadas:**
-- ❌ Vinculação de pilares (PilarEmpresa)
+**Observação:**
+- Vinculação de pilares é auditada via PilarEmpresa/RotinasEmpresa
 
 ---
 
@@ -629,8 +637,8 @@ await this.audit.log({
 - ✅ UPDATE
 - ✅ DELETE
 
-**Operações não auditadas:**
-- ❌ Reordenação (`reordenar()`)
+**Observação:**
+- Reordenação registra auditoria
 
 ---
 
@@ -641,8 +649,8 @@ await this.audit.log({
 - ✅ UPDATE
 - ✅ DELETE
 
-**Operações não auditadas:**
-- ❌ Reordenação (`reordenarPorPilar()`)
+**Observação:**
+- Reordenação registra auditoria
 
 ---
 
@@ -656,7 +664,25 @@ await this.audit.log({
 ### 9.6. Auth
 
 **Operações auditadas:**
-- ❌ NENHUMA (usa LoginHistory separado)
+- ⚠️ LoginHistory (apenas login)
+
+**Operações não auditadas:**
+- ❌ Logout
+- ❌ Reset de senha
+
+**Observação:**
+- Registros de logout/reset são regra proposta
+
+---
+
+### 9.7. PeriodosMentoria
+
+**Operações auditadas:**
+- ❌ NENHUMA
+
+**Operações não auditadas:**
+- ❌ CREATE
+- ❌ UPDATE (renovação)
 
 ---
 

@@ -2,7 +2,7 @@
 CREATE TYPE "PerfilUsuario" AS ENUM ('CONSULTOR', 'GESTOR', 'COLABORADOR', 'LEITURA');
 
 -- CreateEnum
-CREATE TYPE "Criticidade" AS ENUM ('ALTO', 'MEDIO', 'BAIXO');
+CREATE TYPE "Criticidade" AS ENUM ('ALTA', 'MÉDIA', 'BAIXA');
 
 -- CreateEnum
 CREATE TYPE "StatusAcao" AS ENUM ('PENDENTE', 'EM_ANDAMENTO', 'CONCLUIDA', 'CANCELADA');

@@ -9,11 +9,11 @@ export class CreateEmpresaDto {
   @Length(2, 200)
   nome: string;
 
-  @ApiProperty({ example: '12.345.678/0001-90' })
+  @ApiProperty({ example: '12345678000190', description: 'CNPJ apenas números (14 dígitos)' })
   @IsString()
   @IsNotEmpty()
-  @Matches(/^\d{2}\.\d{3}\.\d{3}\/\d{4}-\d{2}$/, {
-    message: 'CNPJ deve estar no formato 00.000.000/0000-00',
+  @Matches(/^\d{14}$/, {
+    message: 'CNPJ deve conter exatamente 14 dígitos numéricos',
   })
   cnpj: string;
 

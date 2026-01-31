@@ -35,6 +35,7 @@ export type TestUser = {
  * - gestor@empresa-a.com (GESTOR)
  * - gestor@empresa-b.com (GESTOR)
  * - colab@empresa-a.com (COLABORADOR)
+ * - leitura@empresa-a.com (LEITURA)
  */
 export const TEST_USERS: Record<string, TestUser> = {
   admin: {
@@ -43,6 +44,12 @@ export const TEST_USERS: Record<string, TestUser> = {
     perfil: 'ADMINISTRADOR',
   },
   gestorEmpresaA: {
+    email: 'gestor@empresa-a.com',
+    senha: 'Admin@123',
+    perfil: 'GESTOR',
+    empresaId: 'empresa-a-id',
+  },
+  'gestor-a': { // Alias para compatibilidade
     email: 'gestor@empresa-a.com',
     senha: 'Admin@123',
     perfil: 'GESTOR',
@@ -60,6 +67,18 @@ export const TEST_USERS: Record<string, TestUser> = {
     perfil: 'COLABORADOR',
     empresaId: 'empresa-a-id',
   },
+  'colab-a': { // Alias para compatibilidade
+    email: 'colab@empresa-a.com',
+    senha: 'Admin@123',
+    perfil: 'COLABORADOR',
+    empresaId: 'empresa-a-id',
+  },
+  leituraEmpresaA: {
+    email: 'leitura@empresa-a.com',
+    senha: 'Admin@123',
+    perfil: 'LEITURA',
+    empresaId: 'empresa-a-id',
+  },
 };
 
 /**
@@ -70,6 +89,7 @@ export const PROTECTED_TEST_USER_EMAILS = [
   'gestor@empresa-a.com',
   'gestor@empresa-b.com',
   'colab@empresa-a.com',
+  'leitura@empresa-a.com',
 ];
 
 /**
@@ -81,28 +101,52 @@ export function isProtectedTestUser(email: string): boolean {
 
 // Helpers de autenticação
 export async function login(page: Page, user: TestUser) {
-  await page.goto('/login');
+  await page.goto('/auth/login');
   
   // Seletores baseados em formControlName (Angular)
   await page.fill('[formControlName="email"]', user.email);
   await page.fill('[formControlName="senha"]', user.senha);
   
   // Buscar botão de login por type="submit"
+  const loginResponsePromise = page.waitForResponse(
+    (response) =>
+      response.url().includes('/api/auth/login') && response.request().method() === 'POST',
+    { timeout: 15000 }
+  ).catch(() => null);
+
   await page.click('button[type="submit"]');
+
+  const loginResponse = await loginResponsePromise;
+  if (loginResponse && !loginResponse.ok()) {
+    throw new Error(`Login falhou: status ${loginResponse.status()}`);
+  }
   
-  // Aguardar navegação acontecer (detecta qualquer mudança de URL)
-  await page.waitForNavigation({ waitUntil: 'networkidle', timeout: 15000 }).catch(async () => {
-    // Se não houver navegação, verificar se token foi criado
-    const token = await page.evaluate(() => localStorage.getItem('access_token'));
+  // Aguardar navegação SPA ou token ser criado
+  await Promise.race([
+    page.waitForURL((url) => !url.pathname.includes('/login'), { timeout: 15000 }),
+    page.waitForFunction(
+      () => !!localStorage.getItem('access_token') || !!sessionStorage.getItem('access_token'),
+      { timeout: 15000 }
+    ),
+  ]).catch(async () => {
+    const token = await page.evaluate(
+      () => localStorage.getItem('access_token') || sessionStorage.getItem('access_token')
+    );
     if (!token) {
       throw new Error('Login falhou: sem navegação e sem token');
     }
   });
   
-  // Validar que saiu da página de login
+  // Se token existe mas URL ainda está em /login, forçar navegação
   const currentUrl = page.url();
   if (currentUrl.includes('/login')) {
-    throw new Error('Login falhou: ainda na página de login');
+    const token = await page.evaluate(
+      () => localStorage.getItem('access_token') || sessionStorage.getItem('access_token')
+    );
+    if (!token) {
+      throw new Error('Login falhou: ainda na página de login');
+    }
+    await page.goto('/');
   }
 }
 
@@ -126,6 +170,52 @@ export async function navigateTo(page: Page, route: string) {
   if (await loader.count() > 0) {
     await loader.waitFor({ state: 'hidden', timeout: 10000 });
   }
+}
+
+/**
+ * Seleciona uma empresa na navbar (apenas para perfil ADMINISTRADOR)
+ * @param page - Página do Playwright
+ * @param empresaNome - Nome da empresa a selecionar (ex: 'Empresa A')
+ */
+export async function selectEmpresa(page: Page, empresaNome: string) {
+  // Aguardar navbar carregar completamente
+  await page.waitForLoadState('networkidle');
+  await page.waitForTimeout(1500);
+  
+  // Localizar o ng-select de empresa na navbar
+  let empresaSelect = page.locator('[data-testid="empresa-select"]').first();
+  
+  // Verificar se existe (apenas ADMIN tem este seletor)
+  const selectCount = await empresaSelect.count();
+  if (selectCount === 0) {
+    // Tentar navegar para uma rota protegida para garantir que a navbar foi carregada
+    await page.goto('/usuarios');
+    await page.waitForLoadState('networkidle');
+    await page.waitForTimeout(1000);
+
+    empresaSelect = page.locator('[data-testid="empresa-select"]').first();
+    const retryCount = await empresaSelect.count();
+    if (retryCount === 0) {
+      throw new Error('Seletor de empresa não encontrado. Apenas ADMINISTRADOR pode selecionar empresa.');
+    }
+  }
+  
+  // Aguardar elemento estar visível
+  await empresaSelect.waitFor({ state: 'visible', timeout: 10000 });
+  
+  // Abrir dropdown
+  await empresaSelect.click();
+  await page.waitForTimeout(800);
+  
+  // Selecionar empresa pelo nome (buscar texto exato ou parcial)
+  const option = page.locator(`.ng-option`).filter({ hasText: empresaNome }).first();
+  await option.waitFor({ state: 'visible', timeout: 8000 });
+  await option.click();
+  
+  // Aguardar seleção ser aplicada
+  await page.waitForTimeout(1500);
+  
+  console.log(`[INFO] Empresa "${empresaNome}" selecionada com sucesso`);
 }
 
 // Helpers de formulários

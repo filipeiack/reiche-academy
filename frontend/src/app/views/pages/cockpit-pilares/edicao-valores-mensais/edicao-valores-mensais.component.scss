@@ -1,0 +1,141 @@
+.indicador-header {
+  position: sticky;
+  top: calc(var(--navbar-height, 60px) + var(--headerDashboard-height, 40px));
+  z-index: 5;
+  background: var(--bs-card-bg);
+}
+
+// Wrapper que contém apenas o header da tabela (fora do table-responsive)
+.table-header-wrapper {
+  position: sticky;
+  top: calc(var(--navbar-height, 60px) + var(--headerDashboard-height, 40px) + 50px);
+  z-index: 4;
+  margin-bottom: 0;
+  margin-top: 0;
+
+  .table {
+    margin-bottom: 0;
+  }
+}
+
+.mobile-table-header {
+  display: none;
+}
+
+.valores-header {
+  gap: 0.75rem;
+}
+
+.table-header-wrapper .table,
+.table-responsive .table {
+  min-width: 720px;
+}
+
+// Ajustes responsivos para o header do indicador em mobile
+@media (max-width: 768px) {
+  .valores-header {
+    flex-direction: column;
+    align-items: stretch !important;
+  }
+
+  .btn-novo-ciclo {
+    width: 100%;
+  }
+
+  .edicao-valores-wrapper .card-body {
+    padding: 0.75rem !important;
+  }
+
+  .indicador-header {
+    flex-direction: column;
+    align-items: flex-start !important;
+  }
+
+  .detalhes-indicador {
+    flex-wrap: wrap !important;
+    width: 100%;
+    gap: 0.5rem !important;
+    flex-shrink: 1 !important;
+  }
+
+  .detalhes-indicador .badge {
+    flex: 1 1 48%;
+    min-width: 140px;
+    padding: 0.4rem 0.5rem !important;
+  }
+
+  .detalhes-indicador .form-label {
+    font-size: 0.7rem;
+    margin-bottom: 0.25rem !important;
+  }
+
+  .detalhes-indicador .fw-bold,
+  .detalhes-indicador .badge {
+    font-size: 0.8rem;
+  }
+
+  .table-header-wrapper {
+    display: none;
+  }
+
+  .mobile-table-header {
+    display: table-header-group;
+  }
+
+  .table-responsive .form-control {
+    font-size: 0.8rem;
+    padding: 0.25rem 0.4rem;
+  }
+
+  .badge-desvio {
+    min-height: 30px;
+    font-size: 0.8rem;
+  }
+}
+
+@media (max-width: 576px) {
+  .detalhes-indicador .badge {
+    flex: 1 1 100%;
+    min-width: 0;
+  }
+}
+
+// Em mobile, evitar sticky para não quebrar o layout
+@media (max-width: 768px) {
+  .indicador-header,
+  .table-header-wrapper {
+    position: static;
+    top: auto;
+  }
+}
+
+
+/* Classes badges para span */
+span.bg-danger {
+  background-color: var(--bs-danger-bg-subtle) !important;
+  border-color: var(--bs-danger) !important;
+  border: 1px solid;
+  color: var(--bs-body-color);
+}
+
+span.bg-warning {
+  background-color: var(--bs-warning-bg-subtle) !important;
+  border-color: var(--bs-warning) !important;
+  border: 1px solid;
+  color: var(--bs-body-color);
+}
+
+span.bg-success {
+  background-color: var(--bs-success-bg-subtle) !important;
+  border-color: var(--bs-success) !important;
+  border: 1px solid;
+  color: var(--bs-body-color);
+}
+
+/* Badge de desvio com altura similar aos inputs */
+.badge-desvio {
+  min-height: 35px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}

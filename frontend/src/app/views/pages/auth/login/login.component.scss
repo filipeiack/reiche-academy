@@ -1,9 +1,9 @@
 // Variáveis CSS para tema claro
 :host {
-    height: 100vh;
-    display: flex;
-    align-items: center;
-    justify-content: center;
+  height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 
   --logo-wrapper-filter: opacity(0.5) contrast(1.2);
   --login-bg-image: url('/assets/images/fundo-login-light.png');
@@ -22,14 +22,27 @@
 .nobleui-logo {
   font-weight: 700;
   font-size: 1.5rem;
+
   span {
-        color: var(--bs-primary);
-        font-weight: 500;
-      }
+    color: var(--bs-primary);
+    font-weight: 500;
+  }
+}
+
+.env-indicator {
+  font-size: 0.65rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--bs-secondary-color, #6c757d);
+  opacity: 0.6;
+  margin-top: -6px;
+  margin-bottom: 14px;
+  user-select: none;
 }
 
 .logo-wrapper {
   text-align: center;
+
   img {
     border-radius: 8px;
     max-height: 160px;
@@ -46,11 +59,16 @@
   display: flex;
   align-items: center;
   justify-content: space-around;
-  
+
   img {
     max-width: 150px;
     height: auto;
     opacity: 0.2;
     filter: grayscale(100%);
   }
+}
+
+form i {
+  margin-top: -50px;
+  cursor: pointer;
 }

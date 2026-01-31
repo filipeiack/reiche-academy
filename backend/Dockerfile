@@ -54,6 +54,9 @@ FROM base AS production
 # Set NODE_ENV
 ENV NODE_ENV=production
 
+# Install tsx globally for running TypeScript scripts (seed, etc)
+RUN npm install -g tsx
+
 # Copy package files
 COPY package*.json ./
 COPY prisma ./prisma/

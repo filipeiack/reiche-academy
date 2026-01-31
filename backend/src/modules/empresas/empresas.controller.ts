@@ -91,8 +91,8 @@ export class EmpresasController {
   @ApiOperation({ summary: 'Buscar empresa por ID' })
   @ApiResponse({ status: 200, description: 'Empresa encontrada' })
   @ApiResponse({ status: 404, description: 'Empresa não encontrada' })
-  findOne(@Param('id') id: string) {
-    return this.empresasService.findOne(id);
+  findOne(@Param('id') id: string, @Request() req: ExpressRequest & { user: any }) {
+    return this.empresasService.findOne(id, req.user);
   }
 
   @ApiBearerAuth()

@@ -1,0 +1,1 @@
+// Migrado para frontend/e2e/security/security-adversarial.smoke.spec.ts

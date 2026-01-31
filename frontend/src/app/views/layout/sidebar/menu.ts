@@ -18,6 +18,27 @@ export const MENU: MenuItem[] = [
   //   link: '/calendario'
   // },
   {
+    label: 'MENU.PAINEL_CONTROLE',
+    isTitle: true
+  },
+  {
+    label: 'MENU.NOTAS',
+    icon: 'clipboard',
+    link: '/diagnostico-notas'
+  },
+  {
+    label: 'MENU.EVOLUCAO',
+    icon: 'trending-up',
+    link: '/diagnostico-evolucao'
+  },
+  {
+    label: 'MENU.COCKPITS',
+    icon: 'bi bi-speedometer2',
+    id: 999,
+    //subItems: [], // Será populado dinamicamente no MenuService
+    //expanded: true // Manter sempre expandido
+  },
+{
     label: 'MENU.CADASTROS',
     isTitle: true
   },
@@ -47,21 +68,6 @@ export const MENU: MenuItem[] = [
     //   }
     // ]
   },
-  {
-    label: 'MENU.PAINEL_CONTROLE',
-    isTitle: true
-  },
-  {
-    label: 'MENU.NOTAS',
-    icon: 'clipboard',
-    link: '/diagnostico-notas'
-  },
-  {
-    label: 'MENU.EVOLUCAO',
-    icon: 'trending-up',
-    link: '/diagnostico-evolucao'
-  },
-
   
   // {
   //   label: 'MENU.DOCS',

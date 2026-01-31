@@ -24,7 +24,7 @@ export const adminGuard: CanActivateFn = (route, state) => {
   
   // Verificar se perfil existe
   if (!currentUser.perfil) {
-    router.navigate(['/dashboard']);
+    router.navigate(['/diagnostico-notas']);
     return false;
   }
   
@@ -33,7 +33,7 @@ export const adminGuard: CanActivateFn = (route, state) => {
     : currentUser.perfil;
 
   if (perfilCodigo !== 'ADMINISTRADOR') {
-    router.navigate(['/dashboard']);
+    router.navigate(['/diagnostico-notas']);
     return false;
   }
 

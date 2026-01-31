@@ -81,7 +81,7 @@ export class RotinaFormComponent implements OnInit, AfterViewInit {
         this.pilares = pilares.filter(p => p.ativo);
       },
       error: (error: HttpErrorResponse) => {
-        this.showToast('Erro ao carregar pilares', 'error');
+        this.showToast(error?.error?.message || 'Erro ao carregar pilares', 'error');
         this.loading = false;
       }
     });
@@ -109,7 +109,7 @@ export class RotinaFormComponent implements OnInit, AfterViewInit {
         if (error.status === 404) {
           this.showToast('Rotina não encontrada', 'error');
         } else {
-          this.showToast('Erro ao carregar rotina', 'error');
+          this.showToast(error?.error?.message || 'Erro ao carregar rotina', 'error');
         }
         
       }
@@ -191,9 +191,9 @@ export class RotinaFormComponent implements OnInit, AfterViewInit {
     } else if (error.status === 404) {
       this.showToast('Rotina não encontrada', 'error');
     } else if (error.status === 400) {
-      this.showToast('Dados inválidos. Verifique os campos.', 'error');
+      this.showToast(error?.error?.message || 'Dados inválidos. Verifique os campos.', 'error');
     } else {
-      this.showToast('Erro ao salvar rotina. Tente novamente.', 'error');
+      this.showToast(error?.error?.message || 'Erro ao salvar rotina. Tente novamente.', 'error');
     }
   }
 

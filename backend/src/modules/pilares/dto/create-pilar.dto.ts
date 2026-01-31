@@ -5,7 +5,7 @@ export class CreatePilarDto {
   @ApiProperty({ example: 'Estratégia e Governança' })
   @IsString()
   @IsNotEmpty()
-  @Length(2, 100)
+  @Length(2, 60)
   nome: string;
 
   @ApiPropertyOptional({ example: 'Pilar focado em planejamento estratégico e governança corporativa' })

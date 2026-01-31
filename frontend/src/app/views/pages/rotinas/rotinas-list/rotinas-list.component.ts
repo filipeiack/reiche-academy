@@ -101,7 +101,7 @@ export class RotinasListComponent implements OnInit {
         this.loading = false;
       },
       error: (error: HttpErrorResponse) => {
-        this.showToast('Erro ao carregar rotinas. Tente novamente.', 'error');
+        this.showToast(error?.error?.message || 'Erro ao carregar rotinas. Tente novamente.', 'error');
         this.loading = false;
         console.error('Erro ao carregar rotinas:', error);
       }
@@ -182,7 +182,7 @@ export class RotinasListComponent implements OnInit {
       },
       error: (error: HttpErrorResponse) => {
         this.loadRotinas(); // Reverter
-        this.showToast('Erro ao reordenar rotinas', 'error');
+        this.showToast(error?.error?.message || 'Erro ao reordenar rotinas', 'error');
         console.error('Erro ao reordenar:', error);
       }
     });
@@ -235,7 +235,7 @@ export class RotinasListComponent implements OnInit {
         });
       },
       error: (err) => {
-        this.showToast('Erro ao verificar rotina', 'error');
+        this.showToast(err?.error?.message || 'Erro ao verificar rotina', 'error');
       }
     });
   }
@@ -298,9 +298,9 @@ export class RotinasListComponent implements OnInit {
         this.selectedRotina = rotina;
         this.loadingDetails = false;
       },
-      error: () => {
+      error: (err) => {
         this.loadingDetails = false;
-        this.showToast('Erro ao carregar detalhes', 'error');
+        this.showToast(err?.error?.message || 'Erro ao carregar detalhes', 'error');
       }
     });
   }

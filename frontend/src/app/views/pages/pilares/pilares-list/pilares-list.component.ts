@@ -232,7 +232,7 @@ export class PilaresListComponent implements OnInit {
         }
       },
       error: (err) => {
-        this.showToast('Erro ao verificar pilar', 'error');
+        this.showToast(err?.error?.message || 'Erro ao verificar pilar', 'error');
       }
     });
   }
@@ -313,7 +313,8 @@ export class PilaresListComponent implements OnInit {
       
       this.loadPilares();
     } catch (error) {
-      this.showToast('Erro ao salvar a ordem dos pilares. Tente novamente', 'error');
+      const message = (error as any)?.error?.message || 'Erro ao salvar a ordem dos pilares. Tente novamente';
+      this.showToast(message, 'error');
     }
   }
 
@@ -326,9 +327,9 @@ export class PilaresListComponent implements OnInit {
         this.selectedPilar = pilar;
         this.loadingDetails = false;
       },
-      error: () => {
+      error: (err) => {
         this.loadingDetails = false;
-        this.showToast('Erro ao carregar detalhes', 'error');
+        this.showToast(err?.error?.message || 'Erro ao carregar detalhes', 'error');
       }
     });
   }

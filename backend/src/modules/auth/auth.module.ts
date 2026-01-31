@@ -6,9 +6,12 @@ import { AuthService } from './auth.service';
 import { AuthController } from './auth.controller';
 import { JwtStrategy } from './strategies/jwt.strategy';
 import { LocalStrategy } from './strategies/local.strategy';
+import { JwtAuthGuard } from './guards/jwt-auth.guard';
 import { UsuariosModule } from '../usuarios/usuarios.module';
 import { PrismaModule } from '../../common/prisma/prisma.module';
 import { EmailService } from './email.service';
+import { RefreshTokensService } from './refresh-tokens.service';
+import { TokenCleanupService } from './services/token-cleanup.service';
 
 @Module({
   imports: [
@@ -27,7 +30,7 @@ import { EmailService } from './email.service';
     }),
   ],
   controllers: [AuthController],
-  providers: [AuthService, JwtStrategy, LocalStrategy, EmailService],
-  exports: [AuthService],
+  providers: [AuthService, JwtStrategy, LocalStrategy, JwtAuthGuard, EmailService, RefreshTokensService, TokenCleanupService],
+  exports: [AuthService, JwtAuthGuard],
 })
 export class AuthModule {}

@@ -1,4 +1,4 @@
-﻿import { NgIf } from '@angular/common';
+import { NgIf } from '@angular/common';
 import { Component, OnInit, inject } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
@@ -27,7 +27,9 @@ export class LoginComponent implements OnInit {
   errorMessage = '';
   empresa: Empresa | null = null;
   logoUrl = 'assets/images/logo_reiche_academy.png'; // Logo padrão
-  currentTheme = 'dark';
+  currentTheme = 'light';
+  showPassword = false;
+  environmentLabel = (environment.environmentName || 'DESCONHECIDO').toUpperCase();
 
   private readonly REMEMBER_EMAIL_KEY = 'remember_email';
 
@@ -45,8 +47,8 @@ export class LoginComponent implements OnInit {
   });
 
   ngOnInit(): void {
-    // Get the return URL from the route parameters, or default to '/dashboard'
-    this.returnUrl = this.route.snapshot.queryParams['returnUrl'] || '/dashboard';
+    // Get the return URL from the route parameters, or default to '/diagnostico-notas'
+    this.returnUrl = this.route.snapshot.queryParams['returnUrl'] || '/diagnostico-notas';
 
     // Carregar email salvo se "lembrar-me" estava ativo
     this.loadRememberedEmail();
@@ -125,10 +127,19 @@ export class LoginComponent implements OnInit {
     }
   }
 
+  togglePasswordVisibility(): void {
+    this.showPassword = !this.showPassword;
+  }
+
   onLoggedin(e: Event) {
     e.preventDefault();
 
+    console.log('[LoginComponent] Iniciando processo de login');
+    console.log('[LoginComponent] Formulário válido:', !this.form.invalid);
+    console.log('[LoginComponent] Valores do formulário:', this.form.value);
+
     if (this.form.invalid) {
+      console.log('[LoginComponent] Formulário inválido, marcando campos');
       this.form.markAllAsTouched();
       return;
     }
@@ -141,12 +152,15 @@ export class LoginComponent implements OnInit {
     // Salvar ou remover email baseado no checkbox "lembrar-me"
     this.handleRememberMe(email || '', !!remember);
 
+    console.log('[LoginComponent] Enviando requisição de login...');
     this.authService.login({ email: email || '', senha: senha || '' }, !!remember).subscribe({
-      next: () => {
+      next: (response) => {
+        console.log('[LoginComponent] Login bem-sucedido:', response);
         this.loading = false;
         this.router.navigate([this.returnUrl]);
       },
       error: (err) => {
+        console.error('[LoginComponent] Erro no login:', err);
         this.loading = false;
         this.errorMessage = err?.error?.message || 'Não foi possível fazer login. Verifique as credenciais.';
       }

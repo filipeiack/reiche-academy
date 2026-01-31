@@ -21,7 +21,7 @@ export class PilaresFormComponent implements OnInit {
 
   // UI-PIL-005: Formulário de Criação/Edição
   form = this.fb.group({
-    nome: ['', [Validators.required, Validators.minLength(2), Validators.maxLength(100)]],
+    nome: ['', [Validators.required, Validators.minLength(2), Validators.maxLength(60)]],
     descricao: ['', [Validators.maxLength(500)]],
     ordem: [null as number | null, [Validators.min(1)]],
     ativo: [true]
@@ -71,7 +71,7 @@ export class PilaresFormComponent implements OnInit {
         this.loading = false;
       },
       error: (err) => {
-        this.showToast('Erro ao carregar pilar', 'error');
+        this.showToast(err?.error?.message || 'Erro ao carregar pilar', 'error');
         this.loading = false;
         this.router.navigate(['/pilares']);
       }

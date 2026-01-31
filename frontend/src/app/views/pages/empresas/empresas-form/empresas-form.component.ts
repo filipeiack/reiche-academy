@@ -10,6 +10,7 @@ import { Usuario } from '../../../../core/models/auth.model';
 import { AuthService } from '../../../../core/services/auth.service';
 import { PilaresService, Pilar, CreatePilarDto } from '../../../../core/services/pilares.service';
 import { PilaresEmpresaService, PilarEmpresa } from '../../../../core/services/pilares-empresa.service';
+import { PeriodosMentoriaService } from '../../../../core/services/periodos-mentoria.service';
 import { TranslatePipe } from '../../../../core/pipes/translate.pipe';
 import { environment } from '../../../../../environments/environment';
 import { NgSelectModule } from '@ng-select/ng-select';
@@ -29,6 +30,7 @@ export class EmpresasFormComponent implements OnInit {
   private authService = inject(AuthService);
   private pilaresService = inject(PilaresService);
   private pilaresEmpresaService = inject(PilaresEmpresaService);
+  private periodosMentoriaService = inject(PeriodosMentoriaService);
   private fb = inject(FormBuilder);
   private router = inject(Router);
   private route = inject(ActivatedRoute);
@@ -69,6 +71,11 @@ export class EmpresasFormComponent implements OnInit {
   previewUrl: string | null = null;
   logoFile: File | null = null;
 
+  // Período de Mentoria
+  dataInicioMentoria: Date | null = null;
+  periodoAtivo: any = null;
+  periodosMentoria: any[] = [];
+
   get isPerfilCliente(): boolean {
     if (!this.currentLoggedUser?.perfil) return false;
     const perfilCodigo = typeof this.currentLoggedUser.perfil === 'object' 
@@ -97,12 +104,101 @@ export class EmpresasFormComponent implements OnInit {
       this.loadEmpresa(this.empresaId);
       this.loadUsuariosAssociados(this.empresaId);
       this.loadPilaresAssociados(this.empresaId);
+      this.loadPeriodoAtivo(this.empresaId);
+      this.loadPeriodosMentoria(this.empresaId);
     }
+  }
+
+  loadPeriodoAtivo(empresaId: string): void {
+    this.periodosMentoriaService.getPeriodoAtivo(empresaId).subscribe({
+      next: (periodo) => {
+        this.periodoAtivo = periodo;
+        if (periodo) {
+          this.dataInicioMentoria = new Date(periodo.dataInicio);
+        }
+      },
+      error: (err) => console.error('Erro ao carregar período ativo:', err)
+    });
+  }
+
+  loadPeriodosMentoria(empresaId: string): void {
+    this.periodosMentoriaService.listarPorEmpresa(empresaId).subscribe({
+      next: (periodos) => {
+        this.periodosMentoria = periodos.sort((a, b) => b.numero - a.numero);
+      },
+      error: (err) => console.error('Erro ao carregar períodos de mentoria:', err)
+    });
+  }
+
+  calcularDataFim(): Date | null {
+    if (!this.dataInicioMentoria) return null;
+    const dataFim = new Date(this.dataInicioMentoria);
+    dataFim.setFullYear(dataFim.getFullYear() + 1);
+    dataFim.setDate(dataFim.getDate() - 1);
+    return dataFim;
+  }
+
+  onDataInicioChange(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    if (input.value) {
+      this.dataInicioMentoria = new Date(input.value);
+    } else {
+      this.dataInicioMentoria = null;
+    }
+  }
+
+  formatarDataPeriodo(data: Date | string): string {
+    const d = typeof data === 'string' ? new Date(data) : data;
+    const meses = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'];
+    const mes = meses[d.getMonth()];
+    const ano = d.getFullYear().toString().slice(-2);
+    return `${mes}/${ano}`;
+  }
+
+  criarPeriodo(): void {
+    if (!this.dataInicioMentoria || !this.empresaId) return;
+    
+    this.periodosMentoriaService.create(this.empresaId, { dataInicio: this.dataInicioMentoria }).subscribe({
+      next: (periodo) => {
+        this.periodoAtivo = periodo;
+        this.loadPeriodosMentoria(this.empresaId!);
+        this.showToast('Período de mentoria criado com sucesso!', 'success');
+      },
+      error: (err) => this.showToast(err?.error?.message || 'Erro ao criar período', 'error')
+    });
+  }
+
+  renovarPeriodo(): void {
+    if (!this.periodoAtivo || !this.empresaId) return;
+
+    Swal.fire({
+      title: 'Renovar Mentoria?',
+      html: `<p>O período atual <strong>Período ${this.periodoAtivo.numero}</strong> será encerrado.</p>
+             <p>Um novo período <strong>Período ${this.periodoAtivo.numero + 1}</strong> será criado a partir de hoje com duração de 1 ano.</p>`,
+      showCancelButton: true,
+      confirmButtonText: 'Sim, renovar',
+      cancelButtonText: 'Cancelar',
+      confirmButtonColor: '#3085d6',
+    }).then((result) => {
+      if (result.isConfirmed && this.periodoAtivo && this.empresaId) {
+        const novaDataInicio = new Date(); // Usar data de hoje
+
+        this.periodosMentoriaService.renovar(this.empresaId, this.periodoAtivo.id, novaDataInicio).subscribe({
+          next: (novoPeriodo) => {
+            this.periodoAtivo = novoPeriodo;
+            this.dataInicioMentoria = new Date(novoPeriodo.dataInicio);
+            this.loadPeriodosMentoria(this.empresaId!);
+            this.showToast('Mentoria renovada com sucesso!', 'success');
+          },
+          error: (err) => this.showToast(err?.error?.message || 'Erro ao renovar período', 'error')
+        });
+      }
+    });
   }
 
   private getRedirectUrl(): string {
     // Perfis de cliente vão para o dashboard
-    return this.isPerfilCliente ? '/dashboard' : '/empresas';
+    return this.isPerfilCliente ? '/diagnostico-notas' : '/empresas';
   }
 
   handleCancel(): void {
@@ -160,10 +256,13 @@ export class EmpresasFormComponent implements OnInit {
     this.loading = true;
     const v = this.form.value;
 
+    // Sanitizar CNPJ (remover formatação)
+    const cnpjSanitizado = (v.cnpj || '').replace(/\D/g, '');
+
     if (this.isEditMode && this.empresaId) {
       const updateData: UpdateEmpresaRequest = {
         nome: v.nome || '',
-        cnpj: v.cnpj || '',
+        cnpj: cnpjSanitizado,
         tipoNegocio: v.tipoNegocio || undefined,
         loginUrl: v.loginUrl || undefined,
         cidade: v.cidade || '',
@@ -177,7 +276,7 @@ export class EmpresasFormComponent implements OnInit {
     } else {
       const createData: CreateEmpresaRequest = {
         nome: v.nome || '',
-        cnpj: v.cnpj || '',
+        cnpj: cnpjSanitizado,
         tipoNegocio: v.tipoNegocio || undefined,
         loginUrl: v.loginUrl || undefined,
         cidade: v.cidade || '',
@@ -200,6 +299,17 @@ export class EmpresasFormComponent implements OnInit {
           if (this.logoFile && novaEmpresa.id) {
             console.log('Iniciando upload do logo para empresa recém-criada');
             this.uploadLogo(this.logoFile, novaEmpresa.id);
+          }
+
+          // Criar período de mentoria se dataInicio foi definida
+          if (this.dataInicioMentoria) {
+            this.periodosMentoriaService.create(novaEmpresa.id, { dataInicio: this.dataInicioMentoria }).subscribe({
+              next: (periodo) => {
+                this.periodoAtivo = periodo;
+                console.log('Período de mentoria criado:', periodo);
+              },
+              error: (err) => console.error('Erro ao criar período:', err)
+            });
           }
 
           // Carregar dados para a etapa 2
@@ -524,7 +634,7 @@ export class EmpresasFormComponent implements OnInit {
       },
       (err) => {
         console.error('Erro ao associar usuários pendentes:', err);
-        this.showToast('Erro ao associar alguns usuários. Verifique em modo edição.', 'warning');
+        this.showToast(err?.error?.message || 'Erro ao associar alguns usuários. Verifique em modo edição.', 'warning');
       }
     );
   }
@@ -705,7 +815,7 @@ export class EmpresasFormComponent implements OnInit {
       },
       error: (err) => {
         console.error('Erro ao reordenar pilares:', err);
-        this.showToast('Erro ao reordenar pilares. Recarregue a página.', 'error');
+        this.showToast(err?.error?.message || 'Erro ao reordenar pilares. Recarregue a página.', 'error');
         // Recarregar lista original em caso de erro
         if (this.empresaId) {
           this.loadPilaresAssociados(this.empresaId);
@@ -730,7 +840,7 @@ export class EmpresasFormComponent implements OnInit {
       },
       error: (err) => {
         console.error('Erro ao associar pilares pendentes:', err);
-        this.showToast('Erro ao associar alguns pilares. Verifique em modo edição.', 'warning');
+        this.showToast(err?.error?.message || 'Erro ao associar alguns pilares. Verifique em modo edição.', 'warning');
       }
     });
   }

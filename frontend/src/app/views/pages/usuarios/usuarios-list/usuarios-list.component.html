@@ -10,8 +10,9 @@
     </ol>
   </nav>
 
-  <button data-testid="novo-usuario-button" id="btnNovo" type="button" class="btn btn-primary btn-icon-text btn-xs" [routerLink]="['/usuarios/novo']">
-    <i class="feather icon-plus btn-icon-prepend"></i>
+  <button data-testid="novo-usuario-button" id="btnNovo" type="button" class="btn btn-primary btn-sm"
+    [routerLink]="['/usuarios/novo']">
+    <i class="bi bi-plus-circle btn-icon-prepend"></i>
     {{ 'USERS.ADD' | translate }}
   </button>
 </div>
@@ -20,7 +21,7 @@
   <div class="col-md-12 stretch-card">
     <div class="card">
       <div class="card-body">
-        <div class="row">
+        <div class="row mb-3">
           <div class="col-md-6">
             <div class="input-icon search-inline">
               <span class="input-icon-addon">
@@ -31,16 +32,16 @@
             </div>
           </div>
 
-          <div class="col-md-6 text-end">
+          <!-- <div class="col-md-6 text-end">
 
             @if (selectedCount > 0) {
-            <ngb-alert id="usuarioBarBtn" class="alert-custom-primary" [dismissible]="false">
+            
               <button type="button" class="btn btn-xs btn-outline-danger" (click)="deleteSelectedUsuarios()">
                 {{ "BUTTONS.DELETE_SELECTED" | translate }} ({{ selectedCount }})
               </button>
-            </ngb-alert>
+            
             }
-          </div>
+          </div> -->
         </div>
 
         <div class="table-responsive">
@@ -53,11 +54,11 @@
           </div>
           } @else {
           <div class="table-responsive">
-            <table class="table table-hover table-striped mb-2">
-              <thead>
+            <table class="table table-hover table-sm mb-2">
+              <thead class="table-light">
                 <tr>
-                  <th><input class="form-check-input" type="checkbox" [(ngModel)]="headerCheckboxChecked"
-                      (change)="toggleHeaderCheckbox()"></th>
+                  <!-- <th><input class="form-check-input" type="checkbox" [(ngModel)]="headerCheckboxChecked"
+                      (change)="toggleHeaderCheckbox()"></th> -->
                   <th scope="col" sortable="name" (sort)="onSort($event)">{{ 'USERS.NAME' | translate }}</th>
                   <th scope="col" sortable="email" (sort)="onSort($event)">{{ 'USERS.EMAIL' | translate }}</th>
                   <th>{{ 'USERS.ROLE' | translate }}</th>
@@ -68,10 +69,10 @@
               <tbody>
                 @for (usuario of paginatedUsuarios; track usuario.id) {
                 <tr>
-                  <td>
+                  <!-- <td>
                     <input class="form-check-input" type="checkbox" [checked]="isUsuarioSelected(usuario.id)"
                       (change)="toggleUsuarioSelection(usuario.id)">
-                  </td>
+                  </td> -->
                   <td>{{ usuario.nome }}</td>
                   <td class="text-muted">{{ usuario.email }}</td>
                   <td>{{ getPerfilLabel(usuario.perfil) }}</td>
@@ -93,12 +94,12 @@
                         <i class="feather"
                           [ngClass]="{'icon-toggle-right': usuario.ativo, 'icon-toggle-left text-danger': !usuario.ativo}"></i>
                       </button>
-                      <button data-testid="edit-usuario-button" class="btn btn-icon text-secondary" [routerLink]="['/usuarios', usuario.id, 'editar']"
-                        title="{{ 'BUTTONS.EDIT' | translate }}">
+                      <button data-testid="edit-usuario-button" class="btn btn-icon text-secondary"
+                        [routerLink]="['/usuarios', usuario.id, 'editar']" title="{{ 'BUTTONS.EDIT' | translate }}">
                         <i class="feather icon-edit"></i>
                       </button>
-                      <button data-testid="delete-usuario-button" class="btn btn-icon text-danger" (click)="deleteUsuario(usuario.id, usuario.nome)"
-                        title="{{ 'BUTTONS.DELETE' | translate }}">
+                      <button data-testid="delete-usuario-button" class="btn btn-icon text-danger"
+                        (click)="deleteUsuario(usuario.id, usuario.nome)" title="{{ 'BUTTONS.DELETE' | translate }}">
                         <i class="feather icon-trash-2"></i>
                       </button>
                     </div>
@@ -126,13 +127,14 @@
             </select> -->
 
             <span class="text-muted fs-12">
-              Mostrando {{ getStartIndex() + 1 }}-{{ getEndIndex() }} de {{ filteredUsuarios.length }} {{ 'COMMON.ITEMS' | translate }}
+              Mostrando {{ getStartIndex() + 1 }}-{{ getEndIndex() }} de {{ filteredUsuarios.length }} {{ 'COMMON.ITEMS'
+              | translate }}
             </span>
 
             @if (totalPages > 1) {
-              <ngb-pagination [collectionSize]="filteredUsuarios.length" [(page)]="currentPage" size="sm"
-                [pageSize]="pageSize" (pageChange)="paginatedUsuarios">
-              </ngb-pagination>
+            <ngb-pagination [collectionSize]="filteredUsuarios.length" [(page)]="currentPage" size="sm"
+              [pageSize]="pageSize" (pageChange)="paginatedUsuarios">
+            </ngb-pagination>
             }
           </div>
           }
@@ -199,9 +201,9 @@
           <label class="text-muted small">Empresa</label>
           <p class="mb-0">
             @if (selectedUsuario.empresa) {
-              {{ selectedUsuario.empresa.nome }}
+            {{ selectedUsuario.empresa.nome }}
             } @else {
-              <span class="text-muted">Não associado</span>
+            <span class="text-muted">Não associado</span>
             }
           </p>
         </div>
