@@ -2,7 +2,7 @@ import { AfterViewInit, Directive } from '@angular/core';
 import * as feather from 'feather-icons';
 
 @Directive({
-  selector: '[appFeatherIcon]',
+  selector: '[featherIcon],[appFeatherIcon]',
   standalone: true
 })
 
