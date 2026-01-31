@@ -42,7 +42,7 @@
         </span>
         @if (getSelectedEmpresaPeriodoMentoriaInterval()) {
           <!-- <i class="bi bi-circle " style="font-size: 8px;"></i> -->
-          <span class="text-muted"> Mentoria: {{ getSelectedEmpresaPeriodoMentoriaInterval() }}</span>
+          <span class="text-muted fs-11px"> Mentoria: {{ getSelectedEmpresaPeriodoMentoriaInterval() }}</span>
         }
         }
         <!-- @if (getSelectedEmpresaPeriodoMentoriaLabel()) {
@@ -61,15 +61,15 @@
 
       <div class="d-flex flex-column gap-1 justify-content-center col-mobile-hide empresa-detalhes">
         @if (getEmpresaCnpj()) {
-        <span class="text-muted fs-12px">{{ getEmpresaCnpj() | cnpj }}</span>
+        <span class="text-muted fs-11px">{{ getEmpresaCnpj() | cnpj }}</span>
         }
         @if (getEmpresaLocalizacao()) {
-        <span class="text-muted fs-12px">
+        <span class="text-muted fs-11px">
           {{ getEmpresaLocalizacao() }} 
         </span>
         @if (getSelectedEmpresaPeriodoMentoriaInterval()) {
           <!-- <i class="bi bi-square " style="font-size: 8px;"></i> -->
-          <span class="text-muted"> Mentoria: {{ getSelectedEmpresaPeriodoMentoriaInterval() }}</span>
+          <span class="text-muted fs-11px"> Mentoria: {{ getSelectedEmpresaPeriodoMentoriaInterval() }}</span>
         }
         }
 

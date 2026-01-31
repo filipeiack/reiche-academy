@@ -41,7 +41,7 @@
     <div class="row">
         <div [ngClass]="!modalMode ? 'col-md-8' : 'col-md-12'">
             <!-- Form Card -->
-            <form id="usuarioForm" [formGroup]="form" (ngSubmit)="onSubmit()">
+            <form id="usuarioForm" [formGroup]="form" (ngSubmit)="onSubmit()" autocomplete="off">
                 <div class="card mb-3">
                     <div class="card-body">
 
@@ -135,10 +135,10 @@
 
                         <!-- Email -->
                         <div class="mb-3">
-                            <label class="form-label" for="email">{{ "USERS.EMAIL" | translate }}
+                            <label class="form-label" for="emailInputUsuario">{{ "USERS.EMAIL" | translate }}
                                 <span class="text-danger">*</span></label>
                             <input type="email" class="form-control" [class.is-invalid]="isFieldInvalid('email')"
-                                id="email" formControlName="email" placeholder="Ex: joao@reiche.com" />
+                                id="emailInputUsuario" formControlName="email" placeholder="Ex: joao@reiche.com" autocomplete="off" />
                             @if (isFieldInvalid('email')) {
                             <div class="invalid-feedback d-block">
                                 {{ getFieldError("email") }}
@@ -150,14 +150,14 @@
                             <!-- Senha -->
                             <div class="mb-3">
                                 @if (!isEditMode) {
-                                <label class="form-label" for="senha">
+                                <label class="form-label" for="senhaInputUsuario">
                                     {{ "AUTH.PASSWORD" | translate }}
                                     <span class="text-danger">*</span>
                                 </label>
                                 <div class="input-group">
                                     <input [type]="showPassword ? 'text' : 'password'" class="form-control"
-                                        [class.is-invalid]="isFieldInvalid('senha')" id="senha"
-                                        formControlName="senha" placeholder="Ex: Senha123@" />
+                                        [class.is-invalid]="isFieldInvalid('senha')" id="senhaInputUsuario"
+                                        formControlName="senha" placeholder="Ex: Senha123@" autocomplete="new-password" />
                                     <button type="button" class="btn btn-outline-secondary"
                                         (click)="togglePasswordVisibility()"
                                         [attr.aria-label]="showPassword ? 'Ocultar senha' : 'Mostrar senha'">
@@ -177,15 +177,15 @@
 
                                 } @else {
                                 <!-- Senha (modo edição - opcional) -->
-                                <label class="form-label" for="senhaEdit">
+                                <label class="form-label" for="senhaInputUsuarioEdit">
                                     {{ "AUTH.PASSWORD" | translate }}
                                     <span class="text-muted">({{ "COMMON.OPTIONAL" | translate }})</span>
                                 </label>
                                 <div class="input-group">
                                     <input [type]="showPassword ? 'text' : 'password'" class="form-control"
-                                        [class.is-invalid]="isFieldInvalid('senha')" id="senhaEdit"
+                                        [class.is-invalid]="isFieldInvalid('senha')" id="senhaInputUsuarioEdit"
                                         formControlName="senha"
-                                        placeholder="Deixe em branco para manter a senha atual" />
+                                        placeholder="Deixe em branco para manter a senha atual" autocomplete="new-password" />
                                     <button type="button" class="btn btn-outline-secondary"
                                         (click)="togglePasswordVisibility()"
                                         [attr.aria-label]="showPassword ? 'Ocultar senha' : 'Mostrar senha'">
