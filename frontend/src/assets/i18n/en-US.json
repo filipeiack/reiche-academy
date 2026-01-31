@@ -112,6 +112,7 @@
     "EMAIL": "Email",
     "ROLE": "Role in System",
     "CARGO": "Position in Company",
+    "CARGO_PENDING": "Position will be associated later.",
     "STATUS": "Status",
     "CREATE": "Create User",
     "EDIT": "Edit User",

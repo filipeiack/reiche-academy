@@ -142,6 +142,7 @@
     "EMAIL": "Email",
     "ROLE": "Perfil Sistema",
     "CARGO": "Cargo na Empresa",
+    "CARGO_PENDING": "Cargo será associado posteriormente.",
     "STATUS": "Status",
     "CREATE": "Criar Usuário",
     "EDIT": "Editar Usuário",

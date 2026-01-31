@@ -88,12 +88,26 @@
                             <!-- Cargo -->
                             <div class="col-md-8 mb-3">
                                 <label class="form-label" for="cargo">{{ "USERS.CARGO" | translate }}</label>
-                                <input type="text" class="form-control" [class.is-invalid]="isFieldInvalid('cargo')"
-                                    id="cargo" formControlName="cargo" placeholder="Ex: Diretor Financeiro" />
-                                @if (isFieldInvalid('cargo')) {
-                                <div class="invalid-feedback d-block">
-                                    {{ getFieldError("cargo") }}
+                                @if (loadingCargosCockpit) {
+                                <div class="form-control d-flex align-items-center gap-2">
+                                    <span class="spinner-border spinner-border-sm" role="status"></span>
+                                    <span class="text-muted">{{ "COMMON.LOADING" | translate }}</span>
                                 </div>
+                                } @else {
+                                @if (cargosCockpit.length > 0) {
+                                <ul class="list-unstyled mb-0">
+                                    @for (cargo of cargosCockpit; track cargo.cargo + '-' + cargo.pilar) {
+                                    <li class="d-flex align-items-center gap-2 mb-1">
+                                        <i class="feather icon-briefcase"></i>
+                                        <span>{{ cargo.cargo }} — {{ cargo.pilar }}</span>
+                                    </li>
+                                    }
+                                </ul>
+                                } @else {
+                                <div class="form-control-plaintext text-muted">
+                                    {{ "USERS.CARGO_PENDING" | translate }}
+                                </div>
+                                }
                                 }
                             </div>
 

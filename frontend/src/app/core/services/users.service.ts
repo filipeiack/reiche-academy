@@ -25,6 +25,11 @@ export interface UpdateUsuarioDto {
   empresaId?: string | null;
 }
 
+export interface UsuarioCargoCockpit {
+  cargo: string;
+  pilar: string;
+}
+
 @Injectable({
   providedIn: 'root'
 })
@@ -51,6 +56,13 @@ export class UsersService {
    */
   getById(id: string): Observable<Usuario> {
     return this.http.get<Usuario>(`${this.API_URL}/${id}`);
+  }
+
+  /**
+   * Buscar cargos do usuário via Cockpit
+   */
+  getCargosCockpitByUsuario(id: string): Observable<UsuarioCargoCockpit[]> {
+    return this.http.get<UsuarioCargoCockpit[]>(`${this.API_URL}/${id}/cargos-cockpit`);
   }
 
   /**

@@ -624,4 +624,49 @@ export class UsuariosService {
 
     return updated;
   }
+
+  async getCargosCockpitByUsuario(id: string, requestUser: RequestUser) {
+    const usuario = await this.prisma.usuario.findUnique({
+      where: { id },
+      select: {
+        id: true,
+        empresaId: true,
+      },
+    });
+
+    if (!usuario) {
+      throw new NotFoundException('Usuário não encontrado');
+    }
+
+    await this.validateTenantAccess(usuario, requestUser, 'visualizar cargos de');
+
+    const responsaveis = await this.prisma.cargoCockpitResponsavel.findMany({
+      where: { usuarioId: id },
+      select: {
+        cargoCockpit: {
+          select: {
+            cargo: true,
+            cockpitPilar: {
+              select: {
+                pilarEmpresa: {
+                  select: {
+                    nome: true,
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
+    });
+
+    if (responsaveis.some((item) => !item.cargoCockpit || !item.cargoCockpit.cockpitPilar?.pilarEmpresa)) {
+      throw new NotFoundException('Cargo associado não encontrado');
+    }
+
+    return responsaveis.map((item) => ({
+      cargo: item.cargoCockpit.cargo,
+      pilar: item.cargoCockpit.cockpitPilar.pilarEmpresa.nome,
+    }));
+  }
 }

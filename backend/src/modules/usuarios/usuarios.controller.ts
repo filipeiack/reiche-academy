@@ -69,6 +69,19 @@ export class UsuariosController {
     return this.usuariosService.findById(id, req.user);
   }
 
+  @Get(':id/cargos-cockpit')
+  @Roles('ADMINISTRADOR', 'GESTOR', 'COLABORADOR', 'LEITURA')
+  @ApiOperation({ summary: 'Listar cargos do usuário via Cockpit' })
+  @ApiResponse({ status: 200, description: 'Lista de cargos do usuário retornada com sucesso' })
+  @ApiResponse({ status: 404, description: 'Usuário não encontrado' })
+  @ApiResponse({ status: 403, description: 'Sem permissão para visualizar usuário de outra empresa' })
+  getCargosCockpit(
+    @Param('id', new ParseUUIDPipe({ version: '4' })) id: string,
+    @Request() req: { user: RequestUser },
+  ) {
+    return this.usuariosService.getCargosCockpitByUsuario(id, req.user);
+  }
+
   @Patch(':id')
   @Roles('ADMINISTRADOR', 'GESTOR', 'COLABORADOR')
   @ApiOperation({ summary: 'Atualizar usuário' })

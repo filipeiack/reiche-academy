@@ -3,7 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router, ActivatedRoute } from '@angular/router';
 import Swal from 'sweetalert2';
-import { UsersService, CreateUsuarioDto, UpdateUsuarioDto } from '../../../../core/services/users.service';
+import { UsersService, CreateUsuarioDto, UpdateUsuarioDto, UsuarioCargoCockpit } from '../../../../core/services/users.service';
 import { Usuario } from '../../../../core/models/auth.model';
 import { UserProfileService } from '../../../../core/services/user-profile.service';
 import { AuthService } from '../../../../core/services/auth.service';
@@ -40,7 +40,6 @@ export class UsuariosFormComponent implements OnInit {
     nome: ['', [Validators.required, Validators.minLength(2)]],
     telefone: [''],
     email: ['', [Validators.required, Validators.email]],
-    cargo: ['', []],
     perfilId: ['', Validators.required],
     empresaId: [''],
     senha: ['', []], // Validadores adicionados dinamicamente no ngOnInit
@@ -62,6 +61,8 @@ export class UsuariosFormComponent implements OnInit {
 
   perfis: PerfilUsuario[] = [];
   empresas: Empresa[] = [];
+  cargosCockpit: UsuarioCargoCockpit[] = [];
+  loadingCargosCockpit = false;
 
   get senhaRequired(): boolean {
     return !this.isEditMode;
@@ -256,11 +257,11 @@ export class UsuariosFormComponent implements OnInit {
           nome: usuario.nome,
           telefone: usuario.telefone || '',
           email: usuario.email,
-          cargo: usuario.cargo,
           perfilId: typeof usuario.perfil === 'object' ? usuario.perfil.id : usuario.perfil,
           empresaId: usuario.empresaId || null,
           ativo: usuario.ativo
         });
+        this.loadCargosCockpit(usuario.id);
         this.loading = false;
       },
       error: (err) => {
@@ -269,6 +270,20 @@ export class UsuariosFormComponent implements OnInit {
         if (!this.modalMode) {
           this.router.navigate([this.getRedirectUrl()]);
         }
+      }
+    });
+  }
+
+  private loadCargosCockpit(usuarioId: string): void {
+    this.loadingCargosCockpit = true;
+    this.usersService.getCargosCockpitByUsuario(usuarioId).subscribe({
+      next: (cargos) => {
+        this.cargosCockpit = cargos;
+        this.loadingCargosCockpit = false;
+      },
+      error: () => {
+        this.cargosCockpit = [];
+        this.loadingCargosCockpit = false;
       }
     });
   }
@@ -296,9 +311,6 @@ export class UsuariosFormComponent implements OnInit {
       }
       if (this.form.get('telefone')?.dirty) {
         updateData.telefone = formValue.telefone || '';
-      }
-      if (this.form.get('cargo')?.dirty) {
-        updateData.cargo = formValue.cargo || '';
       }
 
       // Campos privilegiados - enviar apenas se foram alterados
@@ -354,7 +366,6 @@ export class UsuariosFormComponent implements OnInit {
         nome: formValue.nome || '',
         telefone: formValue.telefone || '',
         email: formValue.email || '',
-        cargo: formValue.cargo || '',
         perfilId: formValue.perfilId || '',
         senha: formValue.senha || '',
         // ADMINISTRADOR nunca pode ter empresa associada
