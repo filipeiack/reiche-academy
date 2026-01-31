@@ -20,6 +20,7 @@ import { PerfisModule } from './modules/perfis/perfis.module';
 import { PeriodosAvaliacaoModule } from './modules/periodos-avaliacao/periodos-avaliacao.module';
 import { CockpitPilaresModule } from './modules/cockpit-pilares/cockpit-pilares.module';
 import { PeriodosMentoriaModule } from './modules/periodos-mentoria/periodos-mentoria.module';
+import { HealthModule } from './modules/health/health.module';
 
 @Module({
   imports: [
@@ -47,6 +48,7 @@ import { PeriodosMentoriaModule } from './modules/periodos-mentoria/periodos-men
     PeriodosAvaliacaoModule,
     CockpitPilaresModule,
     PeriodosMentoriaModule,
+    HealthModule,
   ],
   providers: [
     // Core services
