@@ -49,6 +49,12 @@ O Sidebar implementa:
 **R-SID-003**: Atualização reativa
 - Regenera itens ao mudar idioma (`currentLang$`) ou usuário atual
 
+### 3.3 Regras Propostas
+
+**R-SID-009**: Ordenação alfabética do submenu de Cockpits
+- Os subitens gerados para Cockpits devem ser ordenados alfabeticamente pelo nome do pilar exibido.
+- Regra proposta - aguardando implementação.
+
 ### 3.2 Comportamento de Sidebar (SidebarComponent)
 
 **R-SID-004**: Inicialização e MetisMenu

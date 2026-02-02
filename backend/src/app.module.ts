@@ -21,6 +21,7 @@ import { PeriodosAvaliacaoModule } from './modules/periodos-avaliacao/periodos-a
 import { CockpitPilaresModule } from './modules/cockpit-pilares/cockpit-pilares.module';
 import { PeriodosMentoriaModule } from './modules/periodos-mentoria/periodos-mentoria.module';
 import { HealthModule } from './modules/health/health.module';
+import { IndicadoresTemplatesModule } from './modules/indicadores-templates/indicadores-templates.module';
 
 @Module({
   imports: [
@@ -47,6 +48,7 @@ import { HealthModule } from './modules/health/health.module';
     PerfisModule,
     PeriodosAvaliacaoModule,
     CockpitPilaresModule,
+    IndicadoresTemplatesModule,
     PeriodosMentoriaModule,
     HealthModule,
   ],

@@ -57,6 +57,20 @@ export const routes: Routes = [
     ]
   },
   {
+    path: 'indicadores-templates',
+    component: BaseComponent,
+    canActivate: [authGuard],
+    children: [
+      {
+        path: '',
+        loadChildren: () =>
+          import('./views/pages/indicadores-templates/indicadores-templates.routes').then(
+            m => m.INDICADORES_TEMPLATES_ROUTES,
+          )
+      }
+    ]
+  },
+  {
     path: 'diagnostico-notas',
     component: BaseComponent,
     canActivate: [authGuard],

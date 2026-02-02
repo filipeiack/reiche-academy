@@ -1,0 +1,193 @@
+<div class="mb-2 align-items-center gap-2 d-flex justify-content-between flex-wrap">
+  <nav aria-label="breadcrumb">
+    <ol class="breadcrumb breadcrumb-arrow mb-1">
+      <li class="breadcrumb-item">
+        <i class="feather icon-bar-chart-2"></i>
+      </li>
+      <li class="breadcrumb-item">
+        {{ 'INDICADORES_TEMPLATES.TITLE' | translate }}
+      </li>
+      <li class="breadcrumb-item active" aria-current="page">
+        {{ isEditMode ? ('INDICADORES_TEMPLATES.EDIT' | translate) : ('INDICADORES_TEMPLATES.NEW' | translate) }}
+      </li>
+    </ol>
+  </nav>
+
+  <div class="d-flex gap-2">
+    <button type="button" data-testid="cancel-indicador-template-button" (click)="handleCancel()"
+      class="btn btn-outline-secondary">
+      {{ 'BUTTONS.CANCEL' | translate }}
+    </button>
+    <button type="submit" form="indicadorTemplateForm" data-testid="submit-indicador-template-button"
+      class="btn btn-primary" [disabled]="loading || submitting || form.invalid">
+      @if (loading || submitting) {
+      <span class="spinner-border spinner-border-sm me-2" role="status"></span>
+      }
+      @if (isEditMode) {
+      {{ 'BUTTONS.UPDATE' | translate }}
+      } @else {
+      {{ 'BUTTONS.CREATE' | translate }}
+      }
+    </button>
+  </div>
+</div>
+
+<div class="card-body">
+  @if (loading && isEditMode) {
+  <div class="text-center py-5">
+    <div class="spinner-border text-primary" role="status">
+      <span class="visually-hidden">{{ 'COMMON.LOADING' | translate }}</span>
+    </div>
+  </div>
+  } @else {
+  <div class="row">
+    <div class="col-md-8">
+      <form id="indicadorTemplateForm" [formGroup]="form" (ngSubmit)="onSubmit()">
+        <div class="card">
+          <div class="card-body">
+
+            <!-- Pilar -->
+            <div class="mb-3">
+              <label for="pilarId" class="form-label">
+                {{ 'INDICADORES_TEMPLATES.FIELDS.PILAR' | translate }} <span class="text-danger">*</span>
+              </label>
+              <select #pilarIdSelect class="form-select" id="pilarId" formControlName="pilarId"
+                [class.is-invalid]="pilarIdInvalid">
+                <option value="">{{ 'COMMON.SELECT' | translate }}</option>
+                @for (pilar of pilares; track pilar.id) {
+                  <option [value]="pilar.id">
+                    {{ pilar.nome }}
+                  </option>
+                }
+              </select>
+              @if (isEditMode) {
+                <div class="form-text">
+                  {{ 'INDICADORES_TEMPLATES.PILAR_IMUTAVEL' | translate }}
+                </div>
+              }
+              @if (pilarIdInvalid) {
+                <div class="invalid-feedback">
+                  {{ 'INDICADORES_TEMPLATES.VALIDATIONS.PILAR_REQUIRED' | translate }}
+                </div>
+              }
+            </div>
+
+            <!-- Nome -->
+            <div class="mb-3">
+              <label for="nome" class="form-label">
+                {{ 'INDICADORES_TEMPLATES.FIELDS.NOME' | translate }} <span class="text-danger">*</span>
+              </label>
+              <input type="text" class="form-control" id="nome" formControlName="nome" [class.is-invalid]="nomeInvalid"
+                [placeholder]="'INDICADORES_TEMPLATES.NAME_PLACEHOLDER' | translate">
+              @if (nomeInvalid) {
+                <div class="invalid-feedback">
+                  @if (form.get('nome')?.errors?.['required']) {
+                    <span>{{ 'INDICADORES_TEMPLATES.VALIDATIONS.NOME_REQUIRED' | translate }}</span>
+                  }
+                  @if (form.get('nome')?.errors?.['minlength']) {
+                    <span>{{ 'INDICADORES_TEMPLATES.VALIDATIONS.NOME_MIN' | translate }}</span>
+                  }
+                  @if (form.get('nome')?.errors?.['maxlength']) {
+                    <span>{{ 'INDICADORES_TEMPLATES.VALIDATIONS.NOME_MAX' | translate }}</span>
+                  }
+                </div>
+              }
+            </div>
+
+            <!-- Descrição -->
+            <div class="mb-3">
+              <label for="descricao" class="form-label">{{ 'INDICADORES_TEMPLATES.FIELDS.DESCRICAO' | translate }}</label>
+              <textarea class="form-control" id="descricao" formControlName="descricao"
+                [class.is-invalid]="descricaoInvalid" rows="4"
+                [placeholder]="'INDICADORES_TEMPLATES.DESCRICAO_PLACEHOLDER' | translate"></textarea>
+              <div class="form-text">
+                {{ 'INDICADORES_TEMPLATES.DESCRICAO_MAX' | translate }}
+              </div>
+              @if (descricaoInvalid) {
+                <div class="invalid-feedback">
+                  @if (form.get('descricao')?.errors?.['maxlength']) {
+                    <span>{{ 'INDICADORES_TEMPLATES.VALIDATIONS.DESCRICAO_MAX' | translate }}</span>
+                  }
+                </div>
+              }
+            </div>
+
+            <!-- Tipo Medida -->
+            <div class="mb-3">
+              <label for="tipoMedida" class="form-label">
+                {{ 'INDICADORES_TEMPLATES.FIELDS.TIPO_MEDIDA' | translate }} <span class="text-danger">*</span>
+              </label>
+              <select class="form-select" id="tipoMedida" formControlName="tipoMedida" [class.is-invalid]="tipoMedidaInvalid">
+                <option value="">{{ 'COMMON.SELECT' | translate }}</option>
+                @for (option of tipoMedidaOptions; track option.value) {
+                  <option [value]="option.value">
+                    {{ option.labelKey | translate }}
+                  </option>
+                }
+              </select>
+              @if (tipoMedidaInvalid) {
+                <div class="invalid-feedback">
+                  {{ 'INDICADORES_TEMPLATES.VALIDATIONS.TIPO_MEDIDA_REQUIRED' | translate }}
+                </div>
+              }
+            </div>
+
+            <!-- Status Medição -->
+            <div class="mb-3">
+              <label for="statusMedicao" class="form-label">
+                {{ 'INDICADORES_TEMPLATES.FIELDS.STATUS_MEDICAO' | translate }} <span class="text-danger">*</span>
+              </label>
+              <select class="form-select" id="statusMedicao" formControlName="statusMedicao" [class.is-invalid]="statusMedicaoInvalid">
+                <option value="">{{ 'COMMON.SELECT' | translate }}</option>
+                @for (option of statusMedicaoOptions; track option.value) {
+                  <option [value]="option.value">
+                    {{ option.labelKey | translate }}
+                  </option>
+                }
+              </select>
+              @if (statusMedicaoInvalid) {
+                <div class="invalid-feedback">
+                  {{ 'INDICADORES_TEMPLATES.VALIDATIONS.STATUS_MEDICAO_REQUIRED' | translate }}
+                </div>
+              }
+            </div>
+
+            <!-- Melhor -->
+            <div class="mb-3">
+              <label for="melhor" class="form-label">
+                {{ 'INDICADORES_TEMPLATES.FIELDS.MELHOR' | translate }} <span class="text-danger">*</span>
+              </label>
+              <select class="form-select" id="melhor" formControlName="melhor" [class.is-invalid]="melhorInvalid">
+                <option value="">{{ 'COMMON.SELECT' | translate }}</option>
+                @for (option of melhorOptions; track option.value) {
+                  <option [value]="option.value">
+                    {{ option.labelKey | translate }}
+                  </option>
+                }
+              </select>
+              @if (melhorInvalid) {
+                <div class="invalid-feedback">
+                  {{ 'INDICADORES_TEMPLATES.VALIDATIONS.MELHOR_REQUIRED' | translate }}
+                </div>
+              }
+            </div>
+
+            <!-- Ordem -->
+            <div class="mb-3">
+              <label for="ordem" class="form-label">{{ 'INDICADORES_TEMPLATES.FIELDS.ORDER' | translate }}</label>
+              <input type="number" class="form-control" id="ordem" formControlName="ordem" [class.is-invalid]="ordemInvalid"
+                min="1">
+              @if (ordemInvalid) {
+                <div class="invalid-feedback">
+                  {{ 'INDICADORES_TEMPLATES.VALIDATIONS.ORDEM_MIN' | translate }}
+                </div>
+              }
+            </div>
+
+          </div>
+        </div>
+      </form>
+    </div>
+  </div>
+  }
+</div>

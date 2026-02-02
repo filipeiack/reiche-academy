@@ -28,7 +28,8 @@ export class MenuService {
     '/usuarios',
     '/empresas',
     '/pilares',
-    '/rotinas'
+    '/rotinas',
+    '/indicadores-templates'
   ];
 
   constructor() {
@@ -121,6 +122,8 @@ export class MenuService {
         label: cockpit.pilarEmpresa?.nome.charAt(0).toUpperCase() + cockpit.pilarEmpresa?.nome.slice(1).toLowerCase(),
         link: `/cockpits/${cockpit.id}/dashboard`
       }));
+
+      cockpitSubItems.sort((a, b) => (a.label ?? '').localeCompare(b.label ?? ''));
 
       // Atualizar o item de cockpits com os submenus
       menu[cockpitIndex] = {

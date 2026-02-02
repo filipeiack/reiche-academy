@@ -42,12 +42,61 @@
     "EMPRESAS": "Empresas",
     "PILARES": "Pilares",
     "ROTINAS": "Rotinas",
+    "INDICADORES_TEMPLATES": "Indicadores Templates",
     "PAINEL_CONTROLE": "Painel de Controle",
     "NOTAS": "Dashboard da Empresa",
     "EVOLUCAO": "Evolução dos Pilares",
     "COCKPITS": "Cockpits dos Pilares",
     "DOCS": "Documentação",
     "DOCUMENTATION": "Documentação"
+  },
+  "INDICADORES_TEMPLATES": {
+    "TITLE": "Indicadores Templates",
+    "NEW": "Adicionar Indicador Template",
+    "NEW_TOOLTIP": "Adicionar Novo Indicador Template",
+    "EDIT": "Editar Indicador Template",
+    "DETAILS": "Detalhes do Indicador Template",
+    "FILTER_ALL_PILARES": "Todos os Pilares",
+    "SEARCH_PLACEHOLDER": "Buscar por nome do indicador...",
+    "NAME_PLACEHOLDER": "Ex: Faturamento Mensal",
+    "DESCRICAO_PLACEHOLDER": "Descrição detalhada do indicador...",
+    "DESCRICAO_MAX": "Máximo 1000 caracteres",
+    "PILAR_IMUTAVEL": "O pilar não pode ser alterado após a criação",
+    "FIELDS": {
+      "NOME": "Indicador",
+      "PILAR": "Pilar",
+      "TIPO_MEDIDA": "Tipo de Medida",
+      "STATUS_MEDICAO": "Status da Medição",
+      "MELHOR": "Melhor",
+      "ORDER": "Ordem",
+      "DESCRICAO": "Descrição"
+    },
+    "TIPO_MEDIDA": {
+      "REAL": "Real (R$)",
+      "QUANTIDADE": "Quantidade",
+      "TEMPO": "Tempo",
+      "PERCENTUAL": "Percentual"
+    },
+    "STATUS_MEDICAO": {
+      "NAO_MEDIDO": "Não medido",
+      "MEDIDO_NAO_CONFIAVEL": "Medido (não confiável)",
+      "MEDIDO_CONFIAVEL": "Medido (confiável)"
+    },
+    "MELHOR": {
+      "MAIOR": "Maior é melhor",
+      "MENOR": "Menor é melhor"
+    },
+    "VALIDATIONS": {
+      "PILAR_REQUIRED": "Pilar é obrigatório",
+      "NOME_REQUIRED": "Indicador é obrigatório",
+      "NOME_MIN": "Indicador deve ter no mínimo 2 caracteres",
+      "NOME_MAX": "Indicador deve ter no máximo 200 caracteres",
+      "DESCRICAO_MAX": "Descrição deve ter no máximo 1000 caracteres",
+      "TIPO_MEDIDA_REQUIRED": "Tipo de medida é obrigatório",
+      "STATUS_MEDICAO_REQUIRED": "Status da medição é obrigatório",
+      "MELHOR_REQUIRED": "Melhor é obrigatório",
+      "ORDEM_MIN": "Ordem deve ser maior ou igual a 1"
+    }
   },
   "NAVBAR": {
     "LANGUAGE": {

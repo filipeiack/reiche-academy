@@ -337,6 +337,71 @@ export class CockpitPilaresService {
       });
     }
 
+    // Copiar indicadores templates (Snapshot Pattern) quando houver pilarTemplateId
+    let indicadoresCopiados = 0;
+    const indicadoresCriados: { id: string; nome: string }[] = [];
+
+    if (pilarEmpresa.pilarTemplateId) {
+      const templates = await this.prisma.indicadorTemplate.findMany({
+        where: {
+          pilarId: pilarEmpresa.pilarTemplateId,
+          ativo: true,
+        },
+        orderBy: { ordem: 'asc' },
+      });
+
+      if (templates.length > 0) {
+        const anoAtual = new Date().getFullYear();
+
+        await this.prisma.$transaction(async (tx) => {
+          for (const template of templates) {
+            const indicador = await tx.indicadorCockpit.create({
+              data: {
+                cockpitPilarId: cockpit.id,
+                nome: template.nome,
+                descricao: template.descricao,
+                tipoMedida: template.tipoMedida,
+                statusMedicao: template.statusMedicao,
+                melhor: template.melhor,
+                ordem: template.ordem,
+                createdBy: user.id,
+                updatedBy: user.id,
+              },
+            });
+
+            const meses = Array.from({ length: 12 }, (_, i) => ({
+              indicadorCockpitId: indicador.id,
+              mes: i + 1,
+              ano: anoAtual,
+              createdBy: user.id,
+              updatedBy: user.id,
+            }));
+
+            await tx.indicadorMensal.createMany({
+              data: meses,
+            });
+
+            indicadoresCriados.push({ id: indicador.id, nome: indicador.nome });
+            indicadoresCopiados += 1;
+          }
+        });
+      }
+    }
+
+    if (indicadoresCriados.length > 0) {
+      for (const indicador of indicadoresCriados) {
+        await this.audit.log({
+          usuarioId: user.id,
+          usuarioNome: user.nome,
+          usuarioEmail: user.email ?? '',
+          entidade: 'IndicadorCockpit',
+          entidadeId: indicador.id,
+          acao: 'CREATE',
+          dadosDepois: { origem: 'template', nome: indicador.nome, cockpitId: cockpit.id },
+        });
+      }
+    }
+
     // Auditoria
     await this.audit.log({
       usuarioId: user.id,
@@ -345,7 +410,12 @@ export class CockpitPilaresService {
       entidade: 'CockpitPilar',
       entidadeId: cockpit.id,
       acao: 'CREATE',
-      dadosDepois: { cockpitId: cockpit.id, pilarNome: pilarEmpresa.nome, processosVinculados: rotinas.length },
+      dadosDepois: {
+        cockpitId: cockpit.id,
+        pilarNome: pilarEmpresa.nome,
+        processosVinculados: rotinas.length,
+        indicadoresCopiados,
+      },
     });
 
     // Retornar cockpit com relações

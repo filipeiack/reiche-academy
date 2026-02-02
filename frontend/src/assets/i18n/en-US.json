@@ -42,6 +42,7 @@
     "EMPRESAS": "Companies",
     "PILARES": "Pillars",
     "ROTINAS": "Routines",
+    "INDICADORES_TEMPLATES": "Indicator Templates",
     "PAINEL_CONTROLE": "Control Panel",
     "NOTAS": "Company Dashboard",
     "EVOLUCAO": "Pillars Evolution",
@@ -51,6 +52,54 @@
     "ERROR": "Error",
     "DOCS": "Docs",
     "DOCUMENTATION": "Documentation"
+  },
+  "INDICADORES_TEMPLATES": {
+    "TITLE": "Indicator Templates",
+    "NEW": "Add Indicator Template",
+    "NEW_TOOLTIP": "Add New Indicator Template",
+    "EDIT": "Edit Indicator Template",
+    "DETAILS": "Indicator Template Details",
+    "FILTER_ALL_PILARES": "All Pillars",
+    "SEARCH_PLACEHOLDER": "Search by indicator name...",
+    "NAME_PLACEHOLDER": "Ex: Monthly Revenue",
+    "DESCRICAO_PLACEHOLDER": "Detailed description of the indicator...",
+    "DESCRICAO_MAX": "Maximum 1000 characters",
+    "PILAR_IMUTAVEL": "The pillar cannot be changed after creation",
+    "FIELDS": {
+      "NOME": "Indicator",
+      "PILAR": "Pillar",
+      "TIPO_MEDIDA": "Measure Type",
+      "STATUS_MEDICAO": "Measurement Status",
+      "MELHOR": "Better",
+      "ORDER": "Order",
+      "DESCRICAO": "Description"
+    },
+    "TIPO_MEDIDA": {
+      "REAL": "Currency (R$)",
+      "QUANTIDADE": "Quantity",
+      "TEMPO": "Time",
+      "PERCENTUAL": "Percentage"
+    },
+    "STATUS_MEDICAO": {
+      "NAO_MEDIDO": "Not measured",
+      "MEDIDO_NAO_CONFIAVEL": "Measured (not reliable)",
+      "MEDIDO_CONFIAVEL": "Measured (reliable)"
+    },
+    "MELHOR": {
+      "MAIOR": "Higher is better",
+      "MENOR": "Lower is better"
+    },
+    "VALIDATIONS": {
+      "PILAR_REQUIRED": "Pillar is required",
+      "NOME_REQUIRED": "Indicator is required",
+      "NOME_MIN": "Indicator must be at least 2 characters",
+      "NOME_MAX": "Indicator must be at most 200 characters",
+      "DESCRICAO_MAX": "Description must be at most 1000 characters",
+      "TIPO_MEDIDA_REQUIRED": "Measure type is required",
+      "STATUS_MEDICAO_REQUIRED": "Measurement status is required",
+      "MELHOR_REQUIRED": "Better direction is required",
+      "ORDEM_MIN": "Order must be 1 or greater"
+    }
   },
   "NAVBAR": {
     "LANGUAGE": {

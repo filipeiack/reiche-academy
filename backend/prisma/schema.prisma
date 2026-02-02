@@ -244,8 +244,9 @@ model Pilar {
   updatedBy String?
 
   // Relations
-  rotinas  Rotina[]
-  empresas PilarEmpresa[]
+  rotinas             Rotina[]
+  indicadoresTemplates IndicadorTemplate[]
+  empresas            PilarEmpresa[]
 
   @@map("pilares")
 }
@@ -269,6 +270,32 @@ model Rotina {
   rotinaEmpresas RotinaEmpresa[]
 
   @@map("rotinas")
+}
+
+model IndicadorTemplate {
+  id String @id @default(uuid())
+
+  pilarId String
+  pilar   Pilar @relation(fields: [pilarId], references: [id])
+
+  nome      String
+  descricao String?
+
+  tipoMedida    TipoMedidaIndicador
+  statusMedicao StatusMedicaoIndicador
+  melhor        DirecaoIndicador
+
+  ordem Int
+  ativo Boolean @default(true)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  createdBy String?
+  updatedBy String?
+
+  @@unique([pilarId, nome])
+  @@index([pilarId])
+  @@map("indicadores_templates")
 }
 
 model PilarEmpresa {

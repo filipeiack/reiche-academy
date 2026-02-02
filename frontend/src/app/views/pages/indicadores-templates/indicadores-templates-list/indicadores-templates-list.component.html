@@ -1,0 +1,231 @@
+<div class="mb-2 align-items-center gap-2 d-flex justify-content-between flex-wrap">
+  <nav aria-label="breadcrumb">
+    <ol class="breadcrumb breadcrumb-arrow mb-1">
+      <li class="breadcrumb-item">
+        <i class="feather icon-bar-chart-2"></i>
+      </li>
+      <li class="breadcrumb-item active" aria-current="page">
+        {{ 'INDICADORES_TEMPLATES.TITLE' | translate }}
+      </li>
+    </ol>
+  </nav>
+
+  <button
+    type="button"
+    class="btn btn-primary btn-sm"
+    [routerLink]="['/indicadores-templates/novo']"
+    [ngbTooltip]="'INDICADORES_TEMPLATES.NEW_TOOLTIP' | translate"
+  >
+    <i class="bi bi-plus-circle btn-icon-prepend"></i>
+    {{ 'INDICADORES_TEMPLATES.NEW' | translate }}
+  </button>
+</div>
+
+<div class="row">
+  <div class="col-md-12 stretch-card">
+    <div class="card">
+      <div class="card-body">
+        <!-- Filtros -->
+        <div class="row mb-3">
+          <div class="col-md-4">
+            <ng-select
+              id="pilarFilter"
+              [(ngModel)]="pilarIdFiltro"
+              (ngModelChange)="onFilterChange()"
+              [placeholder]="'INDICADORES_TEMPLATES.FILTER_ALL_PILARES' | translate"
+              [clearable]="true"
+            >
+              @for (pilar of pilares; track pilar.id) {
+                <ng-option [value]="pilar.id">
+                  {{ pilar.nome }}
+                </ng-option>
+              }
+            </ng-select>
+          </div>
+          <div class="col-md-8">
+            <input
+              type="text"
+              class="form-control"
+              [(ngModel)]="searchQuery"
+              (input)="applyFilters()"
+              [placeholder]="'INDICADORES_TEMPLATES.SEARCH_PLACEHOLDER' | translate"
+            />
+          </div>
+        </div>
+
+        @if (loading) {
+          <div class="text-center py-5">
+            <div class="spinner-border text-primary" role="status">
+              <span class="visually-hidden">{{ 'COMMON.LOADING' | translate }}</span>
+            </div>
+          </div>
+        } @else {
+          @if (totalIndicadores > 0) {
+            <div class="table-responsive">
+              <table class="table table-hover table-sm mb-2">
+                <thead class="table-light">
+                  <tr>
+                    <th>{{ 'INDICADORES_TEMPLATES.FIELDS.NOME' | translate }}</th>
+                    <th>{{ 'INDICADORES_TEMPLATES.FIELDS.PILAR' | translate }}</th>
+                    <th>{{ 'INDICADORES_TEMPLATES.FIELDS.TIPO_MEDIDA' | translate }}</th>
+                    <th>{{ 'INDICADORES_TEMPLATES.FIELDS.STATUS_MEDICAO' | translate }}</th>
+                    <th>{{ 'INDICADORES_TEMPLATES.FIELDS.MELHOR' | translate }}</th>
+                    <th>{{ 'INDICADORES_TEMPLATES.FIELDS.ORDER' | translate }}</th>
+                    <th style="width: 120px;">{{ 'COMMON.ACTIONS' | translate }}</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  @for (indicador of paginatedIndicadores; track indicador.id) {
+                    <tr>
+                      <td style="max-width: 300px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
+                        <span [ngbTooltip]="indicador.nome">{{ indicador.nome }}</span>
+                      </td>
+                      <td style="max-width: 200px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
+                        {{ indicador.pilar?.nome || '—' }}
+                      </td>
+                      <td>
+                        {{ ('INDICADORES_TEMPLATES.TIPO_MEDIDA.' + indicador.tipoMedida) | translate }}
+                      </td>
+                      <td>
+                        {{ ('INDICADORES_TEMPLATES.STATUS_MEDICAO.' + indicador.statusMedicao) | translate }}
+                      </td>
+                      <td>
+                        {{ ('INDICADORES_TEMPLATES.MELHOR.' + indicador.melhor) | translate }}
+                      </td>
+                      <td>
+                        <span class="badge bg-secondary small">{{ indicador.ordem }}</span>
+                      </td>
+                      <td class="text-nowrap">
+                        <div class="btn-group btn-group-sm" role="group">
+                          <button
+                            class="btn btn-icon text-primary"
+                            (click)="openDetailsOffcanvas(indicador.id, detailsOffcanvas)"
+                            [title]="'INDICADORES_TEMPLATES.DETAILS' | translate"
+                          >
+                            <i class="feather icon-info"></i>
+                          </button>
+
+                          <button
+                            class="btn btn-icon text-primary"
+                            (click)="toggleStatus(indicador.id, indicador.nome, indicador.ativo)"
+                            [title]="indicador.ativo ? 'Inativar' : 'Ativar'"
+                          >
+                            <i class="feather" [ngClass]="{'icon-toggle-right': indicador.ativo, 'icon-toggle-left': !indicador.ativo}"></i>
+                          </button>
+
+                          <button
+                            class="btn btn-icon text-secondary"
+                            [routerLink]="['/indicadores-templates/editar', indicador.id]"
+                            [title]="'BUTTONS.EDIT' | translate"
+                          >
+                            <i class="feather icon-edit"></i>
+                          </button>
+
+                          @if (indicador.ativo) {
+                            <button
+                              class="btn btn-icon text-danger"
+                              (click)="confirmarExclusao(indicador)"
+                              [title]="'BUTTONS.DELETE' | translate"
+                            >
+                              <i class="feather icon-trash-2"></i>
+                            </button>
+                          }
+                        </div>
+                      </td>
+                    </tr>
+                  }
+                </tbody>
+              </table>
+            </div>
+          }
+
+          <div class="d-flex justify-content-between p-2">
+            <span class="text-muted fs-12">
+              Mostrando {{ getStartIndex() + 1 }}-{{ getEndIndex() }} de {{ totalIndicadores }}
+              {{ 'COMMON.ITEMS' | translate }}
+            </span>
+            <ngb-pagination
+              [(page)]="page"
+              [pageSize]="pageSize"
+              [collectionSize]="totalIndicadores"
+              size="sm"
+              [rotate]="true"
+              [boundaryLinks]="true"
+            >
+            </ngb-pagination>
+          </div>
+        }
+      </div>
+    </div>
+  </div>
+</div>
+
+<ng-template #detailsOffcanvas let-offcanvas>
+  <div class="offcanvas-header">
+    <h5 class="offcanvas-title">{{ 'INDICADORES_TEMPLATES.DETAILS' | translate }}</h5>
+    <button type="button" class="btn-close text-reset" (click)="offcanvas.dismiss()"></button>
+  </div>
+  <div class="offcanvas-body">
+    @if (loadingDetails) {
+      <div class="text-center py-5">
+        <div class="spinner-border text-primary" role="status">
+          <span class="visually-hidden">{{ 'COMMON.LOADING' | translate }}</span>
+        </div>
+        <p class="text-muted mt-3">{{ 'COMMON.LOADING' | translate }}...</p>
+      </div>
+    } @else if (selectedIndicador) {
+      <div class="mb-4">
+        <h4 class="mb-2">{{ selectedIndicador.nome }}</h4>
+
+        <span class="badge" [ngClass]="{ 'bg-success': selectedIndicador.ativo, 'bg-danger': !selectedIndicador.ativo }">
+          {{ selectedIndicador.ativo ? ('COMMON.ACTIVE' | translate) : ('COMMON.INACTIVE' | translate) }}
+        </span>
+      </div>
+
+      <div class="card mb-3">
+        <div class="card-body">
+          <h6 class="card-title mb-3">{{ 'COMMON.BASIC_INFO' | translate }}</h6>
+          @if (selectedIndicador.descricao) {
+            <div class="mb-3">
+              <span class="text-muted small">{{ 'INDICADORES_TEMPLATES.FIELDS.DESCRICAO' | translate }}</span>
+              <div class="mt-1">{{ selectedIndicador.descricao }}</div>
+            </div>
+          }
+          <div class="mb-2">
+            <span class="text-muted small">{{ 'INDICADORES_TEMPLATES.FIELDS.TIPO_MEDIDA' | translate }}</span>
+            <div>{{ ('INDICADORES_TEMPLATES.TIPO_MEDIDA.' + selectedIndicador.tipoMedida) | translate }}</div>
+          </div>
+          <div class="mb-2">
+            <span class="text-muted small">{{ 'INDICADORES_TEMPLATES.FIELDS.STATUS_MEDICAO' | translate }}</span>
+            <div>{{ ('INDICADORES_TEMPLATES.STATUS_MEDICAO.' + selectedIndicador.statusMedicao) | translate }}</div>
+          </div>
+          <div class="mb-2">
+            <span class="text-muted small">{{ 'INDICADORES_TEMPLATES.FIELDS.MELHOR' | translate }}</span>
+            <div>{{ ('INDICADORES_TEMPLATES.MELHOR.' + selectedIndicador.melhor) | translate }}</div>
+          </div>
+          <div class="mb-2">
+            <span class="text-muted small">{{ 'INDICADORES_TEMPLATES.FIELDS.ORDER' | translate }}</span>
+            <div>{{ selectedIndicador.ordem }}</div>
+          </div>
+          @if (selectedIndicador.pilar) {
+            <div class="mb-0">
+              <span class="text-muted small">{{ 'INDICADORES_TEMPLATES.FIELDS.PILAR' | translate }}</span>
+              <div>{{ selectedIndicador.pilar.nome }}</div>
+            </div>
+          }
+        </div>
+      </div>
+
+      <div class="d-grid gap-2">
+        <button
+          type="button"
+          class="btn btn-primary"
+          [routerLink]="['/indicadores-templates/editar', selectedIndicador.id]"
+          (click)="offcanvas.dismiss()"
+        >
+          <i class="feather icon-edit"></i> {{ 'BUTTONS.EDIT' | translate }}
+        </button>
+      </div>
+    }
+  </div>
+</ng-template>
