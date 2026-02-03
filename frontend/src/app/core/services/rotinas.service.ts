@@ -8,6 +8,7 @@ export interface Rotina {
   nome: string;
   descricao?: string;
   ordem?: number;
+  criticidade?: 'ALTA' | 'MEDIA' | 'BAIXA' | null;
   ativo: boolean;
   pilarId: string;
   createdAt: string;
@@ -28,6 +29,7 @@ export interface CreateRotinaDto {
   nome: string;
   descricao?: string;
   ordem?: number;
+  criticidade?: 'ALTA' | 'MEDIA' | 'BAIXA' | null;
   pilarId?: string; // Opcional para rotinas customizadas
   pilarEmpresaId?: string;
 }
@@ -36,6 +38,7 @@ export interface UpdateRotinaDto {
   nome?: string;
   descricao?: string;
   ordem?: number;
+  criticidade?: 'ALTA' | 'MEDIA' | 'BAIXA' | null;
   ativo?: boolean;
 }
 

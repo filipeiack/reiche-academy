@@ -9,6 +9,7 @@ export interface RotinaEmpresa {
   nome: string;
   pilarEmpresaId: string;
   ordem: number;
+  criticidade?: 'ALTA' | 'MEDIA' | 'BAIXA' | null;
   observacao?: string | null;
   ativo: boolean;
   createdAt: string;
@@ -20,11 +21,13 @@ export interface RotinaEmpresa {
 export interface CreateRotinaEmpresaDto {
   rotinaTemplateId?: string; // UUID do template (para copiar)
   nome?: string; // Nome customizado (se não usar template)
+  criticidade?: 'ALTA' | 'MEDIA' | 'BAIXA' | null;
 }
 
 export interface UpdateRotinaEmpresaDto {
   nome?: string;
   observacao?: string;
+  criticidade?: 'ALTA' | 'MEDIA' | 'BAIXA' | null;
 }
 
 export interface ReordenarRotinasDto {

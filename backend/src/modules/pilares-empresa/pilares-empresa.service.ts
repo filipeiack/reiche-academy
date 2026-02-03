@@ -364,6 +364,7 @@ export class PilaresEmpresaService {
               nome: rotinaTemplate.nome,
               pilarEmpresaId: pilarEmpresa.id,
               ordem: i + 1, // Preservar ordem do template
+              criticidade: rotinaTemplate.criticidade ?? null,
               createdBy: user.id,
             },
           });

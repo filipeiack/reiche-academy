@@ -257,6 +257,7 @@ model Rotina {
   nome      String
   descricao String?
   ordem     Int?
+  criticidade Criticidade?
   ativo     Boolean @default(true)
 
   pilarId String
@@ -397,6 +398,7 @@ model RotinaEmpresa {
   nome String
 
   ordem Int
+  criticidade Criticidade?
 
   observacao String?
   ativo      Boolean @default(true)

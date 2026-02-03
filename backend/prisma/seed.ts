@@ -10,8 +10,8 @@ const prisma = new PrismaClient();
  * - 4 perfis de usuário (ADMINISTRADOR, GESTOR, COLABORADOR, LEITURA)
  * - 2 empresas (Empresa A e Empresa B)
  * - 4 usuários (admin, gestor-a, gestor-b, colaborador-a)
- * - 6 pilares completos (ESTRATÉGICO, MARKETING, VENDAS, PESSOAS, FINANCEIRO, COMPRAS/ESTOQUE)
- * - 60 rotinas profissionais (10 por pilar)
+ * - 7 pilares completos (ESTRATÉGICO, MARKETING, VENDAS, PESSOAS, FINANCEIRO, COMPRAS, GESTÃO DO ESTOQUE)
+ * - Rotinas profissionais por pilar (conforme catálogo)
  * - Vinculação de pilares e rotinas às empresas
  * - Diagnósticos iniciais para Empresa A
  * 
@@ -21,10 +21,11 @@ const prisma = new PrismaClient();
 async function main() {
   console.log('🧪 Starting E2E seed...');
 
+
   // ========================================
   // 1. PERFIS DE USUÁRIO
   // ========================================
-  
+
   const perfis = [
     { codigo: 'ADMINISTRADOR', nome: 'Administrador', descricao: 'Acesso total', nivel: 1 },
     { codigo: 'GESTOR', nome: 'Gestor', descricao: 'Gerencia empresa', nivel: 2 },
@@ -218,64 +219,79 @@ async function main() {
   console.log(`   - ${colaboradorA.email} (senha: Admin@123)`);
   console.log(`   - ${leituraA.email} (senha: Admin@123)`);
 
+
   // ========================================
   // 4. PILARES GLOBAIS COMPLETOS
   // ========================================
 
-  const pilaresData = [
+  type RotinaSeed = {
+    nome: string;
+    criticidade: Criticidade;
+    ordem: number;
+    descricao?: string;
+  };
+
+  type PilarSeed = {
+    nome: string;
+    descricao: string;
+    ordem: number;
+    rotinas: RotinaSeed[];
+  };
+
+  const pilaresData: PilarSeed[] = [
     {
       nome: 'ESTRATÉGICO',
       descricao: 'Pilar responsável por planejamento e estratégias empresariais',
       ordem: 1,
       rotinas: [
         {
-          nome: 'DEFINIÇÃO E ALINHAMENTO COM O TIME DE MISSÃO, VISÃO E VALORES (DO CEO ATÉ A OPERAÇÃO)',
-          descricao: 'Estabelecimento e comunicação dos princípios fundamentais da empresa',
+          nome: 'DEFINIÇÃO E ALINHAMENTO COM O TIME DE  MISSÃO, VISÃO E VALORES (DO CEO ATÉ A OPERAÇÃO)',
+          criticidade: 'ALTA',
           ordem: 1,
         },
         {
-          nome: 'GESTÃO DO ORGANOGRAMA DA EMPRESA E MAPEAMENTO DOS CARGOS E FUNÇÕES',
-          descricao: 'Organização e definição clara da estrutura hierárquica e responsabilidades',
+          nome: 'GESTÃO DO ORGANOGRAMA DA EMPRESA  E MAPEAMENTO DOS CARGOS E FUNÇÕES',
+          criticidade: 'ALTA',
           ordem: 2,
         },
         {
           nome: 'ELABORAÇÃO E APRESENTAÇÃO DO REGULAMENTO INTERNO PARA GARANTIR REGRAS E PADRÕES DA EMPRESA',
-          descricao: 'Criação e divulgação de normas internas para manter a ordem e a conformidade',
+          criticidade: 'ALTA',
           ordem: 3,
         },
         {
-          nome: 'DEFINIÇÃO DE METAS ANUAIS E DESDOBRAMENTO DE METAS MÊS A MÊS',
-          descricao: 'Estabelecimento de objetivos anuais e seu detalhamento mensal para acompanhamento',
+          nome: 'DEFINIÇÃO DE METAS ANUAIS E  DESDOBRAMENTO DE METAS MÊS A MÊS',
+          criticidade: 'ALTA',
           ordem: 4,
         },
         {
           nome: 'ROTINA DE REUNIÃO MENSAL: PARA ANÁLISE DOS RESULTADOS (POR ÁREA E INDICADOR)',
-          descricao: 'Encontros mensais para avaliação de desempenho e indicadores por setor',
+          criticidade: 'ALTA',
           ordem: 5,
         },
         {
-          nome: 'ROTINA DE REUNIÃO SEMANAL: PARA ALINHAMENTO 1 A 1 (COM LÍDERES DE CADA ÁREA)',
-          descricao: 'Reuniões semanais individuais para alinhamento entre líderes e suas equipes',
+          nome: 'ROTINA DE REUNIÃO SEMANAL:PARA ALINHAMENTO 1 A 1 (COM LÍDERES DE CADA ÁREA)',
+          criticidade: 'ALTA',
           ordem: 6,
         },
         {
-          nome: 'ROTINA DE REUNIÃO DIÁRIA: PARA ALINHAMENTO DO TIME (FOCO NAS ROTINAS E PADRÕES)',
-          descricao: 'Reuniões diárias para alinhamento rápido e foco nas rotinas e padrões',
+          nome: 'ROTINA DE REUNIÃO DIÁRIA:PARA ALINHAMENTO DO TIME (FOCO NAS ROTINAS E PADRÕES)',
+          criticidade: 'ALTA',
           ordem: 7,
         },
         {
           nome: 'ROTINA DE TREINAMENTO E FORMAÇÃO DE NOVAS LIDERANÇAS PARA AS POSIÇÕES CRÍTICAS',
-          descricao: 'Programas de treinamento e desenvolvimento para preparar novas lideranças',
+          criticidade: 'MEDIA',
           ordem: 8,
         },
         {
-          nome: 'AÇÕES DE DESENVOLVIMENTO E FORTALECIMENTO DA CULTURA ORGANIZACIONAL',
-          descricao: 'Iniciativas para fortalecer e desenvolver a cultura da empresa',
+          nome: 'AÇÕES DE DESENOLVIMENTO E FORTALECIMENTO DA CULTURA ORGANIZACIONAL',
+          criticidade: 'BAIXA',
           ordem: 9,
         },
         {
           nome: 'ROTINA DE ANÁLISE DE CONCORRENTES E TENDÊNCIAS DE MERCADO PARA O SETOR (RISCOS E OPORTUNIDADES)',
-          descricao: 'Monitoramento e análise de concorrentes e tendências para identificar riscos e oportunidades',
+          criticidade: 'BAIXA',
           ordem: 10,
         },
       ],
@@ -287,52 +303,52 @@ async function main() {
       rotinas: [
         {
           nome: 'RAIO-X DO CLIENTE DOS SONHOS, ANÁLISE DA CONCORRÊNCIA E ESTUDO DE MERCADO',
-          descricao: 'Análise detalhada do perfil do cliente ideal, estudo de concorrentes e tendências do mercado',
+          criticidade: 'ALTA',
           ordem: 1,
         },
         {
           nome: 'GESTÃO DE PÁGINAS, SITES, GOOGLE MEU NEGÓCIO',
-          descricao: 'Gerenciamento e manutenção de páginas web, sites corporativos e perfil do Google Meu Negócio',
+          criticidade: 'ALTA',
           ordem: 2,
         },
         {
-          nome: 'GESTÃO DAS REDES SOCIAIS E CRIAÇÃO DE CONTEÚDOS ORGÂNICOS/VIRAIS',
-          descricao: 'Administração de redes sociais e produção de conteúdo orgânico com potencial viral',
+          nome: 'GESTÃO DAS REDES SOCIAIS E  CRIAÇÃO DE CONTEÚDOS ORGÂNICOS/VIRAIS',
+          criticidade: 'ALTA',
           ordem: 3,
         },
         {
           nome: 'ROTINAS DE SOCIAL SELLER (PROSPECÇÃO ATIVA NAS REDES SOCIAIS)',
-          descricao: 'Estratégias de vendas sociais e prospecção ativa através das redes sociais',
+          criticidade: 'ALTA',
           ordem: 4,
         },
         {
           nome: 'GESTÃO DE TRÁFEGO PAGO/ANÚNCIOS ONLINE',
-          descricao: 'Planejamento, execução e otimização de campanhas pagas em plataformas digitais',
+          criticidade: 'ALTA',
           ordem: 5,
         },
         {
           nome: 'PARCERIAS COM EMPRESAS E NEGÓCIOS ESTRATÉGICOS',
-          descricao: 'Desenvolvimento e gestão de parcerias comerciais estratégicas',
+          criticidade: 'MEDIA',
           ordem: 6,
         },
         {
-          nome: 'GESTÃO DE GRUPO VIP NO WHATSAPP/MENSAGENS VIA LISTA DE TRANSMISSÃO',
-          descricao: 'Gerenciamento de grupos VIP e listas de transmissão para comunicação segmentada',
+          nome: 'GESTÃO DE GRUPO VIP NO WHATSAPP/ MENSAGENS VIA LISTA DE TRANSMISSÃO',
+          criticidade: 'MEDIA',
           ordem: 7,
         },
         {
-          nome: 'ROTINA DE LIVES SHOP PARA DIVULGAÇÃO DE PRODUTOS/OFERTAS ESPECIAIS',
-          descricao: 'Planejamento e execução de transmissões ao vivo para vendas e promoções',
+          nome: 'LIVES SHOP PARA DIVULGAÇÃO DE PRODUTOS, OFERTAS E GERAÇÃO DE AUTORIDADE',
+          criticidade: 'MEDIA',
           ordem: 8,
         },
         {
-          nome: 'PARCERIAS COM INFLUENCERS E PROFISSIONAIS DO NICHO',
-          descricao: 'Desenvolvimento de parcerias com influenciadores digitais e especialistas do setor',
+          nome: 'PARCERIAS COM INFLUENCERS E PROFISSIONAIS DO SEU NICHO',
+          criticidade: 'BAIXA',
           ordem: 9,
         },
         {
           nome: 'ELABORAÇÃO DE MATERIAIS, FOLDERS, PANFLETOS INSTITUCIONAIS, CARTAZES, ETC',
-          descricao: 'Criação de materiais gráficos e institucionais para comunicação offline',
+          criticidade: 'BAIXA',
           ordem: 10,
         },
       ],
@@ -343,54 +359,44 @@ async function main() {
       ordem: 3,
       rotinas: [
         {
-          nome: 'EXECUÇÃO DIÁRIA DA AMPULHETA DE VENDAS (DA PROSPECÇÃO ATÉ A VENDA E INDICAÇÕES)',
-          descricao: 'Processo completo de vendas desde a prospecção até pós-venda e indicações',
+          nome: 'CONTROLE DE METAS E INDICADORES DA ÁREA',
+          criticidade: 'ALTA',
           ordem: 1,
         },
         {
-          nome: 'GESTÃO CONTÍNUA DA BASE DE CLIENTES (ATIVOS E INATIVOS)',
-          descricao: 'Gerenciamento e acompanhamento da carteira de clientes ativos e inativos',
+          nome: 'GESTÃO DA BASE DE LEADS PARA ATENDIMENTO',
+          criticidade: 'ALTA',
           ordem: 2,
         },
         {
-          nome: 'ROTINA/SCRIPT DE ATENDIMENTO PRESENCIAL EM LOJA OU VIA WHATSAPP',
-          descricao: 'Padronização do atendimento ao cliente nos canais presenciais e digitais',
+          nome: 'PROSPECÇÃO ATIVA DE NOVOS CLIENTES',
+          criticidade: 'ALTA',
           ordem: 3,
         },
         {
-          nome: 'DIAGNÓSTICO DO CLIENTE E MAPEAMENTO DAS NECESSIDADES (AMPULHETA DE VENDAS)',
-          descricao: 'Identificação e análise das necessidades do cliente para propostas personalizadas',
+          nome: 'ATENDIMENTO E DIAGNÓSTICO DAS NECESSIDADES DO CLIENTE',
+          criticidade: 'ALTA',
           ordem: 4,
         },
         {
-          nome: 'ROTINA DE COLETA E DIVULGAÇÃO DE PROVAS SOCIAIS',
-          descricao: 'Coleta de depoimentos, avaliações e cases de sucesso para divulgação',
+          nome: 'ELABORAÇÃO DE PROPOSTAS COMERCIAIS',
+          criticidade: 'ALTA',
           ordem: 5,
         },
         {
-          nome: 'ROTINA DE FOLLOWUP DE PROPOSTAS EM ABERTO PARA CLIENTES',
-          descricao: 'Acompanhamento e follow-up de propostas comerciais pendentes',
+          nome: 'GESTÃO DAS PROPOSTAS EM ABERTO E FOLLOW UP DAS NEGOCIAÇÕES',
+          criticidade: 'ALTA',
           ordem: 6,
         },
         {
-          nome: 'ELABORAÇÃO E CONSTRUÇÃO DE ORÇAMENTOS PARA O CLIENTE',
-          descricao: 'Criação de orçamentos e propostas comerciais customizadas',
+          nome: 'GESTÃO PÓS VENDA PARA ENCANTAMENTO DOS CLIENTES',
+          criticidade: 'MEDIA',
           ordem: 7,
         },
         {
-          nome: 'ROTINA DE QUEBRA DE OBJEÇÕES E USO DE GATILHOS MENTAIS',
-          descricao: 'Técnicas de vendas para superar objeções e aplicar gatilhos mentais',
+          nome: 'GESTÃO DA CARTEIRA DE CLIENTES PARA NOVAS OFERTAS (COMBOS, UPSELL, DOWNSELL)',
+          criticidade: 'MEDIA',
           ordem: 8,
-        },
-        {
-          nome: 'ROTINA DE UPSELL, DOWNSELL, CROSSELL E COMBOS NAS NEGOCIAÇÕES',
-          descricao: 'Estratégias de maximização de vendas através de ofertas complementares',
-          ordem: 9,
-        },
-        {
-          nome: 'GESTÃO DE FERRAMENTAS DE AUTOMAÇÃO E I.A. (INTELIGÊNCIA ARTIFICIAL)',
-          descricao: 'Utilização de ferramentas tecnológicas para otimizar o processo de vendas',
-          ordem: 10,
         },
       ],
     },
@@ -401,173 +407,211 @@ async function main() {
       rotinas: [
         {
           nome: 'ROTINAS DE RECRUTAMENTO E SELEÇÃO DE NOVOS COLABORADORES',
-          descricao: 'Processos de atração, seleção e contratação de novos talentos',
+          criticidade: 'ALTA',
           ordem: 1,
         },
         {
           nome: 'TREINAMENTO INTRODUTÓRIO NA CULTURA E REG. INTERNO PARA NOVOS FUNCIONÁRIOS',
-          descricao: 'Onboarding e integração de novos colaboradores na cultura organizacional',
+          criticidade: 'ALTA',
           ordem: 2,
         },
         {
           nome: 'TREINAMENTO E CAPACITAÇÃO DE COLABORADORES NAS SUAS FUNÇÕES (COM FLUXOGRAMAS)',
-          descricao: 'Desenvolvimento de competências técnicas e comportamentais dos colaboradores',
+          criticidade: 'ALTA',
           ordem: 3,
         },
         {
-          nome: 'AVALIAÇÃO DE DESEMPENHO DOS FUNCIONÁRIOS',
-          descricao: 'Processo estruturado de avaliação de performance e resultados',
+          nome: 'AVALIAÇÃO DE DESEMPENHODOS FUNIONÁRIOS',
+          criticidade: 'ALTA',
           ordem: 4,
         },
         {
           nome: 'ROTINA DE FEEDBACKS COM FUNCIONÁRIOS (1 A 1) LÍDERES E LIDERADOS',
-          descricao: 'Conversas individuais de feedback e desenvolvimento entre líderes e liderados',
+          criticidade: 'ALTA',
           ordem: 5,
         },
         {
           nome: 'ROTINAS TREINAMENTO E CAPACITAÇÃO DAS LIDERANÇAS DA EMPRESA',
-          descricao: 'Desenvolvimento e formação de líderes e gestores',
+          criticidade: 'MEDIA',
           ordem: 6,
         },
         {
           nome: 'GESTÃO DA FOLHA DE PAGAMENTO E DA REMUNERAÇÃO VARIÁVEL',
-          descricao: 'Administração de salários, benefícios e programas de remuneração variável',
+          criticidade: 'MEDIA',
           ordem: 7,
         },
         {
           nome: 'AÇÕES DE PREMIAÇÃO, BONIFICAÇÃO E DE PROMOÇÃO DA MERITOCRACIA',
-          descricao: 'Programas de reconhecimento e recompensa por resultados e desempenho',
+          criticidade: 'MEDIA',
           ordem: 8,
         },
         {
           nome: 'PESQUISA DE CLIMA ORGANIZACIONAL PARA PADRONIZAÇÃO DE BOAS PRÁTICAS E AÇÕES CORRETIVAS',
-          descricao: 'Avaliação do ambiente de trabalho e implementação de melhorias',
+          criticidade: 'MEDIA',
           ordem: 9,
         },
         {
           nome: 'ROTINAS DE PROCESSO DEMISSIONAL E ENTREVISTA DE DESLIGAMENTO (SE APLICÁVEL)',
-          descricao: 'Gestão de desligamentos e coleta de feedbacks de saída',
+          criticidade: 'BAIXA',
           ordem: 10,
         },
       ],
     },
     {
       nome: 'FINANCEIRO',
-      descricao: 'Pilar responsável por gestão financeira e controles econômicos',
+      descricao: 'Pilar responsável por gestão financeira e controle de caixa',
       ordem: 5,
       rotinas: [
         {
           nome: 'ROTINAS DE CONTAS A PAGAR (GESTÃO DE MULTAS E JUROS EM DIA)',
-          descricao: 'Gerenciamento de pagamentos e controle de vencimentos para evitar multas',
+          criticidade: 'ALTA',
           ordem: 1,
         },
         {
           nome: 'ROTINAS DE CONTAS A RECEBER (GESTÃO DA CONSTRUÇÃO DE UM CAIXA FORTE)',
-          descricao: 'Controle de recebimentos e estratégias para fortalecimento do caixa',
+          criticidade: 'ALTA',
           ordem: 2,
         },
         {
           nome: 'GESTÃO DO FLUXO DE CAIXA (GESTÃO DA PREVISIBILIDADE DA EMPRESA MÊS A MÊS E PRÓ LABORE DOS SÓCIOS)',
-          descricao: 'Projeção e controle do fluxo de caixa incluindo retirada dos sócios',
+          criticidade: 'ALTA',
           ordem: 3,
         },
         {
           nome: 'FECHAMENTO MENSAL DOS RESULTADOS E ANÁLISE DA DRE DA EMPRESA',
-          descricao: 'Análise das demonstrações financeiras e resultados mensais',
+          criticidade: 'ALTA',
           ordem: 4,
         },
         {
           nome: 'ROTINAS DE PRECIFICAÇÃO E ANÁLISE DAS MARGENS DE LUCRO',
-          descricao: 'Definição de preços e monitoramento de rentabilidade dos produtos/serviços',
+          criticidade: 'ALTA',
           ordem: 5,
         },
         {
           nome: 'GESTÃO MATRICIAL DE CUSTOS E DESPESAS (CONTROLE LINHA A LINHA DE TODOS OS GASTOS)',
-          descricao: 'Controle detalhado e categorizado de todos os custos e despesas',
+          criticidade: 'ALTA',
           ordem: 6,
         },
         {
           nome: 'GESTÃO MATRICIAL DE RECEITAS E VENDAS (CONTROLE DE VOLUME E LUCRO)',
-          descricao: 'Acompanhamento detalhado das receitas por categoria e produto/serviço',
+          criticidade: 'ALTA',
           ordem: 7,
         },
         {
           nome: 'ROTINA DE EMISSÃO DE NOTAS FISCAIS',
-          descricao: 'Processo de emissão e gestão de documentos fiscais',
+          criticidade: 'MEDIA',
           ordem: 8,
         },
         {
           nome: 'GESTÃO DE INADIMPLENTES',
-          descricao: 'Controle e cobrança de clientes com pagamentos em atraso',
+          criticidade: 'MEDIA',
           ordem: 9,
         },
         {
-          nome: 'GESTÃO DO FUNDO DE RESERVA E PRÓ-LABORE DOS SÓCIOS',
-          descricao: 'Administração de reservas financeiras e distribuição de lucros aos sócios',
+          nome: 'GESTÃO DO FUNDO DE RESERVA  E PRÓ-LABORE DOS SÓCIOS',
+          criticidade: 'BAIXA',
           ordem: 10,
         },
       ],
     },
     {
-      nome: 'COMPRAS/ESTOQUE',
-      descricao: 'Pilar responsável por compras, estoque e logística',
+      nome: 'COMPRAS',
+      descricao: 'Pilar responsável por compras e fornecedores',
       ordem: 6,
       rotinas: [
         {
           nome: 'ANÁLISE E CADASTRO DE FORNECEDORES',
-          descricao: 'Avaliação, seleção e cadastro de fornecedores estratégicos',
+          criticidade: 'ALTA',
           ordem: 1,
         },
         {
-          nome: 'ROTINA DE COTAÇÃO DE PREÇOS',
-          descricao: 'Processo de pesquisa e comparação de preços entre fornecedores',
+          nome: 'ROTINA DE COTAÇÃO E COMPARAÇÃO DE PREÇOS',
+          criticidade: 'ALTA',
           ordem: 2,
         },
         {
-          nome: 'ROTINA DE EXECUÇÃO DE COMPRAS',
-          descricao: 'Processo de efetivação de pedidos e compras',
+          nome: 'APROVAÇÃO E LIBERAÇÃO DE COMPRAS CONFORME ALÇADA',
+          criticidade: 'ALTA',
           ordem: 3,
         },
         {
-          nome: 'RECEBIMENTO E CONFERÊNCIA DE MERCADORIAS',
-          descricao: 'Verificação e validação de produtos recebidos',
+          nome: 'NEGOCIAÇÃO DE PREÇOS, PRAZOS E CONDIÇÕES ESPECIAIS',
+          criticidade: 'ALTA',
           ordem: 4,
         },
         {
-          nome: 'GESTÃO DO ESTOQUE E ANÁLISE DE NÍVEIS CRÍTICOS',
-          descricao: 'Controle de inventário e monitoramento de níveis mínimos',
+          nome: 'EXECUÇÃO DO PEDIDO DE COMPRAS',
+          criticidade: 'ALTA',
           ordem: 5,
         },
         {
-          nome: 'ROTINAS DE ESTOCAGEM',
-          descricao: 'Organização e armazenamento adequado de produtos',
+          nome: 'ACOMPANHAMENTO DE PEDIDOS E PRAZOS DE ENTREGA',
+          criticidade: 'MEDIA',
           ordem: 6,
         },
         {
-          nome: 'ROTINAS DE TROCAS E DEVOLUÇÕES',
-          descricao: 'Processo de gestão de devoluções e trocas de produtos',
+          nome: 'GESTÃO DE CONTRATOS E ACORDOS COMERCIAIS',
+          criticidade: 'MEDIA',
           ordem: 7,
         },
         {
-          nome: 'COMPRAS DE MATERIAL ADMINISTRATIVO',
-          descricao: 'Aquisição de materiais de escritório e suprimentos',
+          nome: 'CONTROLE DE CUSTOS E ECONOMIAS GERADAS PELO SETOR',
+          criticidade: 'BAIXA',
           ordem: 8,
-        },
-        {
-          nome: 'ROTINAS DE ALMOXARIFADO',
-          descricao: 'Gestão e controle do almoxarifado e materiais',
-          ordem: 9,
-        },
-        {
-          nome: 'ROTINA DE LIMPEZA DO ESTOQUE',
-          descricao: 'Processo de eliminação de produtos obsoletos ou com baixo giro',
-          ordem: 10,
         },
       ],
     },
-  ];
+    {
+      nome: 'GESTÃO DO ESTOQUE',
+      descricao: 'Pilar responsável por gestão do estoque',
+      ordem: 7,
+      rotinas: [
+        {
+          nome: 'RECEBIMENTO E CONFERENCIA DE MERCADORIAS',
+          criticidade: 'ALTA',
+          ordem: 1,
+        },
+        {
+          nome: 'ENDEREÇAMENTO E ORGANIZAÇÃO DO ESTOQUE',
+          criticidade: 'ALTA',
+          ordem: 2,
+        },
+        {
+          nome: 'CONTROLE DE ENTRADAS E SAÍDAS',
+          criticidade: 'ALTA',
+          ordem: 3,
+        },
+        {
+          nome: 'GESTÃO DE NÍVEIS MÍNIMOS, MÁXIMOS E CRÍTICOS',
+          criticidade: 'ALTA',
+          ordem: 4,
+        },
+        {
+          nome: 'SEPARAÇÃO E LIBERAÇÃO DE MATERIAIS PARA USO OU VENDA',
+          criticidade: 'ALTA',
+          ordem: 5,
+        },
+        {
+          nome: 'EXECUÇÃO DE INVENTÁRIOS PARA AJUSTE DE DIVERGÊNCIAS',
+          criticidade: 'MEDIA',
+          ordem: 6,
+        },
+        {
+          nome: 'GESTÃO DE TROCAS DEVOLUÇÕES E AVARIAS',
+          criticidade: 'MEDIA',
+          ordem: 7,
+        },
+        {
+          nome: 'LIMPEZA E PADRONIZAÇÃO DO ESTOQUE',
+          criticidade: 'BAIXA',
+          ordem: 8,
+        },
+      ],
+    },
+  ] as const;
 
-  const pilaresCriados = [];
+  const pilaresCriados: { id: string; nome: string; descricao: string | null; ativo: boolean; createdAt: Date; updatedAt: Date; createdBy: string | null; updatedBy: string | null; ordem: number; }[] = [];
+  const criticidadePorPilarRotina = new Map<string, Criticidade>();
   let totalRotinasCriadas = 0;
 
   for (const pilarData of pilaresData) {
@@ -590,10 +634,17 @@ async function main() {
 
     // Criar rotinas do pilar
     for (const rotinaData of pilarData.rotinas) {
+      criticidadePorPilarRotina.set(
+        `${pilarData.nome}::${rotinaData.nome}`,
+        rotinaData.criticidade,
+      );
+
       const rotinaExistente = await prisma.rotina.findFirst({
         where: {
-          nome: rotinaData.nome,
-          pilarId: pilar.id,
+          nome: {
+            equals: rotinaData.nome,
+            mode: 'insensitive',
+          },
         },
       });
 
@@ -601,13 +652,24 @@ async function main() {
         await prisma.rotina.create({
           data: {
             nome: rotinaData.nome,
-            descricao: rotinaData.descricao,
+            descricao: rotinaData.descricao ?? null,
             ordem: rotinaData.ordem,
+            criticidade: rotinaData.criticidade,
             ativo: true,
             pilarId: pilar.id,
           },
         });
         totalRotinasCriadas++;
+      } else {
+        await prisma.rotina.update({
+          where: { id: rotinaExistente.id },
+          data: {
+            descricao: rotinaData.descricao ?? null,
+            ordem: rotinaData.ordem,
+            criticidade: rotinaData.criticidade,
+            pilarId: pilar.id,
+          },
+        });
       }
     }
   }
@@ -657,7 +719,7 @@ async function main() {
       missao: 'Comprar bem, no tempo certo, para sustentar a operação e proteger o resultado,',
     },
     {
-      pilarNome: 'ESTOQUE',
+      pilarNome: 'GESTÃO DO ESTOQUE',
       entradas: 'Gestão dos materiais, insumos e produtos adquiridos,',
       saidas: 'Produtos liberados para uso, venda ou produção dentro dos prazos necessários,',
       missao: 'Garantir disponibilidade sem excesso,',
@@ -692,6 +754,277 @@ async function main() {
   }
 
   console.log(`✅ ${objetivosTemplatesCriados} objetivos templates criados/atualizados`);
+
+  // ========================================
+  // 5.2. INDICADORES TEMPLATES (Pilares)
+  // ========================================
+
+  const upsertIndicadoresTemplates = async (
+    pilarNome: string,
+    indicadores: Array<{
+      nome: string;
+      tipoMedida: 'REAL' | 'QUANTIDADE' | 'TEMPO' | 'PERCENTUAL';
+      statusMedicao: 'NAO_MEDIDO' | 'MEDIDO_NAO_CONFIAVEL' | 'MEDIDO_CONFIAVEL';
+      melhor: 'MAIOR' | 'MENOR';
+      descricao: string;
+      ordem: number;
+    }>
+  ) => {
+    const pilarTemplate = pilaresCriados.find((item) => item.nome === pilarNome);
+
+    if (!pilarTemplate) {
+      throw new Error(`Pilar ${pilarNome} não encontrado para indicadores templates`);
+    }
+
+    for (const indicador of indicadores) {
+      const existente = await (prisma as any).indicadorTemplate.findFirst({
+        where: {
+          pilarId: pilarTemplate.id,
+          nome: {
+            equals: indicador.nome,
+            mode: 'insensitive',
+          },
+        },
+      });
+
+      if (!existente) {
+        await (prisma as any).indicadorTemplate.create({
+          data: {
+            pilarId: pilarTemplate.id,
+            nome: indicador.nome,
+            descricao: indicador.descricao,
+            tipoMedida: indicador.tipoMedida,
+            statusMedicao: indicador.statusMedicao,
+            melhor: indicador.melhor,
+            ordem: indicador.ordem,
+            ativo: true,
+          },
+        });
+      } else {
+        await (prisma as any).indicadorTemplate.update({
+          where: { id: existente.id },
+          data: {
+            descricao: indicador.descricao,
+            tipoMedida: indicador.tipoMedida,
+            statusMedicao: indicador.statusMedicao,
+            melhor: indicador.melhor,
+            ordem: indicador.ordem,
+            ativo: true,
+          },
+        });
+      }
+    }
+  };
+
+  await upsertIndicadoresTemplates('MARKETING', [
+    {
+      nome: 'GASTO TOTAL COM ANUNCIOS',
+      tipoMedida: 'REAL',
+      statusMedicao: 'NAO_MEDIDO',
+      melhor: 'MENOR',
+      descricao: 'TOTAL INVESTIDO EM ANUNCIOS NO MÊS',
+      ordem: 1,
+    },
+    {
+      nome: 'VOLUME DE LEADS QUALIFICADOS GERADOS',
+      tipoMedida: 'QUANTIDADE',
+      statusMedicao: 'NAO_MEDIDO',
+      melhor: 'MAIOR',
+      descricao: '# POTENCIAIS CLIENTES CAPTURADOS',
+      ordem: 2,
+    },
+    {
+      nome: 'CUSTO AQUISIÇÃO DO CLIENTE (CAC)',
+      tipoMedida: 'REAL',
+      statusMedicao: 'NAO_MEDIDO',
+      melhor: 'MAIOR',
+      descricao: 'TOTAL GASTO/NÚMERO DE CLIENTES ADQUIRIDOS',
+      ordem: 3,
+    },
+    {
+      nome: 'ROI DE MARKETING',
+      tipoMedida: 'QUANTIDADE',
+      statusMedicao: 'NAO_MEDIDO',
+      melhor: 'MAIOR',
+      descricao: 'FATURAMENTO TOTAL',
+      ordem: 4,
+    },
+  ]);
+
+  await upsertIndicadoresTemplates('VENDAS', [
+    {
+      nome: 'FATURAMENTO GLOBAL',
+      tipoMedida: 'REAL',
+      statusMedicao: 'NAO_MEDIDO',
+      melhor: 'MAIOR',
+      descricao: 'TOTAL FATURADO NO MÊS',
+      ordem: 1,
+    },
+    {
+      nome: '# VENDAS REALIZADAS',
+      tipoMedida: 'QUANTIDADE',
+      statusMedicao: 'NAO_MEDIDO',
+      melhor: 'MAIOR',
+      descricao: 'NÚMERO DE VENDAS REALIZADAS NO MÊS',
+      ordem: 2,
+    },
+    {
+      nome: 'TICKET MÉDIO DAS VENDAS REALIZADAS',
+      tipoMedida: 'REAL',
+      statusMedicao: 'NAO_MEDIDO',
+      melhor: 'MAIOR',
+      descricao: 'TOTAL FATURADO NO MÊS/ NÚMERO DE VENDAS',
+      ordem: 3,
+    },
+    {
+      nome: 'TAXA DE CONVERSÃO',
+      tipoMedida: 'PERCENTUAL',
+      statusMedicao: 'NAO_MEDIDO',
+      melhor: 'MAIOR',
+      descricao: '# PROPOSTAS FECHADAS / TOTAL DE PROPOSTAS ENVIADAS',
+      ordem: 4,
+    },
+  ]);
+
+  await upsertIndicadoresTemplates('PESSOAS', [
+    {
+      nome: 'TURNOVER',
+      tipoMedida: 'PERCENTUAL',
+      statusMedicao: 'NAO_MEDIDO',
+      melhor: 'MENOR',
+      descricao: '% DE COLABORADORES QUE ENTRAM E SAEM DA EMPRESA',
+      ordem: 1,
+    },
+    {
+      nome: 'ABSENTEÍSMO',
+      tipoMedida: 'QUANTIDADE',
+      statusMedicao: 'NAO_MEDIDO',
+      melhor: 'MENOR',
+      descricao: '# DE FALTAS OU ATRASO NÃO JUSTIFICADOS',
+      ordem: 2,
+    },
+    {
+      nome: 'TEMPO MÉDIO DE CONTRATAÇÃO',
+      tipoMedida: 'TEMPO',
+      statusMedicao: 'NAO_MEDIDO',
+      melhor: 'MENOR',
+      descricao: 'TEMPO ENTRE A SOLICITAÇÃO DA PESSOA E A CHEGADA DO NOVO COLABORADOR',
+      ordem: 3,
+    },
+    {
+      nome: 'CUSTO TOTAL COM HORAS EXTRAS',
+      tipoMedida: 'REAL',
+      statusMedicao: 'NAO_MEDIDO',
+      melhor: 'MENOR',
+      descricao: 'TOTAL GASTO COM HORAS EXTRAS DE FUNCIONÁRIOS',
+      ordem: 4,
+    },
+  ]);
+
+  await upsertIndicadoresTemplates('FINANCEIRO', [
+    {
+      nome: 'FATURAMENTO MENSAL',
+      tipoMedida: 'REAL',
+      statusMedicao: 'NAO_MEDIDO',
+      melhor: 'MAIOR',
+      descricao: 'VALOR VENDIDO PELA EMPRESA NO MÊS',
+      ordem: 1,
+    },
+    {
+      nome: 'DESPESAS FIXAS MENSAIS',
+      tipoMedida: 'REAL',
+      statusMedicao: 'NAO_MEDIDO',
+      melhor: 'MENOR',
+      descricao: 'VALOR QUE A EMPRESA CUSTA POR MÊS',
+      ordem: 2,
+    },
+    {
+      nome: 'MARGEM DE LUCRO LÍQUIDA',
+      tipoMedida: 'PERCENTUAL',
+      statusMedicao: 'NAO_MEDIDO',
+      melhor: 'MAIOR',
+      descricao: 'LUCRO LÍQUIDO / RECEITA BRUTA × 100',
+      ordem: 3,
+    },
+    {
+      nome: 'ENDIVIDAMENTO',
+      tipoMedida: 'PERCENTUAL',
+      statusMedicao: 'NAO_MEDIDO',
+      melhor: 'MENOR',
+      descricao: 'ENDIVIDAMENTO (%) = PASSIVO TOTAL / ATIVO TOTAL × 100',
+      ordem: 4,
+    },
+  ]);
+
+  await upsertIndicadoresTemplates('COMPRAS', [
+    {
+      nome: 'GASTO TOTAL COM COMPRAS',
+      tipoMedida: 'REAL',
+      statusMedicao: 'NAO_MEDIDO',
+      melhor: 'MENOR',
+      descricao: 'TOTAL INVESTIDO EM COMPRAS NO MÊS',
+      ordem: 1,
+    },
+    {
+      nome: '# COMPRAS REALIZADAS NO MÊS',
+      tipoMedida: 'QUANTIDADE',
+      statusMedicao: 'NAO_MEDIDO',
+      melhor: 'MENOR',
+      descricao: 'TOTAL DE COMPRAS REALIZADAS NO MÊS',
+      ordem: 2,
+    },
+    {
+      nome: 'ÍNDICE DE COMPRAS EMERGENCIAIS',
+      tipoMedida: 'PERCENTUAL',
+      statusMedicao: 'NAO_MEDIDO',
+      melhor: 'MENOR',
+      descricao: 'TOTAL DE COMPRAS EMERGENCIAIS/ TOTAL DE COMPRAS REALIZADAS',
+      ordem: 3,
+    },
+    {
+      nome: 'TEMPO MÉDIO DE COMPRA',
+      tipoMedida: 'TEMPO',
+      statusMedicao: 'NAO_MEDIDO',
+      melhor: 'MENOR',
+      descricao: 'TEMPO ENTRE A SOLICITAÇÃO DA COMPRA E A CHEGADA DO ITEM',
+      ordem: 4,
+    },
+  ]);
+
+  await upsertIndicadoresTemplates('GESTÃO DO ESTOQUE', [
+    {
+      nome: 'VALOR TOTAL DO ESTOQUE',
+      tipoMedida: 'REAL',
+      statusMedicao: 'NAO_MEDIDO',
+      melhor: 'MENOR',
+      descricao: 'TOTAL EM R$ IMOBILIZADO EM ESTOQUE',
+      ordem: 1,
+    },
+    {
+      nome: 'RUPTURA DE ESTOQUE',
+      tipoMedida: 'QUANTIDADE',
+      statusMedicao: 'NAO_MEDIDO',
+      melhor: 'MENOR',
+      descricao: '# DE VENDAS PERDIDAS POR FALTA DE PRODUTO',
+      ordem: 2,
+    },
+    {
+      nome: 'TOTAL EM PERDAS E AVARIAS',
+      tipoMedida: 'REAL',
+      statusMedicao: 'NAO_MEDIDO',
+      melhor: 'MENOR',
+      descricao: 'TOTAL GASTO COM PERDAS E AVARIAS',
+      ordem: 3,
+    },
+    {
+      nome: 'TOTAL DE TROCAS E DEVOLUÇÕES',
+      tipoMedida: 'REAL',
+      statusMedicao: 'NAO_MEDIDO',
+      melhor: 'MENOR',
+      descricao: '# DE TROCAS OU PRODUTOS DEVOLVIDOS',
+      ordem: 4,
+    },
+  ]);
 
   // ========================================
   // 6. VINCULAR PILARES ÀS EMPRESAS
@@ -751,12 +1084,17 @@ async function main() {
   let rotinasEmpresaCriadas = 0;
 
   for (const pilarEmpA of pilaresEmpresaA) {
+    const pilarNome = pilaresCriados.find((p) => p.id === pilarEmpA.pilarTemplateId)?.nome;
     const rotinasGlobais = await prisma.rotina.findMany({
       where: { pilarId: pilarEmpA.pilarTemplateId! },
       orderBy: { ordem: 'asc' },
     });
 
     for (const rotinaGlobal of rotinasGlobais) {
+      const criticidade = pilarNome
+        ? criticidadePorPilarRotina.get(`${pilarNome}::${rotinaGlobal.nome}`)
+        : undefined;
+
       await prisma.rotinaEmpresa.upsert({
         where: {
           pilarEmpresaId_nome: {
@@ -764,12 +1102,15 @@ async function main() {
             nome: rotinaGlobal.nome,
           },
         },
-        update: {},
+        update: {
+          criticidade,
+        },
         create: {
           pilarEmpresaId: pilarEmpA.id,
           rotinaTemplateId: rotinaGlobal.id,
           nome: rotinaGlobal.nome,
           ordem: rotinaGlobal.ordem!,
+          criticidade,
           ativo: true,
         },
       });
@@ -778,12 +1119,17 @@ async function main() {
   }
 
   for (const pilarEmpB of pilaresEmpresaB) {
+    const pilarNome = pilaresCriados.find((p) => p.id === pilarEmpB.pilarTemplateId)?.nome;
     const rotinasGlobais = await prisma.rotina.findMany({
       where: { pilarId: pilarEmpB.pilarTemplateId! },
       orderBy: { ordem: 'asc' },
     });
 
     for (const rotinaGlobal of rotinasGlobais) {
+      const criticidade = pilarNome
+        ? criticidadePorPilarRotina.get(`${pilarNome}::${rotinaGlobal.nome}`)
+        : undefined;
+
       await prisma.rotinaEmpresa.upsert({
         where: {
           pilarEmpresaId_nome: {
@@ -791,12 +1137,15 @@ async function main() {
             nome: rotinaGlobal.nome,
           },
         },
-        update: {},
+        update: {
+          criticidade,
+        },
         create: {
           pilarEmpresaId: pilarEmpB.id,
           rotinaTemplateId: rotinaGlobal.id,
           nome: rotinaGlobal.nome,
           ordem: rotinaGlobal.ordem!,
+          criticidade,
           ativo: true,
         },
       });
@@ -833,7 +1182,7 @@ async function main() {
     if (!existingNota) {
       // Criar notas variadas por pilar para simular diferentes níveis de maturidade
       let notaBase = 5;
-      
+
       // Pilares com notas diferentes para simular realidade
       if (rotinaEmp.pilarEmpresa.nome === 'ESTRATÉGICO') {
         notaBase = 7; // Empresa mais madura no estratégico
@@ -845,8 +1194,10 @@ async function main() {
         notaBase = 6; // Razoável no financeiro
       } else if (rotinaEmp.pilarEmpresa.nome === 'PESSOAS') {
         notaBase = 5; // Mediano em pessoas
-      } else if (rotinaEmp.pilarEmpresa.nome === 'COMPRAS/ESTOQUE') {
-        notaBase = 3; // Fraco em compras/estoque
+      } else if (rotinaEmp.pilarEmpresa.nome === 'COMPRAS') {
+        notaBase = 3; // Fraco em compras
+      } else if (rotinaEmp.pilarEmpresa.nome === 'GESTÃO DO ESTOQUE') {
+        notaBase = 3; // Fraco em estoque
       }
 
       // Adicionar variação de -2 a +2 à nota base
@@ -921,11 +1272,11 @@ async function main() {
     const dataRef = trimestres[i];
     const trimestreNum = Math.floor(dataRef.getMonth() / 3) + 1; // 1-4
     const ano = dataRef.getFullYear();
-    
+
     // Apenas o último período (atual) permanece aberto
     const isAberto = i === trimestres.length - 1;
-    const dataCongelamento = isAberto 
-      ? null 
+    const dataCongelamento = isAberto
+      ? null
       : new Date(dataRef.getFullYear(), dataRef.getMonth() + 3, 15, 10, 0, 0); // 15 dias após o fim do trimestre
 
     const periodo = await prisma.periodoAvaliacao.upsert({
@@ -968,12 +1319,12 @@ async function main() {
       if (!periodoId) {
         throw new Error(`Período de avaliação não encontrado para chave ${periodoKey}`);
       }
-      
+
       // Simular evolução gradual: começar com nota mais baixa e evoluir até a média atual
       // Por exemplo: se média atual é 7, começar em 4 e evoluir gradualmente
       const mediaFinal = pilarComMedia.mediaAtual;
       const evolucaoFactor = (i + 1) / trimestres.length; // 0.25, 0.5, 0.75, 1.0
-      
+
       // Começar com 60% da nota final no primeiro trimestre e evoluir até 100%
       const mediaBase = mediaFinal * 0.6;
       const diferenca = mediaFinal - mediaBase;
@@ -1019,97 +1370,106 @@ async function main() {
     throw new Error('Pilar de Marketing não encontrado para Empresa A');
   }
 
-  // Criar Cockpit de Marketing
+  const objetivoTemplateMarketing = pilarMarketingA.pilarTemplateId
+    ? await (prisma as any).objetivoTemplate.findFirst({
+      where: {
+        pilarId: pilarMarketingA.pilarTemplateId,
+      },
+      orderBy: { createdAt: 'asc' },
+    })
+    : null;
+
+  // Criar Cockpit de Marketing (respeitando template de objetivos)
   const cockpitMarketing = await prisma.cockpitPilar.upsert({
     where: {
       pilarEmpresaId: pilarMarketingA.id,
     },
-    update: {},
+    update: {
+      entradas: objetivoTemplateMarketing?.entradas ?? null,
+      saidas: objetivoTemplateMarketing?.saidas ?? null,
+      missao: objetivoTemplateMarketing?.missao ?? null,
+    },
     create: {
       pilarEmpresaId: pilarMarketingA.id,
+      entradas: objetivoTemplateMarketing?.entradas ?? null,
+      saidas: objetivoTemplateMarketing?.saidas ?? null,
+      missao: objetivoTemplateMarketing?.missao ?? null,
     },
   });
 
   console.log(`✅ Cockpit de Marketing criado - ID: ${cockpitMarketing.id}`);
 
-  // Criar 5 indicadores para o cockpit de Marketing
-  const indicadoresData = [
-    {
-      nome: 'Leads Gerados',
-      descricao: 'Total de leads captados através de todas as fontes de marketing',
-      tipoMedida: 'QUANTIDADE' as const,
-      statusMedicao: 'MEDIDO_CONFIAVEL' as const,
-      melhor: 'MAIOR' as const,
-      ordem: 1,
-    },
-    {
-      nome: 'Taxa de Conversão',
-      descricao: 'Percentual de leads que se tornam clientes',
-      tipoMedida: 'PERCENTUAL' as const,
-      statusMedicao: 'MEDIDO_CONFIAVEL' as const,
-      melhor: 'MAIOR' as const,
-      ordem: 2,
-    },
-    {
-      nome: 'CAC (Custo de Aquisição de Cliente)',
-      descricao: 'Investimento médio necessário para conquistar um novo cliente',
-      tipoMedida: 'REAL' as const,
-      statusMedicao: 'MEDIDO_CONFIAVEL' as const,
-      melhor: 'MENOR' as const,
-      ordem: 3,
-    },
-    {
-      nome: 'ROI de Campanhas',
-      descricao: 'Retorno sobre investimento das campanhas de marketing',
-      tipoMedida: 'PERCENTUAL' as const,
-      statusMedicao: 'MEDIDO_CONFIAVEL' as const,
-      melhor: 'MAIOR' as const,
-      ordem: 4,
-    },
-    {
-      nome: 'Engajamento nas Redes Sociais',
-      descricao: 'Média de interações (curtidas, comentários, compartilhamentos) nas redes sociais',
-      tipoMedida: 'QUANTIDADE' as const,
-      statusMedicao: 'MEDIDO_CONFIAVEL' as const,
-      melhor: 'MAIOR' as const,
-      ordem: 5,
-    },
-  ];
+  // Criar indicadores a partir do template do pilar
+  const indicadoresTemplates = pilarMarketingA.pilarTemplateId
+    ? await (prisma as any).indicadorTemplate.findMany({
+      where: {
+        pilarId: pilarMarketingA.pilarTemplateId,
+        ativo: true,
+      },
+      orderBy: { ordem: 'asc' },
+    })
+    : [];
 
   // Responsáveis para os indicadores (distribuindo entre gestorA e colaboradorA)
-  const responsaveisIndicadores = [gestorA, colaboradorA, gestorA, colaboradorA, gestorA];
+  const responsaveisIndicadores = [gestorA, colaboradorA];
+  const anoAtual = new Date().getFullYear();
 
   const indicadoresCriados = [];
-  for (let i = 0; i < indicadoresData.length; i++) {
-    const indData = indicadoresData[i];
-    const responsavel = responsaveisIndicadores[i];
+  for (let i = 0; i < indicadoresTemplates.length; i++) {
+    const template = indicadoresTemplates[i];
+    const responsavel = responsaveisIndicadores[i % responsaveisIndicadores.length];
 
     const indicador = await prisma.indicadorCockpit.upsert({
       where: {
         cockpitPilarId_nome: {
           cockpitPilarId: cockpitMarketing.id,
-          nome: indData.nome,
+          nome: template.nome,
         },
       },
       update: {
+        descricao: template.descricao,
+        tipoMedida: template.tipoMedida,
+        statusMedicao: template.statusMedicao,
+        melhor: template.melhor,
+        ordem: template.ordem,
         responsavelMedicaoId: responsavel.id,
+        ativo: true,
       },
       create: {
         cockpitPilarId: cockpitMarketing.id,
-        nome: indData.nome,
-        descricao: indData.descricao,
-        tipoMedida: indData.tipoMedida,
-        statusMedicao: indData.statusMedicao,
-        melhor: indData.melhor,
-        ordem: indData.ordem,
+        nome: template.nome,
+        descricao: template.descricao,
+        tipoMedida: template.tipoMedida,
+        statusMedicao: template.statusMedicao,
+        melhor: template.melhor,
+        ordem: template.ordem,
         responsavelMedicaoId: responsavel.id,
         ativo: true,
       },
     });
+
+    const mesesExistentes = await prisma.indicadorMensal.findMany({
+      where: {
+        indicadorCockpitId: indicador.id,
+        ano: anoAtual,
+      },
+      select: { mes: true },
+    });
+
+    const mesesExistentesSet = new Set(mesesExistentes.map(m => m.mes));
+    const meses = Array.from({ length: 12 }, (_, idx) => ({
+      indicadorCockpitId: indicador.id,
+      mes: idx + 1,
+      ano: anoAtual,
+    })).filter(mes => !mesesExistentesSet.has(mes.mes));
+
+    if (meses.length > 0) {
+      await prisma.indicadorMensal.createMany({ data: meses });
+    }
     indicadoresCriados.push(indicador);
   }
 
-  console.log(`✅ ${indicadoresCriados.length} indicadores criados para Cockpit de Marketing`);
+  console.log(`✅ ${indicadoresCriados.length} indicadores criados para Cockpit de Marketing (templates)`);
   console.log(`   - Responsáveis vinculados: ${gestorA.nome}, ${colaboradorA.nome}`);
 
   // ========================================
@@ -1129,7 +1489,7 @@ async function main() {
   let processosAssociados = 0;
   for (let i = 0; i < rotinasMarketingA.length; i++) {
     const rotina = rotinasMarketingA[i];
-    
+
     const processo = await prisma.processoPrioritario.upsert({
       where: {
         cockpitPilarId_rotinaEmpresaId: {
@@ -1149,6 +1509,242 @@ async function main() {
 
   console.log(`✅ ${processosAssociados} rotinas do Marketing associadas como processos prioritários`);
 
+  // ========================================
+  // 10.2. FLUXOGRAMA (1 rotina do Marketing)
+  // ========================================
+
+  const processoMarketing = await prisma.processoPrioritario.findFirst({
+    where: { cockpitPilarId: cockpitMarketing.id },
+    orderBy: { ordem: 'asc' },
+  });
+
+  if (processoMarketing) {
+    const fluxoExistente = await prisma.processoFluxograma.findFirst({
+      where: {
+        processoPrioritarioId: processoMarketing.id,
+        ordem: 1,
+      },
+    });
+
+    if (!fluxoExistente) {
+      await prisma.processoFluxograma.create({
+        data: {
+          processoPrioritarioId: processoMarketing.id,
+          descricao: 'Mapear etapas do processo de marketing e pontos de controle.',
+          ordem: 1,
+        },
+      });
+    }
+  }
+
+  // ========================================
+  // 10.3. CARGOS E FUNÇÕES (Marketing)
+  // ========================================
+
+  let cargoMarketing = await prisma.cargoCockpit.findFirst({
+    where: {
+      cockpitPilarId: cockpitMarketing.id,
+      cargo: 'Analista de Marketing',
+    },
+  });
+
+  if (!cargoMarketing) {
+    cargoMarketing = await prisma.cargoCockpit.create({
+      data: {
+        cockpitPilarId: cockpitMarketing.id,
+        cargo: 'Analista de Marketing',
+        ordem: 1,
+      },
+    });
+  }
+
+  const funcoesData = [
+    {
+      descricao: 'Planejar campanhas e calendário editorial',
+      nivelCritico: 'ALTA' as const,
+      ordem: 1,
+    },
+    {
+      descricao: 'Monitorar métricas e otimizar investimentos',
+      nivelCritico: 'MEDIA' as const,
+      ordem: 2,
+    },
+  ];
+
+  for (const funcao of funcoesData) {
+    const funcaoExistente = await prisma.funcaoCargo.findFirst({
+      where: {
+        cargoCockpitId: cargoMarketing.id,
+        descricao: funcao.descricao,
+      },
+    });
+
+    if (!funcaoExistente) {
+      await prisma.funcaoCargo.create({
+        data: {
+          cargoCockpitId: cargoMarketing.id,
+          descricao: funcao.descricao,
+          nivelCritico: funcao.nivelCritico,
+          ordem: funcao.ordem,
+        },
+      });
+    }
+  }
+
+  // ========================================
+  // 10.4. PLANOS DE AÇÃO (Marketing)
+  // ========================================
+
+  const hojeAcoes = new Date();
+  const anoReferencia = hojeAcoes.getFullYear();
+  const acoesData = [
+    {
+      acaoProposta: 'Revisar funil de leads e qualificação',
+      indicadorNome: 'VOLUME DE LEADS QUALIFICADOS GERADOS',
+      mesReferencia: 3,
+      anoReferencia,
+      causa1: 'Baixa aderência ao ICP nas campanhas atuais',
+      causa2: 'Critérios de qualificação pouco claros para o time',
+      causa3: 'Integração fraca entre formulários e CRM',
+      causa4: 'Landing pages com baixa taxa de conversão',
+      causa5: 'Segmentação de mídia paga desalinhada',
+      status: 'PENDENTE' as const,
+      responsavelId: gestorA.id,
+      inicioPrevisto: new Date(hojeAcoes.getFullYear(), hojeAcoes.getMonth(), hojeAcoes.getDate() + 7),
+      prazo: new Date(hojeAcoes.getFullYear(), hojeAcoes.getMonth(), hojeAcoes.getDate() + 30),
+    },
+    {
+      acaoProposta: 'Refinar qualificação e scoring de leads',
+      indicadorNome: 'VOLUME DE LEADS QUALIFICADOS GERADOS',
+      mesReferencia: 6,
+      anoReferencia,
+      causa1: 'Lead scoring baseado em dados incompletos',
+      causa2: 'Baixa integração entre marketing e vendas',
+      status: 'EM_ANDAMENTO' as const,
+      responsavelId: colaboradorA.id,
+      inicioPrevisto: new Date(hojeAcoes.getFullYear(), hojeAcoes.getMonth(), hojeAcoes.getDate() - 5),
+      inicioReal: new Date(hojeAcoes.getFullYear(), hojeAcoes.getMonth(), hojeAcoes.getDate() - 4),
+      prazo: new Date(hojeAcoes.getFullYear(), hojeAcoes.getMonth(), hojeAcoes.getDate() + 12),
+    },
+    {
+      acaoProposta: 'Atualizar campanhas de tráfego pago',
+      indicadorNome: 'GASTO TOTAL COM ANUNCIOS',
+      mesReferencia: 4,
+      anoReferencia,
+      causa1: 'Criativos com fadiga e queda de CTR',
+      causa2: 'Ajuste de público-alvo insuficiente',
+      status: 'EM_ANDAMENTO' as const,
+      responsavelId: colaboradorA.id,
+      inicioPrevisto: new Date(hojeAcoes.getFullYear(), hojeAcoes.getMonth(), hojeAcoes.getDate() - 3),
+      inicioReal: new Date(hojeAcoes.getFullYear(), hojeAcoes.getMonth(), hojeAcoes.getDate() - 2),
+      prazo: new Date(hojeAcoes.getFullYear(), hojeAcoes.getMonth(), hojeAcoes.getDate() + 14),
+    },
+    {
+      acaoProposta: 'Negociar mídia e otimizar orçamento mensal',
+      indicadorNome: 'GASTO TOTAL COM ANUNCIOS',
+      mesReferencia: 7,
+      anoReferencia,
+      causa1: 'Custos de mídia aumentaram acima do previsto',
+      causa2: 'Distribuição de verba por canal sem revisão',
+      status: 'PENDENTE' as const,
+      responsavelId: gestorA.id,
+      inicioPrevisto: new Date(hojeAcoes.getFullYear(), hojeAcoes.getMonth(), hojeAcoes.getDate() + 5),
+      prazo: new Date(hojeAcoes.getFullYear(), hojeAcoes.getMonth(), hojeAcoes.getDate() + 25),
+    },
+    {
+      acaoProposta: 'Rever precificação e proposta de valor',
+      indicadorNome: 'CUSTO AQUISIÇÃO DO CLIENTE (CAC)',
+      mesReferencia: 5,
+      anoReferencia,
+      causa1: 'Ticket médio não cobre custo de aquisição',
+      causa2: 'Pouca diferenciação percebida pelo cliente',
+      status: 'PENDENTE' as const,
+      responsavelId: gestorA.id,
+      inicioPrevisto: new Date(hojeAcoes.getFullYear(), hojeAcoes.getMonth(), hojeAcoes.getDate() + 9),
+      prazo: new Date(hojeAcoes.getFullYear(), hojeAcoes.getMonth(), hojeAcoes.getDate() + 33),
+    },
+    {
+      acaoProposta: 'Ajustar mix de canais para reduzir CAC',
+      indicadorNome: 'CUSTO AQUISIÇÃO DO CLIENTE (CAC)',
+      mesReferencia: 8,
+      anoReferencia,
+      causa1: 'Canais com baixa conversão ainda ativos',
+      causa2: 'Remarketing sem segmentação adequada',
+      status: 'EM_ANDAMENTO' as const,
+      responsavelId: colaboradorA.id,
+      inicioPrevisto: new Date(hojeAcoes.getFullYear(), hojeAcoes.getMonth(), hojeAcoes.getDate() - 2),
+      inicioReal: new Date(hojeAcoes.getFullYear(), hojeAcoes.getMonth(), hojeAcoes.getDate() - 1),
+      prazo: new Date(hojeAcoes.getFullYear(), hojeAcoes.getMonth(), hojeAcoes.getDate() + 18),
+    },
+    {
+      acaoProposta: 'Implantar dashboard de ROI por canal',
+      indicadorNome: 'ROI DE MARKETING',
+      mesReferencia: 9,
+      anoReferencia,
+      causa1: 'Dados financeiros e de mídia dispersos',
+      causa2: 'Ausência de visão consolidada por canal',
+      status: 'EM_ANDAMENTO' as const,
+      responsavelId: gestorA.id,
+      inicioPrevisto: new Date(hojeAcoes.getFullYear(), hojeAcoes.getMonth(), hojeAcoes.getDate() - 1),
+      inicioReal: new Date(hojeAcoes.getFullYear(), hojeAcoes.getMonth(), hojeAcoes.getDate()),
+      prazo: new Date(hojeAcoes.getFullYear(), hojeAcoes.getMonth(), hojeAcoes.getDate() + 20),
+    },
+    {
+      acaoProposta: 'Auditar attribution e ROI por campanha',
+      indicadorNome: 'ROI DE MARKETING',
+      mesReferencia: 11,
+      anoReferencia,
+      causa1: 'Medição de conversões com janelas inconsistentes',
+      causa2: 'UTMs e eventos sem padronização',
+      status: 'PENDENTE' as const,
+      responsavelId: gestorA.id,
+      inicioPrevisto: new Date(hojeAcoes.getFullYear(), hojeAcoes.getMonth(), hojeAcoes.getDate() + 12),
+      prazo: new Date(hojeAcoes.getFullYear(), hojeAcoes.getMonth(), hojeAcoes.getDate() + 40),
+    },
+  ];
+
+  for (const acao of acoesData) {
+    const acaoExistente = await prisma.acaoCockpit.findFirst({
+      where: {
+        cockpitPilarId: cockpitMarketing.id,
+        acaoProposta: acao.acaoProposta,
+      },
+    });
+
+    if (!acaoExistente) {
+      const indicador = indicadoresCriados.find(ind => ind.nome === acao.indicadorNome) ?? null;
+      const indicadorMensal = indicador
+        ? await prisma.indicadorMensal.findFirst({
+          where: {
+            indicadorCockpitId: indicador.id,
+            ano: acao.anoReferencia,
+            mes: acao.mesReferencia,
+          },
+        })
+        : null;
+
+      await prisma.acaoCockpit.create({
+        data: {
+          cockpitPilarId: cockpitMarketing.id,
+          indicadorCockpitId: indicador?.id ?? null,
+          indicadorMensalId: indicadorMensal?.id ?? null,
+          causa1: acao.causa1,
+          causa2: acao.causa2,
+          causa3: acao.causa3,
+          causa4: acao.causa4,
+          causa5: acao.causa5,
+          acaoProposta: acao.acaoProposta,
+          responsavelId: acao.responsavelId,
+          status: acao.status,
+          inicioPrevisto: acao.inicioPrevisto,
+          inicioReal: acao.inicioReal,
+          prazo: acao.prazo,
+          dataConclusao: acao.dataConclusao,
+        },
+      });
+    }
+  }
+
   // Dados de março/2025 a fevereiro/2026 (12 meses) para cada indicador
   const todosMesesData = [
     { mes: 3, ano: 2025, meta: 80, realizado: 75, historico: 65 },
@@ -1165,31 +1761,33 @@ async function main() {
     { mes: 2, ano: 2026, meta: 125, realizado: 130, historico: 98 },
   ];
 
+  const gastoAnunciosData = [
+    { mes: 3, ano: 2025, meta: 12000, realizado: 11000, historico: 10000 },
+    { mes: 4, ano: 2025, meta: 12500, realizado: 12800, historico: 10500 },
+    { mes: 5, ano: 2025, meta: 13000, realizado: 12700, historico: 11000 },
+    { mes: 6, ano: 2025, meta: 13500, realizado: 13800, historico: 11500 },
+    { mes: 7, ano: 2025, meta: 14000, realizado: 14500, historico: 12000 },
+    { mes: 8, ano: 2025, meta: 14000, realizado: 13900, historico: 12500 },
+    { mes: 9, ano: 2025, meta: 14500, realizado: 15000, historico: 13000 },
+    { mes: 10, ano: 2025, meta: 15000, realizado: 14800, historico: 13500 },
+    { mes: 11, ano: 2025, meta: 15500, realizado: 15800, historico: 14000 },
+    { mes: 12, ano: 2025, meta: 16000, realizado: 16500, historico: 14500 },
+    { mes: 1, ano: 2026, meta: 16500, realizado: 17000, historico: 15000 },
+    { mes: 2, ano: 2026, meta: 17000, realizado: 17200, historico: 15500 },
+  ];
+
   // Dados específicos por indicador (ajustados para a realidade de cada métrica)
   const indicadoresValores = [
     {
-      nome: 'Leads Gerados',
+      nome: 'GASTO TOTAL COM ANUNCIOS',
+      valores: gastoAnunciosData, // Real (R$)
+    },
+    {
+      nome: 'VOLUME DE LEADS QUALIFICADOS GERADOS',
       valores: todosMesesData, // Quantidade
     },
     {
-      nome: 'Taxa de Conversão',
-      valores: [
-        { mes: 3, ano: 2025, meta: 12.0, realizado: 11.5, historico: 10.0 },
-        { mes: 4, ano: 2025, meta: 12.5, realizado: 13.0, historico: 10.5 },
-        { mes: 5, ano: 2025, meta: 13.0, realizado: 12.8, historico: 11.0 },
-        { mes: 6, ano: 2025, meta: 13.5, realizado: 13.2, historico: 11.5 },
-        { mes: 7, ano: 2025, meta: 14.0, realizado: 14.5, historico: 12.0 },
-        { mes: 8, ano: 2025, meta: 14.0, realizado: 13.8, historico: 12.5 },
-        { mes: 9, ano: 2025, meta: 14.5, realizado: 14.2, historico: 13.0 },
-        { mes: 10, ano: 2025, meta: 15.0, realizado: 15.5, historico: 13.5 },
-        { mes: 11, ano: 2025, meta: 15.5, realizado: 15.8, historico: 14.0 },
-        { mes: 12, ano: 2025, meta: 16.0, realizado: 16.2, historico: 14.5 },
-        { mes: 1, ano: 2026, meta: 16.5, realizado: 16.8, historico: 15.0 },
-        { mes: 2, ano: 2026, meta: 17.0, realizado: 17.3, historico: 15.5 },
-      ], // Percentual
-    },
-    {
-      nome: 'CAC (Custo de Aquisição de Cliente)',
+      nome: 'CUSTO AQUISIÇÃO DO CLIENTE (CAC)',
       valores: [
         { mes: 3, ano: 2025, meta: 450, realizado: 480, historico: 500 },
         { mes: 4, ano: 2025, meta: 440, realizado: 420, historico: 490 },
@@ -1206,7 +1804,7 @@ async function main() {
       ], // Real (R$)
     },
     {
-      nome: 'ROI de Campanhas',
+      nome: 'ROI DE MARKETING',
       valores: [
         { mes: 3, ano: 2025, meta: 250, realizado: 240, historico: 200 },
         { mes: 4, ano: 2025, meta: 260, realizado: 280, historico: 210 },
@@ -1220,35 +1818,18 @@ async function main() {
         { mes: 12, ano: 2025, meta: 340, realizado: 350, historico: 290 },
         { mes: 1, ano: 2026, meta: 350, realizado: 360, historico: 300 },
         { mes: 2, ano: 2026, meta: 360, realizado: 370, historico: 310 },
-      ], // Percentual
-    },
-    {
-      nome: 'Engajamento nas Redes Sociais',
-      valores: [
-        { mes: 3, ano: 2025, meta: 1200, realizado: 1100, historico: 800 },
-        { mes: 4, ano: 2025, meta: 1300, realizado: 1400, historico: 900 },
-        { mes: 5, ano: 2025, meta: 1400, realizado: 1350, historico: 1000 },
-        { mes: 6, ano: 2025, meta: 1500, realizado: 1550, historico: 1100 },
-        { mes: 7, ano: 2025, meta: 1600, realizado: 1650, historico: 1200 },
-        { mes: 8, ano: 2025, meta: 1600, realizado: 1580, historico: 1300 },
-        { mes: 9, ano: 2025, meta: 1700, realizado: 1750, historico: 1400 },
-        { mes: 10, ano: 2025, meta: 1700, realizado: 1680, historico: 1500 },
-        { mes: 11, ano: 2025, meta: 1800, realizado: 1850, historico: 1600 },
-        { mes: 12, ano: 2025, meta: 1900, realizado: 1920, historico: 1700 },
-        { mes: 1, ano: 2026, meta: 2000, realizado: 2050, historico: 1800 },
-        { mes: 2, ano: 2026, meta: 2100, realizado: 2150, historico: 1900 },
       ], // Quantidade
     },
   ];
 
-  // Criar valores mensais para TODOS os 5 indicadores
+  // Criar valores mensais para TODOS os indicadores do template
   let totalValoresCriados = 0;
   for (const indicadorData of indicadoresValores) {
     const indicador = indicadoresCriados.find(ind => ind.nome === indicadorData.nome);
     if (!indicador) continue;
 
     for (const mesData of indicadorData.valores) {
-// Verificar se já existe registro
+      // Verificar se já existe registro
       const existing = await prisma.indicadorMensal.findFirst({
         where: {
           indicadorCockpitId: indicador.id,
@@ -1257,7 +1838,17 @@ async function main() {
         },
       });
 
-      if (!existing) {
+      if (existing) {
+        await prisma.indicadorMensal.update({
+          where: { id: existing.id },
+          data: {
+            meta: mesData.meta,
+            realizado: mesData.realizado,
+            historico: mesData.historico,
+          },
+        });
+        totalValoresCriados++;
+      } else {
         await prisma.indicadorMensal.create({
           data: {
             indicadorCockpitId: indicador.id,
@@ -1288,15 +1879,15 @@ async function main() {
   console.log(`   - 2 empresas`);
   console.log(`   - 2 períodos de mentoria`);
   console.log(`   - 5 usuários`);
-  console.log(`   - ${pilaresCriados.length} pilares globais (ESTRATÉGICO, MARKETING, VENDAS, PESSOAS, FINANCEIRO, COMPRAS/ESTOQUE)`);
-  console.log(`   - ${totalRotinasCriadas} rotinas globais (10 por pilar)`);
+  console.log(`   - ${pilaresCriados.length} pilares globais (ESTRATÉGICO, MARKETING, VENDAS, PESSOAS, FINANCEIRO, COMPRAS, GESTÃO DO ESTOQUE)`);
+  console.log(`   - ${totalRotinasCriadas} rotinas globais (total)`);
   console.log(`   - ${pilaresEmpresaA.length + pilaresEmpresaB.length} pilares vinculados às empresas`);
   console.log(`   - ${rotinasEmpresaCriadas} rotinas vinculadas às empresas`);
   console.log(`   - ${notasCriadas} diagnósticos criados`);
   console.log(`   - ${trimestres.length} períodos de avaliação`);
   console.log(`   - ${evoluçõesCriadas} registros de evolução`);
   console.log(`   - 1 cockpit de Marketing`);
-  console.log(`   - 5 indicadores de Marketing (com responsáveis vinculados)`);
+  console.log(`   - ${indicadoresCriados.length} indicadores de Marketing (com responsáveis vinculados)`);
   console.log(`   - ${processosAssociados} processos prioritários (rotinas do Marketing associadas)`);
   console.log(`   - ${totalValoresCriados} valores mensais (meta, realizado, histórico para 12 meses em cada indicador)`);
   console.log('\n🔑 Credenciais de acesso:');

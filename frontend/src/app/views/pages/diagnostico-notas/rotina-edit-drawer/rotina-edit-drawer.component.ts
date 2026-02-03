@@ -86,7 +86,30 @@ import { TranslatePipe } from "../../../../core/pipes/translate.pipe";
                         <i class="feather icon-x"></i>
                       </button>
                     } @else {
-                      <span class="flex-grow-1 rotina-nome">{{ rotina.nome }}</span>
+                      <div class="flex-grow-1">
+                        <span class="rotina-nome">{{ rotina.nome }}</span>
+                        <div class="mt-2">
+                          <label class="form-label small mb-1">
+                            {{ 'DIAGNOSTICO.CRITICIDADE' | translate }}
+                          </label>
+                          <select
+                            class="form-select form-select-sm"
+                            [ngModel]="rotina.criticidade || ''"
+                            (ngModelChange)="salvarCriticidade(rotina, $event)"
+                            [ngModelOptions]="{standalone: true}"
+                          >
+                            @for (criticidade of criticidades; track criticidade.value) {
+                              <option [value]="criticidade.value">
+                                @if (criticidade.value === '') {
+                                  {{ criticidade.label | translate }}
+                                } @else {
+                                  {{ criticidade.label }}
+                                }
+                              </option>
+                            }
+                          </select>
+                        </div>
+                      </div>
                       
                       <button data-testid="edit-cargo-button" class="btn btn-icon text-secondary"
                         (click)="iniciarEdicao(rotina)" [title]="'BUTTONS.EDIT' | translate">
@@ -189,6 +212,12 @@ export class RotinaEditDrawerComponent implements OnInit {
   loading = false;
   editandoRotinaId: string | null = null;
   nomeEditando: string = '';
+  criticidades = [
+    { value: '', label: 'DIAGNOSTICO.SELECT_CRITICIDADE' },
+    { value: 'BAIXA', label: 'BAIXA' },
+    { value: 'MEDIA', label: 'MÉDIA' },
+    { value: 'ALTA', label: 'ALTA' },
+  ];
 
   ngOnInit(): void {
     this.loadRotinas();
@@ -245,6 +274,34 @@ export class RotinaEditDrawerComponent implements OnInit {
       },
       error: (err: any) => {
         this.showToast(err?.error?.message || 'Erro ao atualizar descrição', 'error');
+      }
+    });
+  }
+
+  salvarCriticidade(rotina: RotinaEmpresa, valor: string): void {
+    const anterior = rotina.criticidade ?? null;
+    const criticidade = valor ? (valor as 'ALTA' | 'MEDIA' | 'BAIXA') : null;
+
+    if (anterior === criticidade) {
+      return;
+    }
+
+    rotina.criticidade = criticidade;
+
+    this.rotinasEmpresaService.updateRotinaEmpresa(
+      this.empresaId,
+      this.pilarEmpresa.id,
+      rotina.id,
+      { criticidade },
+    ).subscribe({
+      next: (rotinaAtualizada: RotinaEmpresa) => {
+        rotina.criticidade = rotinaAtualizada.criticidade ?? null;
+        this.showToast('Criticidade atualizada com sucesso!', 'success');
+        this.rotinasModificadas.emit();
+      },
+      error: (err: any) => {
+        rotina.criticidade = anterior;
+        this.showToast(err?.error?.message || 'Erro ao atualizar criticidade', 'error');
       }
     });
   }

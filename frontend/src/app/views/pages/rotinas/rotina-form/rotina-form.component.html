@@ -105,6 +105,19 @@
               </div>
             </div>
 
+            <!-- Criticidade -->
+            <div class="mb-3">
+              <label for="criticidade" class="form-label">
+                {{ 'DIAGNOSTICO.CRITICIDADE' | translate }}
+              </label>
+              <select class="form-select" id="criticidade" formControlName="criticidade">
+                <option value="">{{ 'DIAGNOSTICO.SELECT_CRITICIDADE' | translate }}</option>
+                <option *ngFor="let criticidade of criticidades" [value]="criticidade.value">
+                  {{ criticidade.label }}
+                </option>
+              </select>
+            </div>
+
           </div>
         </div>
 
