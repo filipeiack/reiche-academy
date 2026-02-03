@@ -24,6 +24,7 @@ import { RotinaAddDrawerComponent } from './rotina-add-drawer/rotina-add-drawer.
 import { RotinaEditDrawerComponent } from './rotina-edit-drawer/rotina-edit-drawer.component';
 import { CriarCockpitDrawerComponent } from './criar-cockpit-drawer/criar-cockpit-drawer.component';
 import { OFFCANVAS_SIZE } from '@core/constants/ui.constants';
+import { formatDateInputSaoPaulo, formatTimeDisplaySaoPaulo, normalizeDateToSaoPaulo } from '../../../core/utils/date-time';
 
 interface AutoSaveQueueItem {
   rotinaEmpresaId: string;
@@ -507,7 +508,7 @@ export class DiagnosticoNotasComponent implements OnInit, OnDestroy {
       next: (response) => {
         this.savingCount--;
         // Atualizar timestamp do último salvamento
-        this.lastSaveTime = new Date();
+        this.lastSaveTime = normalizeDateToSaoPaulo(new Date());
         // Atualizar dados locais com resposta do backend
         this.updateLocalNotaData(item.rotinaEmpresaId, response.nota);
         // Manter cache (não limpar) para preservar valores na tela
@@ -692,12 +693,7 @@ export class DiagnosticoNotasComponent implements OnInit, OnDestroy {
    */
   getLastSaveTimeFormatted(): string {
     if (!this.lastSaveTime) return '';
-    
-    const hours = this.lastSaveTime.getHours().toString().padStart(2, '0');
-    const minutes = this.lastSaveTime.getMinutes().toString().padStart(2, '0');
-    const seconds = this.lastSaveTime.getSeconds().toString().padStart(2, '0');
-    
-    return `${hours}:${minutes}:${seconds}`;
+    return formatTimeDisplaySaoPaulo(this.lastSaveTime);
   }
 
   /**
@@ -783,10 +779,10 @@ export class DiagnosticoNotasComponent implements OnInit, OnDestroy {
    */
   abrirModalIniciarPeriodo(): void {
     // Sugerir data atual como referência
-    const hoje = new Date();
+    const hoje = normalizeDateToSaoPaulo(new Date());
     
     // Formatar como YYYY-MM-DD para input type="date"
-    this.dataReferenciaPeriodo = hoje.toISOString().split('T')[0];
+    this.dataReferenciaPeriodo = formatDateInputSaoPaulo(hoje);
     this.showIniciarPeriodoModal = true;
   }
 
@@ -812,9 +808,8 @@ export class DiagnosticoNotasComponent implements OnInit, OnDestroy {
       next: (periodo) => {
         this.periodoAtual = periodo;
         this.fecharModalIniciarPeriodo();
-        const dataRef = new Date(periodo.dataReferencia);
-        const mes = (dataRef.getMonth() + 1).toString().padStart(2, '0');
-        const ano = dataRef.getFullYear();
+        const dataRef = formatDateInputSaoPaulo(normalizeDateToSaoPaulo(periodo.dataReferencia));
+        const [ano, mes] = dataRef.split('-');
         this.showToast(`Período ${mes}/${ano} iniciado com sucesso!`, 'success');
       },
       error: (err) => {
@@ -829,9 +824,8 @@ export class DiagnosticoNotasComponent implements OnInit, OnDestroy {
    */
   getPeriodoAtualTexto(): string {
     if (!this.periodoAtual) return '';
-    const dataRef = new Date(this.periodoAtual.dataReferencia);
-    const mes = (dataRef.getMonth() + 1).toString().padStart(2, '0');
-    const ano = dataRef.getFullYear();
+    const dataRef = formatDateInputSaoPaulo(normalizeDateToSaoPaulo(this.periodoAtual.dataReferencia));
+    const [ano, mes] = dataRef.split('-');
     return `Avaliação ${mes}/${ano} em andamento`;
   }
 

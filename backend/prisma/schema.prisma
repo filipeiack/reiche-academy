@@ -698,6 +698,8 @@ model AcaoCockpit {
   responsavel   Usuario? @relation("ResponsavelAcaoCockpit", fields: [responsavelId], references: [id], onDelete: SetNull)
 
   status StatusAcao @default(PENDENTE)
+  inicioPrevisto DateTime?
+  inicioReal DateTime?
   prazo  DateTime?
   dataConclusao DateTime?
 

@@ -13,6 +13,7 @@ import { TranslatePipe } from '../../../core/pipes/translate.pipe';
 import { CnpjPipe } from '../../../core/pipes/cnpj.pipe';
 import { UserAvatarComponent } from '../../../shared/components/user-avatar/user-avatar.component';
 import { Usuario } from '../../../core/models/auth.model';
+import { formatMonthYearSaoPaulo } from '../../../core/utils/date-time';
 
 @Component({
   selector: 'app-navbar',
@@ -276,16 +277,10 @@ export class NavbarComponent implements OnInit {
     const periodoMentoria = this.selectedEmpresa?.periodoMentoriaAtivo || this.currentUser?.empresa?.periodoMentoriaAtivo;
     if (!periodoMentoria) return '';
 
-    const dataInicio = new Date(periodoMentoria.dataInicio);
-    const dataFim = new Date(periodoMentoria.dataFim);
-    const meses = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'];
+    const inicio = formatMonthYearSaoPaulo(periodoMentoria.dataInicio);
+    const fim = formatMonthYearSaoPaulo(periodoMentoria.dataFim);
 
-    const mesInicio = meses[dataInicio.getMonth()];
-    const anoInicio = dataInicio.getFullYear().toString().slice(-2);
-    const mesFim = meses[dataFim.getMonth()];
-    const anoFim = dataFim.getFullYear().toString().slice(-2);
-
-    return `${mesInicio}/${anoInicio} - ${mesFim}/${anoFim}`;
+    return `${inicio} - ${fim}`;
   }
 
   /**

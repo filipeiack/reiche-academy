@@ -1,13 +1,30 @@
+@if (loading) {
+<div class="text-center py-4">
+  <div class="spinner-border text-primary" role="status"></div>
+  <p class="mt-2 text-muted">Carregando plano de ação...</p>
+</div>
+} @else {
+
+<div class="row g-2 mb-3">
+  @for (item of resumoStatus; track item.key) {
+  <div class="col-6 col-md-3">
+    <div class="card">
+      <div class="card-body">
+        <div class="border rounded p-2 text-center h-100">
+          <div><span class="fw-bold mt-1 x-large">{{ item.count }}</span></div>
+          <span class="badge" [class]="item.badgeClass + ' text-black'">{{ item.label }}</span>
+          <div class="text-muted">{{ item.percent }}%</div>
+        </div>
+      </div>
+    </div>
+  </div>
+  }
+</div>
+
 <div class="card">
   <div class="card-body">
 
-    @if (loading) {
-    <div class="text-center py-4">
-      <div class="spinner-border text-primary" role="status"></div>
-      <p class="mt-2 text-muted">Carregando plano de ação...</p>
-    </div>
-    } @else {
-    <div class="cockpit-tab-header d-flex align-items-center justify-content-between flex-wrap plano-acao-header">
+    <div class="cockpit-tab-header d-flex align-items-center justify-content-between flex-wrap plano-acao-header mb-3">
       <h5 class="card-title cockpit-tab-title">
         <i class="bi bi-clipboard-check me-2"></i>
         PLANO DE AÇÃO ESPECÍFICO
@@ -17,6 +34,7 @@
         Adicionar Ação
       </button>
     </div>
+
     @if (acoes.length === 0) {
     <div class="text-muted">Nenhuma ação encontrada.</div>
     } @else {
@@ -24,52 +42,91 @@
       <table class="table table-sm align-middle">
         <thead class="table-light small">
           <tr>
-            <th>Indicador</th>
-            <th class="col-mobile-hide">Análise de Causas</th>
-            <th class="text-center col-mobile-hide">Status</th>
-            <th class="text-center">Ações</th>
+            <th style="width: 20%;">Indicador</th>
+            <th style="width: 30%;" class="col-mobile-hide">Análise de Causas</th>
+            <th style="width: 35%;" class="text-center col-mobile-hide">Ação Proposta</th>
+            <th style="width: 10%;" class="text-center col-mobile-hide">Status</th>
+            <th class="text-center" style="width: 5%;"></th>
           </tr>
         </thead>
         <tbody>
           @for (acao of acoes; track acao.id) {
           <tr>
-            <td>
+            <td class="text-break" style="word-break: break-word; white-space: normal; overflow-wrap: anywhere;">
               {{ acao.indicadorCockpit?.nome || '-' }} <br>
-              <small> {{ getMesLabel(acao.indicadorMensal) }}</small>
+              <small>{{ getMesLabel(acao.indicadorMensal) }}</small>
             </td>
             <td class="col-mobile-hide">
               @if (acao.causa1) {
-              <span class="badge bg-gray-100 text-black acao-badge mb-1" style="text-align: left;"><small>Causa 1:
+              <span class="badge bg-gray-100 text-black acao-badge mb-1" style="text-align: left;"><small><small>Causa 1: </small>
                 </small>{{ acao.causa1 }}</span>
               }
               @if (acao.causa2) {
-              <span class="badge bg-gray-100 text-black acao-badge mb-1" style="text-align: left;"><small>Causa 2:
+              <span class="badge bg-gray-100 text-black acao-badge mb-1" style="text-align: left;"><small><small>Causa 2: </small>
                 </small>{{ acao.causa2 }}</span>
               }
               @if (acao.causa3) {
-              <span class="badge bg-gray-100 text-black acao-badge mb-1" style="text-align: left;"><small>Causa 3:
+              <span class="badge bg-gray-100 text-black acao-badge mb-1" style="text-align: left;"><small><small>Causa 3: </small>
                 </small>{{ acao.causa3 }}</span>
               }
               @if (acao.causa4) {
-              <span class="badge bg-gray-100 text-black acao-badge mb-1" style="text-align: left;"><small>Causa 4:
+              <span class="badge bg-gray-100 text-black acao-badge mb-1" style="text-align: left;"><small><small>Causa 4: </small>
                 </small>{{ acao.causa4 }}</span>
               }
               @if (acao.causa5) {
-              <span class="badge bg-gray-100 text-black acao-badge mb-1" style="text-align: left;"><small>Causa 5:
+              <span class="badge bg-gray-100 text-black acao-badge mb-1" style="text-align: left;"><small><small>Causa 5: </small>
                 </small>{{ acao.causa5 }}</span>
               }
-              <span class="badge bg-gray-300 text-black acao-badge" style="text-align: left;"><small>Ação Proposta: </small>{{
-                acao.acaoProposta }}</span>
             </td>
             <td class="col-mobile-hide">
+              <span class="badge bg-gray-500 text-black acao-badge" style="text-align: left;"><small><small>Ação: </small>
+                </small>{{
+                acao.acaoProposta }}</span>
+              <small><small>Responsável: </small><b>{{ acao.responsavel?.nome || '-' }}</b></small><br>
+            </td>
+            <td class="text-center">
+              <div class="border rounded bg-gray-100 p-1 mb-1 mt-1">
+                @if (acao.inicioPrevisto) {
+                <div class="text-end small">
+                  <small class="text-end">Início Previsto: </small><b>{{ acao.inicioPrevisto | date:'shortDate':'America/Sao_Paulo'}}</b>
+                </div>
+                }
+                @if (acao.prazo) {
+                <div class="text-end small">
+                  <small class="text-end">Término Previsto: </small><b>{{ acao.prazo | date:'shortDate':'America/Sao_Paulo'}}</b>
+
+                </div>
+                }
+              </div>
               <span class="badge" [class]="getStatusClass(acao) + ' text-black'" style="width: 100%;">
                 {{ getStatusLabel(acao) }}
               </span>
-              <br>
-              <small>Prazo: <b>{{ acao.prazo | date:'shortDate' }}</b></small><br>
-              <small>Responsável: <b>{{ acao.responsavel?.nome || '-' }}</b></small>
+              @if (acao.inicioReal || acao.dataConclusao) {
+              <div class="border rounded bg-gray-100 p-1 mb-1 mt-1">
+                @if (acao.inicioReal) {
+                <div class="text-end small">
+                  <small class="text-end">Início Real: </small><b>{{ acao.inicioReal | date:'shortDate':'America/Sao_Paulo'}}</b>
+                </div>
+                }
+                @if (acao.dataConclusao) {
+                <div class="text-end small">
+                  <small class="text-end">Término Real: </small> <b>{{ acao.dataConclusao | date:'shortDate':'America/Sao_Paulo'}}</b>
+                </div>
+                }
+              </div>
+            }
             </td>
             <td class="text-center">
+              @if (!acao.inicioReal) {
+              <button class="btn btn-icon text-primary" (click)="marcarInicioReal(acao)" title="Marcar início real">
+                <i class="feather icon-play"></i>
+              </button>
+              }
+              @if (acao.inicioReal && !acao.dataConclusao) {
+              <button class="btn btn-icon text-success" (click)="marcarTerminoReal(acao)" title="Marcar término real">
+                <i class="feather icon-check"></i>
+              </button>
+              }
               <button data-testid="edit-acao-button" class="btn btn-icon text-secondary" (click)="editarAcao(acao)"
                 [title]="'BUTTONS.EDIT' | translate">
                 <i class="feather icon-edit"></i>
@@ -85,6 +142,6 @@
       </table>
     </div>
     }
-    }
   </div>
 </div>
+}

@@ -11,6 +11,7 @@ import {
 import { OFFCANVAS_SIZE } from '@core/constants/ui.constants';
 import { AcaoFormDrawerComponent } from '@app/views/pages/cockpit-pilares/plano-acao-especifico/acao-form-drawer/acao-form-drawer.component';
 import { TranslatePipe } from "../../../../core/pipes/translate.pipe";
+import { formatDateInputSaoPaulo } from '@core/utils/date-time';
 
 @Component({
   selector: 'app-plano-acao-especifico',
@@ -19,6 +20,7 @@ import { TranslatePipe } from "../../../../core/pipes/translate.pipe";
   templateUrl: './plano-acao-especifico.component.html',
   styleUrl: './plano-acao-especifico.component.scss',
 })
+
 export class PlanoAcaoEspecificoComponent implements OnInit {
   @Input() cockpitId!: string;
 
@@ -27,6 +29,13 @@ export class PlanoAcaoEspecificoComponent implements OnInit {
 
   indicadores: IndicadorCockpit[] = [];
   acoes: AcaoCockpit[] = [];
+  resumoStatus: Array<{
+    key: string;
+    label: string;
+    count: number;
+    percent: number;
+    badgeClass: string;
+  }> = [];
   empresaId: string | null = null;
   loading = false;
 
@@ -56,10 +65,12 @@ export class PlanoAcaoEspecificoComponent implements OnInit {
     this.cockpitService.getAcoesCockpit(this.cockpitId).subscribe({
       next: (acoes) => {
         this.acoes = acoes;
+        this.atualizarResumoStatus();
       },
       error: (err) => {
         console.error('Erro ao carregar ações:', err);
         this.acoes = [];
+        this.atualizarResumoStatus();
       },
     });
   }
@@ -82,6 +93,7 @@ export class PlanoAcaoEspecificoComponent implements OnInit {
     component.indicadores = this.indicadores;
     component.acaoSalva.subscribe((acao: AcaoCockpit) => {
       this.acoes.unshift(acao);
+      this.atualizarResumoStatus();
     });
   }
 
@@ -107,6 +119,7 @@ export class PlanoAcaoEspecificoComponent implements OnInit {
       if (index >= 0) {
         this.acoes[index] = acaoAtualizada;
       }
+      this.atualizarResumoStatus();
     });
   }
 
@@ -126,6 +139,7 @@ export class PlanoAcaoEspecificoComponent implements OnInit {
     this.cockpitService.deleteAcaoCockpit(acao.id).subscribe({
       next: () => {
         this.acoes = this.acoes.filter((a) => a.id !== acao.id);
+        this.atualizarResumoStatus();
         this.showToast('Ação removida com sucesso', 'success');
       },
       error: (err) => {
@@ -141,8 +155,8 @@ export class PlanoAcaoEspecificoComponent implements OnInit {
         return 'CONCLUÍDA';
       case 'ATRASADA':
         return 'ATRASADA';
-      case 'SEM_PRAZO':
-        return 'SEM PRAZO';
+      case 'EM_ANDAMENTO':
+        return 'EM ANDAMENTO';
       case 'A_INICIAR':
         return 'A INICIAR';
       default:
@@ -156,8 +170,6 @@ export class PlanoAcaoEspecificoComponent implements OnInit {
         return 'bg-danger';
       case 'CONCLUIDA':
         return 'bg-success';
-      case 'SEM_PRAZO':
-        return 'bg-secondary';
       case 'EM_ANDAMENTO':
         return 'bg-warning';
       case 'A_INICIAR':
@@ -165,6 +177,73 @@ export class PlanoAcaoEspecificoComponent implements OnInit {
       default:
         return 'bg-secondary';
     }
+  }
+
+  marcarInicioReal(acao: AcaoCockpit): void {
+    if (acao.inicioReal) {
+      this.showToast('Início real já informado.', 'info');
+      return;
+    }
+
+    const hoje = this.getHojeDateInput();
+    this.atualizarDatasReais(acao.id, { inicioReal: hoje });
+  }
+
+  marcarTerminoReal(acao: AcaoCockpit): void {
+    if (!acao.inicioReal) {
+      this.showToast('Informe o início real antes de concluir.', 'error');
+      return;
+    }
+
+    if (acao.dataConclusao) {
+      this.showToast('Término real já informado.', 'info');
+      return;
+    }
+
+    const hoje = this.getHojeDateInput();
+    this.atualizarDatasReais(acao.id, { terminoReal: hoje });
+  }
+
+  private atualizarDatasReais(
+    acaoId: string,
+    payload: { inicioReal?: string; terminoReal?: string },
+  ): void {
+    this.cockpitService.updateAcaoCockpit(acaoId, payload).subscribe({
+      next: (acaoAtualizada) => {
+        const index = this.acoes.findIndex((a) => a.id === acaoAtualizada.id);
+        if (index >= 0) {
+          this.acoes[index] = acaoAtualizada;
+        }
+        this.atualizarResumoStatus();
+        this.showToast('Datas atualizadas com sucesso', 'success');
+      },
+      error: (err) => {
+        console.error('Erro ao atualizar datas reais:', err);
+        this.showToast(err?.error?.message || 'Erro ao atualizar datas', 'error');
+      },
+    });
+  }
+
+  private atualizarResumoStatus(): void {
+    const total = this.acoes.length;
+    const base = [
+      { key: 'A_INICIAR', label: 'A INICIAR', badgeClass: 'bg-secondary' },
+      { key: 'EM_ANDAMENTO', label: 'EM ANDAMENTO', badgeClass: 'bg-warning' },
+      { key: 'ATRASADA', label: 'ATRASADA', badgeClass: 'bg-danger' },
+      { key: 'CONCLUIDA', label: 'CONCLUÍDA', badgeClass: 'bg-success' },
+    ];
+
+    this.resumoStatus = base.map((status) => {
+      const count = this.acoes.filter(
+        (acao) => (acao.statusCalculado || 'A_INICIAR') === status.key,
+      ).length;
+      const percent = total ? Math.round((count / total) * 100) : 0;
+      return { ...status, count, percent };
+    });
+  }
+
+  private getHojeDateInput(): string {
+    return formatDateInputSaoPaulo(new Date());
   }
 
   getMesLabel(

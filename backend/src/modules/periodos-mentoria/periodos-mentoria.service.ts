@@ -8,7 +8,12 @@ import { PrismaService } from '../../common/prisma/prisma.service';
 import { AuditService } from '../audit/audit.service';
 import { CreatePeriodoMentoriaDto } from './dto/create-periodo-mentoria.dto';
 import { RenovarPeriodoMentoriaDto } from './dto/renovar-periodo-mentoria.dto';
-import { addYears } from 'date-fns';
+import {
+  endOfYearInSaoPaulo,
+  formatDateInSaoPaulo,
+  nowInSaoPaulo,
+  parseDateInSaoPaulo,
+} from '../../common/utils/timezone';
 
 @Injectable()
 export class PeriodosMentoriaService {
@@ -19,20 +24,10 @@ export class PeriodosMentoriaService {
 
   /**
    * Calcula data fim corrigida para períodos anuais
-   * Retorna 31 de dezembro do ano da dataInicio (meia-noite UTC)
+   * Retorna 31 de dezembro do ano da dataInicio (horário de São Paulo)
    */
   private calcularDataFimAno(dataInicio: Date): Date {
-    // Usar UTC para evitar timezone issues
-    const ano = dataInicio.getUTCFullYear();
-    // UTC: 31/dez/ano 23:59:59 UTC
-    return new Date(Date.UTC(ano, 11, 31, 23, 59, 59, 999));
-  }
-
-  /**
-   * Obtém ano de forma segura (UTC) para evitar timezone issues
-   */
-  private getAnoUTC(data: Date): number {
-    return data.getUTCFullYear();
+    return endOfYearInSaoPaulo(dataInicio);
   }
 
   /**
@@ -72,7 +67,7 @@ export class PeriodosMentoriaService {
     const numero = ultimoPeriodo ? ultimoPeriodo.numero + 1 : 1;
 
     // R-MENT-001: Calcular dataFim (dataInicio + 1 ano)
-    const dataInicio = new Date(dto.dataInicio);
+    const dataInicio = parseDateInSaoPaulo(dto.dataInicio);
     const dataFim = this.calcularDataFimAno(dataInicio);
 
     // Criar período
@@ -155,10 +150,10 @@ export class PeriodosMentoriaService {
     }
 
     // Validar data de início (deve ser após período atual)
-    const dataInicio = new Date(dto.dataInicio);
+    const dataInicio = parseDateInSaoPaulo(dto.dataInicio);
     if (dataInicio < periodoAtual.dataFim) {
       throw new BadRequestException(
-        `Data de início da renovação deve ser posterior a ${periodoAtual.dataFim.toISOString().split('T')[0]}`,
+        `Data de início da renovação deve ser posterior a ${formatDateInSaoPaulo(periodoAtual.dataFim, 'yyyy-MM-dd')}`,
       );
     }
 
@@ -172,7 +167,7 @@ export class PeriodosMentoriaService {
         where: { id: periodoId },
         data: {
           ativo: false,
-          dataEncerramento: new Date(),
+          dataEncerramento: nowInSaoPaulo(),
           updatedBy,
         },
       }),

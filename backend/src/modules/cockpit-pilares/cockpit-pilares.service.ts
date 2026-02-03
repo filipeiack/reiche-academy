@@ -24,6 +24,29 @@ import { UpdateFuncaoCargoDto } from './dto/update-funcao-cargo.dto';
 import { CreateAcaoCockpitDto } from './dto/create-acao-cockpit.dto';
 import { UpdateAcaoCockpitDto } from './dto/update-acao-cockpit.dto';
 import { StatusAcao } from '@prisma/client';
+import { nowInSaoPaulo, parseDateInSaoPaulo } from '../../common/utils/timezone';
+
+type AcaoCockpitComCockpit = {
+  cockpitPilar: {
+    pilarEmpresa: {
+      empresa: {
+        id: string;
+      };
+    };
+  };
+  inicioReal: Date | null;
+  dataConclusao: Date | null;
+} & Record<string, any>;
+
+type AcaoCockpitComRelacoes = {
+  responsavel: { id: string; nome: string; email: string | null } | null;
+  indicadorCockpit: { id: string; nome: string } | null;
+  indicadorMensal: { id: string; mes: number | null; ano: number } | null;
+  inicioPrevisto?: Date | null;
+  inicioReal?: Date | null;
+  prazo?: Date | null;
+  dataConclusao?: Date | null;
+} & Record<string, any>;
 
 @Injectable()
 export class CockpitPilaresService {
@@ -201,19 +224,21 @@ export class CockpitPilaresService {
       },
     });
 
-    if (!acao) {
+    const acaoTipada = acao as AcaoCockpitComCockpit | null;
+
+    if (!acaoTipada) {
       throw new NotFoundException('Ação não encontrada');
     }
 
     if (user.perfil?.codigo !== 'ADMINISTRADOR') {
-      if (acao.cockpitPilar.pilarEmpresa.empresa.id !== user.empresaId) {
+      if (acaoTipada.cockpitPilar.pilarEmpresa.empresa.id !== user.empresaId) {
         throw new ForbiddenException(
           'Você não pode acessar ações de outra empresa',
         );
       }
     }
 
-    return acao;
+    return acaoTipada;
   }
 
   private async validateUsuariosEmpresa(
@@ -243,26 +268,39 @@ export class CockpitPilaresService {
   }
 
   private getAgoraSaoPaulo(): Date {
-    return new Date(
-      new Date().toLocaleString('en-US', { timeZone: 'America/Sao_Paulo' }),
-    );
+    return nowInSaoPaulo();
   }
 
   private getStatusCalculado(
-    prazo?: Date | null,
-    dataConclusao?: Date | null,
+    inicioPrevisto?: Date | null,
+    terminoPrevisto?: Date | null,
+    inicioReal?: Date | null,
+    terminoReal?: Date | null,
   ): string {
-    if (dataConclusao) {
+    if (terminoReal) {
       return 'CONCLUIDA';
     }
 
-    if (!prazo) {
-      return 'SEM_PRAZO';
-    }
-
     const agora = this.getAgoraSaoPaulo();
-    if (prazo.getTime() < agora.getTime()) {
-      return 'ATRASADA';
+
+    if (terminoPrevisto) {
+      if (inicioReal) {
+        if (inicioReal.getTime() > terminoPrevisto.getTime()) {
+          return 'ATRASADA';
+        }
+
+        if (terminoPrevisto.getTime() < agora.getTime()) {
+          return 'ATRASADA';
+        }
+
+        return 'EM_ANDAMENTO';
+      }
+
+      if (terminoPrevisto.getTime() < agora.getTime()) {
+        return 'ATRASADA';
+      }
+
+      return 'A_INICIAR';
     }
 
     return 'A_INICIAR';
@@ -342,7 +380,7 @@ export class CockpitPilaresService {
     const indicadoresCriados: { id: string; nome: string }[] = [];
 
     if (pilarEmpresa.pilarTemplateId) {
-      const templates = await this.prisma.indicadorTemplate.findMany({
+      const templates = await (this.prisma as any).indicadorTemplate.findMany({
         where: {
           pilarId: pilarEmpresa.pilarTemplateId,
           ativo: true,
@@ -1366,7 +1404,7 @@ export class CockpitPilaresService {
   async getAcoesCockpit(cockpitId: string, user: RequestUser) {
     await this.validateCockpitAccess(cockpitId, user);
 
-    const acoes = await this.prisma.acaoCockpit.findMany({
+    const acoes = (await this.prisma.acaoCockpit.findMany({
       where: { cockpitPilarId: cockpitId },
       orderBy: { createdAt: 'desc' },
       include: {
@@ -1374,11 +1412,16 @@ export class CockpitPilaresService {
         indicadorCockpit: { select: { id: true, nome: true } },
         indicadorMensal: { select: { id: true, mes: true, ano: true } },
       },
-    });
+    })) as AcaoCockpitComRelacoes[];
 
     return acoes.map((acao) => ({
       ...acao,
-      statusCalculado: this.getStatusCalculado(acao.prazo, acao.dataConclusao),
+      statusCalculado: this.getStatusCalculado(
+        acao.inicioPrevisto,
+        acao.prazo,
+        acao.inicioReal,
+        acao.dataConclusao,
+      ),
     }));
   }
 
@@ -1416,6 +1459,22 @@ export class CockpitPilaresService {
       );
     }
 
+    if (dto.terminoReal && !dto.inicioReal) {
+      throw new BadRequestException(
+        'Data de término real não pode ser informada antes da data de início real',
+      );
+    }
+
+    if (dto.inicioReal && dto.terminoReal) {
+      const inicioReal = parseDateInSaoPaulo(dto.inicioReal);
+      const terminoReal = parseDateInSaoPaulo(dto.terminoReal);
+      if (terminoReal.getTime() < inicioReal.getTime()) {
+        throw new BadRequestException(
+          'Data de término real não pode ser anterior à data de início real',
+        );
+      }
+    }
+
     const acao = await this.prisma.acaoCockpit.create({
       data: {
         cockpitPilarId: cockpitId,
@@ -1428,9 +1487,11 @@ export class CockpitPilaresService {
         causa5: dto.causa5 ? this.sanitizeDescricao(dto.causa5) : null,
         acaoProposta: this.sanitizeDescricao(dto.acaoProposta),
         responsavelId: dto.responsavelId,
-        status: dto.dataConclusao ? StatusAcao.CONCLUIDA : StatusAcao.PENDENTE,
-        prazo: new Date(dto.prazo),
-        dataConclusao: dto.dataConclusao ? new Date(dto.dataConclusao) : null,
+        status: dto.terminoReal ? StatusAcao.CONCLUIDA : StatusAcao.PENDENTE,
+        inicioPrevisto: parseDateInSaoPaulo(dto.inicioPrevisto),
+        inicioReal: dto.inicioReal ? parseDateInSaoPaulo(dto.inicioReal) : null,
+        prazo: parseDateInSaoPaulo(dto.terminoPrevisto),
+        dataConclusao: dto.terminoReal ? parseDateInSaoPaulo(dto.terminoReal) : null,
         createdBy: user.id,
         updatedBy: user.id,
       },
@@ -1446,14 +1507,14 @@ export class CockpitPilaresService {
       dadosDepois: { indicadorMensalId: dto.indicadorMensalId, cockpitId },
     });
 
-    const created = await this.prisma.acaoCockpit.findUnique({
+    const created = (await this.prisma.acaoCockpit.findUnique({
       where: { id: acao.id },
       include: {
         responsavel: { select: { id: true, nome: true, email: true } },
         indicadorCockpit: { select: { id: true, nome: true } },
         indicadorMensal: { select: { id: true, mes: true, ano: true } },
       },
-    });
+    })) as AcaoCockpitComRelacoes | null;
 
     if (!created) {
       throw new NotFoundException('Ação não encontrada');
@@ -1462,7 +1523,9 @@ export class CockpitPilaresService {
     return {
       ...created,
       statusCalculado: this.getStatusCalculado(
+        created.inicioPrevisto,
         created.prazo,
+        created.inicioReal,
         created.dataConclusao,
       ),
     };
@@ -1510,6 +1573,30 @@ export class CockpitPilaresService {
       );
     }
 
+    const inicioRealDto = dto.inicioReal
+      ? parseDateInSaoPaulo(dto.inicioReal)
+      : undefined;
+    const terminoRealDto = dto.terminoReal
+      ? parseDateInSaoPaulo(dto.terminoReal)
+      : undefined;
+
+    if (dto.terminoReal && !dto.inicioReal && !acao.inicioReal) {
+      throw new BadRequestException(
+        'Data de término real não pode ser informada antes da data de início real',
+      );
+    }
+
+    const inicioRealValidar = inicioRealDto ?? acao.inicioReal ?? null;
+    const terminoRealValidar = terminoRealDto ?? acao.dataConclusao ?? null;
+
+    if (inicioRealValidar && terminoRealValidar) {
+      if (terminoRealValidar.getTime() < inicioRealValidar.getTime()) {
+        throw new BadRequestException(
+          'Data de término real não pode ser anterior à data de início real',
+        );
+      }
+    }
+
     await this.prisma.acaoCockpit.update({
       where: { id: acaoId },
       data: {
@@ -1550,21 +1637,33 @@ export class CockpitPilaresService {
           : undefined,
         responsavelId: dto.responsavelId,
         status:
-          dto.dataConclusao !== undefined
-            ? dto.dataConclusao
+          dto.terminoReal !== undefined
+            ? dto.terminoReal
               ? StatusAcao.CONCLUIDA
               : StatusAcao.PENDENTE
             : undefined,
+        inicioPrevisto:
+          dto.inicioPrevisto !== undefined
+            ? dto.inicioPrevisto
+              ? parseDateInSaoPaulo(dto.inicioPrevisto)
+              : null
+            : undefined,
+        inicioReal:
+          dto.inicioReal !== undefined
+            ? dto.inicioReal
+              ? parseDateInSaoPaulo(dto.inicioReal)
+              : null
+            : undefined,
         prazo:
-          dto.prazo !== undefined
-            ? dto.prazo
-              ? new Date(dto.prazo)
+          dto.terminoPrevisto !== undefined
+            ? dto.terminoPrevisto
+              ? parseDateInSaoPaulo(dto.terminoPrevisto)
               : null
             : undefined,
         dataConclusao:
-          dto.dataConclusao !== undefined
-            ? dto.dataConclusao
-              ? new Date(dto.dataConclusao)
+          dto.terminoReal !== undefined
+            ? dto.terminoReal
+              ? parseDateInSaoPaulo(dto.terminoReal)
               : null
             : undefined,
         updatedBy: user.id,
@@ -1581,14 +1680,14 @@ export class CockpitPilaresService {
       dadosDepois: dto,
     });
 
-    const result = await this.prisma.acaoCockpit.findUnique({
+    const result = (await this.prisma.acaoCockpit.findUnique({
       where: { id: acaoId },
       include: {
         responsavel: { select: { id: true, nome: true, email: true } },
         indicadorCockpit: { select: { id: true, nome: true } },
         indicadorMensal: { select: { id: true, mes: true, ano: true } },
       },
-    });
+    })) as AcaoCockpitComRelacoes | null;
 
     if (!result) {
       throw new NotFoundException('Ação não encontrada');
@@ -1597,7 +1696,9 @@ export class CockpitPilaresService {
     return {
       ...result,
       statusCalculado: this.getStatusCalculado(
+        result.inicioPrevisto,
         result.prazo,
+        result.inicioReal,
         result.dataConclusao,
       ),
     };

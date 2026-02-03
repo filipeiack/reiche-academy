@@ -12,6 +12,7 @@ import { PilaresService, Pilar, CreatePilarDto } from '../../../../core/services
 import { PilaresEmpresaService, PilarEmpresa } from '../../../../core/services/pilares-empresa.service';
 import { PeriodosMentoriaService } from '../../../../core/services/periodos-mentoria.service';
 import { TranslatePipe } from '../../../../core/pipes/translate.pipe';
+import { formatMonthYearSaoPaulo, normalizeDateToSaoPaulo, parseDateInputSaoPaulo } from '../../../../core/utils/date-time';
 import { environment } from '../../../../../environments/environment';
 import { NgSelectModule } from '@ng-select/ng-select';
 import { UsuarioModalComponent } from '../../usuarios/usuario-modal/usuario-modal.component';
@@ -114,7 +115,7 @@ export class EmpresasFormComponent implements OnInit {
       next: (periodo) => {
         this.periodoAtivo = periodo;
         if (periodo) {
-          this.dataInicioMentoria = new Date(periodo.dataInicio);
+          this.dataInicioMentoria = normalizeDateToSaoPaulo(periodo.dataInicio);
         }
       },
       error: (err) => console.error('Erro ao carregar período ativo:', err)
@@ -141,18 +142,14 @@ export class EmpresasFormComponent implements OnInit {
   onDataInicioChange(event: Event): void {
     const input = event.target as HTMLInputElement;
     if (input.value) {
-      this.dataInicioMentoria = new Date(input.value);
+      this.dataInicioMentoria = parseDateInputSaoPaulo(input.value);
     } else {
       this.dataInicioMentoria = null;
     }
   }
 
   formatarDataPeriodo(data: Date | string): string {
-    const d = typeof data === 'string' ? new Date(data) : data;
-    const meses = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'];
-    const mes = meses[d.getMonth()];
-    const ano = d.getFullYear().toString().slice(-2);
-    return `${mes}/${ano}`;
+    return formatMonthYearSaoPaulo(data);
   }
 
   criarPeriodo(): void {
@@ -181,12 +178,12 @@ export class EmpresasFormComponent implements OnInit {
       confirmButtonColor: '#3085d6',
     }).then((result) => {
       if (result.isConfirmed && this.periodoAtivo && this.empresaId) {
-        const novaDataInicio = new Date(); // Usar data de hoje
+        const novaDataInicio = normalizeDateToSaoPaulo(new Date()); // Usar data de hoje
 
         this.periodosMentoriaService.renovar(this.empresaId, this.periodoAtivo.id, novaDataInicio).subscribe({
           next: (novoPeriodo) => {
             this.periodoAtivo = novoPeriodo;
-            this.dataInicioMentoria = new Date(novoPeriodo.dataInicio);
+            this.dataInicioMentoria = normalizeDateToSaoPaulo(novoPeriodo.dataInicio);
             this.loadPeriodosMentoria(this.empresaId!);
             this.showToast('Mentoria renovada com sucesso!', 'success');
           },

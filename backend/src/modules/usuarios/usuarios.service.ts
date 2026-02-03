@@ -8,6 +8,7 @@ import { AuditService } from '../audit/audit.service';
 import { CreateUsuarioDto } from './dto/create-usuario.dto';
 import { UpdateUsuarioDto } from './dto/update-usuario.dto';
 import { RequestUser } from '../../common/interfaces/request-user.interface';
+import { formatIsoSaoPaulo } from '../../common/utils/timezone';
 
 @Injectable()
 export class UsuariosService {
@@ -42,7 +43,7 @@ export class UsuariosService {
             action,
             adminCompanyId: requestUser.empresaId,
             targetCompanyId: targetUsuario.empresaId,
-            timestamp: new Date().toISOString(),
+            timestamp: formatIsoSaoPaulo(new Date()),
           },
         });
         this.logger.warn(

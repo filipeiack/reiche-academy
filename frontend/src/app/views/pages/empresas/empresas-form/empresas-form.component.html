@@ -277,14 +277,14 @@
                         }
                     </label>
                     <input type="date" class="form-control"
-                        [value]="dataInicioMentoria ? (dataInicioMentoria | date:'yyyy-MM-dd') : ''"
+                        [value]="dataInicioMentoria ? (dataInicioMentoria | date:'yyyy-MM-dd':'America/Sao_Paulo') : ''"
                         (change)="onDataInicioChange($event)" [disabled]="!!periodoAtivo" />
                     <small class="text-muted">Defina quando a consultoria iniciará</small>
                 </div>
 
                 <div class="col-md-6">
                     <label class="form-label">Data de Término (Calculado Automaticamente)</label>
-                    <input type="text" class="form-control" [value]="calcularDataFim() | date:'dd/MM/yyyy'" disabled />
+                    <input type="text" class="form-control" [value]="calcularDataFim() | date:'dd/MM/yyyy':'America/Sao_Paulo'" disabled />
                     <small class="text-muted">1 ano após o início</small>
                 </div>
             </div>
@@ -340,12 +340,12 @@
                                         {{ periodo.numero }}
                                     </span>
                                 </td>
-                                <td>{{ periodo.dataInicio | date:'dd/MM/yyyy' }}</td>
-                                <td>{{ periodo.dataFim | date:'dd/MM/yyyy' }}</td>
-                                <td>{{ periodo.dataContratacao | date:'dd/MM/yyyy HH:mm' }}</td>
+                                <td>{{ periodo.dataInicio | date:'dd/MM/yyyy':'America/Sao_Paulo' }}</td>
+                                <td>{{ periodo.dataFim | date:'dd/MM/yyyy':'America/Sao_Paulo' }}</td>
+                                <td>{{ periodo.dataContratacao | date:'dd/MM/yyyy HH:mm':'America/Sao_Paulo' }}</td>
                                 <td>
                                     @if (periodo.dataEncerramento) {
-                                    {{ periodo.dataEncerramento | date:'dd/MM/yyyy HH:mm' }}
+                                    {{ periodo.dataEncerramento | date:'dd/MM/yyyy HH:mm':'America/Sao_Paulo' }}
                                     } @else {
                                     <span class="text-muted">—</span>
                                     }

@@ -225,12 +225,12 @@
 
         <div class="mb-3">
           <label class="text-muted small">{{ 'COMMON.CREATED_AT' | translate }}</label>
-          <p class="mb-0">{{ selectedUsuario.createdAt | date:'dd/MM/yyyy HH:mm' }}</p>
+          <p class="mb-0">{{ selectedUsuario.createdAt | date:'dd/MM/yyyy HH:mm':'America/Sao_Paulo' }}</p>
         </div>
 
         <div class="mb-0">
           <label class="text-muted small">{{ 'COMMON.UPDATED_AT' | translate }}</label>
-          <p class="mb-0">{{ selectedUsuario.updatedAt | date:'dd/MM/yyyy HH:mm' }}</p>
+          <p class="mb-0">{{ selectedUsuario.updatedAt | date:'dd/MM/yyyy HH:mm':'America/Sao_Paulo' }}</p>
         </div>
       </div>
     </div>

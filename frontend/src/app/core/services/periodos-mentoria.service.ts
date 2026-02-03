@@ -2,6 +2,7 @@ import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { environment } from '../../../environments/environment';
+import { formatDateInputSaoPaulo } from '../utils/date-time';
 
 export interface PeriodoMentoria {
   id: string;
@@ -23,9 +24,11 @@ export class PeriodosMentoriaService {
   constructor(private http: HttpClient) {}
 
   create(empresaId: string, dto: { dataInicio: Date | string }): Observable<PeriodoMentoria> {
-    const dataInicio = typeof dto.dataInicio === 'string' 
-      ? new Date(dto.dataInicio).toISOString() 
-      : dto.dataInicio.toISOString();
+    const dataInicio = typeof dto.dataInicio === 'string'
+      ? dto.dataInicio.includes('T')
+        ? formatDateInputSaoPaulo(new Date(dto.dataInicio))
+        : dto.dataInicio
+      : formatDateInputSaoPaulo(dto.dataInicio);
     
     return this.http.post<PeriodoMentoria>(
       `${this.apiUrl}/empresas/${empresaId}/periodos-mentoria`,
@@ -50,9 +53,11 @@ export class PeriodosMentoriaService {
     periodoId: string,
     dataInicio: Date | string,
   ): Observable<PeriodoMentoria> {
-    const data = typeof dataInicio === 'string' 
-      ? new Date(dataInicio).toISOString() 
-      : dataInicio.toISOString();
+    const data = typeof dataInicio === 'string'
+      ? dataInicio.includes('T')
+        ? formatDateInputSaoPaulo(new Date(dataInicio))
+        : dataInicio
+      : formatDateInputSaoPaulo(dataInicio);
     
     return this.http.post<PeriodoMentoria>(
       `${this.apiUrl}/empresas/${empresaId}/periodos-mentoria/${periodoId}/renovar`,

@@ -1,5 +1,6 @@
 import { Controller, Get } from '@nestjs/common';
 import { ApiOperation, ApiTags } from '@nestjs/swagger';
+import { formatIsoSaoPaulo } from '../../common/utils/timezone';
 
 @ApiTags('health')
 @Controller('health')
@@ -9,7 +10,7 @@ export class HealthController {
   healthCheck() {
     return {
       status: 'ok',
-      timestamp: new Date().toISOString(),
+      timestamp: formatIsoSaoPaulo(new Date()),
     };
   }
 }

@@ -25,8 +25,7 @@ import {
   IndicadorCockpit,
   DirecaoIndicador,
 } from '@core/interfaces/cockpit-pilares.interface';
-import { format } from 'date-fns';
-import { ptBR } from 'date-fns/locale';
+import { formatMonthYearSaoPaulo, parseDateInputSaoPaulo } from '@core/utils/date-time';
 
 // Registrar componentes do Chart.js
 Chart.register(
@@ -289,8 +288,10 @@ export class GraficoIndicadoresComponent implements OnInit, OnChanges {
     // R-GRAF-001: Usar labels dinâmicos com mês + ano (ex: Jan/25, Fev/25...)
     const meses = mesesData.map((m) => {
       if (m.mes && m.ano) {
-        const date = new Date(m.ano, m.mes - 1, 1);
-        return format(date, 'MMM/yy', { locale: ptBR });
+        const mes = String(m.mes).padStart(2, '0');
+        return formatMonthYearSaoPaulo(
+          parseDateInputSaoPaulo(`${m.ano}-${mes}-01`),
+        );
       }
       return this.getNomeMes(m.mes!);
     });

@@ -56,7 +56,7 @@ O módulo Períodos de Mentoria é responsável por:
 **Integrações:**
 - PrismaService — Acesso ao banco de dados
 - AuditService — Registro de operações CREATE/UPDATE
-- Cálculo de dataFim por regra de fim de ano (UTC) via `calcularDataFimAno`
+- Cálculo de dataFim por regra de fim de ano (horário de São Paulo) via `calcularDataFimAno`
 
 ### 2.2. Frontend
 
@@ -107,7 +107,7 @@ O módulo Períodos de Mentoria é responsável por:
 | empresaId | String | FK para Empresa |
 | numero | Int | Sequencial por empresa (1, 2, 3...) |
 | dataInicio | DateTime | Data de início da mentoria (ex: 2026-05-01) |
-| dataFim | DateTime | Data de término (calculado: **31/12 do ano de dataInicio, 23:59:59.999 UTC**) |
+| dataFim | DateTime | Data de término (calculado: **31/12 do ano de dataInicio, 23:59:59.999 (horário de São Paulo)**) |
 | ativo | Boolean | true = período ativo, false = encerrado |
 | dataContratacao | DateTime | Quando foi contratado (default: now()) |
 | dataEncerramento | DateTime? | Quando foi encerrado (renovação ou cancelamento) |
@@ -126,7 +126,7 @@ O módulo Períodos de Mentoria é responsável por:
 
 **Comportamento:**
 - Sistema permite apenas 1 período ativo por empresa
-- dataFim é calculada como **último dia do ano de `dataInicio` (UTC)**
+- dataFim é calculada como **último dia do ano de `dataInicio` (horário de São Paulo)**
 - Ao renovar, período anterior é encerrado (`ativo = false`)
 - Histórico completo de todos os períodos fica registrado
 
@@ -206,7 +206,7 @@ if (periodoAtivo) {
 3. **Calcular dataFim (fim do ano de dataInicio):**
 ```typescript
 const dataInicio = new Date(dto.dataInicio);
-const dataFim = this.calcularDataFimAno(dataInicio); // 31/12 do ano (UTC)
+const dataFim = this.calcularDataFimAno(dataInicio); // 31/12 do ano (São Paulo)
 ```
 
 4. **Calcular numero sequencial:**
@@ -254,10 +254,10 @@ await this.audit.log({
   "id": "uuid",
   "empresaId": "uuid",
   "numero": 1,
-  "dataInicio": "2026-05-01T00:00:00Z",
-  "dataFim": "2026-12-31T23:59:59.999Z",
+  "dataInicio": "2026-05-01T00:00:00-03:00",
+  "dataFim": "2026-12-31T23:59:59.999-03:00",
   "ativo": true,
-  "dataContratacao": "2026-01-21T10:00:00Z",
+  "dataContratacao": "2026-01-21T10:00:00-03:00",
   "dataEncerramento": null
 }
 ```
@@ -400,8 +400,8 @@ await this.audit.log({
 {
   "id": "uuid",
   "numero": 2,
-  "dataInicio": "2027-05-01T00:00:00Z",
-  "dataFim": "2027-12-31T23:59:59.999Z",
+  "dataInicio": "2027-05-01T00:00:00-03:00",
+  "dataFim": "2027-12-31T23:59:59.999-03:00",
   "ativo": true
 }
 ```
@@ -691,10 +691,10 @@ Content-Type: application/json
   "id": "periodo-uuid",
   "empresaId": "abc-123",
   "numero": 1,
-  "dataInicio": "2026-05-01T00:00:00Z",
-  "dataFim": "2027-04-30T23:59:59Z",
+  "dataInicio": "2026-05-01T00:00:00-03:00",
+  "dataFim": "2027-04-30T23:59:59-03:00",
   "ativo": true,
-  "dataContratacao": "2026-01-21T10:00:00Z",
+  "dataContratacao": "2026-01-21T10:00:00-03:00",
   "dataEncerramento": null
 }
 ```
@@ -716,13 +716,13 @@ Authorization: Bearer <token-admin>
     "id": "periodo-uuid",
     "numero": 1,
     "ativo": false,
-    "dataEncerramento": "2027-04-30T23:59:59Z"
+    "dataEncerramento": "2027-04-30T23:59:59-03:00"
   },
   "novoPeriodo": {
     "id": "novo-periodo-uuid",
     "numero": 2,
-    "dataInicio": "2027-05-01T00:00:00Z",
-    "dataFim": "2028-04-30T23:59:59Z",
+    "dataInicio": "2027-05-01T00:00:00-03:00",
+    "dataFim": "2028-04-30T23:59:59-03:00",
     "ativo": true
   }
 }
@@ -744,16 +744,16 @@ Authorization: Bearer <token>
   {
     "id": "periodo-1-uuid",
     "numero": 1,
-    "dataInicio": "2026-05-01T00:00:00Z",
-    "dataFim": "2027-04-30T23:59:59Z",
+    "dataInicio": "2026-05-01T00:00:00-03:00",
+    "dataFim": "2027-04-30T23:59:59-03:00",
     "ativo": false,
-    "dataEncerramento": "2027-04-30T23:59:59Z"
+    "dataEncerramento": "2027-04-30T23:59:59-03:00"
   },
   {
     "id": "periodo-2-uuid",
     "numero": 2,
-    "dataInicio": "2027-05-01T00:00:00Z",
-    "dataFim": "2028-04-30T23:59:59Z",
+    "dataInicio": "2027-05-01T00:00:00-03:00",
+    "dataFim": "2028-04-30T23:59:59-03:00",
     "ativo": true,
     "dataEncerramento": null
   }
@@ -775,8 +775,8 @@ Authorization: Bearer <token>
 {
   "id": "periodo-2-uuid",
   "numero": 2,
-  "dataInicio": "2027-05-01T00:00:00Z",
-  "dataFim": "2028-04-30T23:59:59Z",
+  "dataInicio": "2027-05-01T00:00:00-03:00",
+  "dataFim": "2028-04-30T23:59:59-03:00",
   "ativo": true
 }
 ```

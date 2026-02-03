@@ -6,6 +6,7 @@ import { FormsModule } from '@angular/forms';
 import Swal from 'sweetalert2';
 import { PilaresService, Pilar } from '../../../../core/services/pilares.service';
 import { PilaresEmpresaService } from '../../../../core/services/pilares-empresa.service';
+import { formatIsoSaoPaulo } from '../../../../core/utils/date-time';
 
 @Component({
   selector: 'app-adicionar-pilar-modal',
@@ -152,9 +153,9 @@ export class AdicionarPilarModalComponent implements OnInit {
       id: nome, // Usar o nome como ID temporário para identificar depois
       nome: nome,
       descricao: '(novo)',
-      ativo: true,
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString()
+       ativo: true,
+       createdAt: formatIsoSaoPaulo(new Date()),
+       updatedAt: formatIsoSaoPaulo(new Date())
     };
     
     this.pilarIdSelecionado = nome;

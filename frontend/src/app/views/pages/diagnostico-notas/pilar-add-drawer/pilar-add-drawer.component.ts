@@ -6,6 +6,7 @@ import { NgSelectModule } from '@ng-select/ng-select';
 import Swal from 'sweetalert2';
 import { PilaresService, Pilar } from '@core/services/pilares.service';
 import { PilaresEmpresaService } from '@core/services/pilares-empresa.service';
+import { formatIsoSaoPaulo } from '@core/utils/date-time';
 
 @Component({
   selector: 'app-pilar-add-drawer',
@@ -168,8 +169,8 @@ export class PilarAddDrawerComponent implements OnInit {
       nome: nome,
       descricao: '(novo)',
       ativo: true,
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString()
+       createdAt: formatIsoSaoPaulo(new Date()),
+       updatedAt: formatIsoSaoPaulo(new Date())
     };
     
     this.pilarIdSelecionado = nome;
