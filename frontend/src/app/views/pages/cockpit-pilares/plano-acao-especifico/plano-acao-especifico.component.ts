@@ -35,6 +35,8 @@ export class PlanoAcaoEspecificoComponent implements OnInit {
     count: number;
     percent: number;
     badgeClass: string;
+    icon: string;
+    kpiClass: string;
   }> = [];
   empresaId: string | null = null;
   loading = false;
@@ -227,10 +229,34 @@ export class PlanoAcaoEspecificoComponent implements OnInit {
   private atualizarResumoStatus(): void {
     const total = this.acoes.length;
     const base = [
-      { key: 'A_INICIAR', label: 'A INICIAR', badgeClass: 'bg-secondary' },
-      { key: 'EM_ANDAMENTO', label: 'EM ANDAMENTO', badgeClass: 'bg-warning' },
-      { key: 'ATRASADA', label: 'ATRASADA', badgeClass: 'bg-danger' },
-      { key: 'CONCLUIDA', label: 'CONCLUÍDA', badgeClass: 'bg-success' },
+      {
+        key: 'A_INICIAR',
+        label: 'A INICIAR',
+        badgeClass: 'bg-secondary',
+        icon: 'clock',
+        kpiClass: 'kpi-neutral',
+      },
+      {
+        key: 'EM_ANDAMENTO',
+        label: 'EM ANDAMENTO',
+        badgeClass: 'bg-warning',
+        icon: 'activity',
+        kpiClass: 'kpi-progress',
+      },
+      {
+        key: 'ATRASADA',
+        label: 'ATRASADA',
+        badgeClass: 'bg-danger',
+        icon: 'alert-triangle',
+        kpiClass: 'kpi-danger',
+      },
+      {
+        key: 'CONCLUIDA',
+        label: 'CONCLUÍDA',
+        badgeClass: 'bg-success',
+        icon: 'check-circle',
+        kpiClass: 'kpi-success',
+      },
     ];
 
     this.resumoStatus = base.map((status) => {
