@@ -246,6 +246,7 @@ model Pilar {
   // Relations
   rotinas             Rotina[]
   indicadoresTemplates IndicadorTemplate[]
+  objetivoTemplate     ObjetivoTemplate?
   empresas            PilarEmpresa[]
 
   @@map("pilares")
@@ -296,6 +297,24 @@ model IndicadorTemplate {
   @@unique([pilarId, nome])
   @@index([pilarId])
   @@map("indicadores_templates")
+}
+
+model ObjetivoTemplate {
+  id String @id @default(uuid())
+
+  pilarId String @unique
+  pilar   Pilar @relation(fields: [pilarId], references: [id])
+
+  entradas String
+  saidas   String
+  missao   String
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  createdBy String?
+  updatedBy String?
+
+  @@map("objetivos_templates")
 }
 
 model PilarEmpresa {

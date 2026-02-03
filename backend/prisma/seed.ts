@@ -616,6 +616,84 @@ async function main() {
   console.log(`✅ ${totalRotinasCriadas} rotinas criadas`);
 
   // ========================================
+  // 5.1. OBJETIVOS TEMPLATES (1 por pilar)
+  // ========================================
+
+  const objetivosTemplatesData = [
+    {
+      pilarNome: 'ESTRATÉGICO',
+      entradas: 'Sonhos e alvos no médio e curto prazo por parte da liderança da empresa,',
+      saidas: 'Ações, definições rotinas inegociáveis que fazem parte do dia a dia da empresa,',
+      missao: 'Criar uma cultura forte com a visão de longo prazo da liderança através de ações que irão nortear a empresa,',
+    },
+    {
+      pilarNome: 'MARKETING',
+      entradas: 'Estudo do mercado e perfil de cliente dos sonhos,',
+      saidas: 'Elaboração e execução de campanhar para captação de leads qualificados,',
+      missao: 'Gerar leads qualificados que queiram ser atendidos pela nossa empresa,',
+    },
+    {
+      pilarNome: 'VENDAS',
+      entradas: 'Obter leads qualificados gerados pelo marketing,',
+      saidas: 'Vendas realizadas para clientes antigos e novos clientes,',
+      missao: 'Alavancar os resultados financeiros da empresa através das vendas,',
+    },
+    {
+      pilarNome: 'PESSOAS',
+      entradas: 'Mapeamento das necessidades internas e externas em relação a pessoas,',
+      saidas: 'Equipe nova treinada e orientada e membros antigos desafiados diariamente e valorizados da forma correta,',
+      missao: 'Otimizar os resultados da empresa através de um time bem orientado,',
+    },
+    {
+      pilarNome: 'FINANCEIRO',
+      entradas: 'Fatos e dados referentes à tudo que a empresa gasta ou recebe diariamente,',
+      saidas: 'Números confiáveis para os principais indicadores que medem a saúde da empresa,',
+      missao: 'Proporcionar à liderança da empresa, fatos e dados confiáveis para tomada de decisões,',
+    },
+    {
+      pilarNome: 'COMPRAS',
+      entradas: 'Gestão e execução das requisições internas e necessidades estratégicas,',
+      saidas: 'Operação abastecida com custo e qualidade controlados,',
+      missao: 'Comprar bem, no tempo certo, para sustentar a operação e proteger o resultado,',
+    },
+    {
+      pilarNome: 'ESTOQUE',
+      entradas: 'Gestão dos materiais, insumos e produtos adquiridos,',
+      saidas: 'Produtos liberados para uso, venda ou produção dentro dos prazos necessários,',
+      missao: 'Garantir disponibilidade sem excesso,',
+    },
+  ];
+
+  let objetivosTemplatesCriados = 0;
+
+  for (const objetivo of objetivosTemplatesData) {
+    const pilar = pilaresCriados.find((item) => item.nome === objetivo.pilarNome);
+
+    if (!pilar) {
+      throw new Error(`Pilar não encontrado para objetivo template: ${objetivo.pilarNome}`);
+    }
+
+    await (prisma as any).objetivoTemplate.upsert({
+      where: { pilarId: pilar.id },
+      update: {
+        entradas: objetivo.entradas,
+        saidas: objetivo.saidas,
+        missao: objetivo.missao,
+      },
+      create: {
+        pilarId: pilar.id,
+        entradas: objetivo.entradas,
+        saidas: objetivo.saidas,
+        missao: objetivo.missao,
+      },
+    });
+
+    objetivosTemplatesCriados++;
+  }
+
+  console.log(`✅ ${objetivosTemplatesCriados} objetivos templates criados/atualizados`);
+
+  // ========================================
   // 6. VINCULAR PILARES ÀS EMPRESAS
   // ========================================
 

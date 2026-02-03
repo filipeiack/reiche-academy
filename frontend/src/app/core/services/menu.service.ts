@@ -29,7 +29,8 @@ export class MenuService {
     '/empresas',
     '/pilares',
     '/rotinas',
-    '/indicadores-templates'
+    '/indicadores-templates',
+    '/objetivos-templates'
   ];
 
   constructor() {

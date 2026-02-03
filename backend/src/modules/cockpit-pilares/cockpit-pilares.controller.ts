@@ -74,6 +74,25 @@ export class CockpitPilaresController {
     return this.cockpitPilaresService.createCockpit(dto, req.user);
   }
 
+  @Get('empresas/:empresaId/pilares/:pilarEmpresaId/objetivos-template')
+  @Roles('ADMINISTRADOR', 'GESTOR')
+  @ApiOperation({
+    summary: 'Buscar objetivo template para pré-preencher criação do cockpit',
+  })
+  @ApiResponse({ status: 200, description: 'Objetivo template encontrado' })
+  @ApiResponse({ status: 404, description: 'Pilar não encontrado' })
+  getObjetivoTemplate(
+    @Param('empresaId') empresaId: string,
+    @Param('pilarEmpresaId') pilarEmpresaId: string,
+    @Request() req: ExpressRequest & { user: any },
+  ) {
+    return this.cockpitPilaresService.getObjetivoTemplateForPilarEmpresa(
+      empresaId,
+      pilarEmpresaId,
+      req.user,
+    );
+  }
+
   @Get('empresas/:empresaId/cockpits')
   @Roles('ADMINISTRADOR', 'CONSULTOR', 'GESTOR', 'COLABORADOR', 'LEITURA')
   @ApiOperation({ summary: 'Listar cockpits de uma empresa' })

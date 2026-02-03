@@ -1,0 +1,152 @@
+<div class="mb-2 align-items-center gap-2 d-flex justify-content-between flex-wrap">
+  <nav aria-label="breadcrumb">
+    <ol class="breadcrumb breadcrumb-arrow mb-1">
+      <li class="breadcrumb-item">
+        <i class="feather icon-target"></i>
+      </li>
+      <li class="breadcrumb-item">
+        {{ 'OBJETIVOS_TEMPLATES.TITLE' | translate }}
+      </li>
+      <li class="breadcrumb-item active" aria-current="page">
+        {{ isEditMode ? ('OBJETIVOS_TEMPLATES.EDIT' | translate) : ('OBJETIVOS_TEMPLATES.NEW' | translate) }}
+      </li>
+    </ol>
+  </nav>
+
+  <div class="d-flex gap-2">
+    <button
+      type="button"
+      data-testid="cancel-objetivo-template-button"
+      (click)="handleCancel()"
+      class="btn btn-outline-secondary"
+    >
+      {{ 'BUTTONS.CANCEL' | translate }}
+    </button>
+    <button
+      type="submit"
+      form="objetivoTemplateForm"
+      data-testid="submit-objetivo-template-button"
+      class="btn btn-primary"
+      [disabled]="loading || submitting || form.invalid"
+    >
+      @if (loading || submitting) {
+        <span class="spinner-border spinner-border-sm me-2" role="status"></span>
+      }
+      @if (isEditMode) {
+        {{ 'BUTTONS.UPDATE' | translate }}
+      } @else {
+        {{ 'BUTTONS.CREATE' | translate }}
+      }
+    </button>
+  </div>
+</div>
+
+<div class="card-body">
+  @if (loading && isEditMode) {
+    <div class="text-center py-5">
+      <div class="spinner-border text-primary" role="status">
+        <span class="visually-hidden">{{ 'COMMON.LOADING' | translate }}</span>
+      </div>
+    </div>
+  } @else {
+    <div class="row">
+      <div class="col-md-8">
+        <form id="objetivoTemplateForm" [formGroup]="form" (ngSubmit)="onSubmit()">
+          <div class="card">
+            <div class="card-body">
+              <div class="mb-3">
+                <label for="pilarId" class="form-label">
+                  {{ 'OBJETIVOS_TEMPLATES.FIELDS.PILAR' | translate }} <span class="text-danger">*</span>
+                </label>
+                <select
+                  #pilarIdSelect
+                  class="form-select"
+                  id="pilarId"
+                  formControlName="pilarId"
+                  [class.is-invalid]="pilarIdInvalid"
+                >
+                  <option value="">{{ 'COMMON.SELECT' | translate }}</option>
+                  @for (pilar of pilares; track pilar.id) {
+                    <option [value]="pilar.id">
+                      {{ pilar.nome }}
+                    </option>
+                  }
+                </select>
+                @if (isEditMode) {
+                  <div class="form-text">
+                    {{ 'OBJETIVOS_TEMPLATES.PILAR_IMUTAVEL' | translate }}
+                  </div>
+                }
+                @if (pilarIdInvalid) {
+                  <div class="invalid-feedback">
+                    {{ 'OBJETIVOS_TEMPLATES.VALIDATIONS.PILAR_REQUIRED' | translate }}
+                  </div>
+                }
+              </div>
+
+              <div class="mb-3">
+                <label class="form-label">{{ 'OBJETIVOS_TEMPLATES.FIELDS.ENTRADAS' | translate }} <span class="text-danger">*</span></label>
+                <textarea
+                  class="form-control"
+                  formControlName="entradas"
+                  rows="3"
+                  maxlength="300"
+                  [class.is-invalid]="entradasInvalid"
+                  [placeholder]="'OBJETIVOS_TEMPLATES.ENTRADAS_PLACEHOLDER' | translate"
+                ></textarea>
+                <small class="form-text text-muted">
+                  {{ form.get('entradas')?.value?.length || 0 }}/300
+                </small>
+                @if (entradasInvalid) {
+                  <div class="invalid-feedback">
+                    {{ 'OBJETIVOS_TEMPLATES.VALIDATIONS.ENTRADAS_REQUIRED' | translate }}
+                  </div>
+                }
+              </div>
+
+              <div class="mb-3">
+                <label class="form-label">{{ 'OBJETIVOS_TEMPLATES.FIELDS.SAIDAS' | translate }} <span class="text-danger">*</span></label>
+                <textarea
+                  class="form-control"
+                  formControlName="saidas"
+                  rows="3"
+                  maxlength="300"
+                  [class.is-invalid]="saidasInvalid"
+                  [placeholder]="'OBJETIVOS_TEMPLATES.SAIDAS_PLACEHOLDER' | translate"
+                ></textarea>
+                <small class="form-text text-muted">
+                  {{ form.get('saidas')?.value?.length || 0 }}/300
+                </small>
+                @if (saidasInvalid) {
+                  <div class="invalid-feedback">
+                    {{ 'OBJETIVOS_TEMPLATES.VALIDATIONS.SAIDAS_REQUIRED' | translate }}
+                  </div>
+                }
+              </div>
+
+              <div class="mb-3">
+                <label class="form-label">{{ 'OBJETIVOS_TEMPLATES.FIELDS.MISSAO' | translate }} <span class="text-danger">*</span></label>
+                <textarea
+                  class="form-control"
+                  formControlName="missao"
+                  rows="3"
+                  maxlength="300"
+                  [class.is-invalid]="missaoInvalid"
+                  [placeholder]="'OBJETIVOS_TEMPLATES.MISSAO_PLACEHOLDER' | translate"
+                ></textarea>
+                <small class="form-text text-muted">
+                  {{ form.get('missao')?.value?.length || 0 }}/300
+                </small>
+                @if (missaoInvalid) {
+                  <div class="invalid-feedback">
+                    {{ 'OBJETIVOS_TEMPLATES.VALIDATIONS.MISSAO_REQUIRED' | translate }}
+                  </div>
+                }
+              </div>
+            </div>
+          </div>
+        </form>
+      </div>
+    </div>
+  }
+</div>

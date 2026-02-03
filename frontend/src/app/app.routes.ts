@@ -71,6 +71,20 @@ export const routes: Routes = [
     ]
   },
   {
+    path: 'objetivos-templates',
+    component: BaseComponent,
+    canActivate: [authGuard],
+    children: [
+      {
+        path: '',
+        loadChildren: () =>
+          import('./views/pages/objetivos-templates/objetivos-templates.routes').then(
+            m => m.OBJETIVOS_TEMPLATES_ROUTES,
+          )
+      }
+    ]
+  },
+  {
     path: 'diagnostico-notas',
     component: BaseComponent,
     canActivate: [authGuard],

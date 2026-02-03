@@ -489,6 +489,47 @@ export class CockpitPilaresService {
   }
 
   /**
+   * Buscar objetivo template para pré-preenchimento ao criar cockpit
+   */
+  async getObjetivoTemplateForPilarEmpresa(
+    empresaId: string,
+    pilarEmpresaId: string,
+    user: RequestUser,
+  ) {
+    const pilarEmpresa = await this.prisma.pilarEmpresa.findUnique({
+      where: { id: pilarEmpresaId },
+      include: {
+        empresa: true,
+      },
+    });
+
+    if (!pilarEmpresa) {
+      throw new NotFoundException('Pilar não encontrado');
+    }
+
+    if (pilarEmpresa.empresaId !== empresaId) {
+      throw new NotFoundException('Pilar não encontrado');
+    }
+
+    this.validateTenantAccess(pilarEmpresa.empresaId, user);
+
+    if (!pilarEmpresa.pilarTemplateId) {
+      return null;
+    }
+
+    return (this.prisma as any).objetivoTemplate.findUnique({
+      where: { pilarId: pilarEmpresa.pilarTemplateId },
+      select: {
+        id: true,
+        pilarId: true,
+        entradas: true,
+        saidas: true,
+        missao: true,
+      },
+    });
+  }
+
+  /**
    * Listar cockpits de uma empresa
    */
   async getCockpitsByEmpresa(empresaId: string, user: RequestUser) {

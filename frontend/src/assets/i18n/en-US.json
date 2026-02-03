@@ -43,6 +43,7 @@
     "PILARES": "Pillars",
     "ROTINAS": "Routines",
     "INDICADORES_TEMPLATES": "Indicators",
+    "OBJETIVOS_TEMPLATES": "Objectives",
     "PAINEL_CONTROLE": "Control Panel",
     "NOTAS": "Company Dashboard",
     "EVOLUCAO": "Pillars Evolution",
@@ -99,6 +100,31 @@
       "STATUS_MEDICAO_REQUIRED": "Measurement status is required",
       "MELHOR_REQUIRED": "Better direction is required",
       "ORDEM_MIN": "Order must be 1 or greater"
+    }
+  },
+  "OBJETIVOS_TEMPLATES": {
+    "TITLE": "Objective Templates",
+    "NEW": "Add Objective Template",
+    "NEW_TOOLTIP": "Add New Objective Template",
+    "EDIT": "Edit Objective Template",
+    "DETAILS": "Objective Template Details",
+    "FILTER_ALL_PILARES": "All Pillars",
+    "SEARCH_PLACEHOLDER": "Search objective content...",
+    "ENTRADAS_PLACEHOLDER": "Ex: Customer requests, commercial proposal demands",
+    "SAIDAS_PLACEHOLDER": "Ex: Proposals sent, deals closed",
+    "MISSAO_PLACEHOLDER": "Ex: Maximize revenue via indirect channel",
+    "PILAR_IMUTAVEL": "The pillar cannot be changed after creation",
+    "FIELDS": {
+      "PILAR": "Pillar",
+      "ENTRADAS": "Inputs",
+      "SAIDAS": "Outputs",
+      "MISSAO": "Mission"
+    },
+    "VALIDATIONS": {
+      "PILAR_REQUIRED": "Pillar is required",
+      "ENTRADAS_REQUIRED": "Inputs is required",
+      "SAIDAS_REQUIRED": "Outputs is required",
+      "MISSAO_REQUIRED": "Mission is required"
     }
   },
   "NAVBAR": {

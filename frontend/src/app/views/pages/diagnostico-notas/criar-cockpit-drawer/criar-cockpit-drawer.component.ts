@@ -1,4 +1,4 @@
-import { Component, Input, Output, EventEmitter, inject } from '@angular/core';
+import { Component, Input, Output, EventEmitter, inject, OnChanges, SimpleChanges } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
@@ -113,7 +113,7 @@ import Swal from 'sweetalert2';
     }
   `]
 })
-export class CriarCockpitDrawerComponent {
+export class CriarCockpitDrawerComponent implements OnChanges {
   public activeOffcanvas = inject(NgbActiveOffcanvas);
   private cockpitService = inject(CockpitPilaresService);
   private menuService = inject(MenuService);
@@ -127,6 +127,12 @@ export class CriarCockpitDrawerComponent {
   missao: string = '';
   loading = false;
   error: string | null = null;
+
+  ngOnChanges(changes: SimpleChanges): void {
+    if (changes['pilar']?.currentValue) {
+      this.carregarObjetivoTemplate();
+    }
+  }
 
   fechar(): void {
     this.activeOffcanvas.dismiss();
@@ -182,5 +188,34 @@ export class CriarCockpitDrawerComponent {
       title,
       icon
     });
+  }
+
+  private carregarObjetivoTemplate(): void {
+    if (!this.pilar?.pilarTemplateId) {
+      return;
+    }
+
+    this.cockpitService
+      .getObjetivoTemplate(this.pilar.empresaId, this.pilar.id)
+      .subscribe({
+        next: (template) => {
+          if (!template) {
+            return;
+          }
+
+          if (!this.entradas.trim()) {
+            this.entradas = template.entradas || '';
+          }
+          if (!this.saidas.trim()) {
+            this.saidas = template.saidas || '';
+          }
+          if (!this.missao.trim()) {
+            this.missao = template.missao || '';
+          }
+        },
+        error: (err: unknown) => {
+          console.error('Erro ao carregar objetivo template:', err);
+        },
+      });
   }
 }
