@@ -9,9 +9,10 @@
 
 <div class="row g-2 mb-3">
   <div class="plano-acao-header mt-3 px-3">
-  <h5 class="card-title cockpit-tab-title text-uppercase small">
-    <i class="bi bi-clipboard-check me-2"></i>
-    RESUMO DO PLANO DE AÇÃO</h5>
+    <h5 class="card-title cockpit-tab-title text-uppercase small">
+      <i class="bi bi-clipboard-check me-2"></i>
+      RESUMO DO PLANO DE AÇÃO
+    </h5>
   </div>
   @for (item of resumoStatus; track item.key) {
   <div class="col-6 col-md-3">
@@ -72,67 +73,73 @@
             </td>
             <td class="col-mobile-hide">
               @if (acao.causa1) {
-              <span class="badge bg-gray-100 text-black acao-badge mb-1" style="text-align: left;"><small><small>Causa 1: </small></small>
+              <span class="badge bg-gray-100 text-black causa-badge mb-1" style="text-align: left;"><small><small>Causa
+                    1: </small></small>
                 {{ acao.causa1 }}
               </span>
               }
               @if (acao.causa2) {
-              <span class="badge bg-gray-100 text-black acao-badge mb-1" style="text-align: left;"><small><small>Causa 2: </small></small>
+              <span class="badge bg-gray-100 text-black causa-badge mb-1" style="text-align: left;"><small><small>Causa
+                    2: </small></small>
                 {{ acao.causa2 }}
               </span>
               }
               @if (acao.causa3) {
-              <span class="badge bg-gray-100 text-black acao-badge mb-1" style="text-align: left;"><small><small>Causa 3: </small></small>
+              <span class="badge bg-gray-100 text-black causa-badge mb-1" style="text-align: left;"><small><small>Causa
+                    3: </small></small>
                 {{ acao.causa3 }}
               </span>
               }
               @if (acao.causa4) {
-              <span class="badge bg-gray-100 text-black acao-badge mb-1" style="text-align: left;"><small><small>Causa 4: </small></small>
+              <span class="badge bg-gray-100 text-black causa-badge mb-1" style="text-align: left;"><small><small>Causa
+                    4: </small></small>
                 {{ acao.causa4 }}
               </span>
               }
               @if (acao.causa5) {
-              <span class="badge bg-gray-100 text-black acao-badge mb-1" style="text-align: left;"><small><small>Causa 5: </small></small>
+              <span class="badge bg-gray-100 text-black causa-badge mb-1" style="text-align: left;"><small><small>Causa
+                    5: </small></small>
                 {{ acao.causa5 }}
               </span>
               }
             </td>
             <td class="col-mobile-hide">
-              <span class="badge bg-gray-500 text-black acao-badge" style="text-align: left;"><small><small>Ação: </small>
+              <span class="badge bg-gray-500 text-black acao-badge" style="text-align: left;"><small><small>Ação:
+                  </small>
                 </small>{{
                 acao.acaoProposta }}</span>
-              <small><small>Responsável: </small><b>{{ acao.responsavel?.nome || '-' }}</b></small><br>
+              <small><small>Responsável: </small>{{ acao.responsavel?.nome || '-' }}</small><br>
             </td>
             <td class="text-center">
               <div class="border rounded bg-gray-100 p-1 mb-1 mt-1">
-                
+
                 <div class="small" style="text-align: left;">
-                  <small>Início Previsto: </small> {{ acao.inicioPrevisto | date:'shortDate':'America/Sao_Paulo'}}
+                  <small>Início Previsto: </small>{{ (acao.inicioPrevisto | date:'shortDate':'America/Sao_Paulo') || '-'}}
                 </div>
-                
+
                 <div class="small" style="text-align: left;">
-                  <small>Término Previsto: </small> {{ acao.prazo | date:'shortDate':'America/Sao_Paulo'}}
+                  <small>Término Previsto: </small>{{ (acao.prazo | date:'shortDate':'America/Sao_Paulo') || '-'}}
                 </div>
-                
+
               </div>
               <span class="badge" [class]="getStatusClass(acao) + ' text-black'" style="width: 100%;">
                 {{ getStatusLabel(acao) }}
               </span>
-              @if (acao.inicioReal || acao.dataConclusao) {
+              
               <div class="border rounded bg-gray-100 p-1 mb-1 mt-1">
-                
+
                 <div class="small" style="text-align: left;">
-                  <small>Início Real: </small> {{ acao.inicioReal | date:'shortDate':'America/Sao_Paulo'}}
+                  <small>Início Real: </small>{{ (acao.inicioReal | date:'shortDate':'America/Sao_Paulo') || '-'}}
                 </div>
-                
+
                 <div class="small" style="text-align: left;">
-                  <small>Término Real: </small> {{ acao.dataConclusao | date:'shortDate':'America/Sao_Paulo'}}
+                  <small>Término Real: </small> {{ (acao.dataConclusao | date:'shortDate':'America/Sao_Paulo') || '-'}}
                 </div>
-                
+
               </div>
-            }
+              
             </td>
-            <td class="text-center">
+            <td class="text-end">
               @if (!acao.inicioReal) {
               <button class="btn btn-icon text-primary" (click)="marcarInicioReal(acao)" title="Marcar início real">
                 <i class="feather icon-play"></i>
@@ -143,14 +150,24 @@
                 <i class="feather icon-check"></i>
               </button>
               }
-              <button data-testid="edit-acao-button" class="btn btn-icon text-secondary" (click)="editarAcao(acao)"
-                [title]="'BUTTONS.EDIT' | translate">
-                <i class="feather icon-edit"></i>
-              </button>
-              <button data-testid="delete-acao-button" class="btn btn-icon text-danger" (click)="deleteAcao(acao)"
-                [title]="'BUTTONS.DELETE' | translate">
-                <i class="feather icon-trash-2"></i>
-              </button>
+              <div ngbDropdown class="d-inline-block">
+                <button class="btn btn-icon text-secondary" ngbDropdownToggle [title]="'BUTTONS.MORE' | translate">
+                  <i class="feather icon-more-vertical"></i>
+                </button>
+                <div ngbDropdownMenu>
+                  <button ngbDropdownItem data-testid="edit-acao-button" class="d-flex align-items-center gap-1"
+                    (click)="editarAcao(acao)" [title]="'BUTTONS.EDIT' | translate">
+                    <i class="feather icon-edit"></i>
+                    <span>{{ 'BUTTONS.EDIT' | translate }}</span>
+                  </button>
+                  <button ngbDropdownItem data-testid="delete-acao-button"
+                    class="d-flex align-items-center gap-1 text-danger" (click)="deleteAcao(acao)"
+                    [title]="'BUTTONS.DELETE' | translate">
+                    <i class="feather icon-trash-2"></i>
+                    <span>{{ 'BUTTONS.DELETE' | translate }}</span>
+                  </button>
+                </div>
+              </div>
             </td>
           </tr>
           }

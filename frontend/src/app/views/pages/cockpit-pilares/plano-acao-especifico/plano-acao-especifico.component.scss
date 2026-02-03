@@ -2,11 +2,16 @@
   vertical-align: middle;
 }
 
+.causa-badge,
 .acao-badge {
   display: block;
   white-space: normal;
   overflow-wrap: anywhere;
   word-break: break-word;
+}
+
+.causa-badge{
+  font-weight: 400;
 }
 
 .table {

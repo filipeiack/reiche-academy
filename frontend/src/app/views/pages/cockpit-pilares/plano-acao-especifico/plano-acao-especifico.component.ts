@@ -1,7 +1,7 @@
 import { Component, Input, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import Swal from 'sweetalert2';
-import { NgbOffcanvas } from '@ng-bootstrap/ng-bootstrap';
+import { NgbDropdownModule, NgbOffcanvas } from '@ng-bootstrap/ng-bootstrap';
 import { CockpitPilaresService } from '@core/services/cockpit-pilares.service';
 import {
   AcaoCockpit,
@@ -16,7 +16,7 @@ import { formatDateInputSaoPaulo } from '@core/utils/date-time';
 @Component({
   selector: 'app-plano-acao-especifico',
   standalone: true,
-  imports: [CommonModule, TranslatePipe],
+  imports: [CommonModule, TranslatePipe, NgbDropdownModule],
   templateUrl: './plano-acao-especifico.component.html',
   styleUrl: './plano-acao-especifico.component.scss',
 })
