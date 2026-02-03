@@ -62,6 +62,11 @@ export const MENU: MenuItem[] = [
     icon: 'bar-chart-2',
     link: '/indicadores-templates'
   },
+  {
+    label: 'MENU.OBJETIVOS_TEMPLATES',
+    icon: 'target',
+    link: '/objetivos-templates'
+  },
     {
     label: 'MENU.EMPRESAS',
     icon: 'briefcase',

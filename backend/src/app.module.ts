@@ -22,6 +22,7 @@ import { CockpitPilaresModule } from './modules/cockpit-pilares/cockpit-pilares.
 import { PeriodosMentoriaModule } from './modules/periodos-mentoria/periodos-mentoria.module';
 import { HealthModule } from './modules/health/health.module';
 import { IndicadoresTemplatesModule } from './modules/indicadores-templates/indicadores-templates.module';
+import { ObjetivosTemplatesModule } from './modules/objetivos-templates/objetivos-templates.module';
 
 @Module({
   imports: [
@@ -49,6 +50,7 @@ import { IndicadoresTemplatesModule } from './modules/indicadores-templates/indi
     PeriodosAvaliacaoModule,
     CockpitPilaresModule,
     IndicadoresTemplatesModule,
+    ObjetivosTemplatesModule,
     PeriodosMentoriaModule,
     HealthModule,
   ],

@@ -1,0 +1,193 @@
+<div class="mb-2 align-items-center gap-2 d-flex justify-content-between flex-wrap">
+  <nav aria-label="breadcrumb">
+    <ol class="breadcrumb breadcrumb-arrow mb-1">
+      <li class="breadcrumb-item">
+        <i class="feather icon-target"></i>
+      </li>
+      <li class="breadcrumb-item active" aria-current="page">
+        {{ 'OBJETIVOS_TEMPLATES.TITLE' | translate }}
+      </li>
+    </ol>
+  </nav>
+
+  <button
+    type="button"
+    class="btn btn-primary btn-sm"
+    [routerLink]="['/objetivos-templates/novo']"
+    [ngbTooltip]="'OBJETIVOS_TEMPLATES.NEW_TOOLTIP' | translate"
+  >
+    <i class="bi bi-plus-circle btn-icon-prepend"></i>
+    {{ 'OBJETIVOS_TEMPLATES.NEW' | translate }}
+  </button>
+</div>
+
+<div class="row">
+  <div class="col-md-12 stretch-card">
+    <div class="card">
+      <div class="card-body">
+        <!-- Filtros -->
+        <div class="row mb-3">
+          <div class="col-md-4">
+            <ng-select
+              id="pilarFilter"
+              [(ngModel)]="pilarIdFiltro"
+              (ngModelChange)="onFilterChange()"
+              [placeholder]="'OBJETIVOS_TEMPLATES.FILTER_ALL_PILARES' | translate"
+              [clearable]="true"
+            >
+              @for (pilar of pilares; track pilar.id) {
+                <ng-option [value]="pilar.id">
+                  {{ pilar.nome }}
+                </ng-option>
+              }
+            </ng-select>
+          </div>
+          <div class="col-md-8">
+            <input
+              type="text"
+              class="form-control"
+              [(ngModel)]="searchQuery"
+              (input)="applyFilters()"
+              [placeholder]="'OBJETIVOS_TEMPLATES.SEARCH_PLACEHOLDER' | translate"
+            />
+          </div>
+        </div>
+
+        @if (loading) {
+          <div class="text-center py-5">
+            <div class="spinner-border text-primary" role="status">
+              <span class="visually-hidden">{{ 'COMMON.LOADING' | translate }}</span>
+            </div>
+          </div>
+        } @else {
+          @if (totalObjetivos > 0) {
+            <div class="table-responsive">
+              <table class="table table-hover table-sm mb-2">
+                <thead class="table-light">
+                  <tr>
+                    <th>{{ 'OBJETIVOS_TEMPLATES.FIELDS.PILAR' | translate }}</th>
+                    <th>{{ 'OBJETIVOS_TEMPLATES.FIELDS.ENTRADAS' | translate }}</th>
+                    <th>{{ 'OBJETIVOS_TEMPLATES.FIELDS.SAIDAS' | translate }}</th>
+                    <th>{{ 'OBJETIVOS_TEMPLATES.FIELDS.MISSAO' | translate }}</th>
+                    <th style="width: 120px;">{{ 'COMMON.ACTIONS' | translate }}</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  @for (objetivo of paginatedObjetivos; track objetivo.id) {
+                    <tr>
+                      <td style="max-width: 200px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
+                        {{ objetivo.pilar?.nome || '—' }}
+                      </td>
+                      <td style="max-width: 260px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
+                        <span [ngbTooltip]="objetivo.entradas">{{ objetivo.entradas }}</span>
+                      </td>
+                      <td style="max-width: 260px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
+                        <span [ngbTooltip]="objetivo.saidas">{{ objetivo.saidas }}</span>
+                      </td>
+                      <td style="max-width: 260px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
+                        <span [ngbTooltip]="objetivo.missao">{{ objetivo.missao }}</span>
+                      </td>
+                      <td class="text-nowrap">
+                        <div class="btn-group btn-group-sm" role="group">
+                          <button
+                            class="btn btn-icon text-primary"
+                            (click)="openDetailsOffcanvas(objetivo.id, detailsOffcanvas)"
+                            [title]="'OBJETIVOS_TEMPLATES.DETAILS' | translate"
+                          >
+                            <i class="feather icon-info"></i>
+                          </button>
+
+                          <button
+                            class="btn btn-icon text-secondary"
+                            [routerLink]="['/objetivos-templates/editar', objetivo.id]"
+                            [title]="'BUTTONS.EDIT' | translate"
+                          >
+                            <i class="feather icon-edit"></i>
+                          </button>
+
+                          <button
+                            class="btn btn-icon text-danger"
+                            (click)="confirmarExclusao(objetivo)"
+                            [title]="'BUTTONS.DELETE' | translate"
+                          >
+                            <i class="feather icon-trash-2"></i>
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  }
+                </tbody>
+              </table>
+            </div>
+          }
+
+          <div class="d-flex justify-content-between p-2">
+            <span class="text-muted fs-12">
+              Mostrando {{ getStartIndex() + 1 }}-{{ getEndIndex() }} de {{ totalObjetivos }}
+              {{ 'COMMON.ITEMS' | translate }}
+            </span>
+            <ngb-pagination
+              [(page)]="page"
+              [pageSize]="pageSize"
+              [collectionSize]="totalObjetivos"
+              size="sm"
+              [rotate]="true"
+              [boundaryLinks]="true"
+            >
+            </ngb-pagination>
+          </div>
+        }
+      </div>
+    </div>
+  </div>
+</div>
+
+<ng-template #detailsOffcanvas let-offcanvas>
+  <div class="offcanvas-header">
+    <h5 class="offcanvas-title">{{ 'OBJETIVOS_TEMPLATES.DETAILS' | translate }}</h5>
+    <button type="button" class="btn-close text-reset" (click)="offcanvas.dismiss()"></button>
+  </div>
+  <div class="offcanvas-body">
+    @if (loadingDetails) {
+      <div class="text-center py-5">
+        <div class="spinner-border text-primary" role="status">
+          <span class="visually-hidden">{{ 'COMMON.LOADING' | translate }}</span>
+        </div>
+        <p class="text-muted mt-3">{{ 'COMMON.LOADING' | translate }}...</p>
+      </div>
+    } @else if (selectedObjetivo) {
+      <div class="card mb-3">
+        <div class="card-body">
+          <h6 class="card-title mb-3">{{ 'COMMON.BASIC_INFO' | translate }}</h6>
+          <div class="mb-3">
+            <span class="text-muted small">{{ 'OBJETIVOS_TEMPLATES.FIELDS.PILAR' | translate }}</span>
+            <div class="mt-1">{{ selectedObjetivo.pilar?.nome || '—' }}</div>
+          </div>
+          <div class="mb-3">
+            <span class="text-muted small">{{ 'OBJETIVOS_TEMPLATES.FIELDS.ENTRADAS' | translate }}</span>
+            <div class="mt-1">{{ selectedObjetivo.entradas }}</div>
+          </div>
+          <div class="mb-3">
+            <span class="text-muted small">{{ 'OBJETIVOS_TEMPLATES.FIELDS.SAIDAS' | translate }}</span>
+            <div class="mt-1">{{ selectedObjetivo.saidas }}</div>
+          </div>
+          <div class="mb-2">
+            <span class="text-muted small">{{ 'OBJETIVOS_TEMPLATES.FIELDS.MISSAO' | translate }}</span>
+            <div class="mt-1">{{ selectedObjetivo.missao }}</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="d-grid gap-2">
+        <button
+          type="button"
+          class="btn btn-primary"
+          [routerLink]="['/objetivos-templates/editar', selectedObjetivo.id]"
+          (click)="offcanvas.dismiss()"
+        >
+          <i class="feather icon-edit"></i> {{ 'BUTTONS.EDIT' | translate }}
+        </button>
+      </div>
+    }
+  </div>
+</ng-template>

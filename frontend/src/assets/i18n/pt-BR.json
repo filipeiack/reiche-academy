@@ -37,12 +37,13 @@
     "MAIN": "Principal",
     "DASHBOARD": "Dashboard do Cliente",
     "CALENDAR": "Calendário",
-    "CADASTROS": "Cadastros",
+    "CADASTROS": "Cadastros Básicos",
     "USUARIOS": "Usuários",
     "EMPRESAS": "Empresas",
     "PILARES": "Pilares",
     "ROTINAS": "Rotinas",
     "INDICADORES_TEMPLATES": "Indicadores",
+    "OBJETIVOS_TEMPLATES": "Objetivos",
     "PAINEL_CONTROLE": "Painel de Controle",
     "NOTAS": "Dashboard da Empresa",
     "EVOLUCAO": "Evolução dos Pilares",
@@ -96,6 +97,31 @@
       "STATUS_MEDICAO_REQUIRED": "Status da medição é obrigatório",
       "MELHOR_REQUIRED": "Melhor é obrigatório",
       "ORDEM_MIN": "Ordem deve ser maior ou igual a 1"
+    }
+  },
+  "OBJETIVOS_TEMPLATES": {
+    "TITLE": "Objetivos Templates",
+    "NEW": "Adicionar Objetivo",
+    "NEW_TOOLTIP": "Adicionar Novo Objetivo Template",
+    "EDIT": "Editar Objetivo Template",
+    "DETAILS": "Detalhes do Objetivo Template",
+    "FILTER_ALL_PILARES": "Todos os Pilares",
+    "SEARCH_PLACEHOLDER": "Buscar por conteúdo do objetivo...",
+    "ENTRADAS_PLACEHOLDER": "Ex: Pedidos de clientes, solicitações de propostas comerciais",
+    "SAIDAS_PLACEHOLDER": "Ex: Propostas enviadas, contratos fechados",
+    "MISSAO_PLACEHOLDER": "Ex: Maximizar faturamento via canal indireto",
+    "PILAR_IMUTAVEL": "O pilar não pode ser alterado após a criação",
+    "FIELDS": {
+      "PILAR": "Pilar",
+      "ENTRADAS": "Entradas",
+      "SAIDAS": "Saídas",
+      "MISSAO": "Missão"
+    },
+    "VALIDATIONS": {
+      "PILAR_REQUIRED": "Pilar é obrigatório",
+      "ENTRADAS_REQUIRED": "Entradas é obrigatório",
+      "SAIDAS_REQUIRED": "Saídas é obrigatório",
+      "MISSAO_REQUIRED": "Missão é obrigatório"
     }
   },
   "NAVBAR": {

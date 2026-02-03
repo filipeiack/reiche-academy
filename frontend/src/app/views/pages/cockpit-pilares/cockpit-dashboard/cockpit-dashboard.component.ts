@@ -41,21 +41,21 @@ export class CockpitDashboardComponent implements OnInit, OnDestroy {
   loading = false;
   error: string | null = null;
   activeTab:
-    | 'contexto'
+    | 'objetivos'
     | 'indicadores'
     | 'graficos'
     | 'processos'
     | 'cargos-funcoes'
     | 'plano-acao' = 'indicadores';
   
-  // Contexto editável
+  // Objetivos editáveis
   entradas: string = '';
   saidas: string = '';
   missao: string = '';
   
   // Feedback centralizado
   saveFeedback: SaveFeedback = {
-    context: '',
+    context: 'objetivos',
     saving: false,
     lastSaveTime: null,
   };
@@ -97,7 +97,7 @@ export class CockpitDashboardComponent implements OnInit, OnDestroy {
     this.autoSaveSubject
       .pipe(debounceTime(environment.debounceTime), distinctUntilChanged())
       .subscribe(() => {
-        this.saveContexto();
+        this.saveObjetivos();
       });
   }
 
@@ -164,14 +164,14 @@ export class CockpitDashboardComponent implements OnInit, OnDestroy {
     }
   }
 
-  onContextoChange(): void {
+  onObjetivosChange(): void {
     this.autoSaveSubject.next();
   }
 
-  saveContexto(): void {
+  saveObjetivos(): void {
     if (!this.cockpit) return;
 
-    this.saveFeedbackService.startSaving('Contexto do pilar');
+    this.saveFeedbackService.startSaving('Objetivos do pilar');
 
     this.cockpitService
       .updateCockpit(this.cockpit.id, {
@@ -185,7 +185,7 @@ export class CockpitDashboardComponent implements OnInit, OnDestroy {
           this.saveFeedbackService.completeSaving();
         },
         error: (err: unknown) => {
-          console.error('Erro ao salvar contexto:', err);
+          console.error('Erro ao salvar objetivos:', err);
           this.saveFeedbackService.reset();
         },
       });
@@ -197,7 +197,7 @@ export class CockpitDashboardComponent implements OnInit, OnDestroy {
 
   setActiveTab(
     tab:
-      | 'contexto'
+      | 'objetivos'
       | 'indicadores'
       | 'graficos'
       | 'processos'
