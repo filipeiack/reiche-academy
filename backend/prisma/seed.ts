@@ -4,7 +4,7 @@ import * as argon2 from 'argon2';
 const prisma = new PrismaClient();
 
 /**
- * Seed paar produção
+ * Seed para produção
  *
  * Cria dados base necessários para operação:
  * - 4 perfis de usuário (ADMINISTRADOR, GESTOR, COLABORADOR, LEITURA)
