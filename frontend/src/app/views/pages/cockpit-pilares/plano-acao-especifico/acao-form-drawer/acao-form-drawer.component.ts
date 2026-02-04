@@ -11,7 +11,6 @@ import {
   AcaoCockpit,
   IndicadorCockpit,
   IndicadorMensal,
-  StatusAcao,
 } from '@core/interfaces/cockpit-pilares.interface';
 import { Usuario } from '@core/models/auth.model';
 
@@ -85,15 +84,6 @@ import { Usuario } from '@core/models/auth.model';
             </ng-select>
           </div>
 
-          <div class="col-md-6">
-            <label class="form-label">Status</label>
-            <select class="form-select" formControlName="status">
-              @for (status of statusOptions; track status.value) {
-                <option [value]="status.value">{{ status.label }}</option>
-              }
-            </select>
-          </div>
-          
           <div class="col-md-12">
             <label class="form-label">Causas (5 Porquês)</label>
             <div class="row g-2">
@@ -130,14 +120,26 @@ import { Usuario } from '@core/models/auth.model';
           
           <div class="col-md-6">
             <label class="form-label">
-              Prazo <span class="text-danger">*</span>
+              Início Previsto <span class="text-danger">*</span>
             </label>
-            <input type="date" class="form-control" formControlName="prazo" />
+            <input type="date" class="form-control" formControlName="inicioPrevisto" />
           </div>
 
           <div class="col-md-6">
-            <label class="form-label">Data de Conclusão</label>
-            <input type="date" class="form-control" formControlName="dataConclusao" />
+            <label class="form-label">
+              Término Previsto <span class="text-danger">*</span>
+            </label>
+            <input type="date" class="form-control" formControlName="terminoPrevisto" />
+          </div>
+
+          <div class="col-md-6">
+            <label class="form-label">Início Real</label>
+            <input type="date" class="form-control" formControlName="inicioReal" />
+          </div>
+
+          <div class="col-md-6">
+            <label class="form-label">Término Real</label>
+            <input type="date" class="form-control" formControlName="terminoReal" />
           </div>
 
           <div class="col-md-12">
@@ -218,9 +220,14 @@ export class AcaoFormDrawerComponent implements OnInit {
         causa5: value.causa5 || '',
         acaoProposta: value.acaoProposta || '',
         responsavelId: value.responsavelId || null,
-        status: value.status,
-        prazo: value.prazo ? this.toDateInput(value.prazo) : null,
-        dataConclusao: value.dataConclusao ? this.toDateInput(value.dataConclusao) : null,
+        inicioPrevisto: value.inicioPrevisto
+          ? this.toDateInput(value.inicioPrevisto)
+          : null,
+        terminoPrevisto: value.prazo ? this.toDateInput(value.prazo) : null,
+        inicioReal: value.inicioReal ? this.toDateInput(value.inicioReal) : null,
+        terminoReal: value.dataConclusao
+          ? this.toDateInput(value.dataConclusao)
+          : null,
       });
       this.onIndicadorChange(indicadorId, true);
       this.form.patchValue({ indicadorMensalId });
@@ -235,12 +242,6 @@ export class AcaoFormDrawerComponent implements OnInit {
   acaoId: string | null = null;
   private perfilColaboradorId: string | null = null;
 
-  statusOptions = [
-    { value: StatusAcao.PENDENTE, label: 'A INICIAR' },
-    { value: StatusAcao.EM_ANDAMENTO, label: 'EM ANDAMENTO' },
-    { value: StatusAcao.CONCLUIDA, label: 'CONCLUÍDA' },
-  ];
-
   form = this.fb.group({
     indicadorId: [null as string | null, Validators.required],
     indicadorMensalId: [null as string | null, Validators.required],
@@ -251,9 +252,10 @@ export class AcaoFormDrawerComponent implements OnInit {
     causa5: [''],
     acaoProposta: ['', [Validators.required, Validators.minLength(3), Validators.maxLength(500)]],
     responsavelId: [null as string | null],
-    status: [StatusAcao.PENDENTE],
-    prazo: [null as string | null, Validators.required],
-    dataConclusao: [null as string | null],
+    inicioPrevisto: [null as string | null, Validators.required],
+    terminoPrevisto: [null as string | null, Validators.required],
+    inicioReal: [null as string | null],
+    terminoReal: [null as string | null],
   });
 
   ngOnInit(): void {
@@ -286,6 +288,15 @@ export class AcaoFormDrawerComponent implements OnInit {
       return trimmed.length > 0 ? trimmed : null;
     };
 
+    const inicioReal = this.form.value.inicioReal || null;
+    const terminoReal = this.form.value.terminoReal || null;
+
+    if (terminoReal && !inicioReal) {
+      this.showToast('Informe o início real antes do término real.', 'error');
+      this.saving = false;
+      return;
+    }
+
     const dto = {
       indicadorMensalId: this.form.value.indicadorMensalId!,
       causa1: normalizeCausa(this.form.value.causa1),
@@ -295,9 +306,10 @@ export class AcaoFormDrawerComponent implements OnInit {
       causa5: normalizeCausa(this.form.value.causa5),
       acaoProposta: this.form.value.acaoProposta?.trim() || '',
       responsavelId: this.form.value.responsavelId || null,
-      status: this.form.value.status || StatusAcao.PENDENTE,
-      prazo: this.form.value.prazo!,
-      dataConclusao: this.form.value.dataConclusao || null,
+      inicioPrevisto: this.form.value.inicioPrevisto!,
+      terminoPrevisto: this.form.value.terminoPrevisto!,
+      inicioReal,
+      terminoReal,
     };
 
     const request$ = this.isEditMode && this.acaoId
@@ -308,6 +320,10 @@ export class AcaoFormDrawerComponent implements OnInit {
       next: (acao) => {
         this.acaoSalva.emit(acao);
         this.saving = false;
+        this.showToast(
+          this.isEditMode ? 'Ação atualizada com sucesso' : 'Ação criada com sucesso',
+          'success',
+        );
         this.activeOffcanvas.close();
       },
       error: (err) => {

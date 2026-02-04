@@ -95,7 +95,7 @@ test.describe('@cockpit smoke - valores mensais', () => {
     await expect(valoresSection).toBeVisible({ timeout: 10000 });
   });
 
-  test('permite preencher meta e realizado quando disponível', async ({ page }) => {
+  test('permite preencher histórico, meta e realizado quando disponível', async ({ page }) => {
     const cockpitOk = await acessarPrimeiroCockpit(page, TEST_USERS.gestorEmpresaA);
     if (!cockpitOk) {
       test.skip();
@@ -110,17 +110,20 @@ test.describe('@cockpit smoke - valores mensais', () => {
       return;
     }
 
+    const historicoInput = page.locator('[data-testid="input-historico"]').first();
     const metaInput = page.locator('[data-testid="input-meta"]').first();
     const realizadoInput = page.locator('[data-testid="input-realizado"]').first();
 
-    if ((await metaInput.count()) === 0 || (await realizadoInput.count()) === 0) {
+    if ((await historicoInput.count()) === 0 || (await metaInput.count()) === 0 || (await realizadoInput.count()) === 0) {
       test.skip();
       return;
     }
 
+    await historicoInput.fill('90');
     await metaInput.fill('100');
     await realizadoInput.fill('80');
 
+    await expect(historicoInput).toHaveValue('90');
     await expect(metaInput).toHaveValue('100');
     await expect(realizadoInput).toHaveValue('80');
   });

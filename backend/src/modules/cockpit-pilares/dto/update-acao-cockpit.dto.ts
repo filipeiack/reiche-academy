@@ -1,13 +1,11 @@
 import { ApiPropertyOptional } from '@nestjs/swagger';
 import {
   IsDateString,
-  IsEnum,
   IsOptional,
   IsString,
   IsUUID,
   MinLength,
 } from 'class-validator';
-import { StatusAcao } from '@prisma/client';
 
 export class UpdateAcaoCockpitDto {
   @ApiPropertyOptional({ example: 'uuid-indicador-mensal' })
@@ -56,18 +54,23 @@ export class UpdateAcaoCockpitDto {
   @IsUUID()
   responsavelId?: string;
 
-  @ApiPropertyOptional({ enum: StatusAcao, example: StatusAcao.EM_ANDAMENTO })
-  @IsOptional()
-  @IsEnum(StatusAcao)
-  status?: StatusAcao;
-
-  @ApiPropertyOptional({ example: '2026-02-28T00:00:00.000Z' })
+  @ApiPropertyOptional({ example: '2026-02-01T00:00:00.000-03:00' })
   @IsOptional()
   @IsDateString()
-  prazo?: string;
+  inicioPrevisto?: string;
 
-  @ApiPropertyOptional({ example: '2026-03-15T00:00:00.000Z' })
+  @ApiPropertyOptional({ example: '2026-02-28T00:00:00.000-03:00' })
   @IsOptional()
   @IsDateString()
-  dataConclusao?: string;
+  terminoPrevisto?: string;
+
+  @ApiPropertyOptional({ example: '2026-02-05T00:00:00.000-03:00' })
+  @IsOptional()
+  @IsDateString()
+  inicioReal?: string;
+
+  @ApiPropertyOptional({ example: '2026-03-15T00:00:00.000-03:00' })
+  @IsOptional()
+  @IsDateString()
+  terminoReal?: string;
 }

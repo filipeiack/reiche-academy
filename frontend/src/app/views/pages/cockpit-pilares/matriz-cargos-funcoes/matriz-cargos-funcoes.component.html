@@ -126,8 +126,9 @@
           <tr>
             <th>Descrição</th>
             <th class="col-mobile-hide" style="width: 100px;">Criticidade</th>
-            <th class="col-mobile-hide" style="width: 100px;">Auto-Avaliação</th>
-            <th class="col-mobile-hide" style="width: 120px;">Avaliação Liderança</th>
+            <th class="col-mobile-hide text-center" style="width: 100px;">Auto-Avaliação</th>
+            <th class="col-mobile-hide text-center" style="width: 120px;">Avaliação Liderança</th>
+            <th class="col-mobile-hide text-center" style="width: 80px;">Desvio</th>
             <th class="text-center" style="width: 100px;">Ações</th>
           </tr>
         </thead>
@@ -143,8 +144,17 @@
                 {{ funcao.nivelCritico }}
               </span>
             </td>
-            <td class="col-mobile-hide text-center">{{ funcao.autoAvaliacao ?? '—' }}</td>
-            <td class="col-mobile-hide text-center">{{ funcao.avaliacaoLideranca ?? '—' }}</td>
+            <td class="col-mobile-hide text-center fs-4 fw-bold">{{ funcao.autoAvaliacao ?? '—' }}</td>
+            <td class="col-mobile-hide text-center fs-4 fw-bold">{{ funcao.avaliacaoLideranca ?? '—' }}</td>
+            <td class="col-mobile-hide text-center">
+              @if (funcao.autoAvaliacao !== null && funcao.avaliacaoLideranca !== null) {
+                <span class="badge fs-5 text-black fw-bold w-100" [ngClass]="getDesvioClass(funcao)">
+                  {{ getDesvio(funcao) }}
+                </span>
+              } @else {
+                <span class="text-muted">—</span>
+              }
+            </td>
             <td class="text-center">
               <button data-testid="edit-cargo-button" class="btn btn-icon text-secondary"
                 (click)="editarFuncao(cargo, funcao)" [title]="'BUTTONS.EDIT' | translate">
@@ -161,8 +171,17 @@
         <tfoot class="table-light small col-mobile-hide">
           <tr>
             <td colspan="2" class="text-end fw-semibold">Médias</td>
-            <td class="text-center">{{ getMediaAuto(cargo) ?? '—' }}</td>
-            <td class="text-center">{{ getMediaLideranca(cargo) ?? '—' }}</td>
+            <td class="text-center fs-4 fw-bold">{{ getMediaAuto(cargo) ?? '—' }}</td>
+            <td class="text-center fs-4 fw-bold">{{ getMediaLideranca(cargo) ?? '—' }}</td>
+            <td class="text-center">
+              @if (getMediaAuto(cargo) !== null && getMediaLideranca(cargo) !== null) {
+                <span class="badge fs-5 fw-bold w-100" [ngClass]="getDesvioMediaClass(cargo)">
+                  {{ getDesvioMedia(cargo) }}
+                </span>
+              } @else {
+                <span class="text-muted">—</span>
+              }
+            </td>
             <td></td>
           </tr>
         </tfoot>

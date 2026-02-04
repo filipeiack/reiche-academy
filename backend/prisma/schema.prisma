@@ -86,8 +86,8 @@ model PerfilUsuario {
   nivel     Int // 1 (maior poder) a 5 (menor poder)
   ativo     Boolean @default(true)
 
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  createdAt DateTime @default(now()) @db.Timestamptz(3)
+  updatedAt DateTime @updatedAt @db.Timestamptz(3)
 
   // Relations
   usuarios Usuario[]
@@ -111,8 +111,8 @@ model Usuario {
   empresaId String?
   empresa   Empresa? @relation(fields: [empresaId], references: [id])
 
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  createdAt DateTime @default(now()) @db.Timestamptz(3)
+  updatedAt DateTime @updatedAt @db.Timestamptz(3)
   createdBy String?
   updatedBy String?
 
@@ -134,13 +134,13 @@ model Usuario {
 model PasswordReset {
   id        String   @id @default(uuid())
   token     String   @unique
-  expiresAt DateTime
+  expiresAt DateTime @db.Timestamptz(3)
   used      Boolean  @default(false)
 
   usuarioId String
   usuario   Usuario @relation(fields: [usuarioId], references: [id], onDelete: Cascade)
 
-  createdAt DateTime @default(now())
+  createdAt DateTime @default(now()) @db.Timestamptz(3)
 
   @@index([token])
   @@index([usuarioId])
@@ -163,7 +163,7 @@ model LoginHistory {
   dispositivo String?
   navegador   String?
 
-  createdAt DateTime @default(now())
+  createdAt DateTime @default(now()) @db.Timestamptz(3)
 
   @@index([usuarioId])
   @@index([email])
@@ -184,15 +184,15 @@ model RefreshToken {
   token     String   @unique
   userId    String
   isActive  Boolean  @default(true)
-  expiresAt DateTime
+  expiresAt DateTime  @db.Timestamptz(3)
   
   // Security tracking
   ipAddress   String?
   userAgent   String?
   dispositivo String?
   
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  createdAt DateTime @default(now()) @db.Timestamptz(3)
+  updatedAt DateTime @updatedAt @db.Timestamptz(3)
 
   // Relations
   user Usuario @relation(fields: [userId], references: [id], onDelete: Cascade)
@@ -217,8 +217,8 @@ model Empresa {
   logoUrl  String?
   loginUrl String?
 
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  createdAt DateTime @default(now()) @db.Timestamptz(3)
+  updatedAt DateTime @updatedAt @db.Timestamptz(3)
   createdBy String?
   updatedBy String?
 
@@ -238,14 +238,16 @@ model Pilar {
   ordem     Int
   ativo     Boolean @default(true)
 
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  createdAt DateTime @default(now()) @db.Timestamptz(3)
+  updatedAt DateTime @updatedAt @db.Timestamptz(3)
   createdBy String?
   updatedBy String?
 
   // Relations
-  rotinas  Rotina[]
-  empresas PilarEmpresa[]
+  rotinas             Rotina[]
+  indicadoresTemplates IndicadorTemplate[]
+  objetivoTemplate     ObjetivoTemplate?
+  empresas            PilarEmpresa[]
 
   @@map("pilares")
 }
@@ -255,6 +257,7 @@ model Rotina {
   nome      String
   descricao String?
   ordem     Int?
+  criticidade Criticidade?
   ativo     Boolean @default(true)
 
   pilarId String
@@ -269,6 +272,49 @@ model Rotina {
   rotinaEmpresas RotinaEmpresa[]
 
   @@map("rotinas")
+}
+
+model IndicadorTemplate {
+  id String @id @default(uuid())
+
+  pilarId String
+  pilar   Pilar @relation(fields: [pilarId], references: [id])
+
+  nome      String
+  descricao String?
+
+  tipoMedida TipoMedidaIndicador
+  melhor     DirecaoIndicador
+
+  ordem Int
+  ativo Boolean @default(true)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  createdBy String?
+  updatedBy String?
+
+  @@unique([pilarId, nome])
+  @@index([pilarId])
+  @@map("indicadores_templates")
+}
+
+model ObjetivoTemplate {
+  id String @id @default(uuid())
+
+  pilarId String @unique
+  pilar   Pilar @relation(fields: [pilarId], references: [id])
+
+  entradas String
+  saidas   String
+  missao   String
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  createdBy String?
+  updatedBy String?
+
+  @@map("objetivos_templates")
 }
 
 model PilarEmpresa {
@@ -351,6 +397,7 @@ model RotinaEmpresa {
   nome String
 
   ordem Int
+  criticidade Criticidade?
 
   observacao String?
   ativo      Boolean @default(true)
@@ -488,7 +535,7 @@ model IndicadorCockpit {
   descricao String?
 
   tipoMedida    TipoMedidaIndicador
-  statusMedicao StatusMedicaoIndicador
+  statusMedicao StatusMedicaoIndicador?
   melhor        DirecaoIndicador
 
   responsavelMedicaoId String?
@@ -671,6 +718,8 @@ model AcaoCockpit {
   responsavel   Usuario? @relation("ResponsavelAcaoCockpit", fields: [responsavelId], references: [id], onDelete: SetNull)
 
   status StatusAcao @default(PENDENTE)
+  inicioPrevisto DateTime?
+  inicioReal DateTime?
   prazo  DateTime?
   dataConclusao DateTime?
 

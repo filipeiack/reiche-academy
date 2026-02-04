@@ -9,6 +9,7 @@ import { EmailService } from './email.service';
 import { RefreshTokensService } from './refresh-tokens.service';
 import { ForgotPasswordDto } from './dto/forgot-password.dto';
 import { ResetPasswordDto } from './dto/reset-password.dto';
+import { nowInSaoPaulo } from '../../common/utils/timezone';
 
 @Injectable()
 export class AuthService {
@@ -42,6 +43,31 @@ export class AuthService {
       // Registra tentativa de login falhada
       await this.registrarLogin(usuario.id, email, false, 'Senha incorreta', ip, userAgent);
       throw new UnauthorizedException('Credenciais inválidas');
+    }
+
+    if (usuario.empresaId) {
+      const empresa = await this.prisma.empresa.findUnique({
+        where: { id: usuario.empresaId },
+        select: { id: true, ativo: true },
+      });
+
+      if (!empresa || !empresa.ativo) {
+        await this.registrarLogin(usuario.id, email, false, 'Empresa inativa', ip, userAgent);
+        throw new UnauthorizedException('A empresa está inativa ou sem mentoria ativa. Contate o administrador.');
+      }
+
+      const periodoAtivo = await this.prisma.periodoMentoria.findFirst({
+        where: {
+          empresaId: usuario.empresaId,
+          ativo: true,
+        },
+        select: { id: true },
+      });
+
+      if (!periodoAtivo) {
+        await this.registrarLogin(usuario.id, email, false, 'Empresa sem período de mentoria ativo', ip, userAgent);
+        throw new UnauthorizedException('A empresa está inativa ou sem mentoria ativa. Contate o administrador.');
+      }
     }
 
     const { senha: _, ...result } = usuario;
@@ -367,6 +393,7 @@ export class AuthService {
           userAgent: params.userAgent,
           dispositivo,
           navegador,
+          createdAt: nowInSaoPaulo(),
         },
       });
     } catch (error) {

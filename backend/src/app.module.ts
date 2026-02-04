@@ -21,6 +21,9 @@ import { PeriodosAvaliacaoModule } from './modules/periodos-avaliacao/periodos-a
 import { CockpitPilaresModule } from './modules/cockpit-pilares/cockpit-pilares.module';
 import { PeriodosMentoriaModule } from './modules/periodos-mentoria/periodos-mentoria.module';
 import { HealthModule } from './modules/health/health.module';
+import { VersionModule } from './modules/version/version.module';
+import { IndicadoresTemplatesModule } from './modules/indicadores-templates/indicadores-templates.module';
+import { ObjetivosTemplatesModule } from './modules/objetivos-templates/objetivos-templates.module';
 
 @Module({
   imports: [
@@ -47,8 +50,11 @@ import { HealthModule } from './modules/health/health.module';
     PerfisModule,
     PeriodosAvaliacaoModule,
     CockpitPilaresModule,
+    IndicadoresTemplatesModule,
+    ObjetivosTemplatesModule,
     PeriodosMentoriaModule,
     HealthModule,
+    VersionModule,
   ],
   providers: [
     // Core services

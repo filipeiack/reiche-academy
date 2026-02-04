@@ -1,4 +1,4 @@
-<div class="mb-2 align-items-center gap-2 d-flex justify-content-between flex-wrap">
+<div class="mb-2 align-items-center gap-2 d-flex justify-content-between flex-wrap sticky-header-dashboard">
     <nav aria-label="breadcrumb">
         <ol class="breadcrumb breadcrumb-arrow mb-1">
             <li class="breadcrumb-item">
@@ -55,7 +55,7 @@
 
 <!-- Indicador de Etapas do Wizard (somente em modo criação) -->
 @if (!isEditMode || (isEditMode && wizardStep === 2)) {
-<div class="card mb-2">
+<div class="card mb-2 sticky-header-card">
     <div class="card-body py-2">
         <div class="d-flex justify-content-center align-items-center">
             <div class="d-flex align-items-center">
@@ -260,68 +260,101 @@
     @if (wizardStep === 2 || isEditMode) {
 
     <!-- Período de Mentoria -->
-    <div class="card mt-1" data-testid="wizard-step-2-mentoria">
-        <div class="card-header">
-            <h3 class="card-title mb-0">
-                <i class="feather icon-calendar me-2"></i>
-                Período de Mentoria
-            </h3>
+    <div class="card mt-1 mentoria-card" data-testid="wizard-step-2-mentoria">
+        <div class="card-header d-flex flex-wrap justify-content-between align-items-center gap-2">
+            <div>
+                <h3 class="card-title mb-1">
+                    <i class="feather icon-calendar me-2"></i>
+                    Período de Mentoria
+                </h3>
+                <small class="text-muted">Gerencie o ciclo atual e acompanhe o histórico da empresa</small>
+            </div>
+            <div class="d-flex flex-wrap gap-2 align-items-center">
+                @if (!isPerfilCliente) {
+                @if (!periodoAtivo) {
+                <button type="button" class="btn btn-sm btn-primary" (click)="abrirModalCriarPeriodo()" [disabled]="!isEditMode">
+                    <i class="feather icon-plus me-1"></i>
+                    Criar Período
+                </button>
+                }
+                @if (periodoAtivo) {
+                <button type="button" class="btn btn-sm btn-outline-primary" (click)="renovarPeriodo()" [disabled]="!isEditMode">
+                    <i class="feather icon-refresh-cw me-1"></i>
+                    Renovar Mentoria
+                </button>
+                <button type="button" class="btn btn-sm btn-outline-danger" (click)="encerrarPeriodo()">
+                    <i class="feather icon-x-circle me-1"></i>
+                    Encerrar
+                </button>
+                }
+                } @else {
+                <span class="badge bg-info">
+                    <i class="feather icon-info me-1"></i>
+                    Somente Visualização
+                </span>
+                }
+            </div>
         </div>
         <div class="card-body">
-            <div class="row">
-                <div class="col-md-6">
-                    <label class="form-label">
-                        Data de Início da Mentoria
-                        @if (!isEditMode) {
-                        <span class="text-danger">*</span>
-                        }
-                    </label>
-                    <input type="date" class="form-control"
-                        [value]="dataInicioMentoria ? (dataInicioMentoria | date:'yyyy-MM-dd') : ''"
-                        (change)="onDataInicioChange($event)" [disabled]="!!periodoAtivo" />
-                    <small class="text-muted">Defina quando a consultoria iniciará</small>
-                </div>
-
-                <div class="col-md-6">
-                    <label class="form-label">Data de Término (Calculado Automaticamente)</label>
-                    <input type="text" class="form-control" [value]="calcularDataFim() | date:'dd/MM/yyyy'" disabled />
-                    <small class="text-muted">1 ano após o início</small>
-                </div>
-            </div>
-
-            @if (periodoAtivo) {
-            <div class="alert alert-info mt-3 mb-0">
-                <div class="d-flex justify-content-between align-items-center">
-                    <div>
-                        <strong>Período {{ periodoAtivo.numero }} Ativo</strong><br>
-                        <small>{{ formatarDataPeriodo(periodoAtivo.dataInicio) }} - {{
-                            formatarDataPeriodo(periodoAtivo.dataFim) }}</small>
+            <div class="mentoria-summary">
+                <div class="mentoria-status" [class.ativo]="periodoAtivo">
+                    <div class="mentoria-status-icon">
+                        <i class="feather" [class.icon-check-circle]="periodoAtivo" [class.icon-alert-circle]="!periodoAtivo"></i>
                     </div>
-                    <button type="button" class="btn btn-sm btn-warning" (click)="renovarPeriodo()">
-                        <i class="feather icon-refresh-cw me-1"></i>
-                        Renovar Mentoria
-                    </button>
+                    <div>
+                        <span class="mentoria-status-title">Status</span>
+                        @if (periodoAtivo) {
+                        <h5 class="mb-1">Período {{ periodoAtivo.numero }} ativo</h5>
+                        <span class="text-muted">{{ formatarDataPeriodo(periodoAtivo.dataInicio) }} - {{ formatarDataPeriodo(periodoAtivo.dataFim) }}</span>
+                        } @else {
+                        <h5 class="mb-1">Sem mentoria ativa</h5>
+                        <p class="mb-0 text-muted">Crie ou renove para iniciar um novo ciclo.</p>
+                        }
+                    </div>
+                </div>
+                <div class="mentoria-info">
+                    <div class="mentoria-info-item">
+                        <span>Início Mentoria</span>
+                        <strong>
+                            @if (periodoAtivo) {
+                            {{ formatarDataCompletaPeriodo(periodoAtivo.dataInicio) }}
+                            } @else {
+                            —
+                            }
+                        </strong>
+                    </div>
+                    <div class="mentoria-info-item">
+                        <span>Término Previsto</span>
+                        <strong>
+                            @if (periodoAtivo) {
+                            {{ formatarDataCompletaPeriodo(periodoAtivo.dataFim) }}
+                            } @else {
+                            —
+                            }
+                        </strong>
+                    </div>
+                    <div class="mentoria-info-item">
+                        <span>Encerramento real</span>
+                        <strong>
+                            @if (periodoAtivo?.dataEncerramento) {
+                            {{ periodoAtivo.dataEncerramento | date:'dd/MM/yyyy HH:mm':'America/Sao_Paulo' }}
+                            } @else {
+                            —
+                            }
+                        </strong>
+                    </div>
                 </div>
             </div>
-            } @else if (isEditMode) {
-            <div class="alert alert-warning mt-3 mb-0">
-                <div class="d-flex justify-content-between align-items-center">
-                    <span>Nenhum período de mentoria ativo</span>
-                    <button type="button" class="btn btn-sm btn-primary" (click)="criarPeriodo()"
-                        [disabled]="!dataInicioMentoria">
-                        <i class="feather icon-plus me-1"></i>
-                        Criar Período
-                    </button>
-                </div>
-            </div>
-            }
 
-            <!-- Lista de Períodos de Mentoria -->
-            @if (periodosMentoria.length > 0) {
-            <div class="mt-3">
-                <h6 class="mb-2">Histórico de Períodos</h6>
-                <div class="table-responsive">
-                    <table class="table table-sm table-hover">
+            <!-- Histórico de Períodos de Mentoria -->
+            @if (periodosMentoriaEncerrados.length > 0) {
+            <div class="mt-4">
+                <div class="d-flex align-items-center justify-content-between mb-2">
+                    <h6 class="mb-0">Histórico de Períodos</h6>
+                    <!-- <span class="badge bg-light text-muted">{{ periodosMentoria.length }} registros</span> -->
+                </div>
+                <div class="table-responsive mentoria-table">
+                    <table class="table table-sm table-hover align-middle">
                         <thead class="table-light">
                             <tr>
                                 <th style="width: 10%;">Período</th>
@@ -332,7 +365,7 @@
                             </tr>
                         </thead>
                         <tbody>
-                            @for (periodo of periodosMentoria; track periodo.id) {
+                            @for (periodo of periodosMentoriaEncerrados; track periodo.id) {
                             <tr [class.table-success]="periodo.ativo">
                                 <td class="text-center">
                                     <span class="badge" [class.bg-success]="periodo.ativo"
@@ -340,12 +373,12 @@
                                         {{ periodo.numero }}
                                     </span>
                                 </td>
-                                <td>{{ periodo.dataInicio | date:'dd/MM/yyyy' }}</td>
-                                <td>{{ periodo.dataFim | date:'dd/MM/yyyy' }}</td>
-                                <td>{{ periodo.dataContratacao | date:'dd/MM/yyyy HH:mm' }}</td>
+                                <td>{{ formatarDataCompletaPeriodo(periodo.dataInicio) }}</td>
+                                <td>{{ formatarDataCompletaPeriodo(periodo.dataFim) }}</td>
+                                <td>{{ periodo.dataContratacao | date:'dd/MM/yyyy HH:mm':'America/Sao_Paulo' }}</td>
                                 <td>
                                     @if (periodo.dataEncerramento) {
-                                    {{ periodo.dataEncerramento | date:'dd/MM/yyyy HH:mm' }}
+                                    {{ periodo.dataEncerramento | date:'dd/MM/yyyy HH:mm':'America/Sao_Paulo' }}
                                     } @else {
                                     <span class="text-muted">—</span>
                                     }
@@ -386,8 +419,8 @@
                 <label class="form-label">
                     Selecione ou adicione usuários à empresa
                 </label>
-                <ng-select [items]="usuariosDisponiveis" [addTag]="addUsuarioTag" bindLabel="nome" [searchable]="true"
-                    [clearable]="true" placeholder="Busque por nome ou email..." (change)="associarUsuario($event)">
+                <ng-select [items]="usuariosDisponiveis" bindLabel="nome" [searchable]="true"
+                    [clearable]="true" placeholder="Digite o nome" (change)="associarUsuario($event)">
                     <ng-template ng-option-tmp let-item="item">
                         <div class="d-flex align-items-center">
                             <app-user-avatar [nome]="item.nome" [fotoUrl]="item.fotoUrl" [size]="'small'"
@@ -535,7 +568,3 @@
     }
 </div>
 
-<!-- Modal para criar novo usuário -->
-<app-usuario-modal maxheight="50vh" title="Criar Novo Usuário" [empresaId]="empresaId || undefined"
-    (usuarioCriado)="onUsuarioCriado($event)">
-</app-usuario-modal>

@@ -25,6 +25,14 @@ import {
   UpdateAcaoCockpitDto,
 } from '../interfaces/cockpit-pilares.interface';
 
+export interface ObjetivoTemplateResumo {
+  id: string;
+  pilarId: string;
+  entradas: string;
+  saidas: string;
+  missao: string;
+}
+
 @Injectable({
   providedIn: 'root',
 })
@@ -42,6 +50,15 @@ export class CockpitPilaresService {
     return this.http.post<CockpitPilar>(
       `${this.API}/empresas/${empresaId}/pilares/${pilarEmpresaId}/cockpit`,
       dto
+    );
+  }
+
+  getObjetivoTemplate(
+    empresaId: string,
+    pilarEmpresaId: string,
+  ): Observable<ObjetivoTemplateResumo | null> {
+    return this.http.get<ObjetivoTemplateResumo | null>(
+      `${this.API}/empresas/${empresaId}/pilares/${pilarEmpresaId}/objetivos-template`
     );
   }
 

@@ -25,8 +25,7 @@ import {
   IndicadorCockpit,
   DirecaoIndicador,
 } from '@core/interfaces/cockpit-pilares.interface';
-import { format } from 'date-fns';
-import { ptBR } from 'date-fns/locale';
+import { formatMonthYearSaoPaulo, normalizeDateToSaoPaulo, parseDateInputSaoPaulo } from '@core/utils/date-time';
 
 // Registrar componentes do Chart.js
 Chart.register(
@@ -65,7 +64,8 @@ export class GraficoIndicadoresComponent implements OnInit, OnChanges {
 
   // R-GRAF-001: Propriedades para seleção de filtro (anos + últimos 12 meses)
   opcoesAnos: { value: string; label: string }[] = [];
-  selectedFiltro: string = 'ultimos-12-meses'; // Padrão: Últimos 12 meses
+  private readonly ANO_CORRENTE = normalizeDateToSaoPaulo(new Date()).getFullYear().toString();
+  selectedFiltro: string = this.ANO_CORRENTE; // Padrão: Ano corrente
 
   // ng2-charts configuration
   public lineChartData: ChartConfiguration['data'] = {
@@ -289,8 +289,10 @@ export class GraficoIndicadoresComponent implements OnInit, OnChanges {
     // R-GRAF-001: Usar labels dinâmicos com mês + ano (ex: Jan/25, Fev/25...)
     const meses = mesesData.map((m) => {
       if (m.mes && m.ano) {
-        const date = new Date(m.ano, m.mes - 1, 1);
-        return format(date, 'MMM/yy', { locale: ptBR });
+        const mes = String(m.mes).padStart(2, '0');
+        return formatMonthYearSaoPaulo(
+          parseDateInputSaoPaulo(`${m.ano}-${mes}-01`),
+        );
       }
       return this.getNomeMes(m.mes!);
     });
@@ -434,10 +436,17 @@ export class GraficoIndicadoresComponent implements OnInit, OnChanges {
 
     this.cockpitService.getAnosDisponiveis(this.cockpitId).subscribe({
       next: (anos: number[]) => {
-        // Adicionar opção "Últimos 12 meses" + anos disponíveis
+        const anosUnicos = Array.from(new Set(anos));
+        const anoCorrente = Number(this.ANO_CORRENTE);
+        if (!anosUnicos.includes(anoCorrente)) {
+          anosUnicos.push(anoCorrente);
+        }
+        const anosOrdenados = anosUnicos.sort((a, b) => b - a);
+
+        // Adicionar anos disponíveis + opção "Últimos 12 meses" por último
         this.opcoesAnos = [
-          { value: 'ultimos-12-meses', label: 'Últimos 12 meses' },
-          ...anos.map(ano => ({ value: ano.toString(), label: ano.toString() }))
+          ...anosOrdenados.map(ano => ({ value: ano.toString(), label: ano.toString() })),
+          { value: 'ultimos-12-meses', label: 'Últimos 12 meses' }
         ];
         
         // Verificar se há filtro salvo no localStorage
@@ -446,17 +455,18 @@ export class GraficoIndicadoresComponent implements OnInit, OnChanges {
         if (filtroSalvo && this.opcoesAnos.find(o => o.value === filtroSalvo)) {
           this.selectedFiltro = filtroSalvo;
         } else {
-          // Padrão: Últimos 12 meses
-          this.selectedFiltro = 'ultimos-12-meses';
+          // Padrão: Ano corrente
+          this.selectedFiltro = this.ANO_CORRENTE;
         }
       },
       error: (err) => {
         console.error('Erro ao carregar anos disponíveis:', err);
-        // Fallback: Apenas "Últimos 12 meses"
+        // Fallback: Ano corrente + "Últimos 12 meses"
         this.opcoesAnos = [
+          { value: this.ANO_CORRENTE, label: this.ANO_CORRENTE },
           { value: 'ultimos-12-meses', label: 'Últimos 12 meses' }
         ];
-        this.selectedFiltro = 'ultimos-12-meses';
+        this.selectedFiltro = this.ANO_CORRENTE;
       }
     });
   }
@@ -466,7 +476,7 @@ export class GraficoIndicadoresComponent implements OnInit, OnChanges {
    */
   onFiltroChange(filtro: string | null): void {
     if (!filtro) {
-      this.selectedFiltro = 'ultimos-12-meses';
+      this.selectedFiltro = this.ANO_CORRENTE;
       return;
     }
 

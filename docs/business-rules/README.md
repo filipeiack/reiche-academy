@@ -9,6 +9,7 @@ Este diretório contém a documentação completa de todas as regras de negócio
 #### Gestão de Templates (Bibliotecas Globais)
 - **[pilares.md](./pilares.md)** — Templates globais de pilares (catálogo de padrões)
 - **[rotinas.md](./rotinas.md)** — Templates globais de rotinas (biblioteca de rotinas padrão)
+- **[indicadores-templates-globais.md](./indicadores-templates-globais.md)** — Templates globais de indicadores (catálogo de padrões)
 
 #### Gestão Multi-Tenant (Instâncias por Empresa)
 - **[pilares-empresa.md](./pilares-empresa.md)** — Instâncias de pilares por empresa (Snapshot Pattern)
@@ -29,6 +30,7 @@ Este diretório contém a documentação completa de todas as regras de negócio
 #### Interface e Navegação
 - **[navbar.md](./navbar.md)** — Barra de navegação superior
 - **[sidebar.md](./sidebar.md)** — Menu lateral
+- **[sidebar-cockpit-submenu-ordenacao.md](./sidebar-cockpit-submenu-ordenacao.md)** — Ordenação alfabética do submenu de Cockpits
 
 #### Auditoria
 - **[audit.md](./audit.md)** — Registro de operações (audit trail)
@@ -52,6 +54,7 @@ Este diretório contém a documentação completa de todas as regras de negócio
 ├─────────────────────────────────────────────────────────┤
 │  pilares.md        → Pilar (templates de pilares)       │
 │  rotinas.md        → Rotina (templates de rotinas)      │
+│  indicadores-templates-globais.md → IndicadorTemplate    │
 └─────────────────────────────────────────────────────────┘
                          ↓ (cópia snapshot)
 ┌─────────────────────────────────────────────────────────┐
@@ -59,6 +62,7 @@ Este diretório contém a documentação completa de todas as regras de negócio
 ├─────────────────────────────────────────────────────────┤
 │  pilares-empresa.md → PilarEmpresa (snapshot editável)  │
 │  rotinas-empresa.md → RotinaEmpresa (snapshot editável) │
+│  cockpit-gestao-indicadores.md → IndicadorCockpit        │
 └─────────────────────────────────────────────────────────┘
                          ↓ (avaliação)
 ┌─────────────────────────────────────────────────────────┐
@@ -88,6 +92,8 @@ Este diretório contém a documentação completa de todas as regras de negócio
 | Instância de Pilar | pilares-empresa.md | PilarEmpresa | Multi-tenant |
 | Template de Rotina | rotinas.md | Rotina | Global (todos) |
 | Instância de Rotina | rotinas-empresa.md | RotinaEmpresa | Multi-tenant |
+| Template de Indicador | indicadores-templates-globais.md | IndicadorTemplate | Global (todos) |
+| Instância de Indicador | cockpit-gestao-indicadores.md | IndicadorCockpit | Multi-tenant |
 
 ### Regra de Ouro
 
@@ -141,6 +147,7 @@ Este diretório contém a documentação completa de todas as regras de negócio
 | pilares-empresa.md | ✅ Implementado | ✅ Implementado |
 | rotinas.md | ✅ Implementado | ✅ Implementado |
 | rotinas-empresa.md | ✅ Implementado | ✅ Implementado |
+| indicadores-templates-globais.md | ❌ Não implementado | ❌ Não implementado |
 | diagnosticos.md | ✅ Implementado | ✅ Implementado |
 | pilar-evolucao.md | ✅ Implementado | ✅ Implementado |
 | auth.md | ✅ Implementado | ✅ Implementado |
@@ -150,6 +157,7 @@ Este diretório contém a documentação completa de todas as regras de negócio
 | audit.md | ✅ Implementado | N/A (backend-only) |
 | navbar.md | N/A (frontend-only) | ✅ Implementado |
 | sidebar.md | N/A (frontend-only) | ✅ Implementado |
+| sidebar-cockpit-submenu-ordenacao.md | N/A (frontend-only) | ❌ Não implementado |
 
 ---
 

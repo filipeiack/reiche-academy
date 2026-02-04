@@ -1,3 +1,17 @@
+@import '../../shared-styles/_sticky-headers';
+
+.sticky-header-card {
+  top: calc(var(--navbar-height, 60px) + var(--headerDashboard-height, 40px));
+  position: sticky;
+  z-index: 1;
+  background: var(--bs-body-bg);
+  
+  &.collapsed {
+    padding: 0.5rem 1rem;
+  }
+}
+
+
 .pilares-list {
     min-height: 200px;
 }
@@ -27,6 +41,118 @@
 
 .drag-handle:active {
     cursor: grabbing;
+}
+
+.mentoria-card {
+    border: 1px solid rgba(31, 111, 235, 0.12);
+    box-shadow: 0 12px 24px rgba(15, 23, 42, 0.04);
+}
+
+.mentoria-summary {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: 1rem;
+}
+
+.mentoria-status {
+    display: flex;
+    gap: 1rem;
+    align-items: center;
+    padding: 1rem;
+    border-radius: 16px;
+    background: rgba(13, 110, 253, 0.08);
+    border: 1px solid rgba(13, 110, 253, 0.18);
+}
+
+.mentoria-status.ativo {
+    background: rgba(25, 135, 84, 0.08);
+    border-color: rgba(25, 135, 84, 0.18);
+}
+
+.mentoria-status-icon {
+    width: 42px;
+    height: 42px;
+    border-radius: 50%;
+    display: grid;
+    place-items: center;
+    background: rgba(13, 110, 253, 0.12);
+    color: #0d6efd;
+    font-size: 1.2rem;
+}
+
+.mentoria-status.ativo .mentoria-status-icon {
+    background: rgba(25, 135, 84, 0.12);
+    color: #198754;
+}
+
+.mentoria-status-title {
+    display: block;
+    font-size: 0.8rem;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--bs-secondary-color);
+}
+
+.mentoria-info {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+    gap: 0.75rem;
+}
+
+.mentoria-info-item {
+    padding: 0.85rem 1rem;
+    border-radius: 14px;
+    background: var(--bs-tertiary-bg);
+    border: 1px solid rgba(15, 23, 42, 0.06);
+}
+
+.mentoria-info-item span {
+    display: block;
+    font-size: 0.78rem;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--bs-secondary-color);
+    margin-bottom: 0.3rem;
+}
+
+.mentoria-info-item strong {
+    font-size: 0.95rem;
+}
+
+.mentoria-hint {
+    margin-top: 1rem;
+    display: flex;
+    gap: 0.5rem;
+    align-items: center;
+    padding: 0.75rem 1rem;
+    border-radius: 12px;
+    background: rgba(33, 37, 41, 0.04);
+    color: var(--bs-secondary-color);
+    font-size: 0.85rem;
+}
+
+.mentoria-hint i {
+    color: #0d6efd;
+}
+
+.mentoria-table table {
+    margin-bottom: 0;
+}
+
+.mentoria-empty-state {
+    margin-top: 1rem;
+    padding: 1.5rem;
+    border-radius: 16px;
+    text-align: center;
+    background: rgba(15, 23, 42, 0.04);
+    color: var(--bs-secondary-color);
+}
+
+.mentoria-empty-state i {
+    font-size: 1.6rem;
+    margin-bottom: 0.5rem;
+    display: block;
+    color: var(--bs-secondary-color);
 }
 
 :host ::ng-deep .modal-body {

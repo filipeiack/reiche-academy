@@ -8,6 +8,7 @@ import { CockpitPilaresService } from '@core/services/cockpit-pilares.service';
 import { PeriodosMentoriaService } from '@core/services/periodos-mentoria.service';
 import { SaveFeedbackService } from '@core/services/save-feedback.service';
 import Swal from 'sweetalert2';
+import { normalizeDateToSaoPaulo } from '@core/utils/date-time';
 import {
   CockpitPilar,
   IndicadorCockpit,
@@ -351,12 +352,12 @@ export class EdicaoValoresMensaisComponent implements OnInit, OnChanges, OnDestr
         }
 
         // Verificar se mês atual >= último mês do período
-        const agora = new Date();
+        const agora = normalizeDateToSaoPaulo(new Date());
         const mesAtual = agora.getMonth() + 1;
         const anoAtual = agora.getFullYear();
         const anoMesAtual = anoAtual * 100 + mesAtual;
 
-        const dataFim = new Date(periodo.dataFim);
+        const dataFim = normalizeDateToSaoPaulo(periodo.dataFim);
         const mesFim = dataFim.getMonth() + 1;
         const anoFim = dataFim.getFullYear();
         const anoMesFim = anoFim * 100 + mesFim;

@@ -9,6 +9,7 @@ import { CnpjPipe } from '../../../../core/pipes/cnpj.pipe';
 import { EmpresasService, Empresa } from '../../../../core/services/empresas.service';
 import { SortableDirective, SortEvent } from '../../../../shared/directives/sortable.directive';
 import { environment } from '../../../../../environments/environment';
+import { formatMonthYearSaoPaulo } from '../../../../core/utils/date-time';
 
 @Component({
   selector: 'app-empresas-list',
@@ -54,16 +55,9 @@ export class EmpresasListComponent implements OnInit {
   loadingDetails = false;
 
   formatarPeriodo(periodo: any): string {
-    const dataInicio = new Date(periodo.dataInicio);
-    const dataFim = new Date(periodo.dataFim);
-    const meses = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'];
-    
-    const mesInicio = meses[dataInicio.getMonth()];
-    const anoInicio = dataInicio.getFullYear().toString().slice(-2);
-    const mesFim = meses[dataFim.getMonth()];
-    const anoFim = dataFim.getFullYear().toString().slice(-2);
-    
-    return `${mesInicio}/${anoInicio} - ${mesFim}/${anoFim}`;
+    const inicio = formatMonthYearSaoPaulo(periodo.dataInicio);
+    const fim = formatMonthYearSaoPaulo(periodo.dataFim);
+    return `${inicio} - ${fim}`;
   }
 
   ngOnInit(): void {

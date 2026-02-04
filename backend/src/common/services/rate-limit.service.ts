@@ -1,4 +1,5 @@
-import { Injectable, Inject } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { Request } from 'express';
 import { RequestUser } from '../../common/interfaces/request-user.interface';
 
@@ -11,8 +12,43 @@ interface RateLimitEntry {
 export class RateLimitService {
   private readonly rateLimits = new Map<string, RateLimitEntry>();
   private readonly cleanupInterval: NodeJS.Timeout;
+  private rateLimitEnabled: boolean;
+  private readonly limitsConfig: {
+    auth: {
+      login: { limit: number; windowMs: number };
+      register: { limit: number; windowMs: number };
+      forgot: { limit: number; windowMs: number };
+      reset: { limit: number; windowMs: number };
+    };
+    general: { limit: number; windowMs: number };
+    sensitive: { limit: number; windowMs: number };
+  };
 
-  constructor() {
+  constructor(private readonly configService: ConfigService) {
+    this.rateLimitEnabled = this.parseBoolean(
+      this.configService.get<string>('RATE_LIMIT_ENABLED'),
+      true
+    );
+
+    const overrideLimit = this.parseNumber(this.configService.get<string>('RATE_LIMIT_MAX'));
+    const overrideWindowMs = this.parseNumber(this.configService.get<string>('RATE_LIMIT_WINDOW_MS'));
+
+    const applyOverride = (limit: number, windowMs: number) => ({
+      limit: overrideLimit ?? limit,
+      windowMs: overrideWindowMs ?? windowMs,
+    });
+
+    this.limitsConfig = {
+      auth: {
+        login: applyOverride(5, 900000),
+        register: applyOverride(3, 3600000),
+        forgot: applyOverride(3, 3600000),
+        reset: applyOverride(3, 3600000),
+      },
+      general: applyOverride(100, 60000),
+      sensitive: applyOverride(20, 60000),
+    };
+
     // Clean up expired entries every minute
     this.cleanupInterval = setInterval(() => {
       this.cleanup();
@@ -48,6 +84,14 @@ export class RateLimitService {
     return { allowed: true, resetTime: entry.resetTime };
   }
 
+  isEnabled(): boolean {
+    return this.rateLimitEnabled;
+  }
+
+  setEnabled(enabled: boolean): void {
+    this.rateLimitEnabled = enabled;
+  }
+
   generateKey(request: Request, endpoint?: string): string {
     const ip = this.getClientIP(request);
     const user = request.user as RequestUser | undefined;
@@ -76,17 +120,22 @@ export class RateLimitService {
   }
 
   // Different limits for different scenarios
-  readonly limits = {
-    // Authentication endpoints - more restrictive
-    auth: {
-      login: { limit: 5, windowMs: 900000 }, // 5 tentativas a cada 15 minutos
-      register: { limit: 3, windowMs: 3600000 }, // 3 tentativas por hora
-      forgot: { limit: 3, windowMs: 3600000 }, // 3 tentativas por hora
-      reset: { limit: 3, windowMs: 3600000 }, // 3 tentativas por hora
-    },
-    // General API endpoints
-    general: { limit: 100, windowMs: 60000 }, // 100 req/min
-    // Sensitive operations
-    sensitive: { limit: 20, windowMs: 60000 }, // 20 req/min
-  };
+  getLimits() {
+    return this.limitsConfig;
+  }
+
+  private parseBoolean(value: string | undefined, defaultValue: boolean): boolean {
+    if (value === undefined || value === null || value === '') {
+      return defaultValue;
+    }
+    return ['true', '1', 'yes', 'y', 'on'].includes(value.toLowerCase());
+  }
+
+  private parseNumber(value: string | undefined): number | null {
+    if (value === undefined || value === null || value === '') {
+      return null;
+    }
+    const parsed = Number(value);
+    return Number.isFinite(parsed) ? parsed : null;
+  }
 }

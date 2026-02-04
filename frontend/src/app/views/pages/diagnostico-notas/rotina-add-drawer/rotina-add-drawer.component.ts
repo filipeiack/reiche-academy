@@ -5,11 +5,12 @@ import { NgbActiveOffcanvas } from '@ng-bootstrap/ng-bootstrap';
 import Swal from 'sweetalert2';
 import { RotinasEmpresaService, CreateRotinaEmpresaDto } from '@core/services/rotinas-empresa.service';
 import { PilarEmpresa } from '@core/services/pilares-empresa.service';
+import { TranslatePipe } from "../../../../core/pipes/translate.pipe";
 
 @Component({
   selector: 'app-rotina-add-drawer',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule],
+  imports: [CommonModule, ReactiveFormsModule, TranslatePipe],
   template: `
     <div class="d-flex flex-column h-100">
       <div class="offcanvas-header border-bottom flex-shrink-0">
@@ -47,6 +48,22 @@ import { PilarEmpresa } from '@core/services/pilares-empresa.service';
                 </div>
               }
             </div>
+
+            <!-- <div class="mb-3">
+              <label class="form-label">
+                {{ 'DIAGNOSTICO.CRITICIDADE' | translate }}
+              </label>
+              <select
+                class="form-select"
+                formControlName="criticidade"
+                data-testid="rotina-add-criticidade"
+              >
+                <option value="">{{ 'DIAGNOSTICO.SELECT_CRITICIDADE' | translate }}</option>
+                <option *ngFor="let criticidade of criticidades" [value]="criticidade.value">
+                  {{ criticidade.label }}
+                </option>
+              </select>
+            </div> -->
 
             <div class="alert alert-info">
               <i class="feather icon-info me-2"></i>
@@ -101,8 +118,15 @@ export class RotinaAddDrawerComponent {
   @Output() rotinaCriada = new EventEmitter<void>();
 
   form = this.fb.group({
-    nome: ['', [Validators.required, Validators.minLength(3)]]
+    nome: ['', [Validators.required, Validators.minLength(3)]],
+    criticidade: [null],
   });
+
+  criticidades = [
+    { value: 'BAIXA', label: 'BAIXA' },
+    { value: 'MEDIA', label: 'MÉDIA' },
+    { value: 'ALTA', label: 'ALTA' },
+  ];
 
   saving = false;
 
@@ -117,7 +141,8 @@ export class RotinaAddDrawerComponent {
     }
 
     const dto: CreateRotinaEmpresaDto = {
-      nome: this.form.value.nome!
+      nome: this.form.value.nome!,
+      criticidade: this.form.value.criticidade || null,
     };
 
     this.saving = true;

@@ -146,6 +146,7 @@ export class RotinasEmpresaService {
     }
 
     let nome: string;
+    let criticidade = dto.criticidade ?? null;
 
     // XOR validation
     if (dto.rotinaTemplateId) {
@@ -159,6 +160,7 @@ export class RotinasEmpresaService {
       }
 
       nome = template.nome;
+      criticidade = template.criticidade ?? null;
     } else {
       // Usar dados customizados
       nome = dto.nome!;
@@ -192,6 +194,7 @@ export class RotinasEmpresaService {
         nome,
         pilarEmpresaId,
         ordem: proximaOrdem,
+        criticidade,
         createdBy: user.id,
       },
       include: {
@@ -268,6 +271,7 @@ export class RotinasEmpresaService {
       data: {
         nome: dto.nome,
         observacao: dto.observacao,
+        criticidade: dto.criticidade,
         updatedBy: user.id,
       },
       include: {
@@ -287,10 +291,12 @@ export class RotinasEmpresaService {
       dadosAntes: {
         nome: rotinaEmpresa.nome,
         observacao: rotinaEmpresa.observacao,
+        criticidade: rotinaEmpresa.criticidade,
       },
       dadosDepois: {
         nome: dto.nome ?? rotinaEmpresa.nome,
         observacao: dto.observacao ?? rotinaEmpresa.observacao,
+        criticidade: dto.criticidade ?? rotinaEmpresa.criticidade,
       },
     });
 

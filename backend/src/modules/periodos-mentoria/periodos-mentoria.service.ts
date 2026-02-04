@@ -8,7 +8,12 @@ import { PrismaService } from '../../common/prisma/prisma.service';
 import { AuditService } from '../audit/audit.service';
 import { CreatePeriodoMentoriaDto } from './dto/create-periodo-mentoria.dto';
 import { RenovarPeriodoMentoriaDto } from './dto/renovar-periodo-mentoria.dto';
-import { addYears } from 'date-fns';
+import {
+  endOfAnnualCycleInSaoPaulo,
+  formatDateInSaoPaulo,
+  nowInSaoPaulo,
+  parseDateInSaoPaulo,
+} from '../../common/utils/timezone';
 
 @Injectable()
 export class PeriodosMentoriaService {
@@ -19,20 +24,29 @@ export class PeriodosMentoriaService {
 
   /**
    * Calcula data fim corrigida para períodos anuais
-   * Retorna 31 de dezembro do ano da dataInicio (meia-noite UTC)
+   * Retorna dataInicio + 1 ano - 1 dia (fim do dia em São Paulo)
    */
   private calcularDataFimAno(dataInicio: Date): Date {
-    // Usar UTC para evitar timezone issues
-    const ano = dataInicio.getUTCFullYear();
-    // UTC: 31/dez/ano 23:59:59 UTC
-    return new Date(Date.UTC(ano, 11, 31, 23, 59, 59, 999));
+    return endOfAnnualCycleInSaoPaulo(dataInicio);
   }
 
-  /**
-   * Obtém ano de forma segura (UTC) para evitar timezone issues
-   */
-  private getAnoUTC(data: Date): number {
-    return data.getUTCFullYear();
+  private addMonths(data: Date, meses: number): Date {
+    const novaData = new Date(data);
+    novaData.setMonth(novaData.getMonth() + meses);
+    return novaData;
+  }
+
+  private validarDataFim(dataInicio: Date, dataFim: Date): void {
+    const minDataFim = this.addMonths(dataInicio, 5);
+    const maxDataFim = this.addMonths(dataInicio, 13);
+
+    if (dataFim < dataInicio) {
+      throw new BadRequestException('Data de término não pode ser anterior à data de início');
+    }
+
+    if (dataFim < minDataFim || dataFim > maxDataFim) {
+      throw new BadRequestException('Data de término deve estar entre 5 e 13 meses após a data de início');
+    }
   }
 
   /**
@@ -72,8 +86,14 @@ export class PeriodosMentoriaService {
     const numero = ultimoPeriodo ? ultimoPeriodo.numero + 1 : 1;
 
     // R-MENT-001: Calcular dataFim (dataInicio + 1 ano)
-    const dataInicio = new Date(dto.dataInicio);
-    const dataFim = this.calcularDataFimAno(dataInicio);
+    const dataInicio = parseDateInSaoPaulo(dto.dataInicio);
+    const dataFim = dto.dataFim
+      ? parseDateInSaoPaulo(dto.dataFim)
+      : this.calcularDataFimAno(dataInicio);
+
+    if (dto.dataFim) {
+      this.validarDataFim(dataInicio, dataFim);
+    }
 
     // Criar período
     const periodo = await this.prisma.periodoMentoria.create({
@@ -155,10 +175,10 @@ export class PeriodosMentoriaService {
     }
 
     // Validar data de início (deve ser após período atual)
-    const dataInicio = new Date(dto.dataInicio);
+    const dataInicio = parseDateInSaoPaulo(dto.dataInicio);
     if (dataInicio < periodoAtual.dataFim) {
       throw new BadRequestException(
-        `Data de início da renovação deve ser posterior a ${periodoAtual.dataFim.toISOString().split('T')[0]}`,
+        `Data de início da renovação deve ser posterior a ${formatDateInSaoPaulo(periodoAtual.dataFim, 'yyyy-MM-dd')}`,
       );
     }
 
@@ -172,7 +192,7 @@ export class PeriodosMentoriaService {
         where: { id: periodoId },
         data: {
           ativo: false,
-          dataEncerramento: new Date(),
+          dataEncerramento: nowInSaoPaulo(),
           updatedBy,
         },
       }),
@@ -217,6 +237,56 @@ export class PeriodosMentoriaService {
     // (botão "Novo ciclo de 12 meses" na tela de edição de valores mensais)
 
     return novoPeriodo;
+  }
+
+  /**
+   * Encerrar período ativo manualmente
+   */
+  async encerrar(empresaId: string, periodoId: string, updatedBy?: string) {
+    const periodoAtual = await this.prisma.periodoMentoria.findFirst({
+      where: {
+        id: periodoId,
+        empresaId,
+      },
+    });
+
+    if (!periodoAtual) {
+      throw new NotFoundException('Período de mentoria não encontrado');
+    }
+
+    if (!periodoAtual.ativo) {
+      throw new BadRequestException('Período de mentoria já está encerrado');
+    }
+
+    const dataEncerramento = nowInSaoPaulo();
+    if (dataEncerramento < periodoAtual.dataInicio) {
+      throw new BadRequestException('Data de encerramento inválida');
+    }
+
+    const periodoEncerrado = await this.prisma.periodoMentoria.update({
+      where: { id: periodoId },
+      data: {
+        ativo: false,
+        dataEncerramento,
+        updatedBy,
+      },
+    });
+
+    if (updatedBy) {
+      const user = await this.prisma.usuario.findUnique({ where: { id: updatedBy } });
+      await this.audit.log({
+        usuarioId: updatedBy,
+        usuarioNome: user?.nome ?? '',
+        usuarioEmail: user?.email ?? '',
+        entidade: 'periodos_mentoria',
+        entidadeId: periodoId,
+        acao: 'UPDATE',
+        dadosAntes: periodoAtual,
+        dadosDepois: periodoEncerrado,
+      });
+    }
+
+    return periodoEncerrado;
   }
 
   /**

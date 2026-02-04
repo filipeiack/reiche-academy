@@ -8,12 +8,8 @@ import { PrismaService } from '../../common/prisma/prisma.service';
 import { AuditService } from '../audit/audit.service';
 import { CreatePeriodoAvaliacaoDto } from './dto/create-periodo-avaliacao.dto';
 import { RequestUser } from '../../common/interfaces/request-user.interface';
-import {
-  getQuarter,
-  getYear,
-  differenceInDays,
-  format,
-} from 'date-fns';
+import { getQuarter, getYear, differenceInDays } from 'date-fns';
+import { formatDateInSaoPaulo, nowInSaoPaulo, parseDateInSaoPaulo } from '../../common/utils/timezone';
 
 @Injectable()
 export class PeriodosAvaliacaoService {
@@ -38,7 +34,7 @@ export class PeriodosAvaliacaoService {
     }
 
     // 2. Calcular trimestre e ano baseado na data de referência
-    const dataRef = new Date(dto.dataReferencia);
+    const dataRef = parseDateInSaoPaulo(dto.dataReferencia);
     const trimestre = getQuarter(dataRef);
     const ano = getYear(dataRef);
 
@@ -59,7 +55,7 @@ export class PeriodosAvaliacaoService {
     // Validar que dataReferencia está dentro do período de mentoria
     if (dataRef < periodoMentoria.dataInicio || dataRef > periodoMentoria.dataFim) {
       throw new BadRequestException(
-        `Data de referência deve estar dentro do período de mentoria ativo (${format(periodoMentoria.dataInicio, 'dd/MM/yyyy')} - ${format(periodoMentoria.dataFim, 'dd/MM/yyyy')})`,
+        `Data de referência deve estar dentro do período de mentoria ativo (${formatDateInSaoPaulo(periodoMentoria.dataInicio, 'dd/MM/yyyy')} - ${formatDateInSaoPaulo(periodoMentoria.dataFim, 'dd/MM/yyyy')})`,
       );
     }
 
@@ -84,7 +80,7 @@ export class PeriodosAvaliacaoService {
       const diffDays = differenceInDays(dataRef, ultimoPeriodo.dataReferencia);
       if (diffDays < 90) {
         throw new BadRequestException(
-          `Intervalo mínimo de 90 dias não respeitado. Último período: ${format(
+          `Intervalo mínimo de 90 dias não respeitado. Último período: ${formatDateInSaoPaulo(
             ultimoPeriodo.dataReferencia,
             'dd/MM/yyyy',
           )}. Faltam ${90 - diffDays} dias.`,
@@ -375,7 +371,7 @@ export class PeriodosAvaliacaoService {
       const periodoAtualizado = await tx.periodoAvaliacao.update({
         where: { id: periodoId },
         data: {
-          updatedAt: new Date(),
+          updatedAt: nowInSaoPaulo(),
           updatedBy: user.id,
         },
         select: {
@@ -388,7 +384,6 @@ export class PeriodosAvaliacaoService {
           dataCongelamento: true,
           createdAt: true,
           updatedAt: true,
-          createdBy: true,
           updatedBy: true,
         },
       });

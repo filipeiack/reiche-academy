@@ -10,6 +10,10 @@ export class RateLimitingInterceptor implements NestInterceptor {
     const request = context.switchToHttp().getRequest();
     const response = context.switchToHttp().getResponse();
 
+    if (!this.rateLimitService.isEnabled()) {
+      return next.handle();
+    }
+
     // Determine rate limit based on endpoint
     const limitConfig = this.getLimitConfig(request);
     const key = this.rateLimitService.generateKey(request, request.route?.path);
@@ -41,29 +45,30 @@ export class RateLimitingInterceptor implements NestInterceptor {
   }
 
   private getLimitConfig(request: any): { limit: number; windowMs: number } {
+    const limits = this.rateLimitService.getLimits();
     const path = request.path;
     const method = request.method;
 
     // Authentication endpoints
     if (path.includes('/auth/login')) {
-      return this.rateLimitService.limits.auth.login;
+      return limits.auth.login;
     }
     if (path.includes('/auth/register')) {
-      return this.rateLimitService.limits.auth.register;
+      return limits.auth.register;
     }
     if (path.includes('/auth/forgot')) {
-      return this.rateLimitService.limits.auth.forgot;
+      return limits.auth.forgot;
     }
     if (path.includes('/auth/reset')) {
-      return this.rateLimitService.limits.auth.reset;
+      return limits.auth.reset;
     }
 
     // Sensitive operations (POST, PUT, DELETE, PATCH)
     if (['POST', 'PUT', 'DELETE', 'PATCH'].includes(method)) {
-      return this.rateLimitService.limits.sensitive;
+      return limits.sensitive;
     }
 
     // General API endpoints
-    return this.rateLimitService.limits.general;
+    return limits.general;
   }
 }

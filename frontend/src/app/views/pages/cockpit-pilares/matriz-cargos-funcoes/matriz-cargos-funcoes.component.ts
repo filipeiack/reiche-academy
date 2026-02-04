@@ -309,6 +309,55 @@ export class MatrizCargosFuncoesComponent implements OnInit {
     return Number((total / notas.length).toFixed(2));
   }
 
+  getDesvio(funcao: FuncaoCargo): number {
+    if (
+      funcao.autoAvaliacao === null || 
+      funcao.autoAvaliacao === undefined || 
+      funcao.avaliacaoLideranca === null || 
+      funcao.avaliacaoLideranca === undefined
+    ) {
+      return 0;
+    }
+    return Math.abs(funcao.autoAvaliacao - funcao.avaliacaoLideranca);
+  }
+
+  getDesvioClass(funcao: FuncaoCargo): string {
+    const desvio = this.getDesvio(funcao);
+    
+    if (desvio === 0) {
+      return 'bg-success text-dark'; // Verde
+    } else if (desvio === 1) {
+      return 'bg-warning text-dark'; // Amarelo
+    } else {
+      return 'bg-danger text-dark'; // Vermelho (2 ou mais)
+    }
+  }
+
+  getDesvioMedia(cargo: CargoCockpit): number {
+    const mediaAuto = this.getMediaAuto(cargo);
+    const mediaLideranca = this.getMediaLideranca(cargo);
+    
+    if (mediaAuto === null || mediaLideranca === null) {
+      return 0;
+    }
+    
+    return Number(Math.abs(mediaAuto - mediaLideranca).toFixed(2));
+  }
+
+  getDesvioMediaClass(cargo: CargoCockpit): string {
+    const desvio = this.getDesvioMedia(cargo);
+    
+    if (desvio === 0) {
+      return 'bg-success text-dark'; // Verde
+    } else if (desvio < 1) {
+      return 'bg-warning text-dark'; // Amarelo para desvios menores que 1
+    } else if (desvio < 2) {
+      return 'bg-warning text-dark'; // Amarelo para desvios entre 1 e 2
+    } else {
+      return 'bg-danger text-dark'; // Vermelho (2 ou mais)
+    }
+  }
+
   private showToast(title: string, icon: 'success' | 'error' | 'info' | 'warning', timer = 3000): void {
     Swal.fire({
       toast: true,

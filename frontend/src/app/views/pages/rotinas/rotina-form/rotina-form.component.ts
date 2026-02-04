@@ -33,6 +33,11 @@ export class RotinaFormComponent implements OnInit, AfterViewInit {
   isEditMode = false;
   loading = false;
   submitting = false;
+  criticidades = [
+    { value: 'BAIXA', label: 'BAIXA' },
+    { value: 'MEDIA', label: 'MÉDIA' },
+    { value: 'ALTA', label: 'ALTA' },
+  ];
 
   ngOnInit(): void {
     this.buildForm();
@@ -70,6 +75,7 @@ export class RotinaFormComponent implements OnInit, AfterViewInit {
     this.form = this.fb.group({
       nome: ['', [Validators.required, Validators.minLength(2), Validators.maxLength(200)]],
       descricao: ['', [Validators.maxLength(500)]],
+      criticidade: [null],
       pilarId: ['', [Validators.required]],
       ordem: [null, [Validators.min(1)]],
     });
@@ -96,6 +102,7 @@ export class RotinaFormComponent implements OnInit, AfterViewInit {
         this.form.patchValue({
           nome: rotina.nome,
           descricao: rotina.descricao || '',
+          criticidade: rotina.criticidade ?? null,
           pilarId: rotina.pilarId,
           ordem: rotina.ordem,
         });
@@ -141,6 +148,11 @@ export class RotinaFormComponent implements OnInit, AfterViewInit {
       delete formValue.ordem;
     }
 
+    // Remover criticidade se vazia
+    if (!formValue.criticidade) {
+      delete formValue.criticidade;
+    }
+
     if (this.isEditMode) {
       this.updateRotina(formValue);
     } else {
@@ -169,6 +181,7 @@ export class RotinaFormComponent implements OnInit, AfterViewInit {
       nome: data.nome,
       descricao: data.descricao,
       ordem: data.ordem,
+      criticidade: data.criticidade,
     };
     
     this.rotinasService.update(this.rotinaId, updateData).subscribe({

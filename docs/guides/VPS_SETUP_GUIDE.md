@@ -123,6 +123,9 @@ git pull origin staging
 bash scripts/deploy-vps.sh staging
 ```
 
+# comando para limpar base de dados
+# docker compose -f docker-compose.vps.yml exec backend-staging npx prisma db push --force-reset
+
 **O que faz:**
 - ✅ Atualiza sistema Ubuntu
 - ✅ Instala Docker e Docker Compose (se necessário)
@@ -245,7 +248,7 @@ node -e "console.log(require('crypto').randomBytes(64).toString('hex'))"
 > **Nota sobre branches no VPS:**
 > - Mantenha o VPS sincronizado com `staging` para o ambiente de staging
 > - Mude para `main` antes de fazer deploy de produção
-> - Use `git fetch origin` + `git checkout <branch>` para trocar entre ambientes
+> - Use `git fetch origin` + `git checkout main` para trocar entre ambientes
 
 ### **5. Build e Start**
 

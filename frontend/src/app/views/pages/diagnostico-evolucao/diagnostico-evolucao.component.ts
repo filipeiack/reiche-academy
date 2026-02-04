@@ -17,6 +17,7 @@ import { Chart, registerables } from 'chart.js';
 import annotationPlugin from 'chartjs-plugin-annotation';
 import { MediaBadgeComponent } from '../../../shared/components/media-badge/media-badge.component';
 import { SortableDirective, SortEvent } from '../../../shared/directives/sortable.directive';
+import { formatDateInputSaoPaulo, formatDateTimeDisplaySaoPaulo, normalizeDateToSaoPaulo } from '../../../core/utils/date-time';
 
 Chart.register(...registerables, annotationPlugin);
 
@@ -56,7 +57,8 @@ export class DiagnosticoEvolucaoComponent implements OnInit, OnDestroy {
   periodoAtual: PeriodoAvaliacao | null = null;
   periodoCongelado: PeriodoAvaliacao | null = null; // Último período congelado (para recongelamento)
   private readonly FILTRO_ULTIMOS_12_MESES = 'ultimos-12-meses';
-  anoFiltro: string = this.FILTRO_ULTIMOS_12_MESES;
+  private readonly ANO_CORRENTE = normalizeDateToSaoPaulo(new Date()).getFullYear().toString();
+  anoFiltro: string = this.ANO_CORRENTE;
   anosDisponiveis: Array<{ value: string; label: string }> = [];
   private periodosHistorico: PeriodoComSnapshots[] = [];
 
@@ -148,7 +150,7 @@ export class DiagnosticoEvolucaoComponent implements OnInit, OnDestroy {
       next: (data) => {
         this.medias = data;
         this.loading = false;
-        this.anoFiltro = this.FILTRO_ULTIMOS_12_MESES;
+        this.anoFiltro = this.ANO_CORRENTE;
         // Carregar período atual
         this.loadPeriodoAtual();
         // Carregar histórico com filtro de ano
@@ -200,9 +202,8 @@ export class DiagnosticoEvolucaoComponent implements OnInit, OnDestroy {
         if (isRecongelamento) {
           this.periodosService.recongelar(periodo.id).subscribe({
             next: (response) => {
-              const dataRef = new Date(response.periodo.dataReferencia);
-              const mes = (dataRef.getMonth() + 1).toString().padStart(2, '0');
-              const ano = dataRef.getFullYear();
+              const dataRef = formatDateInputSaoPaulo(normalizeDateToSaoPaulo(response.periodo.dataReferencia));
+              const [ano, mes] = dataRef.split('-');
               this.showToast(
                 `Período ${mes}/${ano} recongelado com sucesso! ${response.resumo.totalSnapshots} snapshots atualizados.`,
                 'success',
@@ -224,9 +225,8 @@ export class DiagnosticoEvolucaoComponent implements OnInit, OnDestroy {
         } else {
           this.periodosService.congelar(periodo.id).subscribe({
             next: (response) => {
-              const dataRef = new Date(response.periodo.dataReferencia);
-              const mes = (dataRef.getMonth() + 1).toString().padStart(2, '0');
-              const ano = dataRef.getFullYear();
+              const dataRef = formatDateInputSaoPaulo(normalizeDateToSaoPaulo(response.periodo.dataReferencia));
+              const [ano, mes] = dataRef.split('-');
               this.showToast(
                 `Período ${mes}/${ano} congelado com sucesso! ${response.snapshots.length} snapshots criados.`,
                 'success',
@@ -277,8 +277,8 @@ export class DiagnosticoEvolucaoComponent implements OnInit, OnDestroy {
         const dadosPilar = periodosFiltrados
           .sort((a, b) => {
             // Ordenar por dataReferencia
-            const dataA = new Date(a.dataReferencia);
-            const dataB = new Date(b.dataReferencia);
+            const dataA = normalizeDateToSaoPaulo(a.dataReferencia);
+            const dataB = normalizeDateToSaoPaulo(b.dataReferencia);
             return dataA.getTime() - dataB.getTime();
           })
           .map(periodo => {
@@ -311,9 +311,10 @@ export class DiagnosticoEvolucaoComponent implements OnInit, OnDestroy {
       this.historico = [];
       this.destroyBarChart();
       this.anosDisponiveis = [
+        { value: this.ANO_CORRENTE, label: this.ANO_CORRENTE },
         { value: this.FILTRO_ULTIMOS_12_MESES, label: 'Últimos 12 meses' }
       ];
-      this.anoFiltro = this.FILTRO_ULTIMOS_12_MESES;
+      this.anoFiltro = this.ANO_CORRENTE;
     }
   }
 
@@ -350,7 +351,7 @@ renderBarChart(): void {
     this.historico.forEach(pilar => {
       pilar.data.forEach((item: any) => {
         // Extrair mês/ano da dataReferencia real
-        const dataRef = new Date(item.data);
+        const dataRef = normalizeDateToSaoPaulo(item.data);
         const mes = (dataRef.getMonth() + 1).toString().padStart(2, '0');
         const ano = dataRef.getFullYear();
         const mesAno = `${mes}/${ano}`;
@@ -375,7 +376,7 @@ renderBarChart(): void {
       // Para cada pilar, pegar a média do período correspondente
       const data = this.historico.map(pilar => {
         const item = pilar.data.find((h: any) => {
-          const dataItem = new Date(h.data);
+          const dataItem = normalizeDateToSaoPaulo(h.data);
           const mesItem = (dataItem.getMonth() + 1).toString().padStart(2, '0');
           const anoItem = dataItem.getFullYear();
           const mesAnoItem = `${mesItem}/${anoItem}`;
@@ -568,15 +569,7 @@ renderBarChart(): void {
    */
   formatarData(data: string | null | undefined): string {
     if (!data) return '-';
-    
-    const date = new Date(data);
-    const dia = date.getDate().toString().padStart(2, '0');
-    const mes = (date.getMonth() + 1).toString().padStart(2, '0');
-    const ano = date.getFullYear();
-    const hora = date.getHours().toString().padStart(2, '0');
-    const minuto = date.getMinutes().toString().padStart(2, '0');
-    
-    return `${dia}/${mes}/${ano} ${hora}:${minuto}`;
+    return formatDateTimeDisplaySaoPaulo(data);
   }
 
   private showToast(title: string, icon: 'success' | 'error' | 'info' | 'warning', timer: number = 3000): void {
@@ -630,7 +623,7 @@ renderBarChart(): void {
         if (periodos && periodos.length > 0) {
           // Ordenar por data de referência decrescente
           const periodosOrdenados = periodos.sort((a, b) => {
-            return new Date(b.dataReferencia).getTime() - new Date(a.dataReferencia).getTime();
+            return normalizeDateToSaoPaulo(b.dataReferencia).getTime() - normalizeDateToSaoPaulo(a.dataReferencia).getTime();
           });
           this.periodoCongelado = periodosOrdenados[0];
         } else {
@@ -648,15 +641,23 @@ renderBarChart(): void {
    * Gera lista de anos disponíveis para o filtro (últimos 5 anos a partir do ano atual)
    */
   private atualizarAnosDisponiveis(periodos: PeriodoComSnapshots[]): void {
-    const anosUnicos = Array.from(new Set(periodos.map(p => p.ano))).sort((a, b) => b - a);
+    const anoCorrente = Number(this.ANO_CORRENTE);
+    const anosUnicos = Array.from(new Set(periodos.map(p => p.ano)));
+
+    if (!anosUnicos.includes(anoCorrente)) {
+      anosUnicos.push(anoCorrente);
+    }
+
+    const anosOrdenados = anosUnicos.sort((a, b) => b - a);
 
     this.anosDisponiveis = [
-      { value: this.FILTRO_ULTIMOS_12_MESES, label: 'Últimos 12 meses' },
-      ...anosUnicos.map(ano => ({ value: ano.toString(), label: ano.toString() }))
+      ...anosOrdenados.map(ano => ({ value: ano.toString(), label: ano.toString() })),
+      { value: this.FILTRO_ULTIMOS_12_MESES, label: 'Últimos 12 meses' }
     ];
 
-    if (!this.anoFiltro || (this.anoFiltro !== this.FILTRO_ULTIMOS_12_MESES && !anosUnicos.includes(Number(this.anoFiltro)))) {
-      this.anoFiltro = this.FILTRO_ULTIMOS_12_MESES;
+    const valoresDisponiveis = this.anosDisponiveis.map(opcao => opcao.value);
+    if (!this.anoFiltro || !valoresDisponiveis.includes(this.anoFiltro)) {
+      this.anoFiltro = this.ANO_CORRENTE;
     }
   }
 
@@ -664,9 +665,9 @@ renderBarChart(): void {
     const periodosFechados = periodos.filter(p => !p.aberto);
 
     if (this.anoFiltro === this.FILTRO_ULTIMOS_12_MESES) {
-      const limite = new Date();
+      const limite = normalizeDateToSaoPaulo(new Date());
       limite.setMonth(limite.getMonth() - 12);
-      return periodosFechados.filter(p => new Date(p.dataReferencia) >= limite);
+      return periodosFechados.filter(p => normalizeDateToSaoPaulo(p.dataReferencia) >= limite);
     }
 
     if (this.anoFiltro) {
@@ -691,8 +692,8 @@ renderBarChart(): void {
         .map(media => {
           const dadosPilar = periodosFiltrados
             .sort((a, b) => {
-              const dataA = new Date(a.dataReferencia);
-              const dataB = new Date(b.dataReferencia);
+              const dataA = normalizeDateToSaoPaulo(a.dataReferencia);
+              const dataB = normalizeDateToSaoPaulo(b.dataReferencia);
               return dataA.getTime() - dataB.getTime();
             })
             .map(periodo => {
@@ -728,7 +729,7 @@ renderBarChart(): void {
   getPeriodoMesAno(): string {
     const periodo = this.periodoAtual || this.periodoCongelado;
     if (!periodo) return '';
-    const dataRef = new Date(periodo.dataReferencia);
+    const dataRef = normalizeDateToSaoPaulo(periodo.dataReferencia);
     const mes = (dataRef.getMonth() + 1).toString().padStart(2, '0');
     const ano = dataRef.getFullYear();
     return `${mes}/${ano}`;

@@ -5,8 +5,10 @@ import {
   Length,
   MaxLength,
   ValidateIf,
+  IsEnum,
 } from 'class-validator';
 import { ApiPropertyOptional } from '@nestjs/swagger';
+import { Criticidade } from '@prisma/client';
 
 export class CreateRotinaEmpresaDto {
   @ApiPropertyOptional({ 
@@ -25,4 +27,9 @@ export class CreateRotinaEmpresaDto {
   @IsNotEmpty({ message: 'Nome é obrigatório para rotinas customizadas' })
   @Length(2, 200, { message: 'Nome deve ter entre 2 e 200 caracteres' })
   nome?: string;
+
+  @ApiPropertyOptional({ example: 'MEDIA', enum: Criticidade })
+  @IsEnum(Criticidade, { message: 'Criticidade deve ser ALTA, MEDIA ou BAIXA' })
+  @IsOptional()
+  criticidade?: Criticidade;
 }

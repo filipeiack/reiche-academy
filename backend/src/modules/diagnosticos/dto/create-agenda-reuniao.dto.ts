@@ -14,7 +14,7 @@ export class CreateAgendaReuniaoDto {
   @Length(0, 1000)
   descricao?: string;
 
-  @ApiProperty({ example: '2025-12-10T14:00:00Z' })
+  @ApiProperty({ example: '2025-12-10T14:00:00-03:00' })
   @IsDateString()
   @IsNotEmpty()
   dataHora: string;

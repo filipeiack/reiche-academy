@@ -88,11 +88,11 @@ const acessarPrimeiroCockpit = async (page: any, user: TestUser) => {
   return hasHeader;
 };
 
-const abrirTabIndicadores = async (page: any) => {
-  const tabIndicadores = page.locator('[data-testid="tab-indicadores"]').first();
-  await expect(tabIndicadores).toBeVisible({ timeout: 5000 });
-  await tabIndicadores.click();
-  await expect(page.locator('[data-testid="indicadores-panel"], [data-testid="indicadores-table"]').first()).toBeVisible({ timeout: 10000 });
+const abrirTabGraficos = async (page: any) => {
+  const tabGraficos = page.locator('[data-testid="tab-graficos"]').first();
+  await expect(tabGraficos).toBeVisible({ timeout: 5000 });
+  await tabGraficos.click();
+  await expect(page.locator('[data-testid="grafico-panel"]').first()).toBeVisible({ timeout: 10000 });
 };
 
 const selecionarPrimeiroIndicador = async (page: any) => {
@@ -119,7 +119,7 @@ test.describe('@cockpit smoke - grafico indicadores', () => {
       return;
     }
 
-    await abrirTabIndicadores(page);
+      await abrirTabGraficos(page);
     await selecionarPrimeiroIndicador(page);
 
     const filtroSelect = page.locator('#filtroSelect, [data-testid="filtro-select"]').first();
@@ -139,7 +139,7 @@ test.describe('@cockpit smoke - grafico indicadores', () => {
       return;
     }
 
-    await abrirTabIndicadores(page);
+      await abrirTabGraficos(page);
 
     const filtroLabel = page.locator('#filtroSelect .ng-value-label, [data-testid="filtro-select"] .ng-value-label').first();
     await expect(filtroLabel).toContainText('Últimos 12 meses');
@@ -152,7 +152,7 @@ test.describe('@cockpit smoke - grafico indicadores', () => {
       return;
     }
 
-    await abrirTabIndicadores(page);
+      await abrirTabGraficos(page);
     const indicadorOk = await selecionarPrimeiroIndicador(page);
     if (!indicadorOk) {
       test.skip();
@@ -188,7 +188,7 @@ test.describe('@cockpit smoke - grafico indicadores', () => {
       return;
     }
 
-    await abrirTabIndicadores(page);
+      await abrirTabGraficos(page);
     await selecionarPrimeiroIndicador(page);
 
     const url = page.url();
@@ -231,7 +231,7 @@ test.describe('@cockpit smoke - grafico indicadores', () => {
       return;
     }
 
-    await abrirTabIndicadores(page);
+      await abrirTabGraficos(page);
     const indicadorOk = await selecionarPrimeiroIndicador(page);
     if (!indicadorOk) {
       test.skip();
@@ -257,7 +257,7 @@ test.describe('@cockpit smoke - grafico indicadores', () => {
       return;
     }
 
-    await abrirTabIndicadores(page);
+      await abrirTabGraficos(page);
     await selecionarPrimeiroIndicador(page);
 
     await page.locator('#filtroSelect, [data-testid="filtro-select"]').first().click();
@@ -274,7 +274,7 @@ test.describe('@cockpit smoke - grafico indicadores', () => {
       return;
     }
 
-    await abrirTabIndicadores(page);
+      await abrirTabGraficos(page);
     const indicadorOk = await selecionarPrimeiroIndicador(page);
     if (!indicadorOk) {
       test.skip();

@@ -1,5 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../../common/prisma/prisma.service';
+import { nowInSaoPaulo } from '../../common/utils/timezone';
 
 @Injectable()
 export class AuditService {
@@ -45,6 +46,7 @@ export class AuditService {
         acao: params.acao,
         dadosAntes: params.dadosAntes ?? null,
         dadosDepois: params.dadosDepois ?? null,
+        createdAt: nowInSaoPaulo(),
       },
     });
   }

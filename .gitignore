@@ -49,6 +49,14 @@ backend/public/
 *.bak
 *.tmp
 
+# Version files (gerados em runtime)
+VERSION.staging
+VERSION.prod
+
+# Deploy metadata (histórico local, não versionado)
+deploy-metadata/*.json
+!deploy-metadata/README.md
+
 # Templates and test artifacts
 templates/
 frontend/test-results/

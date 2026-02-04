@@ -187,6 +187,8 @@ export interface AcaoCockpit {
     email?: string;
   };
   status: StatusAcao;
+  inicioPrevisto?: string | null;
+  inicioReal?: string | null;
   prazo?: string | null;
   dataConclusao?: string | null;
   statusCalculado?: string;
@@ -283,9 +285,10 @@ export interface CreateAcaoCockpitDto {
   causa5?: string | null;
   acaoProposta: string;
   responsavelId?: string | null;
-  status?: StatusAcao;
-  prazo: string;
-  dataConclusao?: string | null;
+  inicioPrevisto: string;
+  terminoPrevisto: string;
+  inicioReal?: string | null;
+  terminoReal?: string | null;
 }
 
 export interface UpdateAcaoCockpitDto {
@@ -297,9 +300,10 @@ export interface UpdateAcaoCockpitDto {
   causa5?: string | null;
   acaoProposta?: string;
   responsavelId?: string | null;
-  status?: StatusAcao;
-  prazo?: string | null;
-  dataConclusao?: string | null;
+  inicioPrevisto?: string | null;
+  terminoPrevisto?: string | null;
+  inicioReal?: string | null;
+  terminoReal?: string | null;
 }
 
 export interface CreateProcessoFluxogramaDto {

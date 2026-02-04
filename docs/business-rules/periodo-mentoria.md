@@ -56,7 +56,7 @@ O módulo Períodos de Mentoria é responsável por:
 **Integrações:**
 - PrismaService — Acesso ao banco de dados
 - AuditService — Registro de operações CREATE/UPDATE
-- Cálculo de dataFim por regra de fim de ano (UTC) via `calcularDataFimAno`
+- Cálculo de dataFim por regra de fim de ano (horário de São Paulo) via `calcularDataFimAno`
 
 ### 2.2. Frontend
 
@@ -107,7 +107,7 @@ O módulo Períodos de Mentoria é responsável por:
 | empresaId | String | FK para Empresa |
 | numero | Int | Sequencial por empresa (1, 2, 3...) |
 | dataInicio | DateTime | Data de início da mentoria (ex: 2026-05-01) |
-| dataFim | DateTime | Data de término (calculado: **31/12 do ano de dataInicio, 23:59:59.999 UTC**) |
+| dataFim | DateTime | Data de término (calculado: **31/12 do ano de dataInicio, 23:59:59.999 (horário de São Paulo)**) |
 | ativo | Boolean | true = período ativo, false = encerrado |
 | dataContratacao | DateTime | Quando foi contratado (default: now()) |
 | dataEncerramento | DateTime? | Quando foi encerrado (renovação ou cancelamento) |
@@ -126,7 +126,7 @@ O módulo Períodos de Mentoria é responsável por:
 
 **Comportamento:**
 - Sistema permite apenas 1 período ativo por empresa
-- dataFim é calculada como **último dia do ano de `dataInicio` (UTC)**
+- dataFim é calculada como **último dia do ano de `dataInicio` (horário de São Paulo)**
 - Ao renovar, período anterior é encerrado (`ativo = false`)
 - Histórico completo de todos os períodos fica registrado
 
@@ -206,7 +206,7 @@ if (periodoAtivo) {
 3. **Calcular dataFim (fim do ano de dataInicio):**
 ```typescript
 const dataInicio = new Date(dto.dataInicio);
-const dataFim = this.calcularDataFimAno(dataInicio); // 31/12 do ano (UTC)
+const dataFim = this.calcularDataFimAno(dataInicio); // 31/12 do ano (São Paulo)
 ```
 
 4. **Calcular numero sequencial:**
@@ -254,10 +254,10 @@ await this.audit.log({
   "id": "uuid",
   "empresaId": "uuid",
   "numero": 1,
-  "dataInicio": "2026-05-01T00:00:00Z",
-  "dataFim": "2026-12-31T23:59:59.999Z",
+  "dataInicio": "2026-05-01T00:00:00-03:00",
+  "dataFim": "2026-12-31T23:59:59.999-03:00",
   "ativo": true,
-  "dataContratacao": "2026-01-21T10:00:00Z",
+  "dataContratacao": "2026-01-21T10:00:00-03:00",
   "dataEncerramento": null
 }
 ```
@@ -400,8 +400,8 @@ await this.audit.log({
 {
   "id": "uuid",
   "numero": 2,
-  "dataInicio": "2027-05-01T00:00:00Z",
-  "dataFim": "2027-12-31T23:59:59.999Z",
+  "dataInicio": "2027-05-01T00:00:00-03:00",
+  "dataFim": "2027-12-31T23:59:59.999-03:00",
   "ativo": true
 }
 ```
@@ -549,6 +549,54 @@ const periodo = await this.prisma.periodoAvaliacao.create({
 
 ---
 
+## 4.1 Regras Propostas (2026-02-03)
+
+As regras abaixo foram solicitadas para evolução do fluxo de gestão de períodos no wizard e **não estão implementadas**.
+
+### R-MENT-013: Encerramento Manual de Período
+
+**Descrição:** Permitir encerrar um período ativo informando data/hora de encerramento, deixando a empresa sem período ativo.
+
+**Documento:** [periodo-mentoria-encerramento-manual.md](periodo-mentoria-encerramento-manual.md)
+
+**Status:** ❌ **PROPOSTA — aguardando implementação**
+
+---
+
+### R-MENT-014: Renovação Inteligente
+
+**Descrição:** Botão “Renovar mentoria” verifica se existe período ativo; se existir, confirma encerramento e cria novo período de 1 ano a partir de hoje. Se não existir, comporta-se como criação.
+
+**Documento:** [periodo-mentoria-renovacao-inteligente.md](periodo-mentoria-renovacao-inteligente.md)
+
+**Status:** ❌ **PROPOSTA — aguardando implementação**
+
+---
+
+### R-MENT-015: Criação via Modal com Término Editável
+
+**Descrição:** Botão “Criar” abre modal pedindo data de início e sugerindo data de término calculada automaticamente, mantendo o campo de término editável.
+
+**Restrições adicionais:** `dataFim` deve ficar entre 5 e 13 meses após `dataInicio`.
+
+**Documento:** [periodo-mentoria-criacao-modal.md](periodo-mentoria-criacao-modal.md)
+
+**Status:** ❌ **PROPOSTA — aguardando implementação**
+
+---
+
+### R-MENT-016: Bloqueio de Login sem Mentoria Ativa
+
+**Descrição:** Ao encerrar um período, usuários da empresa perdem acesso; login deve validar empresa ativa e período de mentoria ativo.
+
+**Exceção:** Usuários sem empresa vinculada (ex.: ADMINISTRADOR global) não são bloqueados.
+
+**Documento:** [autenticacao-bloqueio-empresa-sem-mentoria.md](autenticacao-bloqueio-empresa-sem-mentoria.md)
+
+**Status:** ❌ **PROPOSTA — aguardando implementação**
+
+---
+
 ### R-MENT-010: Exibição de Status na Lista de Empresas
 
 **🔄 STATUS:** **IMPLEMENTADO E FUNCIONAL**
@@ -691,10 +739,10 @@ Content-Type: application/json
   "id": "periodo-uuid",
   "empresaId": "abc-123",
   "numero": 1,
-  "dataInicio": "2026-05-01T00:00:00Z",
-  "dataFim": "2027-04-30T23:59:59Z",
+  "dataInicio": "2026-05-01T00:00:00-03:00",
+  "dataFim": "2027-04-30T23:59:59-03:00",
   "ativo": true,
-  "dataContratacao": "2026-01-21T10:00:00Z",
+  "dataContratacao": "2026-01-21T10:00:00-03:00",
   "dataEncerramento": null
 }
 ```
@@ -716,13 +764,13 @@ Authorization: Bearer <token-admin>
     "id": "periodo-uuid",
     "numero": 1,
     "ativo": false,
-    "dataEncerramento": "2027-04-30T23:59:59Z"
+    "dataEncerramento": "2027-04-30T23:59:59-03:00"
   },
   "novoPeriodo": {
     "id": "novo-periodo-uuid",
     "numero": 2,
-    "dataInicio": "2027-05-01T00:00:00Z",
-    "dataFim": "2028-04-30T23:59:59Z",
+    "dataInicio": "2027-05-01T00:00:00-03:00",
+    "dataFim": "2028-04-30T23:59:59-03:00",
     "ativo": true
   }
 }
@@ -744,16 +792,16 @@ Authorization: Bearer <token>
   {
     "id": "periodo-1-uuid",
     "numero": 1,
-    "dataInicio": "2026-05-01T00:00:00Z",
-    "dataFim": "2027-04-30T23:59:59Z",
+    "dataInicio": "2026-05-01T00:00:00-03:00",
+    "dataFim": "2027-04-30T23:59:59-03:00",
     "ativo": false,
-    "dataEncerramento": "2027-04-30T23:59:59Z"
+    "dataEncerramento": "2027-04-30T23:59:59-03:00"
   },
   {
     "id": "periodo-2-uuid",
     "numero": 2,
-    "dataInicio": "2027-05-01T00:00:00Z",
-    "dataFim": "2028-04-30T23:59:59Z",
+    "dataInicio": "2027-05-01T00:00:00-03:00",
+    "dataFim": "2028-04-30T23:59:59-03:00",
     "ativo": true,
     "dataEncerramento": null
   }
@@ -775,8 +823,8 @@ Authorization: Bearer <token>
 {
   "id": "periodo-2-uuid",
   "numero": 2,
-  "dataInicio": "2027-05-01T00:00:00Z",
-  "dataFim": "2028-04-30T23:59:59Z",
+  "dataInicio": "2027-05-01T00:00:00-03:00",
+  "dataFim": "2028-04-30T23:59:59-03:00",
   "ativo": true
 }
 ```

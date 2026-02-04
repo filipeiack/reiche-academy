@@ -26,7 +26,7 @@
       } @else if (saveFeedback.lastSaveTime) {
       <div class="text-success small">
         <i class="bi bi-check-circle me-1"></i>
-        {{ saveFeedback.context }} salvo em {{ saveFeedback.lastSaveTime | date: 'HH:mm:ss' }}
+        {{ saveFeedback.context }} salvo em {{ saveFeedback.lastSaveTime | date: 'HH:mm:ss':'America/Sao_Paulo' }}
       </div>
       }
     </div>
@@ -40,10 +40,10 @@
   <!-- Tabs -->
   <ul class="nav nav-tabs mb-2 cockpit-tabs" role="tablist">
     <li class="nav-item" role="presentation">
-      <button class="nav-link" data-testid="tab-contexto" [class.active]="activeTab === 'contexto'" (click)="setActiveTab('contexto')"
+      <button class="nav-link" data-testid="tab-objetivos" [class.active]="activeTab === 'objetivos'" (click)="setActiveTab('objetivos')"
         type="button">
         <i class="bi bi-info-circle me-1"></i>
-        Contexto
+        Objetivos
       </button>
     </li>
     <li class="nav-item" role="presentation">
@@ -85,8 +85,8 @@
 
   <!-- Tab Content -->
   <div class="tab-content p-0 w-100">
-    <!-- Contexto -->
-    @if (activeTab === 'contexto') {
+    <!-- Objetivos -->
+    @if (activeTab === 'objetivos') {
     <div class="card">
       <div class="card-body">
         <h5 class="card-title cockpit-tab-title">
@@ -96,23 +96,23 @@
 
         <div class="mb-3">
           <label class="form-label">ENTRADAS:</label>
-          <textarea class="form-control" [(ngModel)]="entradas" (ngModelChange)="onContextoChange()" rows="3"
+          <textarea class="form-control" [(ngModel)]="entradas" (ngModelChange)="onObjetivosChange()" rows="3"
             placeholder="Ex: Pedidos de clientes, solicitações de propostas comerciais, leads qualificados do marketing"
-            data-testid="contexto-entradas"></textarea>
+            data-testid="objetivos-entradas"></textarea>
         </div>
 
         <div class="mb-3">
           <label class="form-label">SAÍDAS:</label>
-          <textarea class="form-control" [(ngModel)]="saidas" (ngModelChange)="onContextoChange()" rows="3"
+          <textarea class="form-control" [(ngModel)]="saidas" (ngModelChange)="onObjetivosChange()" rows="3"
             placeholder="Ex: Propostas comerciais enviadas, contratos assinados, relatórios de performance"
-            data-testid="contexto-saidas"></textarea>
+            data-testid="objetivos-saidas"></textarea>
         </div>
 
         <div class="mb-3">
           <label class="form-label">MISSÃO DO PILAR:</label>
-          <textarea class="form-control" [(ngModel)]="missao" (ngModelChange)="onContextoChange()" rows="3"
+          <textarea class="form-control" [(ngModel)]="missao" (ngModelChange)="onObjetivosChange()" rows="3"
             placeholder="Ex: Maximizar o faturamento via canal indireto, mantendo alta qualidade no atendimento e reduzindo inadimplência"
-            data-testid="contexto-missao"></textarea>
+            data-testid="objetivos-missao"></textarea>
         </div>
       </div>
     </div>

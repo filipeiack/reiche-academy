@@ -1,5 +1,6 @@
-import { IsOptional, IsInt, Min, Max, Length, MaxLength } from 'class-validator';
+import { IsOptional, IsInt, Min, Max, Length, MaxLength, IsEnum } from 'class-validator';
 import { ApiPropertyOptional } from '@nestjs/swagger';
+import { Criticidade } from '@prisma/client';
 
 export class UpdateRotinaEmpresaDto {
   @ApiPropertyOptional({ example: 'Planejamento Estratégico Anual Revisado' })
@@ -18,4 +19,9 @@ export class UpdateRotinaEmpresaDto {
   @Min(0)
   @Max(100)
   avaliacao?: number;
+
+  @ApiPropertyOptional({ example: 'MEDIA', enum: Criticidade })
+  @IsEnum(Criticidade, { message: 'Criticidade deve ser ALTA, MEDIA ou BAIXA' })
+  @IsOptional()
+  criticidade?: Criticidade;
 }
