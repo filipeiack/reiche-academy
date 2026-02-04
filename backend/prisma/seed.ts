@@ -43,7 +43,6 @@ async function main() {
   console.log('🧪 Starting E2E seed...');
 
   await prisma.$executeRaw`SET timezone TO 'America/Sao_Paulo'`;
-  await prisma.$executeRaw`ALTER DATABASE reiche_academy SET TIMEZONE TO 'America/Sao_Paulo'`;
 
 
   // ========================================
