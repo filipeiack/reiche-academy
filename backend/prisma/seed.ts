@@ -1,31 +1,10 @@
 import { PrismaClient, Criticidade } from '@prisma/client';
 import * as argon2 from 'argon2';
-import { addDays, addMonths, addYears } from 'date-fns';
-import { formatDateInSaoPaulo, nowInSaoPaulo, parseDateInSaoPaulo } from '../src/common/utils/timezone';
 
 const prisma = new PrismaClient();
 
-const pad2 = (value: number) => String(value).padStart(2, '0');
-
-const dateFromParts = (
-  year: number,
-  monthIndex: number,
-  day: number,
-  hour = 0,
-  minute = 0,
-  second = 0,
-) => {
-  const month = pad2(monthIndex + 1);
-  const dayLabel = pad2(day);
-  const hourLabel = pad2(hour);
-  const minuteLabel = pad2(minute);
-  const secondLabel = pad2(second);
-
-  return parseDateInSaoPaulo(`${year}-${month}-${dayLabel}T${hourLabel}:${minuteLabel}:${secondLabel}`);
-};
-
 /**
- * Seed de produção
+ * Seed paar produção
  *
  * Cria dados base necessários para operação:
  * - 4 perfis de usuário (ADMINISTRADOR, GESTOR, COLABORADOR, LEITURA)
