@@ -1733,9 +1733,9 @@ async function main() {
           responsavelId: acao.responsavelId,
           status: acao.status,
           inicioPrevisto: acao.inicioPrevisto,
-          inicioReal: acao.inicioReal,
+          inicioReal: 'inicioReal' in acao ? (acao.inicioReal as Date | undefined) : undefined,
           prazo: acao.prazo,
-          dataConclusao: acao.dataConclusao,
+          dataConclusao: 'dataConclusao' in acao ? (acao.dataConclusao as Date | undefined) : undefined,
         },
       });
     }
