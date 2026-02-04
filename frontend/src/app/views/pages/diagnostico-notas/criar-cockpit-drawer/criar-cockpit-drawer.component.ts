@@ -1,4 +1,4 @@
-import { Component, Input, Output, EventEmitter, inject, OnChanges, SimpleChanges } from '@angular/core';
+import { Component, Input, Output, EventEmitter, inject, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
@@ -113,7 +113,7 @@ import Swal from 'sweetalert2';
     }
   `]
 })
-export class CriarCockpitDrawerComponent implements OnChanges {
+export class CriarCockpitDrawerComponent implements OnInit {
   public activeOffcanvas = inject(NgbActiveOffcanvas);
   private cockpitService = inject(CockpitPilaresService);
   private menuService = inject(MenuService);
@@ -128,10 +128,8 @@ export class CriarCockpitDrawerComponent implements OnChanges {
   loading = false;
   error: string | null = null;
 
-  ngOnChanges(changes: SimpleChanges): void {
-    if (changes['pilar']?.currentValue) {
-      this.carregarObjetivoTemplate();
-    }
+  ngOnInit(): void {
+    this.carregarObjetivoTemplate();
   }
 
   fechar(): void {
@@ -191,6 +189,7 @@ export class CriarCockpitDrawerComponent implements OnChanges {
   }
 
   private carregarObjetivoTemplate(): void {
+   
     if (!this.pilar?.pilarTemplateId) {
       return;
     }
@@ -199,22 +198,19 @@ export class CriarCockpitDrawerComponent implements OnChanges {
       .getObjetivoTemplate(this.pilar.empresaId, this.pilar.id)
       .subscribe({
         next: (template) => {
+          
           if (!template) {
             return;
           }
 
-          if (!this.entradas.trim()) {
-            this.entradas = template.entradas || '';
-          }
-          if (!this.saidas.trim()) {
-            this.saidas = template.saidas || '';
-          }
-          if (!this.missao.trim()) {
-            this.missao = template.missao || '';
-          }
+          // Preencher campos com valores do template (sempre, ao abrir o drawer)
+          this.entradas = template.entradas || '';
+          this.saidas = template.saidas || '';
+          this.missao = template.missao || '';
+          
         },
         error: (err: unknown) => {
-          console.error('Erro ao carregar objetivo template:', err);
+          console.error('❌ Erro ao carregar objetivo template:', err);
         },
       });
   }
