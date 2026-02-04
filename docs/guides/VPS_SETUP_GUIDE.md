@@ -123,6 +123,9 @@ git pull origin staging
 bash scripts/deploy-vps.sh staging
 ```
 
+# comando para limpar base de dados
+# docker compose -f docker-compose.vps.yml exec backend-staging npx prisma db push --force-reset
+
 **O que faz:**
 - ✅ Atualiza sistema Ubuntu
 - ✅ Instala Docker e Docker Compose (se necessário)

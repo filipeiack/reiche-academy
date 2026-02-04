@@ -67,6 +67,9 @@ RUN npm ci --only=production && npm cache clean --force
 # Copy built application from builder
 COPY --from=builder /app/dist ./dist
 
+# Copy source files so TypeScript seeds can run with `tsx prisma/seed.ts`
+COPY --from=builder /app/src ./src
+
 # Generate Prisma Client
 RUN npx prisma generate
 
