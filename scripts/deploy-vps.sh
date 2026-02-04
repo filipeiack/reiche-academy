@@ -158,10 +158,6 @@ if [ "$ENVIRONMENT" == "staging" ]; then
         --build-arg GIT_COMMIT="$GIT_COMMIT" \
         --build-arg ENVIRONMENT="staging" \
         backend-staging frontend-staging
-    
-    # Tagear imagens com versão
-    docker tag reiche-academy-backend-staging:latest reiche-academy-backend-staging:$VERSION
-    docker tag reiche-academy-frontend-staging:latest reiche-academy-frontend-staging:$VERSION
 else
     docker compose -f docker-compose.vps.yml build --no-cache \
         --build-arg BUILD_VERSION="$VERSION" \
@@ -169,10 +165,6 @@ else
         --build-arg GIT_COMMIT="$GIT_COMMIT" \
         --build-arg ENVIRONMENT="production" \
         backend-prod frontend-prod
-    
-    # Tagear imagens com versão
-    docker tag reiche-academy-backend-prod:latest reiche-academy-backend-prod:$VERSION
-    docker tag reiche-academy-frontend-prod:latest reiche-academy-frontend-prod:$VERSION
 fi
 
 # ============================================================================
@@ -241,14 +233,9 @@ echo "  Produção:  http://app.reicheacademy.cloud (após DNS configurado)"
 echo "  Staging:   http://staging.reicheacademy.cloud (após DNS configurado)"
 echo ""
 � Versão implantada: v$VERSION"
-echo "🏷️  Imagens Docker:"
-if [ "$ENVIRONMENT" == "staging" ]; then
-    echo "   - reiche-academy-backend-staging:$VERSION"
-    echo "   - reiche-academy-frontend-staging:$VERSION"
-else
-    echo "   - reiche-academy-backend-prod:$VERSION"
-    echo "   - reiche-academy-frontend-prod:$VERSION"
-fi
+echo "🏷️  Build tags:"
+echo "   - BUILD_DATE: $BUILD_DATE"
+echo "   - GIT_COMMIT: $GIT_COMMIT"
 echo ""
 echo "📝 Para fazer deploy do outro ambiente, execute:"
 if [ "$ENVIRONMENT" == "staging" ]; then
