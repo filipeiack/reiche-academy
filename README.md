@@ -32,13 +32,42 @@ Sistema web para gestão empresarial baseado na metodologia PDCA, desenvolvido p
 
 ## 🔧 Configuração
 
-### 1. Iniciar serviços Docker
+### 1. Variáveis de Ambiente
+
+Antes de iniciar, configure as variáveis de ambiente:
+
+#### Para desenvolvimento local:
+```bash
+# Copie os templates de exemplo
+cp .env.example .env
+cp backend/.env.example backend/.env
+
+# Edite os arquivos .env se necessário
+# Os valores padrão funcionam para desenvolvimento local
+```
+
+#### Para deploy em VPS:
+```bash
+# Copie o template VPS
+cp .env.vps.example .env.vps
+
+# IMPORTANTE: Edite .env.vps e altere:
+# - POSTGRES_PASSWORD
+# - REDIS_PASSWORD
+# - JWT_SECRET_PROD e JWT_SECRET_STAGING
+# - JWT_REFRESH_SECRET_PROD e JWT_REFRESH_SECRET_STAGING
+# - CORS_ORIGIN_PROD e CORS_ORIGIN_STAGING
+```
+
+**Observação**: Nunca commite arquivos `.env`, `.env.vps` ou `.env.*.local` no git. Apenas os arquivos `.example` devem ser versionados.
+
+### 2. Iniciar serviços Docker
 
 ```bash
 docker-compose up -d
 ```
 
-### 2. Backend
+### 3. Backend
 
 ```bash
 cd backend
@@ -50,7 +79,7 @@ npm run dev
 O backend estará disponível em `http://localhost:3000`
 API Docs (Swagger): `http://localhost:3000/api`
 
-### 3. Frontend
+### 4. Frontend
 
 ```bash
 cd frontend
