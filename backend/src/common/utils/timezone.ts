@@ -1,4 +1,5 @@
 import { formatInTimeZone, fromZonedTime } from 'date-fns-tz';
+import { addYears, subDays } from 'date-fns';
 
 export const SAO_PAULO_TIMEZONE = 'America/Sao_Paulo';
 
@@ -34,6 +35,15 @@ export function formatIsoSaoPaulo(date: Date): string {
 export function endOfYearInSaoPaulo(date: Date): Date {
   const ano = Number(formatInTimeZone(date, SAO_PAULO_TIMEZONE, 'yyyy'));
   return fromZonedTime(`${ano}-12-31T23:59:59.999`, SAO_PAULO_TIMEZONE);
+}
+
+export function endOfAnnualCycleInSaoPaulo(date: Date): Date {
+  const startDate = formatInTimeZone(date, SAO_PAULO_TIMEZONE, 'yyyy-MM-dd');
+  const startAtMidnight = fromZonedTime(`${startDate}T00:00:00`, SAO_PAULO_TIMEZONE);
+  const nextYearSameDay = addYears(startAtMidnight, 1);
+  const lastDay = subDays(nextYearSameDay, 1);
+  const lastDayStr = formatInTimeZone(lastDay, SAO_PAULO_TIMEZONE, 'yyyy-MM-dd');
+  return fromZonedTime(`${lastDayStr}T23:59:59.999`, SAO_PAULO_TIMEZONE);
 }
 
 export function nowInSaoPaulo(): Date {

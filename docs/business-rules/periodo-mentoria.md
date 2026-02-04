@@ -549,6 +549,54 @@ const periodo = await this.prisma.periodoAvaliacao.create({
 
 ---
 
+## 4.1 Regras Propostas (2026-02-03)
+
+As regras abaixo foram solicitadas para evolução do fluxo de gestão de períodos no wizard e **não estão implementadas**.
+
+### R-MENT-013: Encerramento Manual de Período
+
+**Descrição:** Permitir encerrar um período ativo informando data/hora de encerramento, deixando a empresa sem período ativo.
+
+**Documento:** [periodo-mentoria-encerramento-manual.md](periodo-mentoria-encerramento-manual.md)
+
+**Status:** ❌ **PROPOSTA — aguardando implementação**
+
+---
+
+### R-MENT-014: Renovação Inteligente
+
+**Descrição:** Botão “Renovar mentoria” verifica se existe período ativo; se existir, confirma encerramento e cria novo período de 1 ano a partir de hoje. Se não existir, comporta-se como criação.
+
+**Documento:** [periodo-mentoria-renovacao-inteligente.md](periodo-mentoria-renovacao-inteligente.md)
+
+**Status:** ❌ **PROPOSTA — aguardando implementação**
+
+---
+
+### R-MENT-015: Criação via Modal com Término Editável
+
+**Descrição:** Botão “Criar” abre modal pedindo data de início e sugerindo data de término calculada automaticamente, mantendo o campo de término editável.
+
+**Restrições adicionais:** `dataFim` deve ficar entre 5 e 13 meses após `dataInicio`.
+
+**Documento:** [periodo-mentoria-criacao-modal.md](periodo-mentoria-criacao-modal.md)
+
+**Status:** ❌ **PROPOSTA — aguardando implementação**
+
+---
+
+### R-MENT-016: Bloqueio de Login sem Mentoria Ativa
+
+**Descrição:** Ao encerrar um período, usuários da empresa perdem acesso; login deve validar empresa ativa e período de mentoria ativo.
+
+**Exceção:** Usuários sem empresa vinculada (ex.: ADMINISTRADOR global) não são bloqueados.
+
+**Documento:** [autenticacao-bloqueio-empresa-sem-mentoria.md](autenticacao-bloqueio-empresa-sem-mentoria.md)
+
+**Status:** ❌ **PROPOSTA — aguardando implementação**
+
+---
+
 ### R-MENT-010: Exibição de Status na Lista de Empresas
 
 **🔄 STATUS:** **IMPLEMENTADO E FUNCIONAL**

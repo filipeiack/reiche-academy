@@ -1,7 +1,28 @@
 import { PrismaClient, Criticidade } from '@prisma/client';
 import * as argon2 from 'argon2';
+import { addDays, addMonths, addYears } from 'date-fns';
+import { formatDateInSaoPaulo, nowInSaoPaulo, parseDateInSaoPaulo } from '../src/common/utils/timezone';
 
 const prisma = new PrismaClient();
+
+const pad2 = (value: number) => String(value).padStart(2, '0');
+
+const dateFromParts = (
+  year: number,
+  monthIndex: number,
+  day: number,
+  hour = 0,
+  minute = 0,
+  second = 0,
+) => {
+  const month = pad2(monthIndex + 1);
+  const dayLabel = pad2(day);
+  const hourLabel = pad2(hour);
+  const minuteLabel = pad2(minute);
+  const secondLabel = pad2(second);
+
+  return parseDateInSaoPaulo(`${year}-${month}-${dayLabel}T${hourLabel}:${minuteLabel}:${secondLabel}`);
+};
 
 /**
  * Seed completo para testes E2E
@@ -20,6 +41,9 @@ const prisma = new PrismaClient();
 
 async function main() {
   console.log('🧪 Starting E2E seed...');
+
+  await prisma.$executeRaw`SET timezone TO 'America/Sao_Paulo'`;
+  await prisma.$executeRaw`ALTER DATABASE reiche_academy SET TIMEZONE TO 'America/Sao_Paulo'`;
 
 
   // ========================================
@@ -88,10 +112,8 @@ async function main() {
   // 2.1. PERÍODOS DE MENTORIA (retroativo)
   // ========================================
 
-  const { addYears } = await import('date-fns');
-
   // Data de início padrão: 01/03/2025
-  const dataInicioDefault = new Date(2025, 2, 1); // Março de 2025
+  const dataInicioDefault = parseDateInSaoPaulo('2025-03-01');
 
   // Criar período de mentoria retroativo para Empresa A
   const periodoMentoriaA = await prisma.periodoMentoria.upsert({
@@ -132,8 +154,8 @@ async function main() {
   });
 
   console.log(`✅ 2 períodos de mentoria criados:`);
-  console.log(`   - Empresa A: Período ${periodoMentoriaA.numero} (${periodoMentoriaA.dataInicio.toISOString().split('T')[0]} - ${periodoMentoriaA.dataFim.toISOString().split('T')[0]})`);
-  console.log(`   - Empresa B: Período ${periodoMentoriaB.numero} (${periodoMentoriaB.dataInicio.toISOString().split('T')[0]} - ${periodoMentoriaB.dataFim.toISOString().split('T')[0]})`);
+  console.log(`   - Empresa A: Período ${periodoMentoriaA.numero} (${formatDateInSaoPaulo(periodoMentoriaA.dataInicio, 'yyyy-MM-dd')} - ${formatDateInSaoPaulo(periodoMentoriaA.dataFim, 'yyyy-MM-dd')})`);
+  console.log(`   - Empresa B: Período ${periodoMentoriaB.numero} (${formatDateInSaoPaulo(periodoMentoriaB.dataInicio, 'yyyy-MM-dd')} - ${formatDateInSaoPaulo(periodoMentoriaB.dataFim, 'yyyy-MM-dd')})`);
 
   // ========================================
   // 3. USUÁRIOS (senha padrão: Admin@123)
@@ -1256,12 +1278,13 @@ async function main() {
   );
 
   // Criar registros de evolução para 4 datas diferentes (trimestres)
-  const hoje = new Date();
+  const hoje = nowInSaoPaulo();
+  const baseTrimestre = dateFromParts(hoje.getFullYear(), hoje.getMonth(), 1);
   const trimestres = [
-    new Date(hoje.getFullYear(), hoje.getMonth() - 9, 1), // 3 trimestres atrás
-    new Date(hoje.getFullYear(), hoje.getMonth() - 6, 1), // 2 trimestres atrás
-    new Date(hoje.getFullYear(), hoje.getMonth() - 3, 1), // 1 trimestre atrás
-    hoje, // trimestre atual
+    addMonths(baseTrimestre, -9), // 3 trimestres atrás
+    addMonths(baseTrimestre, -6), // 2 trimestres atrás
+    addMonths(baseTrimestre, -3), // 1 trimestre atrás
+    baseTrimestre, // trimestre atual
   ];
 
   // Criar períodos de avaliação para Empresa Teste A (um por trimestre)
@@ -1277,7 +1300,7 @@ async function main() {
     const isAberto = i === trimestres.length - 1;
     const dataCongelamento = isAberto
       ? null
-      : new Date(dataRef.getFullYear(), dataRef.getMonth() + 3, 15, 10, 0, 0); // 15 dias após o fim do trimestre
+      : addMonths(dateFromParts(dataRef.getFullYear(), dataRef.getMonth(), 15, 10, 0, 0), 3); // 15 dias após o fim do trimestre
 
     const periodo = await prisma.periodoAvaliacao.upsert({
       where: {
@@ -1412,7 +1435,7 @@ async function main() {
 
   // Responsáveis para os indicadores (distribuindo entre gestorA e colaboradorA)
   const responsaveisIndicadores = [gestorA, colaboradorA];
-  const anoAtual = new Date().getFullYear();
+  const anoAtual = nowInSaoPaulo().getFullYear();
 
   const indicadoresCriados = [];
   for (let i = 0; i < indicadoresTemplates.length; i++) {
@@ -1595,11 +1618,12 @@ async function main() {
   // 10.4. PLANOS DE AÇÃO (Marketing)
   // ========================================
 
-  const hojeAcoes = new Date();
+  const hojeAcoes = nowInSaoPaulo();
   const anoReferencia = hojeAcoes.getFullYear();
+  const baseDiaAcoes = dateFromParts(hojeAcoes.getFullYear(), hojeAcoes.getMonth(), hojeAcoes.getDate());
   const acoesData = [
     {
-      acaoProposta: 'Revisar funil de leads e qualificação',
+      acaoProposta: 'Revisar funil de leads e qualificação atual para aumentar volume de leads qualificados e conversões em vendas sem aumentar custos. Mais detalhes no documento de análise de funil. Barras de funil atuais indicam gargalos na conversão.',
       indicadorNome: 'VOLUME DE LEADS QUALIFICADOS GERADOS',
       mesReferencia: 3,
       anoReferencia,
@@ -1610,8 +1634,8 @@ async function main() {
       causa5: 'Segmentação de mídia paga desalinhada',
       status: 'PENDENTE' as const,
       responsavelId: gestorA.id,
-      inicioPrevisto: new Date(hojeAcoes.getFullYear(), hojeAcoes.getMonth(), hojeAcoes.getDate() + 7),
-      prazo: new Date(hojeAcoes.getFullYear(), hojeAcoes.getMonth(), hojeAcoes.getDate() + 30),
+      inicioPrevisto: addDays(baseDiaAcoes, 7),
+      prazo: addDays(baseDiaAcoes, 30),
     },
     {
       acaoProposta: 'Refinar qualificação e scoring de leads',
@@ -1622,9 +1646,9 @@ async function main() {
       causa2: 'Baixa integração entre marketing e vendas',
       status: 'EM_ANDAMENTO' as const,
       responsavelId: colaboradorA.id,
-      inicioPrevisto: new Date(hojeAcoes.getFullYear(), hojeAcoes.getMonth(), hojeAcoes.getDate() - 5),
-      inicioReal: new Date(hojeAcoes.getFullYear(), hojeAcoes.getMonth(), hojeAcoes.getDate() - 4),
-      prazo: new Date(hojeAcoes.getFullYear(), hojeAcoes.getMonth(), hojeAcoes.getDate() + 12),
+      inicioPrevisto: addDays(baseDiaAcoes, -5),
+      inicioReal: addDays(baseDiaAcoes, -4),
+      prazo: addDays(baseDiaAcoes, 12),
     },
     {
       acaoProposta: 'Atualizar campanhas de tráfego pago',
@@ -1635,9 +1659,9 @@ async function main() {
       causa2: 'Ajuste de público-alvo insuficiente',
       status: 'EM_ANDAMENTO' as const,
       responsavelId: colaboradorA.id,
-      inicioPrevisto: new Date(hojeAcoes.getFullYear(), hojeAcoes.getMonth(), hojeAcoes.getDate() - 3),
-      inicioReal: new Date(hojeAcoes.getFullYear(), hojeAcoes.getMonth(), hojeAcoes.getDate() - 2),
-      prazo: new Date(hojeAcoes.getFullYear(), hojeAcoes.getMonth(), hojeAcoes.getDate() + 14),
+      inicioPrevisto: addDays(baseDiaAcoes, -3),
+      inicioReal: addDays(baseDiaAcoes, -2),
+      prazo: addDays(baseDiaAcoes, 14),
     },
     {
       acaoProposta: 'Negociar mídia e otimizar orçamento mensal',
@@ -1648,8 +1672,8 @@ async function main() {
       causa2: 'Distribuição de verba por canal sem revisão',
       status: 'PENDENTE' as const,
       responsavelId: gestorA.id,
-      inicioPrevisto: new Date(hojeAcoes.getFullYear(), hojeAcoes.getMonth(), hojeAcoes.getDate() + 5),
-      prazo: new Date(hojeAcoes.getFullYear(), hojeAcoes.getMonth(), hojeAcoes.getDate() + 25),
+      inicioPrevisto: addDays(baseDiaAcoes, 5),
+      prazo: addDays(baseDiaAcoes, 25),
     },
     {
       acaoProposta: 'Rever precificação e proposta de valor',
@@ -1660,8 +1684,8 @@ async function main() {
       causa2: 'Pouca diferenciação percebida pelo cliente',
       status: 'PENDENTE' as const,
       responsavelId: gestorA.id,
-      inicioPrevisto: new Date(hojeAcoes.getFullYear(), hojeAcoes.getMonth(), hojeAcoes.getDate() + 9),
-      prazo: new Date(hojeAcoes.getFullYear(), hojeAcoes.getMonth(), hojeAcoes.getDate() + 33),
+      inicioPrevisto: addDays(baseDiaAcoes, 9),
+      prazo: addDays(baseDiaAcoes, 33),
     },
     {
       acaoProposta: 'Ajustar mix de canais para reduzir CAC',
@@ -1672,9 +1696,9 @@ async function main() {
       causa2: 'Remarketing sem segmentação adequada',
       status: 'EM_ANDAMENTO' as const,
       responsavelId: colaboradorA.id,
-      inicioPrevisto: new Date(hojeAcoes.getFullYear(), hojeAcoes.getMonth(), hojeAcoes.getDate() - 2),
-      inicioReal: new Date(hojeAcoes.getFullYear(), hojeAcoes.getMonth(), hojeAcoes.getDate() - 1),
-      prazo: new Date(hojeAcoes.getFullYear(), hojeAcoes.getMonth(), hojeAcoes.getDate() + 18),
+      inicioPrevisto: addDays(baseDiaAcoes, -2),
+      inicioReal: addDays(baseDiaAcoes, -1),
+      prazo: addDays(baseDiaAcoes, 18),
     },
     {
       acaoProposta: 'Implantar dashboard de ROI por canal',
@@ -1685,9 +1709,9 @@ async function main() {
       causa2: 'Ausência de visão consolidada por canal',
       status: 'EM_ANDAMENTO' as const,
       responsavelId: gestorA.id,
-      inicioPrevisto: new Date(hojeAcoes.getFullYear(), hojeAcoes.getMonth(), hojeAcoes.getDate() - 1),
-      inicioReal: new Date(hojeAcoes.getFullYear(), hojeAcoes.getMonth(), hojeAcoes.getDate()),
-      prazo: new Date(hojeAcoes.getFullYear(), hojeAcoes.getMonth(), hojeAcoes.getDate() + 20),
+      inicioPrevisto: addDays(baseDiaAcoes, -1),
+      inicioReal: baseDiaAcoes,
+      prazo: addDays(baseDiaAcoes, 20),
     },
     {
       acaoProposta: 'Auditar attribution e ROI por campanha',
@@ -1698,8 +1722,8 @@ async function main() {
       causa2: 'UTMs e eventos sem padronização',
       status: 'PENDENTE' as const,
       responsavelId: gestorA.id,
-      inicioPrevisto: new Date(hojeAcoes.getFullYear(), hojeAcoes.getMonth(), hojeAcoes.getDate() + 12),
-      prazo: new Date(hojeAcoes.getFullYear(), hojeAcoes.getMonth(), hojeAcoes.getDate() + 40),
+      inicioPrevisto: addDays(baseDiaAcoes, 12),
+      prazo: addDays(baseDiaAcoes, 40),
     },
   ];
 

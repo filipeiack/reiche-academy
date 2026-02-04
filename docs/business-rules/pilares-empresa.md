@@ -222,6 +222,22 @@ const pilarEmpresa = await this.prisma.pilarEmpresa.create({
 
 ---
 
+### R-PILEMP-002A: Criação Local de Pilar no empresas-form
+
+**Descrição:** Ao criar um pilar na tela empresas-form, o sistema deve criar **apenas** um `PilarEmpresa` (instância da empresa) e **não** deve criar ou alterar `Pilar` global.
+
+**Condição:** Criação de pilar disparada na gestão de pilares do formulário de empresa.
+
+**Comportamento:**
+- Criar registro em `PilarEmpresa` associado à empresa do CRUD.
+- Não criar registro em `Pilar` global.
+
+**Documento:** [pilares-empresa-criacao-local.md](./pilares-empresa-criacao-local.md)
+
+**Status:** ❌ **PROPOSTA — aguardando implementação**
+
+---
+
 ### R-PILEMP-003: Listagem de Pilares por Empresa (Snapshot Pattern)
 
 **Descrição:** Endpoint retorna pilares ativos de uma empresa específica, ordenados por `PilarEmpresa.ordem`. Dados são lidos da instância snapshot (não precisa JOIN com template).

@@ -23,16 +23,24 @@ export class PeriodosMentoriaService {
 
   constructor(private http: HttpClient) {}
 
-  create(empresaId: string, dto: { dataInicio: Date | string }): Observable<PeriodoMentoria> {
+  create(empresaId: string, dto: { dataInicio: Date | string; dataFim?: Date | string }): Observable<PeriodoMentoria> {
     const dataInicio = typeof dto.dataInicio === 'string'
       ? dto.dataInicio.includes('T')
         ? formatDateInputSaoPaulo(new Date(dto.dataInicio))
         : dto.dataInicio
       : formatDateInputSaoPaulo(dto.dataInicio);
+
+    const dataFim = dto.dataFim
+      ? typeof dto.dataFim === 'string'
+        ? dto.dataFim.includes('T')
+          ? formatDateInputSaoPaulo(new Date(dto.dataFim))
+          : dto.dataFim
+        : formatDateInputSaoPaulo(dto.dataFim)
+      : undefined;
     
     return this.http.post<PeriodoMentoria>(
       `${this.apiUrl}/empresas/${empresaId}/periodos-mentoria`,
-      { dataInicio },
+      { dataInicio, dataFim },
     );
   }
 
@@ -62,6 +70,13 @@ export class PeriodosMentoriaService {
     return this.http.post<PeriodoMentoria>(
       `${this.apiUrl}/empresas/${empresaId}/periodos-mentoria/${periodoId}/renovar`,
       { dataInicio: data },
+    );
+  }
+
+  encerrar(empresaId: string, periodoId: string): Observable<PeriodoMentoria> {
+    return this.http.post<PeriodoMentoria>(
+      `${this.apiUrl}/empresas/${empresaId}/periodos-mentoria/${periodoId}/encerrar`,
+      {},
     );
   }
 }

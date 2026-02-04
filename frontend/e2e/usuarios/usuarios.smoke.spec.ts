@@ -31,7 +31,6 @@ test.describe('@usuarios smoke - crud basico', () => {
     await fillFormField(page, 'nome', 'Usuario Gestor Smoke');
     await fillFormField(page, 'email', uniqueEmail);
     await fillFormField(page, 'senha', 'Senha@123');
-    await fillFormField(page, 'cargo', 'Gerente');
 
     await selectDropdownOption(page, 'perfilId', 'Gestor');
     await selectDropdownOption(page, 'empresaId', 'Empresa Teste A Ltda');
@@ -58,7 +57,6 @@ test.describe('@usuarios smoke - crud basico', () => {
     await fillFormField(page, 'nome', 'Usuario Unico');
     await fillFormField(page, 'email', uniqueEmail);
     await fillFormField(page, 'senha', 'Senha@123');
-    await fillFormField(page, 'cargo', 'Analista');
     await selectDropdownOption(page, 'perfilId', 'Colaborador');
     await selectDropdownOption(page, 'empresaId', 'Empresa Teste A Ltda');
 
@@ -70,7 +68,6 @@ test.describe('@usuarios smoke - crud basico', () => {
     await fillFormField(page, 'nome', 'Usuario Duplicado');
     await fillFormField(page, 'email', uniqueEmail);
     await fillFormField(page, 'senha', 'Senha@123');
-    await fillFormField(page, 'cargo', 'Analista');
     await selectDropdownOption(page, 'perfilId', 'Colaborador');
     await selectDropdownOption(page, 'empresaId', 'Empresa Teste A Ltda');
 

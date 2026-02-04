@@ -49,7 +49,7 @@ import { TranslatePipe } from "../../../../core/pipes/translate.pipe";
               }
             </div>
 
-            <div class="mb-3">
+            <!-- <div class="mb-3">
               <label class="form-label">
                 {{ 'DIAGNOSTICO.CRITICIDADE' | translate }}
               </label>
@@ -63,7 +63,7 @@ import { TranslatePipe } from "../../../../core/pipes/translate.pipe";
                   {{ criticidade.label }}
                 </option>
               </select>
-            </div>
+            </div> -->
 
             <div class="alert alert-info">
               <i class="feather icon-info me-2"></i>

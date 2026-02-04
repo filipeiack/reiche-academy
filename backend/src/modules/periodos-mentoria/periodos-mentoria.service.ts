@@ -9,7 +9,7 @@ import { AuditService } from '../audit/audit.service';
 import { CreatePeriodoMentoriaDto } from './dto/create-periodo-mentoria.dto';
 import { RenovarPeriodoMentoriaDto } from './dto/renovar-periodo-mentoria.dto';
 import {
-  endOfYearInSaoPaulo,
+  endOfAnnualCycleInSaoPaulo,
   formatDateInSaoPaulo,
   nowInSaoPaulo,
   parseDateInSaoPaulo,
@@ -24,10 +24,29 @@ export class PeriodosMentoriaService {
 
   /**
    * Calcula data fim corrigida para períodos anuais
-   * Retorna 31 de dezembro do ano da dataInicio (horário de São Paulo)
+   * Retorna dataInicio + 1 ano - 1 dia (fim do dia em São Paulo)
    */
   private calcularDataFimAno(dataInicio: Date): Date {
-    return endOfYearInSaoPaulo(dataInicio);
+    return endOfAnnualCycleInSaoPaulo(dataInicio);
+  }
+
+  private addMonths(data: Date, meses: number): Date {
+    const novaData = new Date(data);
+    novaData.setMonth(novaData.getMonth() + meses);
+    return novaData;
+  }
+
+  private validarDataFim(dataInicio: Date, dataFim: Date): void {
+    const minDataFim = this.addMonths(dataInicio, 5);
+    const maxDataFim = this.addMonths(dataInicio, 13);
+
+    if (dataFim < dataInicio) {
+      throw new BadRequestException('Data de término não pode ser anterior à data de início');
+    }
+
+    if (dataFim < minDataFim || dataFim > maxDataFim) {
+      throw new BadRequestException('Data de término deve estar entre 5 e 13 meses após a data de início');
+    }
   }
 
   /**
@@ -68,7 +87,13 @@ export class PeriodosMentoriaService {
 
     // R-MENT-001: Calcular dataFim (dataInicio + 1 ano)
     const dataInicio = parseDateInSaoPaulo(dto.dataInicio);
-    const dataFim = this.calcularDataFimAno(dataInicio);
+    const dataFim = dto.dataFim
+      ? parseDateInSaoPaulo(dto.dataFim)
+      : this.calcularDataFimAno(dataInicio);
+
+    if (dto.dataFim) {
+      this.validarDataFim(dataInicio, dataFim);
+    }
 
     // Criar período
     const periodo = await this.prisma.periodoMentoria.create({
@@ -212,6 +237,56 @@ export class PeriodosMentoriaService {
     // (botão "Novo ciclo de 12 meses" na tela de edição de valores mensais)
 
     return novoPeriodo;
+  }
+
+  /**
+   * Encerrar período ativo manualmente
+   */
+  async encerrar(empresaId: string, periodoId: string, updatedBy?: string) {
+    const periodoAtual = await this.prisma.periodoMentoria.findFirst({
+      where: {
+        id: periodoId,
+        empresaId,
+      },
+    });
+
+    if (!periodoAtual) {
+      throw new NotFoundException('Período de mentoria não encontrado');
+    }
+
+    if (!periodoAtual.ativo) {
+      throw new BadRequestException('Período de mentoria já está encerrado');
+    }
+
+    const dataEncerramento = nowInSaoPaulo();
+    if (dataEncerramento < periodoAtual.dataInicio) {
+      throw new BadRequestException('Data de encerramento inválida');
+    }
+
+    const periodoEncerrado = await this.prisma.periodoMentoria.update({
+      where: { id: periodoId },
+      data: {
+        ativo: false,
+        dataEncerramento,
+        updatedBy,
+      },
+    });
+
+    if (updatedBy) {
+      const user = await this.prisma.usuario.findUnique({ where: { id: updatedBy } });
+      await this.audit.log({
+        usuarioId: updatedBy,
+        usuarioNome: user?.nome ?? '',
+        usuarioEmail: user?.email ?? '',
+        entidade: 'periodos_mentoria',
+        entidadeId: periodoId,
+        acao: 'UPDATE',
+        dadosAntes: periodoAtual,
+        dadosDepois: periodoEncerrado,
+      });
+    }
+
+    return periodoEncerrado;
   }
 
   /**

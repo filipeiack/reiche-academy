@@ -84,24 +84,49 @@ test.describe('@cockpit smoke - dashboard', () => {
     }
 
     await expect(page.locator('[data-testid="cockpit-header"]').first()).toBeVisible();
-    await expect(page.locator('[data-testid="tab-contexto"]').first()).toBeVisible();
+    await expect(page.locator('[data-testid="tab-objetivos"]').first()).toBeVisible();
     await expect(page.locator('[data-testid="tab-indicadores"]').first()).toBeVisible();
     await expect(page.locator('[data-testid="tab-graficos"]').first()).toBeVisible();
     await expect(page.locator('[data-testid="tab-processos"]').first()).toBeVisible();
+    await expect(page.locator('[data-testid="tab-cargos-funcoes"]').first()).toBeVisible();
+    await expect(page.locator('[data-testid="tab-plano-acao"]').first()).toBeVisible();
   });
 
-  test('abre aba de contexto e exibe formulário', async ({ page }) => {
+  test('abre aba de objetivos e exibe formulário', async ({ page }) => {
     const cockpitOk = await acessarPrimeiroCockpit(page, TEST_USERS.gestorEmpresaA);
     if (!cockpitOk) {
       test.skip();
       return;
     }
 
-    const tabContexto = page.locator('[data-testid="tab-contexto"]').first();
-    await tabContexto.click();
+    const tabObjetivos = page.locator('[data-testid="tab-objetivos"]').first();
+    await tabObjetivos.click();
 
-    await expect(page.locator('[data-testid="contexto-entradas"]').first()).toBeVisible();
-    await expect(page.locator('[data-testid="contexto-saidas"]').first()).toBeVisible();
-    await expect(page.locator('[data-testid="contexto-missao"]').first()).toBeVisible();
+    await expect(page.locator('[data-testid="objetivos-entradas"]').first()).toBeVisible();
+    await expect(page.locator('[data-testid="objetivos-saidas"]').first()).toBeVisible();
+    await expect(page.locator('[data-testid="objetivos-missao"]').first()).toBeVisible();
+  });
+
+  test('abre aba de plano de ação e exibe lista', async ({ page }) => {
+    const cockpitOk = await acessarPrimeiroCockpit(page, TEST_USERS.gestorEmpresaA);
+    if (!cockpitOk) {
+      test.skip();
+      return;
+    }
+
+    const tabPlanoAcao = page.locator('[data-testid="tab-plano-acao"]').first();
+    await tabPlanoAcao.click();
+
+    await expect(page.locator('text=RESUMO DO PLANO DE AÇÃO').first()).toBeVisible();
+    await expect(page.locator('button:has-text("Adicionar Ação")').first()).toBeVisible();
+
+    const listaVazia = page.locator('text=Nenhuma ação encontrada.');
+    const tabelaAcoes = page.locator('table').first();
+
+    if (await listaVazia.isVisible().catch(() => false)) {
+      await expect(listaVazia).toBeVisible();
+    } else {
+      await expect(tabelaAcoes).toBeVisible();
+    }
   });
 });

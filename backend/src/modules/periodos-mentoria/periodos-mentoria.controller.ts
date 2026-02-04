@@ -68,4 +68,19 @@ export class PeriodosMentoriaController {
     const user = req.user as any;
     return this.service.renovar(empresaId, periodoId, dto, user?.id);
   }
+
+  /**
+   * POST /empresas/:id/periodos-mentoria/:periodoId/encerrar
+   * Encerrar período de mentoria (ADMINISTRADOR)
+   */
+  @Post(':periodoId/encerrar')
+  @Roles('ADMINISTRADOR')
+  async encerrar(
+    @Param('empresaId') empresaId: string,
+    @Param('periodoId') periodoId: string,
+    @Req() req: Request,
+  ) {
+    const user = req.user as any;
+    return this.service.encerrar(empresaId, periodoId, user?.id);
+  }
 }

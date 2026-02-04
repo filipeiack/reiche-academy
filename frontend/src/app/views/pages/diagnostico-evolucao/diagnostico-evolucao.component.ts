@@ -57,7 +57,8 @@ export class DiagnosticoEvolucaoComponent implements OnInit, OnDestroy {
   periodoAtual: PeriodoAvaliacao | null = null;
   periodoCongelado: PeriodoAvaliacao | null = null; // Último período congelado (para recongelamento)
   private readonly FILTRO_ULTIMOS_12_MESES = 'ultimos-12-meses';
-  anoFiltro: string = this.FILTRO_ULTIMOS_12_MESES;
+  private readonly ANO_CORRENTE = normalizeDateToSaoPaulo(new Date()).getFullYear().toString();
+  anoFiltro: string = this.ANO_CORRENTE;
   anosDisponiveis: Array<{ value: string; label: string }> = [];
   private periodosHistorico: PeriodoComSnapshots[] = [];
 
@@ -149,7 +150,7 @@ export class DiagnosticoEvolucaoComponent implements OnInit, OnDestroy {
       next: (data) => {
         this.medias = data;
         this.loading = false;
-        this.anoFiltro = this.FILTRO_ULTIMOS_12_MESES;
+        this.anoFiltro = this.ANO_CORRENTE;
         // Carregar período atual
         this.loadPeriodoAtual();
         // Carregar histórico com filtro de ano
@@ -310,9 +311,10 @@ export class DiagnosticoEvolucaoComponent implements OnInit, OnDestroy {
       this.historico = [];
       this.destroyBarChart();
       this.anosDisponiveis = [
+        { value: this.ANO_CORRENTE, label: this.ANO_CORRENTE },
         { value: this.FILTRO_ULTIMOS_12_MESES, label: 'Últimos 12 meses' }
       ];
-      this.anoFiltro = this.FILTRO_ULTIMOS_12_MESES;
+      this.anoFiltro = this.ANO_CORRENTE;
     }
   }
 
@@ -639,15 +641,23 @@ renderBarChart(): void {
    * Gera lista de anos disponíveis para o filtro (últimos 5 anos a partir do ano atual)
    */
   private atualizarAnosDisponiveis(periodos: PeriodoComSnapshots[]): void {
-    const anosUnicos = Array.from(new Set(periodos.map(p => p.ano))).sort((a, b) => b - a);
+    const anoCorrente = Number(this.ANO_CORRENTE);
+    const anosUnicos = Array.from(new Set(periodos.map(p => p.ano)));
+
+    if (!anosUnicos.includes(anoCorrente)) {
+      anosUnicos.push(anoCorrente);
+    }
+
+    const anosOrdenados = anosUnicos.sort((a, b) => b - a);
 
     this.anosDisponiveis = [
-      { value: this.FILTRO_ULTIMOS_12_MESES, label: 'Últimos 12 meses' },
-      ...anosUnicos.map(ano => ({ value: ano.toString(), label: ano.toString() }))
+      ...anosOrdenados.map(ano => ({ value: ano.toString(), label: ano.toString() })),
+      { value: this.FILTRO_ULTIMOS_12_MESES, label: 'Últimos 12 meses' }
     ];
 
-    if (!this.anoFiltro || (this.anoFiltro !== this.FILTRO_ULTIMOS_12_MESES && !anosUnicos.includes(Number(this.anoFiltro)))) {
-      this.anoFiltro = this.FILTRO_ULTIMOS_12_MESES;
+    const valoresDisponiveis = this.anosDisponiveis.map(opcao => opcao.value);
+    if (!this.anoFiltro || !valoresDisponiveis.includes(this.anoFiltro)) {
+      this.anoFiltro = this.ANO_CORRENTE;
     }
   }
 

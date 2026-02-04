@@ -4,6 +4,7 @@ import { RequestUser } from '../../common/interfaces/request-user.interface';
 import { AuditService } from '../audit/audit.service';
 import { CreatePilarEmpresaDto } from './dto/create-pilar-empresa.dto';
 import { UpdatePilarEmpresaDto } from './dto/update-pilar-empresa.dto';
+import { nowInSaoPaulo } from '../../common/utils/timezone';
 
 @Injectable()
 export class PilaresEmpresaService {
@@ -345,6 +346,8 @@ export class PilaresEmpresaService {
           empresaId,
           ordem: proximaOrdemPilar++,
           createdBy: user.id,
+          createdAt: nowInSaoPaulo(),
+          updatedAt: nowInSaoPaulo(),
         },
         include: {
           pilarTemplate: true,
@@ -462,6 +465,8 @@ export class PilaresEmpresaService {
         empresaId,
         ordem: proximaOrdem,
         createdBy: user.id,
+        createdAt: nowInSaoPaulo(),
+        updatedAt: nowInSaoPaulo(),
       },
       include: {
         pilarTemplate: true,

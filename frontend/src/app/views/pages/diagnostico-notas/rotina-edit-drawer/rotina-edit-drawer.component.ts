@@ -88,7 +88,7 @@ import { TranslatePipe } from "../../../../core/pipes/translate.pipe";
                     } @else {
                       <div class="flex-grow-1">
                         <span class="rotina-nome">{{ rotina.nome }}</span>
-                        <div class="mt-2">
+                        <!-- <div class="mt-2">
                           <label class="form-label small mb-1">
                             {{ 'DIAGNOSTICO.CRITICIDADE' | translate }}
                           </label>
@@ -108,7 +108,7 @@ import { TranslatePipe } from "../../../../core/pipes/translate.pipe";
                               </option>
                             }
                           </select>
-                        </div>
+                        </div> -->
                       </div>
                       
                       <button data-testid="edit-cargo-button" class="btn btn-icon text-secondary"

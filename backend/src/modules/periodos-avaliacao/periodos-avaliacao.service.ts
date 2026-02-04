@@ -9,7 +9,7 @@ import { AuditService } from '../audit/audit.service';
 import { CreatePeriodoAvaliacaoDto } from './dto/create-periodo-avaliacao.dto';
 import { RequestUser } from '../../common/interfaces/request-user.interface';
 import { getQuarter, getYear, differenceInDays } from 'date-fns';
-import { formatDateInSaoPaulo, parseDateInSaoPaulo } from '../../common/utils/timezone';
+import { formatDateInSaoPaulo, nowInSaoPaulo, parseDateInSaoPaulo } from '../../common/utils/timezone';
 
 @Injectable()
 export class PeriodosAvaliacaoService {
@@ -371,7 +371,7 @@ export class PeriodosAvaliacaoService {
       const periodoAtualizado = await tx.periodoAvaliacao.update({
         where: { id: periodoId },
         data: {
-          updatedAt: new Date(),
+          updatedAt: nowInSaoPaulo(),
           updatedBy: user.id,
         },
         select: {
@@ -384,7 +384,6 @@ export class PeriodosAvaliacaoService {
           dataCongelamento: true,
           createdAt: true,
           updatedAt: true,
-          createdBy: true,
           updatedBy: true,
         },
       });
