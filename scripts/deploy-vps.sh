@@ -11,10 +11,17 @@ set -e  # Para em qualquer erro
 
 # Definir ambiente (padrão: staging)
 ENVIRONMENT=${1:-staging}
+VERSION_BUMP=${2:-patch}  # Tipo de bump: major, minor, patch
 
 if [[ "$ENVIRONMENT" != "staging" && "$ENVIRONMENT" != "prod" ]]; then
     echo "❌ Ambiente inválido: $ENVIRONMENT"
-    echo "Uso: bash deploy-vps.sh [staging|prod]"
+    echo "Uso: bash deploy-vps.sh [staging|prod] [patch|minor|major]"
+    exit 1
+fi
+
+if [[ "$VERSION_BUMP" != "patch" && "$VERSION_BUMP" != "minor" && "$VERSION_BUMP" != "major" ]]; then
+    echo "❌ Tipo de versionamento inválido: $VERSION_BUMP"
+    echo "Uso: bash deploy-vps.sh [staging|prod] [patch|minor|major]"
     exit 1
 fi
 
@@ -31,6 +38,19 @@ echo "🚀 Iniciando Deploy do Reiche Academy no VPS..."
 echo "📍 Ambiente: $ENVIRONMENT"
 echo "🌿 Branch: $BRANCH"
 echo "🌐 Domínio: $DOMAIN"
+
+# Gerar nova versão
+echo ""
+echo "🏷️  Gerando versão de deploy..."
+if [ -f "scripts/version-manager.sh" ]; then
+    VERSION=$(bash scripts/version-manager.sh bump "$VERSION_BUMP" "$ENVIRONMENT")
+    echo "📦 Versão: v$VERSION"
+else
+    VERSION="1.0.0"
+    echo "⚠️  version-manager.sh não encontrado, usando versão padrão: v$VERSION"
+fi
+
+export DEPLOY_VERSION=$VERSION
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 
 # ============================================================================
@@ -120,16 +140,39 @@ if [ ! -f ".env" ]; then
 fi
 
 # ============================================================================
-# STEP 6: Build das imagens Docker
+# STEP 6: Build das imagens Docker (com versionamento)
 # ============================================================================
 echo ""
-echo "🔨 [6/8] Fazendo build das imagens Docker ($ENVIRONMENT)..."
+echo "🔨 [6/8] Fazendo build das imagens Docker ($ENVIRONMENT v$VERSION)..."
 echo "⏳ Isto pode levar alguns minutos..."
 
+# Definir tags de build
+BUILD_DATE=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
+GIT_COMMIT=$(git rev-parse --short HEAD 2>/dev/null || echo "unknown")
+
+# Build com labels e tags de versão
 if [ "$ENVIRONMENT" == "staging" ]; then
-    docker compose -f docker-compose.vps.yml build --no-cache backend-staging frontend-staging
+    docker compose -f docker-compose.vps.yml build --no-cache \
+        --build-arg BUILD_VERSION="$VERSION" \
+        --build-arg BUILD_DATE="$BUILD_DATE" \
+        --build-arg GIT_COMMIT="$GIT_COMMIT" \
+        --build-arg ENVIRONMENT="staging" \
+        backend-staging frontend-staging
+    
+    # Tagear imagens com versão
+    docker tag reiche-academy-backend-staging:latest reiche-academy-backend-staging:$VERSION
+    docker tag reiche-academy-frontend-staging:latest reiche-academy-frontend-staging:$VERSION
 else
-    docker compose -f docker-compose.vps.yml build --no-cache backend-prod frontend-prod
+    docker compose -f docker-compose.vps.yml build --no-cache \
+        --build-arg BUILD_VERSION="$VERSION" \
+        --build-arg BUILD_DATE="$BUILD_DATE" \
+        --build-arg GIT_COMMIT="$GIT_COMMIT" \
+        --build-arg ENVIRONMENT="production" \
+        backend-prod frontend-prod
+    
+    # Tagear imagens com versão
+    docker tag reiche-academy-backend-prod:latest reiche-academy-backend-prod:$VERSION
+    docker tag reiche-academy-frontend-prod:latest reiche-academy-frontend-prod:$VERSION
 fi
 
 # ============================================================================
@@ -197,12 +240,25 @@ echo "🔗 URLs de acesso:"
 echo "  Produção:  http://app.reicheacademy.cloud (após DNS configurado)"
 echo "  Staging:   http://staging.reicheacademy.cloud (após DNS configurado)"
 echo ""
-
-echo "📝 Próximos passos:"
+� Versão implantada: v$VERSION"
+echo "🏷️  Imagens Docker:"
+if [ "$ENVIRONMENT" == "staging" ]; then
+    echo "   - reiche-academy-backend-staging:$VERSION"
+    echo "   - reiche-academy-frontend-staging:$VERSION"
+else
+    echo "   - reiche-academy-backend-prod:$VERSION"
+    echo "   - reiche-academy-frontend-prod:$VERSION"
+fi
 echo ""
-echo "1️⃣  Verificar logs:"
-echo "   docker compose -f docker-compose.vps.yml logs -f"
+echo "📝 Para fazer deploy do outro ambiente, execute:"
+if [ "$ENVIRONMENT" == "staging" ]; then
+    echo "   bash deploy-vps.sh prod [patch|minor|major]"
+else
+    echo "   bash deploy-vps.sh staging [patch|minor|major]"
+fi
 echo ""
+echo "📋 Para ver histórico de deploys:"
+echo "   bash scripts/version-manager.sh history $ENVIRONMENT"ho ""
 echo "2️⃣  Configurar SSL (Let's Encrypt):"
 echo "   apt install certbot -y"
 echo "   certbot certonly --standalone -d app.reicheacademy.cloud"

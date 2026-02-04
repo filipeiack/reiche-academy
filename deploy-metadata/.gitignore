@@ -1,0 +1,6 @@
+# Manter estrutura do diretório mas não versionar metadata de deploys
+*.json
+!README.md
+
+# Exceção: manter arquivo de exemplo (se criado no futuro)
+!example-deploy.json
