@@ -248,7 +248,7 @@ node -e "console.log(require('crypto').randomBytes(64).toString('hex'))"
 > **Nota sobre branches no VPS:**
 > - Mantenha o VPS sincronizado com `staging` para o ambiente de staging
 > - Mude para `main` antes de fazer deploy de produção
-> - Use `git fetch origin` + `git checkout <branch>` para trocar entre ambientes
+> - Use `git fetch origin` + `git checkout main` para trocar entre ambientes
 
 ### **5. Build e Start**
 
