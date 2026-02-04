@@ -1,5 +1,11 @@
 # Multi-stage Dockerfile for NestJS Backend
 
+# Build arguments for versioning
+ARG BUILD_VERSION=dev
+ARG BUILD_DATE=unknown
+ARG GIT_COMMIT=unknown
+ARG ENVIRONMENT=development
+
 # Base stage - common dependencies
 FROM node:20-alpine AS base
 WORKDIR /app
@@ -51,8 +57,27 @@ RUN npm run build
 # Production stage
 FROM base AS production
 
+# Re-declare build arguments (needed in each stage)
+ARG BUILD_VERSION=dev
+ARG BUILD_DATE=unknown
+ARG GIT_COMMIT=unknown
+ARG ENVIRONMENT=production
+
 # Set NODE_ENV
 ENV NODE_ENV=production
+
+# Add version metadata as environment variables
+ENV BUILD_VERSION=$BUILD_VERSION \
+    BUILD_DATE=$BUILD_DATE \
+    GIT_COMMIT=$GIT_COMMIT \
+    DEPLOY_ENVIRONMENT=$ENVIRONMENT
+
+# Labels for metadata
+LABEL org.opencontainers.image.title="Reiche Academy Backend"
+LABEL org.opencontainers.image.version="$BUILD_VERSION"
+LABEL org.opencontainers.image.created="$BUILD_DATE"
+LABEL org.opencontainers.image.revision="$GIT_COMMIT"
+LABEL org.opencontainers.image.environment="$ENVIRONMENT"
 
 # Install tsx globally for running TypeScript scripts (seed, etc)
 RUN npm install -g tsx
