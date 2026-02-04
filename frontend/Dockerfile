@@ -65,8 +65,8 @@ LABEL org.opencontainers.image.environment="$ENVIRONMENT"
 # Copy custom nginx config (optional - usar nginx padrão se não tiver custom)
 # COPY nginx.conf /etc/nginx/nginx.conf
 
-# Copy built application
-COPY --from=builder /app/dist/reiche-academy /usr/share/nginx/html
+# Copy built application (Angular 17+ outputs to browser/ subdirectory)
+COPY --from=builder /app/dist/reiche-academy/browser /usr/share/nginx/html
 
 # Create version info file for runtime access
 RUN echo "{\"version\":\"$BUILD_VERSION\",\"buildDate\":\"$BUILD_DATE\",\"commit\":\"$GIT_COMMIT\",\"environment\":\"$ENVIRONMENT\"}" > /usr/share/nginx/html/version.json
