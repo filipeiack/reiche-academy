@@ -53,9 +53,9 @@
   },
   "INDICADORES_TEMPLATES": {
     "TITLE": "Indicadores Templates",
-    "NEW": "Adicionar Indicador Template",
+    "NEW": "Adicionar Indicador",
     "NEW_TOOLTIP": "Adicionar Novo Indicador Template",
-    "EDIT": "Editar Indicador Template",
+    "EDIT": "Editar Indicador",
     "DETAILS": "Detalhes do Indicador Template",
     "FILTER_ALL_PILARES": "Todos os Pilares",
     "SEARCH_PLACEHOLDER": "Buscar por nome do indicador...",
@@ -66,8 +66,8 @@
     "FIELDS": {
       "NOME": "Indicador",
       "PILAR": "Pilar",
-      "TIPO_MEDIDA": "Tipo de Medida",
-      "STATUS_MEDICAO": "Status da Medição",
+      "TIPO_MEDIDA": "Medida",
+      "STATUS_MEDICAO": "Medição",
       "MELHOR": "Melhor",
       "ORDER": "Ordem",
       "DESCRICAO": "Descrição"

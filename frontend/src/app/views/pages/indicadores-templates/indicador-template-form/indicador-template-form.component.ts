@@ -10,8 +10,6 @@ import {
   CreateIndicadorTemplateDto,
   UpdateIndicadorTemplateDto,
   TipoMedidaIndicador,
-  StatusMedicaoIndicador,
-  DirecaoIndicador,
 } from '../../../../core/services/indicadores-templates.service';
 import { PilaresService, Pilar } from '../../../../core/services/pilares.service';
 import { TranslatePipe } from '../../../../core/pipes/translate.pipe';
@@ -47,16 +45,10 @@ export class IndicadorTemplateFormComponent implements OnInit, AfterViewInit {
     { value: 'PERCENTUAL', labelKey: 'INDICADORES_TEMPLATES.TIPO_MEDIDA.PERCENTUAL' },
   ];
 
-  statusMedicaoOptions: { value: StatusMedicaoIndicador; labelKey: string }[] = [
-    { value: 'NAO_MEDIDO', labelKey: 'INDICADORES_TEMPLATES.STATUS_MEDICAO.NAO_MEDIDO' },
-    { value: 'MEDIDO_NAO_CONFIAVEL', labelKey: 'INDICADORES_TEMPLATES.STATUS_MEDICAO.MEDIDO_NAO_CONFIAVEL' },
-    { value: 'MEDIDO_CONFIAVEL', labelKey: 'INDICADORES_TEMPLATES.STATUS_MEDICAO.MEDIDO_CONFIAVEL' },
-  ];
-
-  melhorOptions: { value: DirecaoIndicador; labelKey: string }[] = [
-    { value: 'MAIOR', labelKey: 'INDICADORES_TEMPLATES.MELHOR.MAIOR' },
-    { value: 'MENOR', labelKey: 'INDICADORES_TEMPLATES.MELHOR.MENOR' },
-  ];
+  direcaoIndicador = {
+    MAIOR: 'MAIOR',
+    MENOR: 'MENOR',
+  } as const;
 
   ngOnInit(): void {
     this.buildForm();
@@ -95,7 +87,6 @@ export class IndicadorTemplateFormComponent implements OnInit, AfterViewInit {
       descricao: ['', [Validators.maxLength(1000)]],
       pilarId: ['', [Validators.required]],
       tipoMedida: ['', [Validators.required]],
-      statusMedicao: ['', [Validators.required]],
       melhor: ['', [Validators.required]],
       ordem: [null, [Validators.min(1)]],
     });
@@ -124,7 +115,6 @@ export class IndicadorTemplateFormComponent implements OnInit, AfterViewInit {
           descricao: indicador.descricao || '',
           pilarId: indicador.pilarId,
           tipoMedida: indicador.tipoMedida,
-          statusMedicao: indicador.statusMedicao,
           melhor: indicador.melhor,
           ordem: indicador.ordem,
         });
@@ -192,7 +182,6 @@ export class IndicadorTemplateFormComponent implements OnInit, AfterViewInit {
       nome: data.nome,
       descricao: data.descricao,
       tipoMedida: data.tipoMedida,
-      statusMedicao: data.statusMedicao,
       melhor: data.melhor,
       ordem: data.ordem,
     };
@@ -243,11 +232,6 @@ export class IndicadorTemplateFormComponent implements OnInit, AfterViewInit {
 
   get tipoMedidaInvalid(): boolean {
     const control = this.form.get('tipoMedida');
-    return !!(control && control.invalid && (control.dirty || control.touched));
-  }
-
-  get statusMedicaoInvalid(): boolean {
-    const control = this.form.get('statusMedicao');
     return !!(control && control.invalid && (control.dirty || control.touched));
   }
 

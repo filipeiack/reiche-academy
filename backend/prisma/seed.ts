@@ -786,7 +786,6 @@ async function main() {
     indicadores: Array<{
       nome: string;
       tipoMedida: 'REAL' | 'QUANTIDADE' | 'TEMPO' | 'PERCENTUAL';
-      statusMedicao: 'NAO_MEDIDO' | 'MEDIDO_NAO_CONFIAVEL' | 'MEDIDO_CONFIAVEL';
       melhor: 'MAIOR' | 'MENOR';
       descricao: string;
       ordem: number;
@@ -816,7 +815,6 @@ async function main() {
             nome: indicador.nome,
             descricao: indicador.descricao,
             tipoMedida: indicador.tipoMedida,
-            statusMedicao: indicador.statusMedicao,
             melhor: indicador.melhor,
             ordem: indicador.ordem,
             ativo: true,
@@ -828,7 +826,6 @@ async function main() {
           data: {
             descricao: indicador.descricao,
             tipoMedida: indicador.tipoMedida,
-            statusMedicao: indicador.statusMedicao,
             melhor: indicador.melhor,
             ordem: indicador.ordem,
             ativo: true,
@@ -842,7 +839,6 @@ async function main() {
     {
       nome: 'GASTO TOTAL COM ANUNCIOS',
       tipoMedida: 'REAL',
-      statusMedicao: 'NAO_MEDIDO',
       melhor: 'MENOR',
       descricao: 'TOTAL INVESTIDO EM ANUNCIOS NO MÊS',
       ordem: 1,
@@ -850,7 +846,6 @@ async function main() {
     {
       nome: 'VOLUME DE LEADS QUALIFICADOS GERADOS',
       tipoMedida: 'QUANTIDADE',
-      statusMedicao: 'NAO_MEDIDO',
       melhor: 'MAIOR',
       descricao: '# POTENCIAIS CLIENTES CAPTURADOS',
       ordem: 2,
@@ -858,7 +853,6 @@ async function main() {
     {
       nome: 'CUSTO AQUISIÇÃO DO CLIENTE (CAC)',
       tipoMedida: 'REAL',
-      statusMedicao: 'NAO_MEDIDO',
       melhor: 'MAIOR',
       descricao: 'TOTAL GASTO/NÚMERO DE CLIENTES ADQUIRIDOS',
       ordem: 3,
@@ -866,7 +860,6 @@ async function main() {
     {
       nome: 'ROI DE MARKETING',
       tipoMedida: 'QUANTIDADE',
-      statusMedicao: 'NAO_MEDIDO',
       melhor: 'MAIOR',
       descricao: 'FATURAMENTO TOTAL',
       ordem: 4,
@@ -877,7 +870,6 @@ async function main() {
     {
       nome: 'FATURAMENTO GLOBAL',
       tipoMedida: 'REAL',
-      statusMedicao: 'NAO_MEDIDO',
       melhor: 'MAIOR',
       descricao: 'TOTAL FATURADO NO MÊS',
       ordem: 1,
@@ -885,7 +877,6 @@ async function main() {
     {
       nome: '# VENDAS REALIZADAS',
       tipoMedida: 'QUANTIDADE',
-      statusMedicao: 'NAO_MEDIDO',
       melhor: 'MAIOR',
       descricao: 'NÚMERO DE VENDAS REALIZADAS NO MÊS',
       ordem: 2,
@@ -893,7 +884,6 @@ async function main() {
     {
       nome: 'TICKET MÉDIO DAS VENDAS REALIZADAS',
       tipoMedida: 'REAL',
-      statusMedicao: 'NAO_MEDIDO',
       melhor: 'MAIOR',
       descricao: 'TOTAL FATURADO NO MÊS/ NÚMERO DE VENDAS',
       ordem: 3,
@@ -901,7 +891,6 @@ async function main() {
     {
       nome: 'TAXA DE CONVERSÃO',
       tipoMedida: 'PERCENTUAL',
-      statusMedicao: 'NAO_MEDIDO',
       melhor: 'MAIOR',
       descricao: '# PROPOSTAS FECHADAS / TOTAL DE PROPOSTAS ENVIADAS',
       ordem: 4,
@@ -912,7 +901,6 @@ async function main() {
     {
       nome: 'TURNOVER',
       tipoMedida: 'PERCENTUAL',
-      statusMedicao: 'NAO_MEDIDO',
       melhor: 'MENOR',
       descricao: '% DE COLABORADORES QUE ENTRAM E SAEM DA EMPRESA',
       ordem: 1,
@@ -920,7 +908,6 @@ async function main() {
     {
       nome: 'ABSENTEÍSMO',
       tipoMedida: 'QUANTIDADE',
-      statusMedicao: 'NAO_MEDIDO',
       melhor: 'MENOR',
       descricao: '# DE FALTAS OU ATRASO NÃO JUSTIFICADOS',
       ordem: 2,
@@ -928,7 +915,6 @@ async function main() {
     {
       nome: 'TEMPO MÉDIO DE CONTRATAÇÃO',
       tipoMedida: 'TEMPO',
-      statusMedicao: 'NAO_MEDIDO',
       melhor: 'MENOR',
       descricao: 'TEMPO ENTRE A SOLICITAÇÃO DA PESSOA E A CHEGADA DO NOVO COLABORADOR',
       ordem: 3,
@@ -936,7 +922,6 @@ async function main() {
     {
       nome: 'CUSTO TOTAL COM HORAS EXTRAS',
       tipoMedida: 'REAL',
-      statusMedicao: 'NAO_MEDIDO',
       melhor: 'MENOR',
       descricao: 'TOTAL GASTO COM HORAS EXTRAS DE FUNCIONÁRIOS',
       ordem: 4,
@@ -947,7 +932,6 @@ async function main() {
     {
       nome: 'FATURAMENTO MENSAL',
       tipoMedida: 'REAL',
-      statusMedicao: 'NAO_MEDIDO',
       melhor: 'MAIOR',
       descricao: 'VALOR VENDIDO PELA EMPRESA NO MÊS',
       ordem: 1,
@@ -955,7 +939,6 @@ async function main() {
     {
       nome: 'DESPESAS FIXAS MENSAIS',
       tipoMedida: 'REAL',
-      statusMedicao: 'NAO_MEDIDO',
       melhor: 'MENOR',
       descricao: 'VALOR QUE A EMPRESA CUSTA POR MÊS',
       ordem: 2,
@@ -963,7 +946,6 @@ async function main() {
     {
       nome: 'MARGEM DE LUCRO LÍQUIDA',
       tipoMedida: 'PERCENTUAL',
-      statusMedicao: 'NAO_MEDIDO',
       melhor: 'MAIOR',
       descricao: 'LUCRO LÍQUIDO / RECEITA BRUTA × 100',
       ordem: 3,
@@ -971,7 +953,6 @@ async function main() {
     {
       nome: 'ENDIVIDAMENTO',
       tipoMedida: 'PERCENTUAL',
-      statusMedicao: 'NAO_MEDIDO',
       melhor: 'MENOR',
       descricao: 'ENDIVIDAMENTO (%) = PASSIVO TOTAL / ATIVO TOTAL × 100',
       ordem: 4,
@@ -982,7 +963,6 @@ async function main() {
     {
       nome: 'GASTO TOTAL COM COMPRAS',
       tipoMedida: 'REAL',
-      statusMedicao: 'NAO_MEDIDO',
       melhor: 'MENOR',
       descricao: 'TOTAL INVESTIDO EM COMPRAS NO MÊS',
       ordem: 1,
@@ -990,7 +970,6 @@ async function main() {
     {
       nome: '# COMPRAS REALIZADAS NO MÊS',
       tipoMedida: 'QUANTIDADE',
-      statusMedicao: 'NAO_MEDIDO',
       melhor: 'MENOR',
       descricao: 'TOTAL DE COMPRAS REALIZADAS NO MÊS',
       ordem: 2,
@@ -998,7 +977,6 @@ async function main() {
     {
       nome: 'ÍNDICE DE COMPRAS EMERGENCIAIS',
       tipoMedida: 'PERCENTUAL',
-      statusMedicao: 'NAO_MEDIDO',
       melhor: 'MENOR',
       descricao: 'TOTAL DE COMPRAS EMERGENCIAIS/ TOTAL DE COMPRAS REALIZADAS',
       ordem: 3,
@@ -1006,7 +984,6 @@ async function main() {
     {
       nome: 'TEMPO MÉDIO DE COMPRA',
       tipoMedida: 'TEMPO',
-      statusMedicao: 'NAO_MEDIDO',
       melhor: 'MENOR',
       descricao: 'TEMPO ENTRE A SOLICITAÇÃO DA COMPRA E A CHEGADA DO ITEM',
       ordem: 4,
@@ -1017,7 +994,6 @@ async function main() {
     {
       nome: 'VALOR TOTAL DO ESTOQUE',
       tipoMedida: 'REAL',
-      statusMedicao: 'NAO_MEDIDO',
       melhor: 'MENOR',
       descricao: 'TOTAL EM R$ IMOBILIZADO EM ESTOQUE',
       ordem: 1,
@@ -1025,7 +1001,6 @@ async function main() {
     {
       nome: 'RUPTURA DE ESTOQUE',
       tipoMedida: 'QUANTIDADE',
-      statusMedicao: 'NAO_MEDIDO',
       melhor: 'MENOR',
       descricao: '# DE VENDAS PERDIDAS POR FALTA DE PRODUTO',
       ordem: 2,
@@ -1033,7 +1008,6 @@ async function main() {
     {
       nome: 'TOTAL EM PERDAS E AVARIAS',
       tipoMedida: 'REAL',
-      statusMedicao: 'NAO_MEDIDO',
       melhor: 'MENOR',
       descricao: 'TOTAL GASTO COM PERDAS E AVARIAS',
       ordem: 3,
@@ -1041,7 +1015,6 @@ async function main() {
     {
       nome: 'TOTAL DE TROCAS E DEVOLUÇÕES',
       tipoMedida: 'REAL',
-      statusMedicao: 'NAO_MEDIDO',
       melhor: 'MENOR',
       descricao: '# DE TROCAS OU PRODUTOS DEVOLVIDOS',
       ordem: 4,
@@ -1452,7 +1425,7 @@ async function main() {
       update: {
         descricao: template.descricao,
         tipoMedida: template.tipoMedida,
-        statusMedicao: template.statusMedicao,
+        statusMedicao: null,
         melhor: template.melhor,
         ordem: template.ordem,
         responsavelMedicaoId: responsavel.id,
@@ -1463,7 +1436,7 @@ async function main() {
         nome: template.nome,
         descricao: template.descricao,
         tipoMedida: template.tipoMedida,
-        statusMedicao: template.statusMedicao,
+        statusMedicao: null,
         melhor: template.melhor,
         ordem: template.ordem,
         responsavelMedicaoId: responsavel.id,

@@ -9,11 +9,7 @@ import {
   IsUUID,
 } from 'class-validator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import {
-  TipoMedidaIndicador,
-  StatusMedicaoIndicador,
-  DirecaoIndicador,
-} from '@prisma/client';
+import { TipoMedidaIndicador, DirecaoIndicador } from '@prisma/client';
 
 export class CreateIndicadorTemplateDto {
   @ApiProperty({
@@ -52,18 +48,6 @@ export class CreateIndicadorTemplateDto {
     message: 'tipoMedida deve ser REAL, QUANTIDADE, TEMPO ou PERCENTUAL',
   })
   tipoMedida: TipoMedidaIndicador;
-
-  @ApiProperty({
-    example: 'MEDIDO_CONFIAVEL',
-    enum: StatusMedicaoIndicador,
-    description: 'Status da medição: NAO_MEDIDO, MEDIDO_NAO_CONFIAVEL, MEDIDO_CONFIAVEL',
-  })
-  @IsNotEmpty({ message: 'statusMedicao é obrigatório' })
-  @IsEnum(StatusMedicaoIndicador, {
-    message:
-      'statusMedicao deve ser NAO_MEDIDO, MEDIDO_NAO_CONFIAVEL ou MEDIDO_CONFIAVEL',
-  })
-  statusMedicao: StatusMedicaoIndicador;
 
   @ApiProperty({
     example: 'MAIOR',

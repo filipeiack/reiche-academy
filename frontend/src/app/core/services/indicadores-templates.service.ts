@@ -4,7 +4,6 @@ import { Observable } from 'rxjs';
 import { environment } from '../../../environments/environment';
 
 export type TipoMedidaIndicador = 'REAL' | 'QUANTIDADE' | 'TEMPO' | 'PERCENTUAL';
-export type StatusMedicaoIndicador = 'NAO_MEDIDO' | 'MEDIDO_NAO_CONFIAVEL' | 'MEDIDO_CONFIAVEL';
 export type DirecaoIndicador = 'MAIOR' | 'MENOR';
 
 export interface IndicadorTemplate {
@@ -12,7 +11,6 @@ export interface IndicadorTemplate {
   nome: string;
   descricao?: string;
   tipoMedida: TipoMedidaIndicador;
-  statusMedicao: StatusMedicaoIndicador;
   melhor: DirecaoIndicador;
   ordem: number;
   ativo: boolean;
@@ -32,7 +30,6 @@ export interface CreateIndicadorTemplateDto {
   nome: string;
   descricao?: string;
   tipoMedida: TipoMedidaIndicador;
-  statusMedicao: StatusMedicaoIndicador;
   melhor: DirecaoIndicador;
   ordem?: number;
   pilarId: string;
@@ -42,7 +39,6 @@ export interface UpdateIndicadorTemplateDto {
   nome?: string;
   descricao?: string;
   tipoMedida?: TipoMedidaIndicador;
-  statusMedicao?: StatusMedicaoIndicador;
   melhor?: DirecaoIndicador;
   ordem?: number;
   ativo?: boolean;

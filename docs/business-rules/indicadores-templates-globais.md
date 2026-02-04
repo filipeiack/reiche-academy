@@ -16,11 +16,10 @@ Aplicado quando:
 ### 1) CRUD de Indicadores Templates Globais
 - Indicadores templates são **globais** (não pertencem a empresa).
 - Cada indicador template deve estar associado a um **Pilar Template**.
-- Campos do indicador template devem refletir o mesmo conjunto do **IndicadorCockpit**:
+- Campos do indicador template devem refletir o conjunto **sem `statusMedicao`**:
   - `nome`
   - `descricao`
   - `tipoMedida`
-  - `statusMedicao`
   - `melhor`
   - `ordem`
 - Deve existir **soft delete** via `ativo` (padrão do sistema).
@@ -31,8 +30,9 @@ Aplicado quando:
 - Ao criar um cockpit para um `PilarEmpresa` que possui `pilarTemplateId`, o sistema deve:
   1. Buscar todos os indicadores templates associados ao Pilar Template.
   2. Copiar cada indicador template para **IndicadorCockpit** do cockpit criado.
-  3. Manter os campos copiados conforme o template (`nome`, `descricao`, `tipoMedida`, `statusMedicao`, `melhor`, `ordem`).
-  4. Auto-criar **12** registros `IndicadorMensal` (jan-dez) para cada `IndicadorCockpit` copiado.
+  3. Manter os campos copiados conforme o template (`nome`, `descricao`, `tipoMedida`, `melhor`, `ordem`).
+  4. Definir `statusMedicao` inicial como **null** no `IndicadorCockpit` criado a partir do template.
+  5. Auto-criar **12** registros `IndicadorMensal` (jan-dez) para cada `IndicadorCockpit` copiado.
 - Caso o `PilarEmpresa` não possua `pilarTemplateId`, **nenhum** indicador template é copiado.
 
 ### 3) Isolamento entre template e instância

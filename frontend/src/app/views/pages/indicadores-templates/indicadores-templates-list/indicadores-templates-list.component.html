@@ -63,14 +63,12 @@
           @if (totalIndicadores > 0) {
             <div class="table-responsive">
               <table class="table table-hover table-sm mb-2">
-                <thead class="table-light">
+                <thead class="table-light small">
                   <tr>
                     <th>{{ 'INDICADORES_TEMPLATES.FIELDS.NOME' | translate }}</th>
                     <th>{{ 'INDICADORES_TEMPLATES.FIELDS.PILAR' | translate }}</th>
                     <th>{{ 'INDICADORES_TEMPLATES.FIELDS.TIPO_MEDIDA' | translate }}</th>
-                    <th>{{ 'INDICADORES_TEMPLATES.FIELDS.STATUS_MEDICAO' | translate }}</th>
                     <th>{{ 'INDICADORES_TEMPLATES.FIELDS.MELHOR' | translate }}</th>
-                    <th>{{ 'INDICADORES_TEMPLATES.FIELDS.ORDER' | translate }}</th>
                     <th style="width: 120px;">{{ 'COMMON.ACTIONS' | translate }}</th>
                   </tr>
                 </thead>
@@ -78,7 +76,8 @@
                   @for (indicador of paginatedIndicadores; track indicador.id) {
                     <tr>
                       <td style="max-width: 300px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
-                        <span [ngbTooltip]="indicador.nome">{{ indicador.nome }}</span>
+                        <span class="badge bg-secondary small">{{ indicador.ordem }} </span>
+                        <span [ngbTooltip]="indicador.nome"> {{ indicador.nome }}</span>
                       </td>
                       <td style="max-width: 200px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
                         {{ indicador.pilar?.nome || '—' }}
@@ -87,13 +86,7 @@
                         {{ ('INDICADORES_TEMPLATES.TIPO_MEDIDA.' + indicador.tipoMedida) | translate }}
                       </td>
                       <td>
-                        {{ ('INDICADORES_TEMPLATES.STATUS_MEDICAO.' + indicador.statusMedicao) | translate }}
-                      </td>
-                      <td>
                         {{ ('INDICADORES_TEMPLATES.MELHOR.' + indicador.melhor) | translate }}
-                      </td>
-                      <td>
-                        <span class="badge bg-secondary small">{{ indicador.ordem }}</span>
                       </td>
                       <td class="text-nowrap">
                         <div class="btn-group btn-group-sm" role="group">
@@ -194,10 +187,6 @@
           <div class="mb-2">
             <span class="text-muted small">{{ 'INDICADORES_TEMPLATES.FIELDS.TIPO_MEDIDA' | translate }}</span>
             <div>{{ ('INDICADORES_TEMPLATES.TIPO_MEDIDA.' + selectedIndicador.tipoMedida) | translate }}</div>
-          </div>
-          <div class="mb-2">
-            <span class="text-muted small">{{ 'INDICADORES_TEMPLATES.FIELDS.STATUS_MEDICAO' | translate }}</span>
-            <div>{{ ('INDICADORES_TEMPLATES.STATUS_MEDICAO.' + selectedIndicador.statusMedicao) | translate }}</div>
           </div>
           <div class="mb-2">
             <span class="text-muted small">{{ 'INDICADORES_TEMPLATES.FIELDS.MELHOR' | translate }}</span>

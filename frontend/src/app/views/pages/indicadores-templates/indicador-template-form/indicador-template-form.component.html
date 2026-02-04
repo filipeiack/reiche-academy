@@ -132,48 +132,45 @@
               }
             </div>
 
-            <!-- Status Medição -->
+            <!-- Melhor (Direção) -->
             <div class="mb-3">
-              <label for="statusMedicao" class="form-label">
-                {{ 'INDICADORES_TEMPLATES.FIELDS.STATUS_MEDICAO' | translate }} <span class="text-danger">*</span>
-              </label>
-              <select class="form-select" id="statusMedicao" formControlName="statusMedicao" [class.is-invalid]="statusMedicaoInvalid">
-                <option value="">{{ 'COMMON.SELECT' | translate }}</option>
-                @for (option of statusMedicaoOptions; track option.value) {
-                  <option [value]="option.value">
-                    {{ option.labelKey | translate }}
-                  </option>
-                }
-              </select>
-              @if (statusMedicaoInvalid) {
-                <div class="invalid-feedback">
-                  {{ 'INDICADORES_TEMPLATES.VALIDATIONS.STATUS_MEDICAO_REQUIRED' | translate }}
-                </div>
-              }
-            </div>
-
-            <!-- Melhor -->
-            <div class="mb-3">
-              <label for="melhor" class="form-label">
+              <label class="form-label">
                 {{ 'INDICADORES_TEMPLATES.FIELDS.MELHOR' | translate }} <span class="text-danger">*</span>
               </label>
-              <select class="form-select" id="melhor" formControlName="melhor" [class.is-invalid]="melhorInvalid">
-                <option value="">{{ 'COMMON.SELECT' | translate }}</option>
-                @for (option of melhorOptions; track option.value) {
-                  <option [value]="option.value">
-                    {{ option.labelKey | translate }}
-                  </option>
-                }
-              </select>
+              <div class="btn-group w-100" role="group">
+                <input
+                  type="radio"
+                  class="btn-check"
+                  formControlName="melhor"
+                  [value]="direcaoIndicador.MAIOR"
+                  id="melhor-maior"
+                />
+                <label class="btn btn-outline-secondary" for="melhor-maior">
+                  <i class="bi bi-arrow-up me-1"></i>
+                  Maior é melhor
+                </label>
+
+                <input
+                  type="radio"
+                  class="btn-check"
+                  formControlName="melhor"
+                  [value]="direcaoIndicador.MENOR"
+                  id="melhor-menor"
+                />
+                <label class="btn btn-outline-secondary" for="melhor-menor">
+                  <i class="bi bi-arrow-down me-1"></i>
+                  Menor é melhor
+                </label>
+              </div>
               @if (melhorInvalid) {
-                <div class="invalid-feedback">
+                <div class="invalid-feedback d-block">
                   {{ 'INDICADORES_TEMPLATES.VALIDATIONS.MELHOR_REQUIRED' | translate }}
                 </div>
               }
             </div>
 
             <!-- Ordem -->
-            <div class="mb-3">
+            <!-- <div class="mb-3">
               <label for="ordem" class="form-label">{{ 'INDICADORES_TEMPLATES.FIELDS.ORDER' | translate }}</label>
               <input type="number" class="form-control" id="ordem" formControlName="ordem" [class.is-invalid]="ordemInvalid"
                 min="1">
@@ -182,7 +179,7 @@
                   {{ 'INDICADORES_TEMPLATES.VALIDATIONS.ORDEM_MIN' | translate }}
                 </div>
               }
-            </div>
+            </div> -->
 
           </div>
         </div>

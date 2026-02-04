@@ -283,9 +283,8 @@ model IndicadorTemplate {
   nome      String
   descricao String?
 
-  tipoMedida    TipoMedidaIndicador
-  statusMedicao StatusMedicaoIndicador
-  melhor        DirecaoIndicador
+  tipoMedida TipoMedidaIndicador
+  melhor     DirecaoIndicador
 
   ordem Int
   ativo Boolean @default(true)
@@ -536,7 +535,7 @@ model IndicadorCockpit {
   descricao String?
 
   tipoMedida    TipoMedidaIndicador
-  statusMedicao StatusMedicaoIndicador
+  statusMedicao StatusMedicaoIndicador?
   melhor        DirecaoIndicador
 
   responsavelMedicaoId String?

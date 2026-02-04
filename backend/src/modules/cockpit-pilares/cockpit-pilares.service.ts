@@ -399,7 +399,7 @@ export class CockpitPilaresService {
                 nome: template.nome,
                 descricao: template.descricao,
                 tipoMedida: template.tipoMedida,
-                statusMedicao: template.statusMedicao,
+                statusMedicao: null,
                 melhor: template.melhor,
                 ordem: template.ordem,
                 createdBy: user.id,

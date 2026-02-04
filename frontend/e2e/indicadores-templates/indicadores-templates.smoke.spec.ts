@@ -41,7 +41,6 @@ test.describe('@indicadores-templates smoke', () => {
     await expect(page.locator('#pilarId').first()).toBeVisible();
     await expect(page.locator('#nome').first()).toBeVisible();
     await expect(page.locator('#tipoMedida').first()).toBeVisible();
-    await expect(page.locator('#statusMedicao').first()).toBeVisible();
     await expect(page.locator('#melhor').first()).toBeVisible();
     await expect(page.locator('#ordem').first()).toBeVisible();
 

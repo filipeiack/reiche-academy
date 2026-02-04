@@ -9,6 +9,8 @@ import {
   UseGuards,
   Request,
   Query,
+  UsePipes,
+  ValidationPipe,
 } from '@nestjs/common';
 import { Request as ExpressRequest } from 'express';
 import { ApiTags, ApiOperation, ApiBearerAuth, ApiResponse, ApiQuery } from '@nestjs/swagger';
@@ -30,6 +32,13 @@ export class IndicadoresTemplatesController {
   @Roles('ADMINISTRADOR')
   @ApiOperation({ summary: 'Criar indicador template' })
   @ApiResponse({ status: 201, description: 'Indicador template criado com sucesso' })
+  @UsePipes(
+    new ValidationPipe({
+      whitelist: true,
+      forbidNonWhitelisted: false,
+      transform: true,
+    }),
+  )
   create(
     @Body() dto: CreateIndicadorTemplateDto,
     @Request() req: ExpressRequest & { user: { id: string } },
@@ -59,6 +68,13 @@ export class IndicadoresTemplatesController {
   @Roles('ADMINISTRADOR')
   @ApiOperation({ summary: 'Atualizar indicador template' })
   @ApiResponse({ status: 200, description: 'Indicador template atualizado' })
+  @UsePipes(
+    new ValidationPipe({
+      whitelist: true,
+      forbidNonWhitelisted: false,
+      transform: true,
+    }),
+  )
   update(
     @Param('id') id: string,
     @Body() dto: UpdateIndicadorTemplateDto,
