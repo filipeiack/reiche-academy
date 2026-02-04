@@ -25,7 +25,7 @@ const dateFromParts = (
 };
 
 /**
- * Seed completo para testes E2E
+ * Seed completo para testes E2E e desenvolvimento local.
  * 
  * Cria dados previsíveis e conhecidos para validar testes E2E:
  * - 4 perfis de usuário (ADMINISTRADOR, GESTOR, COLABORADOR, LEITURA)
