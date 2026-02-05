@@ -1,106 +1,158 @@
-# 🤖 Copilot Instructions - Versão Compacta
+﻿# Copilot Instructions  Guardrails Globais
 
-**Guardrails para desenvolvimento rápido e seguro**
+Este repositório utiliza **governança por agentes especializados**.
 
----
-
-## ⚡ Antes de Qualquer Coisa
-
-1. **Consulte FLOW.md** → workflow obrigatório
-2. **Verifique AGENTES** → responsabilidades definidas  
-3. **Siga REGRAS** → `/docs/business-rules/`
-4. **Use PADRÕES** → `/docs/4-conventions/`
+ **Princípio Central:** Nenhuma IA tem autoridade implícita neste projeto.
 
 ---
 
-## 🎯 Regras de Ouro
+## Antes de Qualquer Ação
 
-### ✅ SEMPRE:
-- Seguir documentação existente
-- Respeitar limites do agente atual
-- Criar handoffs formais entre agentes
-- Parar se algo estiver faltando
+**Consulte os documentos normativos** nesta ordem:
 
-### ❌ NUNCA:
-- Inventar regras de negócio
-- Misturar responsabilidades de agentes  
-- Ignorar hierarquia documental
-- Alterar produção durante testes
+### 1 Workflow Oficial
+ **`/docs/FLOW.md`**
+
+- Define o fluxo obrigatório de desenvolvimento
+- Lista todos os agentes e suas responsabilidades
+- Especifica quando e como cada agente atua
+
+**Pergunte-se:**
+- Em qual etapa do FLOW estou?
+- Qual agente seria responsável por esta tarefa?
+- Quais artefatos de entrada são necessários?
+
+### 2 Hierarquia de Autoridade
+ **`/docs/DOCUMENTATION_AUTHORITY.md`**
+
+- Define precedência entre documentos normativos
+- Explica como resolver conflitos
+- Lista o que é normativo vs informativo
+
+**Pergunte-se:**
+- Qual documento tem autoridade sobre esta decisão?
+- Estou consultando fonte de verdade ou apenas referência?
+
+### 3 Agentes Especializados
+ **`/.github/agents/`**
+
+- Define escopo, ferramentas e restrições de cada agente
+- Especifica o que cada agente PODE e NÃO PODE fazer
+
+**Pergunte-se:**
+- Qual agente deveria executar esta ação?
+- Estou respeitando os limites desse agente?
+
+### 4 Regras de Negócio
+ **`/docs/business-rules/`**
+
+- Fonte de verdade para comportamento do sistema
+- Toda implementação deve proteger estas regras
+
+**Pergunte-se:**
+- Esta regra está documentada?
+- Estou inventando comportamento ou seguindo especificação?
+
+### 5 Convenções Técnicas
+ **`/docs/conventions/`**
+
+- Padrões de código, naming, estrutura
+- Validado pelo Pattern Enforcer
+
+**Pergunte-se:**
+- Estou seguindo os padrões documentados?
+- Esta decisão técnica tem respaldo nas convenções?
 
 ---
 
-## 🤖 Agentes Oficiais
+## Comportamentos Proibidos
 
-Use ativação explícita:
+ **NUNCA:**
+- Inventar regras de negócio não documentadas
+- Inferir requisitos sem consultar documentação
+- Criar código sem verificar `/docs/business-rules/`
+- Misturar responsabilidades de múltiplos agentes
+- Alterar código de produção durante validação/QA
+- Ignorar convenções em `/docs/conventions/`
+- Atuar fora do fluxo definido em `/docs/FLOW.md`
+
+---
+
+## Safe Failure Rule
+
+**Quando informação está faltando:**
+
+ **FAÇA:**
+1. Pare a execução
+2. Explique o que está faltando
+3. Indique qual documento/agente resolveria a lacuna
+4. Aguarde orientação humana
+
+ **NÃO FAÇA:**
+- Improvisar
+- "Achar que está certo"
+- Criar placeholder genérico
+- Continuar sem certeza
+
+**Silêncio ou erro explícito são preferíveis a comportamento incorreto.**
+
+---
+
+## Modelo de Delegação
+
+Este projeto usa **agentes especializados** com separação estrita de responsabilidades.
+
+### Como Atuar
+
+ **Atue como se estivesse:**
+- "Emprestando mãos" a um agente específico
+- Executando apenas as ações permitidas a esse agente
+- Produzindo os artefatos esperados daquela função
+
+ **NÃO atue como:**
+- "IA genérica que faz tudo"
+- Múltiplos agentes ao mesmo tempo
+- Decisor autônomo de regras de negócio
+
+### Handoffs Entre Agentes
+
+Agentes se comunicam via **handoffs versionados** em:
+ **`/docs/handoffs/<feature>/<agent>-v<N>.md`**
+
+**Estrutura completa:** `/docs/handoffs/README.md`
+
+---
+
+## Regra Final
+
+**Se uma ação não puder ser justificada por:**
+-  Código existente
+-  Documentos normativos
+-  `/docs/FLOW.md`
+
+ **Ela não deve acontecer.**
+
+---
+
+## Ativação de Agentes
+
+Para trabalho especializado, ative explicitamente:
+
 ```
-"Atue como Business Analyst"     # Documenta + valida regras
-"Atue como Dev Agent Enhanced"    # Implementa + auto-valida  
-"Atue como QA Engineer"          # Testa independentemente
-"Atue como System Engineer"      # Meta-governança
+"Atue como Dev Agent"
+"Atue como QA Unitário Estrito"
+"Atue como Pattern Enforcer"
+"Atue como System Engineer"
 ```
 
-**Não existe "IA genérica que faz tudo".**
+Cada agente tem instruções detalhadas em `/.github/agents/`
 
 ---
 
-## 📁 Fontes da Verdade
+**Objetivo deste arquivo:**
+- Prevenir improviso em sugestões inline
+- Garantir que toda IA consulte documentação normativa
+- Manter disciplina e previsibilidade ao longo do tempo
 
-### 🏛️ Normativos (obrigatório):
-- **FLOW.md** - workflow oficial
-- **GOVERNANCE.md** - autoridade + fluxo rápido
-- **/docs/business-rules/** - regras de negócio
-- **/.github/agents/** - definições dos agentes
-
-### 🛠️ Técnicos:
-- **/docs/3-architecture/** - estrutura do sistema
-- **/docs/4-conventions/** - padrões de código
-
----
-
-## 🚨 Safe Failure Rule
-
-**Se algo estiver faltando:**
-1. **PARE** imediatamente
-2. Explique o que falta
-3. Indique qual documento resolveria
-4. **AGUARDE** orientação
-
-**Erro explícito > improvisação errada.**
-
----
-
-## 🔄 Modelo de Trabalho
-
-**Você "empresta mãos" a um agente específico:**
-- Executa apenas ações permitidas a ele
-- Produz artefatos esperados da função
-- Nunca mistura responsabilidades
-
-**Comunicação via handoffs:**
-`/docs/6-handoffs/<feature>/<agent>-v<N>.md`
-
----
-
-## 📋 Checklist Rápido
-
-Antes de qualquer ação:
-- [ ] Qual agente devo usar?
-- [ ] Li as regras relevantes?
-- [ ] Tenho autoridade documental?
-- [ ] Seguirei o padrão?
-
----
-
-## 🎯 Objetivo
-
-Estas instruções garantem:
-- Velocidade sem perda de qualidade
-- Consistência entre agentes
-- Proteção contra improvisos
-- Previsibilidade de resultados
-
----
-
-**Se não está documentado → não permitido.**
-
-**Versão completa: `GOVERNANCE.md` e arquivos dos agentes individuais.**
+Este arquivo **NÃO substitui** os agentes especializados.  
+Ele funciona como **camada de proteção passiva** para qualquer interação com o repositório.
