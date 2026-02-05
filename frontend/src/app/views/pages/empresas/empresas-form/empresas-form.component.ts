@@ -9,7 +9,7 @@ import { EmpresasService, Empresa, CreateEmpresaRequest, UpdateEmpresaRequest, E
 import { CreateUsuarioDto, UsersService } from '../../../../core/services/users.service';
 import { Usuario } from '../../../../core/models/auth.model';
 import { AuthService } from '../../../../core/services/auth.service';
-import { PilaresService, Pilar, CreatePilarDto } from '../../../../core/services/pilares.service';
+import { PilaresService, Pilar } from '../../../../core/services/pilares.service';
 import { PilaresEmpresaService, PilarEmpresa } from '../../../../core/services/pilares-empresa.service';
 import { PeriodosMentoriaService } from '../../../../core/services/periodos-mentoria.service';
 import { TranslatePipe } from '../../../../core/pipes/translate.pipe';
@@ -17,6 +17,7 @@ import { formatDateDisplaySaoPaulo, formatDateInputSaoPaulo, formatMonthYearSaoP
 import { environment } from '../../../../../environments/environment';
 import { NgSelectModule } from '@ng-select/ng-select';
 import { UsuarioDrawerComponent } from '../../usuarios/usuario-drawer/usuario-drawer.component';
+import { PilarAddDrawerComponent } from '../../diagnostico-notas/pilar-add-drawer/pilar-add-drawer.component';
 import { UserAvatarComponent } from '../../../../shared/components/user-avatar/user-avatar.component';
 import { OFFCANVAS_SIZE } from '@core/constants/ui.constants';
 import { PerfisService } from '@core/services/perfis.service';
@@ -815,56 +816,9 @@ export class EmpresasFormComponent implements OnInit {
     });
   }
 
-  private buildCustomPilar(nome: string): Pilar {
-    return {
-      id: `custom-${Date.now()}`,
-      nome,
-      ativo: true,
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-      __custom: true,
-    } as Pilar;
-  }
 
-  private isCustomPilar(pilar: Pilar): boolean {
-    return (pilar as any).__custom === true;
-  }
-
-  addPilarTag = (nome: string): Pilar | Promise<Pilar> => {
-    const nomeNormalizado = nome.trim();
-    if (!nomeNormalizado) {
-      this.showToast('Informe um nome válido para o pilar', 'warning');
-      return Promise.reject('Nome inválido');
-    }
-
-    if (!this.empresaId) {
-      this.showToast('Salve a empresa antes de criar um pilar', 'info');
-      return Promise.reject('Empresa não definida');
-    }
-
-    return Promise.resolve(this.buildCustomPilar(nomeNormalizado));
-  };
 
   associarPilar(pilar: Pilar): void {
-    if (this.isCustomPilar(pilar)) {
-      if (!this.empresaId) {
-        this.showToast('Salve a empresa antes de criar um pilar', 'info');
-        return;
-      }
-
-      this.pilaresEmpresaService.criarPilarCustomizado(this.empresaId, { nome: pilar.nome }).subscribe({
-        next: (pilarEmpresa) => {
-          this.showToast(`Pilar "${pilar.nome}" criado com sucesso!`, 'success');
-          this.pilaresAssociados.push(pilarEmpresa);
-          this.pilaresDisponiveis = this.pilaresDisponiveis.filter(p => p.id !== pilar.id);
-        },
-        error: (err) => {
-          this.showToast(err?.error?.message || 'Erro ao criar pilar', 'error');
-        }
-      });
-      return;
-    }
-
     if (!this.empresaId) {
       // Modo criação: acumular em memória
       if (this.pilaresPendentesAssociacao.find(p => p.id === pilar.id)) {
@@ -890,6 +844,33 @@ export class EmpresasFormComponent implements OnInit {
       },
       error: (err) => {
         this.showToast(err?.error?.message || 'Erro ao associar pilar', 'error');
+      }
+    });
+  }
+
+  abrirModalNovoPilar(): void {
+    if (!this.empresaId) {
+      this.showToast('Salve a empresa antes de criar um pilar', 'info');
+      return;
+    }
+
+    const offcanvasRef = this.offcanvasService.open(PilarAddDrawerComponent, {
+      position: 'end',
+      backdrop: 'static',
+      panelClass: OFFCANVAS_SIZE.MEDIUM
+    });
+
+    const component = offcanvasRef.componentInstance as PilarAddDrawerComponent;
+    component.empresaId = this.empresaId;
+    
+    // Passar os IDs dos pilares templates já vinculados
+    component.pilaresJaAssociados = this.pilaresAssociados
+      .filter(p => p.pilarTemplateId) // Apenas pilares com template
+      .map(p => p.pilarTemplateId!);  // Extrair os IDs
+    
+    component.pilarAdicionado.subscribe(() => {
+      if (this.empresaId) {
+        this.loadPilaresAssociados(this.empresaId);
       }
     });
   }

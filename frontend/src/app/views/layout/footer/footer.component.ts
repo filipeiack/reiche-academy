@@ -37,7 +37,7 @@ export class FooterComponent implements OnInit {
           if (info) {
             this.versionInfo = info;
             this.version = info.version;
-            this.environmentName = info.environment.toUpperCase();
+            this.environmentName = environment.environmentName.toLowerCase();
           } else {
             // Fallback se API retornar null
             this.version = 'dev';

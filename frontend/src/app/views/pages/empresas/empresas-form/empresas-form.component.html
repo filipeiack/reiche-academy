@@ -496,14 +496,22 @@
                 <i class="feather icon-info me-1"></i>
                 Somente Visualização
             </span>
+            } @else {
+            <button type="button" class="btn btn-sm btn-primary" (click)="abrirModalNovoPilar()">
+                <i class="feather icon-plus me-1"></i>
+                Criar Novo Pilar
+            </button>
             }
         </div>
         <div class="card-body">
             <!-- Buscar e adicionar pilares existentes - Apenas para ADMINISTRADOR/GESTOR -->
             @if (!isPerfilCliente) {
-            <div class="mb-4">
+            <div class="mb-2">
+                <!-- <label class="form-label">
+                    Selecione ou crie pilares para a empresa
+                </label>
                 <ng-select [items]="pilaresDisponiveis" bindLabel="nome" [searchable]="true" [clearable]="true"
-                    [addTag]="addPilarTag" placeholder="Busque por nome de pilar ou digite para criar novo..."
+                    placeholder="Escolha um pilar da lista..."
                     (change)="associarPilar($event)">
                     <ng-template ng-option-tmp let-item="item">
                         <div class="d-flex align-items-center">
@@ -516,9 +524,9 @@
                             </div>
                         </div>
                     </ng-template>
-                </ng-select>
+                </ng-select> -->
                 <small class="text-muted">
-                    Arraste os pilares para reordenar, adicione novos pilares ou remova os existentes.
+                    Arraste os pilares para reordenar ou remova os existentes.
                 </small>
             </div>
             }
