@@ -1,6 +1,5 @@
 import { Injectable } from '@angular/core';
 import { BehaviorSubject, Observable } from 'rxjs';
-import { normalizeDateToSaoPaulo } from '../utils/date-time';
 
 export interface SaveFeedback {
   context: string; // Ex: "Valores mensais", "Contexto do pilar", "Status de processos"
@@ -39,7 +38,7 @@ export class SaveFeedbackService {
     this.feedbackSubject.next({
       context: current.context,
       saving: false,
-      lastSaveTime: normalizeDateToSaoPaulo(new Date()),
+      lastSaveTime: new Date(), // Não usar normalizeDateToSaoPaulo - zera horário!
     });
   }
 
