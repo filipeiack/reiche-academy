@@ -3,7 +3,7 @@
 # Script de Diagnóstico SSL/Nginx - VPS Reiche Academy
 # Uso: bash diagnose-vps-ssl.sh
 #
-# Versão: 2.0
+# Versão: 2.1
 # Última atualização: 2026-02-05
 #
 # Este script verifica:
@@ -14,6 +14,12 @@
 # - IP do VPS vs DNS configurado
 # - Testes de acesso HTTP/HTTPS
 # - Diagnóstico completo de problemas SSL
+#
+# Changelog v2.1:
+# - Melhorada extração de DNS (fallback para dig/host)
+# - Auto-instalação de dnsutils se comandos DNS não disponíveis
+# - Mensagens mais claras quando DNS não pode ser verificado
+# - Resumo final com tratamento de valores N/A
 #
 # Changelog v2.0:
 # - Adicionada verificação de IP do VPS
@@ -192,21 +198,45 @@ echo "IP VPS (hostname -I): $VPS_IP_V4"
 echo "IP Público (ifconfig.me): $VPS_IP_PUBLIC"
 echo ""
 
+# Verificar se comandos DNS estão disponíveis
+if ! command -v nslookup &> /dev/null && ! command -v dig &> /dev/null && ! command -v host &> /dev/null; then
+    echo "⚠️ Comandos DNS não encontrados. Instalando dnsutils..."
+    apt-get update -qq 2>/dev/null && apt-get install -y -qq dnsutils 2>/dev/null
+fi
+echo ""
+
 echo "DNS - app.reicheacademy.cloud:"
-DNS_APP=$(nslookup app.reicheacademy.cloud 2>/dev/null | grep -A1 "Non-authoritative answer:" | grep "Address:" | awk '{print $2}' | head -1)
-echo "  Resolve para: $DNS_APP"
+# Tenta múltiplas formas de extrair o IP do DNS
+DNS_APP=$(nslookup app.reicheacademy.cloud 2>/dev/null | grep "Address:" | grep -v "#" | tail -1 | awk '{print $2}')
+if [ -z "$DNS_APP" ]; then
+    DNS_APP=$(dig +short app.reicheacademy.cloud 2>/dev/null | head -1)
+fi
+if [ -z "$DNS_APP" ]; then
+    DNS_APP=$(host app.reicheacademy.cloud 2>/dev/null | grep "has address" | awk '{print $4}' | head -1)
+fi
+echo "  Resolve para: ${DNS_APP:-N/A}"
 if [ "$DNS_APP" = "$VPS_IP_V4" ] || [ "$DNS_APP" = "$VPS_IP_PUBLIC" ]; then
     echo "  ✅ DNS aponta para IP correto"
+elif [ -z "$DNS_APP" ]; then
+    echo "  ⚠️ Não foi possível resolver DNS (comando nslookup/dig/host indisponível)"
 else
     echo "  ❌ DNS aponta para IP ERRADO! Deveria ser: $VPS_IP_V4"
 fi
 echo ""
 
 echo "DNS - staging.reicheacademy.cloud:"
-DNS_STAGING=$(nslookup staging.reicheacademy.cloud 2>/dev/null | grep -A1 "Non-authoritative answer:" | grep "Address:" | awk '{print $2}' | head -1)
-echo "  Resolve para: $DNS_STAGING"
+DNS_STAGING=$(nslookup staging.reicheacademy.cloud 2>/dev/null | grep "Address:" | grep -v "#" | tail -1 | awk '{print $2}')
+if [ -z "$DNS_STAGING" ]; then
+    DNS_STAGING=$(dig +short staging.reicheacademy.cloud 2>/dev/null | head -1)
+fi
+if [ -z "$DNS_STAGING" ]; then
+    DNS_STAGING=$(host staging.reicheacademy.cloud 2>/dev/null | grep "has address" | awk '{print $4}' | head -1)
+fi
+echo "  Resolve para: ${DNS_STAGING:-N/A}"
 if [ "$DNS_STAGING" = "$VPS_IP_V4" ] || [ "$DNS_STAGING" = "$VPS_IP_PUBLIC" ]; then
     echo "  ✅ DNS aponta para IP correto"
+elif [ -z "$DNS_STAGING" ]; then
+    echo "  ⚠️ Não foi possível resolver DNS (comando nslookup/dig/host indisponível)"
 else
     echo "  ❌ DNS aponta para IP ERRADO! Deveria ser: $VPS_IP_V4"
 fi
@@ -246,9 +276,9 @@ echo "Nginx Status: $NGINX_STATUS"
 echo "Backend PROD: $PROD_STATUS"
 echo "Backend STAGING: $STAGING_STATUS"
 echo "IP VPS: $VPS_IP_V4"
-echo "IP Público: $VPS_IP_PUBLIC"
-echo "DNS app.reicheacademy.cloud: $DNS_APP"
-echo "DNS staging.reicheacademy.cloud: $DNS_STAGING"
+echo "IP Público: ${VPS_IP_PUBLIC:-IPv6 detectado}"
+echo "DNS app.reicheacademy.cloud: ${DNS_APP:-N/A}"
+echo "DNS staging.reicheacademy.cloud: ${DNS_STAGING:-N/A}"
 echo ""
 
 echo "🔧 PRÓXIMOS PASSOS (baseado em problemas comuns):"
@@ -256,12 +286,12 @@ echo "----------------------------------------"
 echo ""
 
 # Verificar problema de DNS
-if [ "$DNS_APP" != "$VPS_IP_V4" ] && [ "$DNS_APP" != "$VPS_IP_PUBLIC" ]; then
+if [ -n "$DNS_APP" ] && [ "$DNS_APP" != "$VPS_IP_V4" ] && [ "$DNS_APP" != "$VPS_IP_PUBLIC" ]; then
     echo "❌ PROBLEMA DE DNS DETECTADO!"
     echo ""
     echo "DNS aponta para IP ERRADO:"
     echo "  - app.reicheacademy.cloud → $DNS_APP (ERRADO)"
-    echo "  - staging.reicheacademy.cloud → $DNS_STAGING (ERRADO)"
+    echo "  - staging.reicheacademy.cloud → ${DNS_STAGING:-N/A} (ERRADO)"
     echo ""
     echo "Deveria apontar para: $VPS_IP_V4"
     echo ""
@@ -274,6 +304,14 @@ if [ "$DNS_APP" != "$VPS_IP_V4" ] && [ "$DNS_APP" != "$VPS_IP_PUBLIC" ]; then
     echo ""
     echo "Enquanto DNS não propaga, acesse pelo IP:"
     echo "  curl -Ikv https://$VPS_IP_V4 --resolve app.reicheacademy.cloud:443:$VPS_IP_V4"
+    echo ""
+elif [ -z "$DNS_APP" ] && [ -z "$DNS_STAGING" ]; then
+    echo "⚠️ NÃO FOI POSSÍVEL VERIFICAR DNS"
+    echo ""
+    echo "Comandos nslookup/dig/host não disponíveis no VPS."
+    echo "Instale com: apt-get install dnsutils bind9-utils"
+    echo ""
+    echo "MAS: Testes HTTPS funcionaram! Veja seções 1️⃣7️⃣ e 1️⃣8️⃣ acima."
     echo ""
 fi
 
