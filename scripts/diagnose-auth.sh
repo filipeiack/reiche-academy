@@ -20,6 +20,25 @@ echo "🔍 DIAGNÓSTICO DE AUTENTICAÇÃO - $ENV"
 echo "=========================================="
 echo ""
 
+# Função helper para tentar localhost e fallback para 127.0.0.1
+function try_curl() {
+    local url_path="$1"
+    shift
+    local curl_args="$@"
+    
+    # Tenta com localhost primeiro
+    local response=$(curl -s --connect-timeout 2 $curl_args "http://localhost:$API_PORT$url_path" 2>/dev/null)
+    if [ $? -eq 0 ] && [ -n "$response" ]; then
+        echo "$response"
+        return 0
+    fi
+    
+    # Se falhou, tenta com 127.0.0.1
+    response=$(curl -s --connect-timeout 2 $curl_args "http://127.0.0.1:$API_PORT$url_path" 2>/dev/null)
+    echo "$response"
+    return $?
+}
+
 # 1. Status do Backend
 echo "1️⃣ STATUS DO BACKEND"
 echo "----------------------------------------"
@@ -42,7 +61,7 @@ echo ""
 # 3. Health Check do Backend
 echo "3️⃣ HEALTH CHECK DO BACKEND"
 echo "----------------------------------------"
-HEALTH_RESPONSE=$(curl -s http://localhost:$API_PORT/api/health)
+HEALTH_RESPONSE=$(try_curl "/api/health")
 if [ "$HEALTH_RESPONSE" = '{"status":"ok"}' ]; then
     echo "✅ API está respondendo: $HEALTH_RESPONSE"
 else
@@ -104,16 +123,14 @@ echo ""
 echo "7️⃣ PERFIS DISPONÍVEIS"
 echo "----------------------------------------"
 docker compose -f docker-compose.vps.yml exec -T postgres psql -U reiche_admin -d $DB_NAME << 'EOSQL'
-SELECT id, codigo, nome FROM perfis ORDER BY nivel DESC;
+SELECT id, codigo, nome FROM perfis_usuario ORDER BY nivel DESC;
 EOSQL
 echo ""
 
 # 8. Testar Login com cURL
 echo "8️⃣ TESTE DE LOGIN (admin@reiche.com.br)"
 echo "----------------------------------------"
-LOGIN_RESPONSE=$(curl -s -X POST http://localhost:$API_PORT/api/auth/login \
-  -H "Content-Type: application/json" \
-  -d '{"email":"admin@reiche.com.br","senha":"Reiche@2024"}')
+LOGIN_RESPONSE=$(try_curl "/api/auth/login" -X POST -H "Content-Type: application/json" -d '{"email":"admin@reiche.com.br","senha":"Admin@123"}')
 
 echo "Resposta:"
 echo "$LOGIN_RESPONSE" | jq '.' 2>/dev/null || echo "$LOGIN_RESPONSE"
@@ -129,9 +146,7 @@ echo ""
 if [ "$ENV" = "staging" ]; then
     echo "9️⃣ TESTE DE LOGIN (gestor@empresa1.com)"
     echo "----------------------------------------"
-    LOGIN_RESPONSE_GESTOR=$(curl -s -X POST http://localhost:$API_PORT/api/auth/login \
-      -H "Content-Type: application/json" \
-      -d '{"email":"gestor@empresa1.com","senha":"Senha@123"}')
+    LOGIN_RESPONSE_GESTOR=$(try_curl "/api/auth/login" -X POST -H "Content-Type: application/json" -d '{"email":"gestor@empresa1.com","senha":"Admin@123"}')
     
     echo "Resposta:"
     echo "$LOGIN_RESPONSE_GESTOR" | jq '.' 2>/dev/null || echo "$LOGIN_RESPONSE_GESTOR"
