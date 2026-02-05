@@ -165,7 +165,7 @@ bash scripts/maintenance-vps.sh health staging   # Health check (staging)
 bash scripts/maintenance-vps.sh backup prod      # Backup (produção)
 bash scripts/maintenance-vps.sh logs all         # Logs (todos)
 bash scripts/maintenance-vps.sh update staging   # Atualizar código (staging)
-bash scripts/maintenance-vps.sh restart prod     # Reiniciar serviços (produção)
+bash scripts/maintenance-vps.sh restart staging     # Reiniciar serviços (produção)
 ```
 
 **Automação com Cron:**

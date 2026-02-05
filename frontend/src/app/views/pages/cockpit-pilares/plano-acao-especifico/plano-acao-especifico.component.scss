@@ -99,6 +99,10 @@
   background: linear-gradient(135deg, rgba(25, 135, 84, 0.18), rgba(255, 255, 255, 0.95));
 }
 
+.kpi-primary {
+  background: linear-gradient(135deg, rgba(13, 110, 253, 0.2), rgba(255, 255, 255, 0.95));
+}
+
 .kpi-icon.kpi-neutral {
   background: rgba(108, 117, 125, 0.15);
 }
@@ -113,6 +117,10 @@
 
 .kpi-icon.kpi-success {
   background: rgba(25, 135, 84, 0.18);
+}
+
+.kpi-icon.kpi-primary {
+  background: rgba(13, 110, 253, 0.2);
 }
 
 // Mobile: manter apenas nome e ação na tabela
@@ -170,6 +178,13 @@ span.bg-success {
 span.bg-secondary {
   background-color: var(--bs-secondary-bg-subtle) !important;
   border-color: var(--bs-secondary) !important;
+  border: 1px solid;
+  color: var(--bs-body-color);
+}
+
+span.bg-primary {
+  background-color: var(--bs-primary-bg-subtle) !important;
+  border-color: var(--bs-primary) !important;
   border: 1px solid;
   color: var(--bs-body-color);
 }
