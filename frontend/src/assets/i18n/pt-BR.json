@@ -331,15 +331,15 @@
     "SELECT_EMPRESA_PLACEHOLDER": "Escolha uma empresa para trabalhar",
     "MEDIA_ATUAL": "Média Atual",
     "ROTINAS_AVALIADAS": "Rotinas Avaliadas",
-    "CONGELAR_TITLE": "Congelar Médias",
+    "CONGELAR_TITLE": "Adicionar Avaliação Trimestral",
     "CONGELAR_DESC": "Salve um snapshot histórico das médias atuais dos pilares",
-    "CONGELAR_BTN": "Congelar Médias",
+    "CONGELAR_BTN": "Adicionar Avaliação Trimestral",
     "GRAFICO_TITLE": "Histórico de Evolução",
     "SELECT_PILAR": "Selecione um Pilar",
     "SELECT_PILAR_PLACEHOLDER": "Escolha um pilar para ver sua evolução",
     "SELECT_PILAR_INFO": "Selecione um pilar acima para visualizar seu histórico de evolução",
     "NO_MEDIAS": "Esta empresa não possui pilares com notas avaliadas.",
-    "NO_HISTORICO": "Este pilar ainda não possui histórico de evolução. Congele as médias para criar o primeiro registro.",
+    "NO_HISTORICO": "Este pilar ainda não possui histórico de evolução no ano selecionado. Adicione uma avaliação trimestral para criar o registro de evolução.",
     "NO_EMPRESA_ASSOCIATED": "Você não possui empresa associada. Entre em contato com o administrador."
   },
   "ROTINAS": {
