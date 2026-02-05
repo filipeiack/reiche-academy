@@ -2,6 +2,27 @@
 
 # Script de Diagnóstico SSL/Nginx - VPS Reiche Academy
 # Uso: bash diagnose-vps-ssl.sh
+#
+# Versão: 2.0
+# Última atualização: 2026-02-05
+#
+# Este script verifica:
+# - Status de containers Docker
+# - Configuração do Nginx e SSL
+# - Validade dos certificados
+# - Conectividade dos backends
+# - IP do VPS vs DNS configurado
+# - Testes de acesso HTTP/HTTPS
+# - Diagnóstico completo de problemas SSL
+#
+# Changelog v2.0:
+# - Adicionada verificação de IP do VPS
+# - Adicionada comparação DNS vs IP real
+# - Adicionado teste SSL direto no IP
+# - Validação completa de certificados com openssl
+# - Testes de acesso aos domínios públicos
+# - Detecção automática de problemas de DNS
+# - Sugestões contextuais baseadas em diagnósticos
 
 echo "=========================================="
 echo "🔍 DIAGNÓSTICO SSL/NGINX - VPS"
@@ -46,20 +67,38 @@ docker compose -f docker-compose.vps.yml exec nginx cat /etc/nginx/nginx.conf | 
 echo ""
 
 # 6. Verificar certificados SSL
-echo "6️⃣ CERTIFICADOS SSL"
+echo "6️⃣ CERTIFICADOS SSL (LOCALIZAÇÃO)"
 echo "----------------------------------------"
-echo "Listando /etc/letsencrypt/live/:"
-docker compose -f docker-compose.vps.yml exec nginx ls -lah /etc/letsencrypt/live/ 2>&1
-echo ""
-echo "Verificando certificado app.reiche.com.br:"
-docker compose -f docker-compose.vps.yml exec nginx ls -lah /etc/letsencrypt/live/app.reiche.com.br/ 2>&1
+echo "Verificando /etc/nginx/ssl/ (USADO PELO NGINX):"
+docker compose -f docker-compose.vps.yml exec nginx ls -lah /etc/nginx/ssl/ 2>&1 || echo "❌ Diretório não existe"
 echo ""
 
-# 7. Verificar validade do certificado
-echo "7️⃣ VALIDADE DO CERTIFICADO SSL"
+echo "Verificando /etc/letsencrypt/live/ (Let's Encrypt):"
+docker compose -f docker-compose.vps.yml exec nginx ls -lah /etc/letsencrypt/live/ 2>&1 || echo "❌ Diretório não existe (normal se usando certificados manuais)"
+echo ""
+
+echo "Verificando certificados específicos:"
+docker compose -f docker-compose.vps.yml exec nginx ls -lah /etc/letsencrypt/live/app.reicheacademy.cloud/ 2>&1 || echo "❌ Certificado app.reicheacademy.cloud não encontrado em /etc/letsencrypt"
+docker compose -f docker-compose.vps.yml exec nginx ls -lah /etc/letsencrypt/live/staging.reicheacademy.cloud/ 2>&1 || echo "❌ Certificado staging.reicheacademy.cloud não encontrado em /etc/letsencrypt"
+echo ""
+
+# 7. Verificar validade dos certificados (completo)
+echo "7️⃣ VALIDADE DOS CERTIFICADOS SSL"
 echo "----------------------------------------"
-CERT_FILE="/etc/letsencrypt/live/app.reiche.com.br/cert.pem"
-docker compose -f docker-compose.vps.yml exec nginx openssl x509 -in $CERT_FILE -noout -dates 2>&1 || echo "❌ Não foi possível ler certificado"
+echo "Instalando openssl no container (se necessário)..."
+docker compose -f docker-compose.vps.yml exec nginx sh -c "apk add --no-cache openssl 2>/dev/null" > /dev/null 2>&1
+
+echo ""
+echo "=== CERTIFICADO PRODUÇÃO (app.reicheacademy.cloud) ==="
+docker compose -f docker-compose.vps.yml exec nginx openssl x509 -in /etc/nginx/ssl/app.reicheacademy.cloud.crt -noout -dates -subject -issuer 2>&1 || echo "❌ Não foi possível ler certificado"
+
+echo ""
+echo "=== CERTIFICADO STAGING (staging.reicheacademy.cloud) ==="
+docker compose -f docker-compose.vps.yml exec nginx openssl x509 -in /etc/nginx/ssl/staging.reicheacademy.cloud.crt -noout -dates -subject -issuer 2>&1 || echo "❌ Não foi possível ler certificado"
+
+echo ""
+echo "=== CERTIFICADO STAGING FULL (staging.reicheacademy.cloud.full.crt) ==="
+docker compose -f docker-compose.vps.yml exec nginx openssl x509 -in /etc/nginx/ssl/staging.reicheacademy.cloud.full.crt -noout -dates -subject -issuer 2>&1 || echo "❌ Não foi possível ler certificado"
 echo ""
 
 # 8. Verificar portas abertas no host
@@ -78,25 +117,31 @@ echo ""
 # 10. Verificar backends
 echo "🔟 STATUS DOS BACKENDS"
 echo "----------------------------------------"
-echo "Backend PROD (porta 3001):"
+echo "Backend PROD (porta 3000 interna):"
 PROD_STATUS=$(docker compose -f docker-compose.vps.yml ps backend-prod --format json 2>/dev/null | jq -r '.State' 2>/dev/null)
 echo "Status: $PROD_STATUS"
 
 echo ""
-echo "Backend STAGING (porta 3002):"
+echo "Backend STAGING (porta 3000 interna):"
 STAGING_STATUS=$(docker compose -f docker-compose.vps.yml ps backend-staging --format json 2>/dev/null | jq -r '.State' 2>/dev/null)
 echo "Status: $STAGING_STATUS"
+
+echo ""
+echo "NOTA: Backends usam porta 3000 dentro dos containers, acessíveis via rede Docker"
 echo ""
 
 # 11. Testar conectividade interna
 echo "1️⃣1️⃣ TESTES DE CONECTIVIDADE INTERNA"
 echo "----------------------------------------"
-echo "Testando backend PROD (http://localhost:3001/api/health):"
-curl -s -o /dev/null -w "HTTP %{http_code} - Tempo: %{time_total}s\n" http://localhost:3001/api/health || echo "❌ Falhou"
+echo "Testando backend PROD (http://backend-prod:3000/api/health via rede interna):"
+docker compose -f docker-compose.vps.yml exec nginx sh -c "apk add --no-cache curl 2>/dev/null; curl -s -o /dev/null -w 'HTTP %{http_code} - Tempo: %{time_total}s\n' http://backend-prod:3000/api/health" 2>&1 || echo "❌ Falhou"
 
 echo ""
-echo "Testando backend STAGING (http://localhost:3002/api/health):"
-curl -s -o /dev/null -w "HTTP %{http_code} - Tempo: %{time_total}s\n" http://localhost:3002/api/health || echo "❌ Falhou"
+echo "Testando backend STAGING (http://backend-staging:3000/api/health via rede interna):"
+docker compose -f docker-compose.vps.yml exec nginx sh -c "curl -s -o /dev/null -w 'HTTP %{http_code} - Tempo: %{time_total}s\n' http://backend-staging:3000/api/health" 2>&1 || echo "❌ Falhou"
+
+echo ""
+echo "NOTA: Backends rodam na porta 3000 DENTRO do container, nginx faz proxy reverso"
 echo ""
 
 # 12. Verificar logs de acesso e erro do Nginx
@@ -119,11 +164,15 @@ echo "iptables (portas 80 e 443):"
 iptables -L -n 2>&1 | grep -E "80|443" || echo "Sem regras específicas"
 echo ""
 
-# 14. Testar SSL externamente
-echo "1️⃣4️⃣ TESTE SSL EXTERNO"
+# 14. Testar SSL externamente (do próprio VPS)
+echo "1️⃣4️⃣ TESTE SSL EXTERNO (do VPS para domínios públicos)"
 echo "----------------------------------------"
-echo "Testando HTTPS (app.reiche.com.br):"
-timeout 5 curl -Iv https://app.reiche.com.br 2>&1 | head -15 || echo "❌ Timeout ou erro"
+echo "Testando HTTPS (app.reicheacademy.cloud):"
+timeout 5 curl -Iv https://app.reicheacademy.cloud 2>&1 | head -15 || echo "❌ Timeout ou erro"
+echo ""
+
+echo "Testando HTTPS (staging.reicheacademy.cloud):"
+timeout 5 curl -Iv https://staging.reicheacademy.cloud 2>&1 | head -15 || echo "❌ Timeout ou erro"
 echo ""
 
 # 15. Verificar docker-compose.vps.yml
@@ -133,6 +182,62 @@ echo "Seção nginx em docker-compose.vps.yml:"
 grep -A 20 "nginx:" docker-compose.vps.yml 2>&1 || echo "Arquivo não encontrado"
 echo ""
 
+# 16. Verificar IP do VPS e DNS
+echo "1️⃣6️⃣ VERIFICAÇÃO DE IP E DNS"
+echo "----------------------------------------"
+VPS_IP_V4=$(hostname -I | awk '{print $1}')
+VPS_IP_PUBLIC=$(curl -s --max-time 3 ifconfig.me 2>/dev/null || echo "")
+
+echo "IP VPS (hostname -I): $VPS_IP_V4"
+echo "IP Público (ifconfig.me): $VPS_IP_PUBLIC"
+echo ""
+
+echo "DNS - app.reicheacademy.cloud:"
+DNS_APP=$(nslookup app.reicheacademy.cloud 2>/dev/null | grep -A1 "Non-authoritative answer:" | grep "Address:" | awk '{print $2}' | head -1)
+echo "  Resolve para: $DNS_APP"
+if [ "$DNS_APP" = "$VPS_IP_V4" ] || [ "$DNS_APP" = "$VPS_IP_PUBLIC" ]; then
+    echo "  ✅ DNS aponta para IP correto"
+else
+    echo "  ❌ DNS aponta para IP ERRADO! Deveria ser: $VPS_IP_V4"
+fi
+echo ""
+
+echo "DNS - staging.reicheacademy.cloud:"
+DNS_STAGING=$(nslookup staging.reicheacademy.cloud 2>/dev/null | grep -A1 "Non-authoritative answer:" | grep "Address:" | awk '{print $2}' | head -1)
+echo "  Resolve para: $DNS_STAGING"
+if [ "$DNS_STAGING" = "$VPS_IP_V4" ] || [ "$DNS_STAGING" = "$VPS_IP_PUBLIC" ]; then
+    echo "  ✅ DNS aponta para IP correto"
+else
+    echo "  ❌ DNS aponta para IP ERRADO! Deveria ser: $VPS_IP_V4"
+fi
+echo ""
+
+# 17. Testar SSL direto no IP do VPS
+echo "1️⃣7️⃣ TESTE SSL DIRETO NO IP DO VPS"
+echo "----------------------------------------"
+echo "Testando HTTPS no IP $VPS_IP_V4 (simulando app.reicheacademy.cloud):"
+timeout 5 curl -Ikv https://$VPS_IP_V4 --resolve app.reicheacademy.cloud:443:$VPS_IP_V4 2>&1 | grep -E "HTTP|SSL|Certificate|subject|issuer|expire|Server certificate" | head -15 || echo "❌ Falhou"
+echo ""
+
+echo "Testando HTTPS no IP $VPS_IP_V4 (simulando staging.reicheacademy.cloud):"
+timeout 5 curl -Ikv https://$VPS_IP_V4 --resolve staging.reicheacademy.cloud:443:$VPS_IP_V4 2>&1 | grep -E "HTTP|SSL|Certificate|subject|issuer|expire|x-environment" | head -15 || echo "❌ Falhou"
+echo ""
+
+# 18. Testar acesso aos domínios
+echo "1️⃣8️⃣ TESTE DE ACESSO AOS DOMÍNIOS"
+echo "----------------------------------------"
+echo "Testando HTTP → HTTPS redirect (app.reicheacademy.cloud):"
+timeout 3 curl -Iv http://app.reicheacademy.cloud 2>&1 | grep -E "HTTP|Location|Server" | head -10 || echo "❌ Timeout ou erro"
+echo ""
+
+echo "Testando HTTPS (app.reicheacademy.cloud):"
+timeout 5 curl -Ikv https://app.reicheacademy.cloud 2>&1 | grep -E "HTTP|SSL|error|subject|x-environment" | head -15 || echo "❌ Timeout ou erro"
+echo ""
+
+echo "Testando HTTPS (staging.reicheacademy.cloud):"
+timeout 5 curl -Ikv https://staging.reicheacademy.cloud 2>&1 | grep -E "HTTP|SSL|error|subject|x-environment" | head -15 || echo "❌ Timeout ou erro"
+echo ""
+
 # Resumo Final
 echo "=========================================="
 echo "📊 RESUMO DO DIAGNÓSTICO"
@@ -140,38 +245,70 @@ echo "=========================================="
 echo "Nginx Status: $NGINX_STATUS"
 echo "Backend PROD: $PROD_STATUS"
 echo "Backend STAGING: $STAGING_STATUS"
+echo "IP VPS: $VPS_IP_V4"
+echo "IP Público: $VPS_IP_PUBLIC"
+echo "DNS app.reicheacademy.cloud: $DNS_APP"
+echo "DNS staging.reicheacademy.cloud: $DNS_STAGING"
 echo ""
 
 echo "🔧 PRÓXIMOS PASSOS (baseado em problemas comuns):"
 echo "----------------------------------------"
 echo ""
+
+# Verificar problema de DNS
+if [ "$DNS_APP" != "$VPS_IP_V4" ] && [ "$DNS_APP" != "$VPS_IP_PUBLIC" ]; then
+    echo "❌ PROBLEMA DE DNS DETECTADO!"
+    echo ""
+    echo "DNS aponta para IP ERRADO:"
+    echo "  - app.reicheacademy.cloud → $DNS_APP (ERRADO)"
+    echo "  - staging.reicheacademy.cloud → $DNS_STAGING (ERRADO)"
+    echo ""
+    echo "Deveria apontar para: $VPS_IP_V4"
+    echo ""
+    echo "SOLUÇÃO:"
+    echo "1. Acesse seu painel DNS (Hostinger, Cloudflare, etc)"
+    echo "2. Edite os registros A (IPv4):"
+    echo "   - app → $VPS_IP_V4"
+    echo "   - staging → $VPS_IP_V4"
+    echo "3. Aguarde propagação (5min a 48h, geralmente rápido)"
+    echo ""
+    echo "Enquanto DNS não propaga, acesse pelo IP:"
+    echo "  curl -Ikv https://$VPS_IP_V4 --resolve app.reicheacademy.cloud:443:$VPS_IP_V4"
+    echo ""
+fi
+
 echo "❌ ERR_SSL_PROTOCOL_ERROR pode ser causado por:"
 echo ""
-echo "1. CERTIFICADO AUSENTE/EXPIRADO:"
-echo "   - Verificar se existe: /etc/letsencrypt/live/app.reiche.com.br/"
-echo "   - Renovar: certbot renew --nginx"
-echo "   - Ou gerar novo: certbot --nginx -d app.reiche.com.br"
+echo "1. DNS APONTANDO PARA IP ERRADO (veja verificação acima)"
 echo ""
-echo "2. NGINX NÃO CONFIGURADO PARA SSL:"
+echo "2. CERTIFICADO AUSENTE/EXPIRADO:"
+echo "   - Verificar se existe: /etc/nginx/ssl/"
+echo "   - Verificar validade na seção 7 deste diagnóstico"
+echo "   - Renovar: certbot renew --nginx"
+echo "   - Ou gerar novo: certbot --nginx -d app.reicheacademy.cloud -d staging.reicheacademy.cloud"
+echo ""
+echo "3. NGINX NÃO CONFIGURADO PARA SSL:"
 echo "   - Verificar se nginx.conf tem: listen 443 ssl;"
 echo "   - Verificar paths dos certificados"
-echo "   - Trocar de nginx.conf para nginx.prod.conf:"
-echo "     docker compose -f docker-compose.vps.yml down nginx"
-echo "     # Editar docker-compose.vps.yml: nginx/nginx.prod.conf"
-echo "     docker compose -f docker-compose.vps.yml up -d nginx"
+echo "   - Certificados devem estar em: /etc/nginx/ssl/"
 echo ""
-echo "3. NGINX NÃO ESTÁ RODANDO:"
+echo "4. NGINX NÃO ESTÁ RODANDO:"
 echo "   docker compose -f docker-compose.vps.yml up -d nginx"
 echo ""
-echo "4. PORTA 443 BLOQUEADA:"
+echo "5. PORTA 443 BLOQUEADA:"
 echo "   ufw allow 443/tcp"
 echo "   ufw allow 80/tcp"
+echo "   ufw status"
 echo ""
-echo "5. BACKENDS NÃO RESPONDENDO:"
+echo "6. BACKENDS NÃO RESPONDENDO:"
 echo "   docker compose -f docker-compose.vps.yml restart backend-prod backend-staging"
 echo ""
-echo "6. LOGS EM TEMPO REAL:"
+echo "7. LOGS EM TEMPO REAL:"
 echo "   docker compose -f docker-compose.vps.yml logs -f nginx"
+echo ""
+echo "8. TESTAR SSL LOCALMENTE (direto no VPS):"
+echo "   curl -Ikv https://$VPS_IP_V4 --resolve app.reicheacademy.cloud:443:$VPS_IP_V4"
+echo "   curl -Ikv https://$VPS_IP_V4 --resolve staging.reicheacademy.cloud:443:$VPS_IP_V4"
 echo ""
 echo "=========================================="
 echo "✅ DIAGNÓSTICO COMPLETO"
