@@ -42,7 +42,7 @@ update_build_version_in_env() {
             sed -i "s/BUILD_VERSION=.*/BUILD_VERSION=\"${new_version}\"/" "$ENV_FILE"
         fi
     fi
-    echo -e "${GREEN}✅ .env atualizado com BUILD_VERSION="${new_version}"${NC}"
+    echo -e "${GREEN}✅ .env atualizado com BUILD_VERSION=${new_version}${NC}"
 }
 
 # ============================================================================
@@ -208,15 +208,17 @@ case $ACTION in
         CURRENT=$(get_version "$ENV")
         NEW_VERSION=$(bump_version "$CURRENT" "$BUMP_TYPE")
         
-        echo -e "${BLUE}📈 Incrementando versão - ${ENV^^}${NC}"
-        echo -e "  Atual:  ${YELLOW}v${CURRENT}${NC}"
-        echo -e "  Nova:   ${GREEN}v${NEW_VERSION}${NC}"
-        echo -e "  Tipo:   ${BUMP_TYPE}"
+        # Enviar logs para stderr (>&2) para não poluir stdout
+        echo -e "${BLUE}📈 Incrementando versão - ${ENV^^}${NC}" >&2
+        echo -e "  Atual:  ${YELLOW}v${CURRENT}${NC}" >&2
+        echo -e "  Nova:   ${GREEN}v${NEW_VERSION}${NC}" >&2
+        echo -e "  Tipo:   ${BUMP_TYPE}" >&2
         
-        save_version "$ENV" "$NEW_VERSION"
-        update_build_version_in_env "$NEW_VERSION"
-        create_deploy_metadata "$ENV" "$NEW_VERSION"
+        save_version "$ENV" "$NEW_VERSION" >&2
+        update_build_version_in_env "$NEW_VERSION" >&2
+        create_deploy_metadata "$ENV" "$NEW_VERSION" >&2
         
+        # Apenas a versão vai para stdout (capturada pelo script)
         echo "$NEW_VERSION"
         ;;
     
@@ -226,16 +228,16 @@ case $ACTION in
         
         # Validar formato semver
         if ! [[ "$VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
-            echo -e "${RED}❌ Versão inválida: $VERSION (use formato: X.Y.Z)${NC}"
+            echo -e "${RED}❌ Versão inválida: $VERSION (use formato: X.Y.Z)${NC}" >&2
             exit 1
         fi
         
-        echo -e "${BLUE}🔧 Definindo versão - ${ENV^^}${NC}"
-        echo -e "  Versão: ${GREEN}v${VERSION}${NC}"
+        echo -e "${BLUE}🔧 Definindo versão - ${ENV^^}${NC}" >&2
+        echo -e "  Versão: ${GREEN}v${VERSION}${NC}" >&2
         
-        save_version "$ENV" "$VERSION"
-        update_build_version_in_env "$VERSION"
-        create_deploy_metadata "$ENV" "$VERSION"
+        save_version "$ENV" "$VERSION" >&2
+        update_build_version_in_env "$VERSION" >&2
+        create_deploy_metadata "$ENV" "$VERSION" >&2
         
         echo "$VERSION"
         ;;
