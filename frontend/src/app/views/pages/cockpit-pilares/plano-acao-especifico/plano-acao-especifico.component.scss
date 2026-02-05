@@ -1,5 +1,192 @@
 .table td, .table th {
-  vertical-align: middle;
+  vertical-align: top;
+  padding: 0.5rem;
+  word-wrap: break-word;
+  word-break: break-word;
+  overflow-wrap: break-word;
+  white-space: normal;
+}
+
+// Layout de 5 linhas baseado na coluna STATUS
+$row-height: 1.8rem;
+
+.acao-row {
+  // Altura total = 5 linhas
+  td {
+    vertical-align: top;
+  }
+}
+
+// Coluna Indicador (reduzida)
+.indicador-cell {
+  width: 10%;
+}
+
+.indicador-nome-box {
+  background: var(--bs-gray-700);
+  color: white;
+  padding: 0.5rem;
+  border-radius: 0.25rem;
+  margin-bottom: 0.5rem;
+  min-height: calc($row-height * 3);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  word-break: break-word;
+  overflow-wrap: break-word;
+  white-space: normal;
+  
+  .indicador-nome {
+    font-weight: 500;
+    font-size: 0.9rem;
+    word-break: break-word;
+    white-space: normal;
+    overflow-wrap: anywhere;
+  }
+}
+
+.mes-analise-box {
+  background: var(--bs-gray-100);
+  padding: 0.4rem;
+  border-radius: 0.25rem;
+  text-align: center;
+  min-height: calc($row-height * 2 - 0.5rem); // 2 linhas
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  
+  small {
+    font-weight: 400;
+    color: var(--bs-body-color);
+  }
+  
+  span {
+    font-weight: 500;
+    color: var(--bs-body-color);
+  }
+}
+
+// Coluna Análise de Causas (alargada)
+.causas-cell {
+  width: 40%;
+}
+
+.causa-row {
+  min-height: $row-height;
+  display: flex;
+  align-items: center;
+  padding: 0.3rem 0.5rem;
+  background: var(--bs-gray-100);
+  border-radius: 0.25rem;
+  margin-bottom: 0.25rem;
+  text-align: left;
+  
+  &.empty {
+    background: transparent;
+  }
+  
+  &:last-child {
+    margin-bottom: 0;
+  }
+  
+  .causa-label {
+    font-weight: 600;
+    margin-right: 0.5rem;
+    color: var(--bs-body-color);
+    white-space: nowrap;
+    font-size: 0.85rem;
+  }
+  
+  .causa-texto {
+    flex: 1;
+    word-break: break-word;
+    overflow-wrap: anywhere;
+    white-space: normal;
+    font-size: 0.85rem;
+    color: var(--bs-body-color);
+  }
+}
+
+// Coluna Ação Proposta (alinhada com Início Previsto)
+.acao-cell {
+  width: 25%;
+}
+
+.acao-spacer {
+  // Espaçador para alinhar com a primeira linha de status (Início Previsto)
+  height: 0;
+  margin-bottom: 0;
+}
+
+.acao-box {
+  background: var(--bs-gray-700);
+  color: white;
+  padding: 0.6rem;
+  border-radius: 0.25rem;
+  margin-bottom: 0.5rem;
+  min-height: calc($row-height * 3); // 3 linhas (alinha com início até status)
+  display: flex;
+  flex-direction: column;
+  text-align: left;
+  
+  .acao-titulo {
+    font-weight: 600;
+    margin-bottom: 0.15rem;
+    font-size: 0.85rem;
+  }
+  
+  .acao-texto {
+    flex: 1;
+    word-break: break-word;
+    overflow-wrap: anywhere;
+    white-space: normal;
+    font-size: 0.85rem;
+    display: flex;
+    align-items: center;
+  }
+}
+
+.responsavel-box {
+  padding: 0.3rem 0.5rem;
+  text-align: left;
+  min-height: calc($row-height * 2 - 0.5rem); // 2 linhas restantes
+  display: flex;
+  align-items: center;
+  
+  small {
+    color: var(--bs-body-color);
+    font-weight: 400;
+  }
+}
+
+// Coluna Status (5 linhas definidas)
+.status-cell {
+  width: 20%;
+}
+
+.status-row {
+  min-height: auto;
+  display: flex;
+  align-items: center;
+  margin-bottom: 0.25rem;
+  
+  &:last-child {
+    margin-bottom: 0;
+  }
+  
+  .badge {
+    width: 100%;
+    //padding: 0.2rem 0.3rem;
+    font-size: 0.75rem;
+    line-height: 1.45;
+    
+    small {
+      margin-right: 0.2rem;
+      font-weight: 500;
+    }
+  }
 }
 
 .causa-badge,
@@ -16,7 +203,24 @@
 }
 
 .table {
-  min-width: 640px;
+  width: 100%;
+  table-layout: fixed;
+}
+
+.table-responsive {
+  overflow-x: visible;
+}
+
+// Quebra de texto nas colunas
+.indicador-cell,
+.causas-cell,
+.acao-cell,
+.status-cell {
+  word-wrap: break-word;
+  word-break: break-word;
+  overflow-wrap: break-word;
+  white-space: normal;
+  max-width: 0;
 }
 
 .kpi-card {
@@ -187,10 +391,6 @@
 
   .col-mobile-hide {
     display: none;
-  }
-
-  .table {
-    min-width: 520px;
   }
 
   .table td,
