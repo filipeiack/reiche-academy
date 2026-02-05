@@ -4,6 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import Swal from 'sweetalert2';
 import { UsersService } from '../../../../core/services/users.service';
+import { AuthService } from '../../../../core/services/auth.service';
 import { Usuario } from '../../../../core/models/auth.model';
 import { TranslatePipe } from '../../../../core/pipes/translate.pipe';
 import { NgbAlertModule, NgbPaginationModule, NgbOffcanvas, NgbOffcanvasModule } from '@ng-bootstrap/ng-bootstrap';
@@ -29,6 +30,7 @@ import { UserAvatarComponent } from '../../../../shared/components/user-avatar/u
 })
 export class UsuariosListComponent implements OnInit {
   private usersService = inject(UsersService);
+  private authService = inject(AuthService);
   private offcanvasService = inject(NgbOffcanvas);
 
   usuarios: Usuario[] = [];
@@ -55,6 +57,21 @@ export class UsuariosListComponent implements OnInit {
 
   ngOnInit(): void {
     this.loadUsuarios();
+  }
+
+  /**
+   * Verifica se o usuário logado é ADMINISTRADOR
+   * Apenas ADMIN pode criar, inativar e deletar usuários via CRUD
+   */
+  get isAdmin(): boolean {
+    const currentUser = this.authService.getCurrentUser();
+    if (!currentUser?.perfil) return false;
+    
+    const perfilCodigo = typeof currentUser.perfil === 'object' 
+      ? currentUser.perfil.codigo 
+      : currentUser.perfil;
+    
+    return perfilCodigo === 'ADMINISTRADOR';
   }
 
   private showToast(title: string, icon: 'success' | 'error' | 'info' | 'warning', timer: number = 3000): void {
@@ -179,6 +196,12 @@ export class UsuariosListComponent implements OnInit {
   }
 
   inactivateUsuario(usuarioId: string, nome: string): void {
+    // Proteção: impedir auto-inativação
+    if (this.isCurrentUser(usuarioId)) {
+      this.showToast('Você não pode inativar sua própria conta', 'error');
+      return;
+    }
+
     Swal.fire({
       title: '<strong>Inativar Usuário</strong>',
       html: `Tem certeza que deseja inativar <strong>${nome}</strong>?<br>O usuário não poderá mais acessar o sistema.`,
@@ -251,6 +274,12 @@ export class UsuariosListComponent implements OnInit {
   }
 
   deleteUsuario(usuarioId: string, nome: string): void {
+    // Proteção: impedir auto-delete
+    if (this.isCurrentUser(usuarioId)) {
+      this.showToast('Você não pode deletar sua própria conta', 'error');
+      return;
+    }
+
     Swal.fire({
       title: '<strong>Deletar Usuário</strong>',
       html: `Tem certeza que deseja deletar <strong>${nome}</strong> permanentemente?<br><strong class="text-danger">Esta ação não pode ser desfeita!</strong>`,
@@ -286,6 +315,14 @@ export class UsuariosListComponent implements OnInit {
 
   get totalPages(): number {
     return Math.ceil(this.filteredUsuarios.length / this.pageSize);
+  }
+
+  /**
+   * Verifica se o usuário é o próprio usuário logado
+   */
+  isCurrentUser(usuarioId: string): boolean {
+    const currentUser = this.authService.getCurrentUser();
+    return currentUser?.id === usuarioId;
   }
 
   getStartIndex(): number {
@@ -350,7 +387,22 @@ export class UsuariosListComponent implements OnInit {
   deleteSelectedUsuarios(): void {
     if (this.selectedUsuariosIds.size === 0) return;
 
-    const count = this.selectedUsuariosIds.size;
+    const currentUser = this.authService.getCurrentUser();
+    
+    // Filtrar próprio usuário da lista de seleção
+    const idsToDelete = Array.from(this.selectedUsuariosIds).filter(id => id !== currentUser?.id);
+    
+    if (idsToDelete.length === 0) {
+      this.showToast('Você não pode deletar sua própria conta', 'error');
+      return;
+    }
+
+    // Avisar se próprio usuário estava na seleção
+    if (idsToDelete.length < this.selectedUsuariosIds.size) {
+      this.showToast('Sua própria conta foi removida da seleção', 'info', 4000);
+    }
+
+    const count = idsToDelete.length;
     Swal.fire({
       title: '<strong>Deletar Usuários</strong>',
       html: `Tem certeza que deseja deletar <strong>${count} usuário(s)</strong> permanentemente?<br><strong class="text-danger">Esta ação não pode ser desfeita!</strong>`,
@@ -364,13 +416,12 @@ export class UsuariosListComponent implements OnInit {
       allowOutsideClick: false
     }).then((result) => {
       if (!result.isConfirmed) return;
-      this.confirmDeleteSelected();
+      this.confirmDeleteSelected(idsToDelete);
     });
   }
 
-  private confirmDeleteSelected(): void {
+  private confirmDeleteSelected(idsToDelete: string[]): void {
     this.loading = true;
-    const idsToDelete = Array.from(this.selectedUsuariosIds);
     let deletedCount = 0;
     let errorCount = 0;
 
@@ -391,9 +442,9 @@ export class UsuariosListComponent implements OnInit {
     );
 
     Promise.all(deleteRequests).then(() => {
-      // Remover do array de usuários
+      // Remover do array de usuários (apenas os que foram efetivamente deletados)
       this.usuarios = this.usuarios.filter(u => 
-        !this.selectedUsuariosIds.has(u.id)
+        !idsToDelete.includes(u.id)
       );
       
       // Limpar seleção

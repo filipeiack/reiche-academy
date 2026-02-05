@@ -44,7 +44,7 @@ export class UsuariosController {
   }
 
   @Get()
-  @Roles('ADMINISTRADOR', 'GESTOR', 'COLABORADOR')
+  @Roles('ADMINISTRADOR', 'GESTOR', 'COLABORADOR', 'LEITURA')
   @ApiOperation({ summary: 'Listar todos os usuários' })
   @ApiResponse({ status: 200, description: 'Lista de usuários retornada com sucesso' })
   findAll(@Request() req: { user: RequestUser }) {

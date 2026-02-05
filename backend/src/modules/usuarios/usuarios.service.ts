@@ -470,6 +470,11 @@ export class UsuariosService {
 
   async remove(id: string, requestUser: RequestUser) {
     const before = await this.findById(id, requestUser, 'editar');
+
+    // RA-004: Impedir auto-inativação (segurança - evita perda de acesso)
+    if (requestUser.id === id) {
+      throw new ForbiddenException('Você não pode inativar sua própria conta');
+    }
     
     const after = await this.prisma.usuario.update({
       where: { id },
@@ -492,6 +497,11 @@ export class UsuariosService {
 
   async hardDelete(id: string, requestUser: RequestUser) {
     const usuario = await this.findById(id, requestUser, 'editar');
+
+    // RA-004: Impedir auto-delete (segurança - evita perda de acesso total ao sistema)
+    if (requestUser.id === id) {
+      throw new ForbiddenException('Você não pode deletar sua própria conta');
+    }
 
     // Delete profile photo if exists
     if (usuario.fotoUrl) {

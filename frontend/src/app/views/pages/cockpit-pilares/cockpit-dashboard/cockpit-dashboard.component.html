@@ -1,15 +1,11 @@
-<div id="headerDashboard" class="sticky-header-dashboard mb-1" data-testid="cockpit-header">
-
-  <div class="mb-2 align-items-center d-flex justify-content-between flex-wrap cockpit-header-row">
+<div id="headerDashboard" class="sticky-header-dashboard" data-testid="cockpit-header">
+  <div class="align-items-center d-flex justify-content-between flex-wrap cockpit-header-row">
     <!-- Breadcrumb -->
-    <nav aria-label="breadcrumb">
-      <ol class="breadcrumb breadcrumb-arrow">
+    <nav aria-label="breadcrumb" class="mb-0">
+      <ol class="breadcrumb breadcrumb-arrow mb-0">
         <li class="breadcrumb-item">
           <i class="bi bi-speedometer2"></i>
         </li>
-        <!-- <li class="breadcrumb-item">
-            <a href="javascript:void(0)" (click)="voltar()">Dashboard Empresa</a>
-          </li> -->
         <li class="breadcrumb-item active fw-bold" aria-current="page">
           COCKPIT: {{ cockpit?.pilarEmpresa?.nome }}
         </li>
@@ -17,7 +13,7 @@
     </nav>
 
     <!-- Feedback de salvamento centralizado -->
-    <div id="feedbackSaveCockpit" class="d-flex justify-content-end align-items-center mb-2" data-testid="feedback-save">
+    <div id="feedbackSaveCockpit" class="d-flex justify-content-end align-items-center" data-testid="feedback-save">
       @if (saveFeedback.saving) {
       <div class="text-warning small">
         <span class="spinner-border spinner-border-sm me-1"></span>
@@ -26,7 +22,7 @@
       } @else if (saveFeedback.lastSaveTime) {
       <div class="text-success small">
         <i class="bi bi-check-circle me-1"></i>
-        {{ saveFeedback.context }} Salvo por último às: {{ saveFeedback.lastSaveTime | date: 'HH:mm:ss':'America/Sao_Paulo' }}
+        {{ saveFeedback.context }} Salvo às {{ saveFeedback.lastSaveTime | date: 'HH:mm:ss':'America/Sao_Paulo' }}
       </div>
       }
     </div>

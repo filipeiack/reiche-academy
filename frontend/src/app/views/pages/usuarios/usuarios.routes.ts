@@ -1,22 +1,24 @@
 import { Routes } from '@angular/router';
 import { UsuariosListComponent } from './usuarios-list/usuarios-list.component';
 import { UsuariosFormComponent } from './usuarios-form/usuarios-form.component';
-import { nonColaboradorGuard } from '../../../core/guards/non-colaborador.guard';
+import { adminGuard } from '../../../core/guards/admin.guard';
 
+// Apenas ADMINISTRADOR acessa tela de CRUD de usuários
+// GESTOR/COLABORADOR/LEITURA podem adicionar usuários via drawers em outras telas
 export const usuariosRoutes: Routes = [
   {
     path: '',
     component: UsuariosListComponent,
-    canActivate: [nonColaboradorGuard]
+    canActivate: [adminGuard]
   },
   {
     path: 'novo',
     component: UsuariosFormComponent,
-    canActivate: [nonColaboradorGuard]
+    canActivate: [adminGuard]
   },
   {
     path: ':id/editar',
     component: UsuariosFormComponent,
-    canActivate: [nonColaboradorGuard]
+    canActivate: [adminGuard]
   }
 ];

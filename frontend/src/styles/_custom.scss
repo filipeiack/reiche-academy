@@ -94,6 +94,28 @@
 
 // Tema Dark específico
 [data-bs-theme="dark"] {
+	// Redeclaração das variáveis CSS de gray para tema dark (escala invertida)
+	--bs-gray-100: #1A1A1A;
+	--bs-gray-200: #2A2A2A;
+	--bs-gray-300: #3A3A3A;
+	--bs-gray-400: #4F4F4F;
+	--bs-gray-500: #6F6F6F;
+	--bs-gray-600: #9F9F9F;
+	--bs-gray-700: #C2C2C2;
+	--bs-gray-800: #E0E0E0;
+	--bs-gray-900: #F7F7F7;
+
+	// Versões RGB (necessárias para rgba())
+	--bs-gray-100-rgb: 26, 26, 26;
+	--bs-gray-200-rgb: 42, 42, 42;
+	--bs-gray-300-rgb: 58, 58, 58;
+	--bs-gray-400-rgb: 79, 79, 79;
+	--bs-gray-500-rgb: 111, 111, 111;
+	--bs-gray-600-rgb: 159, 159, 159;
+	--bs-gray-700-rgb: 194, 194, 194;
+	--bs-gray-800-rgb: 224, 224, 224;
+	--bs-gray-900-rgb: 247, 247, 247;
+
 	.form-control:focus {
 		border-color: var(--bs-primary);
 		box-shadow: 0 0 0 0.1rem rgba(140, 110, 69, 0.25);
@@ -117,15 +139,6 @@
 	.table th,
 	.table td {
 		border-color: #2a2a2aee;
-
-	}
-	
-	.bg-gray-100 {
-		background-color: #333333 !important;
-	}
-
-	.bg-gray-300 {
-		background-color: #131212 !important;
 	}
 
 	.bg-black {
