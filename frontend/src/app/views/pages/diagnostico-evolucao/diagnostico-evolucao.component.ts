@@ -8,6 +8,7 @@ import Swal from 'sweetalert2';
 import { firstValueFrom, Subscription } from 'rxjs';
 import { DiagnosticoNotasService, MediaPilar, HistoricoEvolucao } from '../../../core/services/diagnostico-notas.service';
 import { EmpresasService, Empresa } from '../../../core/services/empresas.service';
+import { PilaresEmpresaService, PilarEmpresa } from '../../../core/services/pilares-empresa.service';
 import { EmpresaBasic } from '@app/core/models/auth.model';
 import { AuthService } from '../../../core/services/auth.service';
 import { EmpresaContextService } from '../../../core/services/empresa-context.service';
@@ -42,6 +43,7 @@ export class DiagnosticoEvolucaoComponent implements OnInit, OnDestroy {
   private authService = inject(AuthService);
   private empresaContextService = inject(EmpresaContextService);
   private periodosService = inject(PeriodosAvaliacaoService);
+  private pilaresEmpresaService = inject(PilaresEmpresaService);
 
   empresaLogada: EmpresaBasic | null = null;
   selectedEmpresaId: string | null = null;
@@ -146,21 +148,47 @@ export class DiagnosticoEvolucaoComponent implements OnInit, OnDestroy {
     this.medias = [];
     this.destroyBarChart();
 
-    this.diagnosticoService.calcularMediasPilares(this.selectedEmpresaId).subscribe({
-      next: (data) => {
-        this.medias = data;
-        this.loading = false;
-        this.anoFiltro = this.ANO_CORRENTE;
-        // Carregar período atual
-        this.loadPeriodoAtual();
-        // Carregar histórico com filtro de ano
-        this.loadAllHistorico();
-      },
-      error: (err: any) => {
-        this.error = err?.error?.message || 'Erro ao carregar médias dos pilares';
-        this.loading = false;
-        this.showToast(this.error, 'error');
-      }
+    // Carregar todos os pilares da empresa e suas médias
+    Promise.all([
+      firstValueFrom(this.pilaresEmpresaService.listarPilaresDaEmpresa(this.selectedEmpresaId)),
+      firstValueFrom(this.diagnosticoService.calcularMediasPilares(this.selectedEmpresaId))
+    ]).then(([todosOsPilares, mediasPilares]) => {
+      // Criar mapa de médias por pilarEmpresaId para fácil lookup
+      const mediasMap = new Map(mediasPilares.map(m => [m.pilarEmpresaId, m]));
+
+      // Combinar: todos os pilares + suas médias (se existirem)
+      this.medias = todosOsPilares
+        .filter(p => p.ativo) // Apenas pilares ativos
+        .map(pilar => {
+          const media = mediasMap.get(pilar.id);
+          if (media) {
+            // Pilar com média existente
+            return media;
+          } else {
+            // Pilar sem média - criar objeto com valores default
+            return {
+              pilarEmpresaId: pilar.id,
+              pilarId: pilar.pilarTemplateId || pilar.id,
+              pilarNome: pilar.nome,
+              mediaAtual: 0,
+              totalRotinasAvaliadas: 0,
+              totalRotinas: 0,
+              ultimaAtualizacao: null
+            } as MediaPilar;
+          }
+        })
+        .sort((a, b) => a.pilarNome.localeCompare(b.pilarNome));
+
+      this.loading = false;
+      this.anoFiltro = this.ANO_CORRENTE;
+      // Carregar período atual
+      this.loadPeriodoAtual();
+      // Carregar histórico com filtro de ano
+      this.loadAllHistorico();
+    }).catch((err: any) => {
+      this.error = err?.error?.message || 'Erro ao carregar pilares';
+      this.loading = false;
+      this.showToast(this.error, 'error');
     });
   }
 
@@ -544,8 +572,15 @@ renderBarChart(): void {
     const sorted = [...this.medias];
     
     if (!this.sortColumn) {
-      // Ordenação padrão: por média decrescente
-      return sorted.sort((a, b) => b.mediaAtual - a.mediaAtual);
+      // Ordenação padrão: pilares com média (desc) primeiro, depois sem média (alfabética)
+      return sorted.sort((a, b) => {
+        // Pilares com média (mediaAtual > 0) primeiro
+        if (a.mediaAtual > 0 && b.mediaAtual === 0) return -1;
+        if (a.mediaAtual === 0 && b.mediaAtual > 0) return 1;
+        // Se ambos têm ou não têm média, ordernar por média ou nome
+        if (a.mediaAtual > 0 && b.mediaAtual > 0) return b.mediaAtual - a.mediaAtual;
+        return a.pilarNome.localeCompare(b.pilarNome);
+      });
     }
 
     // Aplicar ordenação

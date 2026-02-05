@@ -6,7 +6,6 @@ import { NgSelectModule } from '@ng-select/ng-select';
 import Swal from 'sweetalert2';
 import { PilaresService, Pilar } from '@core/services/pilares.service';
 import { PilaresEmpresaService } from '@core/services/pilares-empresa.service';
-import { formatIsoSaoPaulo } from '@core/utils/date-time';
 
 @Component({
   selector: 'app-pilar-add-drawer',
@@ -17,57 +16,125 @@ import { formatIsoSaoPaulo } from '@core/utils/date-time';
       <div class="offcanvas-header border-bottom flex-shrink-0">
         <h5 class="offcanvas-title">
           <i class="feather icon-plus me-2"></i>
-          Adicionar Pilar Customizado
+          Adicionar Novo Pilar
         </h5>
         <button type="button" class="btn-close" (click)="fechar()"></button>
       </div>
 
       <div class="offcanvas-body flex-grow-1 overflow-auto">
-        <form [formGroup]="form">
-          <!-- Nome do Pilar -->
-          <div class="mb-3">
-            <label class="form-label">
-              Nome do Pilar <span class="text-danger">*</span>
+        <!-- Toggle: Selecionar vs Criar -->
+        <div class="mb-4">
+          <div class="btn-group w-100" role="group">
+            <input 
+              type="radio" 
+              class="btn-check" 
+              name="pilar-mode" 
+              id="mode-criar" 
+              [checked]="isCriarNovoMode === true"
+              (change)="isCriarNovoMode = true"
+            />
+            <label class="btn btn-outline-primary" for="mode-criar">
+              <i class="feather icon-plus-circle me-2"></i>
+              Criar Pilar Customizado
             </label>
-            @if (loadingPilares) {
-              <div class="text-center py-3">
-                <div class="spinner-border text-primary spinner-border-sm" role="status">
-                  <span class="visually-hidden">Carregando pilares...</span>
-                </div>
-              </div>
-            } @else {
-              <ng-select 
-                [items]="pilaresDisponiveis" 
-                bindLabel="nome" 
-                bindValue="id"
-                [(ngModel)]="pilarIdSelecionado"
-                [ngModelOptions]="{standalone: true}"
-                placeholder="Busque por nome ou digite para criar novo pilar..."
-                [clearable]="true"
-                [addTag]="addPilarTag"
-                (change)="onPilarSelected()">
-                <ng-template ng-option-tmp let-item="item">
-                  <div class="d-flex align-items-center">
-                    <i class="feather icon-layers me-2"></i>
-                    <div>
-                      <div>{{ item.nome }}</div>
-                      @if (item.descricao) {
-                        <small class="text-muted">{{ item.descricao }}</small>
-                      }
-                    </div>
-                  </div>
-                </ng-template>
-              </ng-select>
-            }
-            @if (form.get('nome')?.invalid && form.get('nome')?.touched) {
-              <div class="invalid-feedback d-block">Nome é obrigatório (mínimo 2 caracteres)</div>
-            }
-          </div>
 
-          <div class="alert alert-info">
-            <i class="feather icon-info me-2"></i>
+            <input 
+              type="radio" 
+              class="btn-check" 
+              name="pilar-mode" 
+              id="mode-selecionar" 
+              [checked]="isCriarNovoMode === false"
+              (change)="isCriarNovoMode = false"
+            />
+            <label class="btn btn-outline-primary" for="mode-selecionar">
+              <i class="feather icon-search me-2"></i>
+              Selecionar Pilar Template
+            </label>
+          </div>
+        </div>
+
+        <form [formGroup]="form">
+          <!-- MODO 1: Criar Novo Pilar (PADRÃO) -->
+          @if (isCriarNovoMode) {
+            <div class="mb-3">
+              <label class="form-label" for="novo-pilar-nome">
+                Nome do Novo Pilar <span class="text-danger">*</span>
+              </label>
+              <input 
+                type="text" 
+                class="form-control"
+                id="novo-pilar-nome"
+                [(ngModel)]="novoNomePilar"
+                [ngModelOptions]="{standalone: true}"
+                placeholder="Ex: Inovação, Sustentabilidade, RH..."
+                (input)="validarNomoPilar()"
+              />
+              @if (novoNomePilarErro) {
+                <small class="text-danger d-block mt-1">
+                  <i class="feather icon-alert-circle me-1"></i>
+                  {{ novoNomePilarErro }}
+                </small>
+              }
+            </div>
+            <div class="alert alert-info alert-sm">
+              <i class="feather icon-info me-2"></i>
+              <small>Digite um nome único para criar um novo pilar customizado.</small>
+            </div>
+          }
+
+          <!-- MODO 2: Selecionar Pilar Template -->
+          @if (!isCriarNovoMode) {
+            <div class="mb-3">
+              <label class="form-label">
+                Selecione um Pilar <span class="text-danger">*</span>
+              </label>
+              @if (loadingPilares) {
+                <div class="text-center py-3">
+                  <div class="spinner-border text-primary spinner-border-sm" role="status">
+                    <span class="visually-hidden">Carregando pilares...</span>
+                  </div>
+                </div>
+              } @else {
+                @if (pilaresDisponiveis.length === 0) {
+                  <div class="alert alert-warning mb-0">
+                    <i class="feather icon-alert-circle me-2"></i>
+                    Nenhum pilar disponível para vincular.
+                  </div>
+                } @else {
+                  <ng-select 
+                    [items]="pilaresDisponiveis" 
+                    bindLabel="nome" 
+                    bindValue="id"
+                    [(ngModel)]="pilarIdSelecionado"
+                    [ngModelOptions]="{standalone: true}"
+                    placeholder="Escolha um pilar da lista..."
+                    [clearable]="true"
+                    (change)="onPilarSelected()">
+                    <ng-template ng-option-tmp let-item="item">
+                      <div class="d-flex align-items-center">
+                        <i class="feather icon-layers me-2"></i>
+                        <div>
+                          <div class="fw-500">{{ item.nome }}</div>
+                          @if (item.descricao) {
+                            <small class="text-muted">{{ item.descricao }}</small>
+                          }
+                        </div>
+                      </div>
+                    </ng-template>
+                  </ng-select>
+                }
+              }
+            </div>
+            <div class="alert alert-info alert-sm">
+              <i class="feather icon-info me-2"></i>
+              <small>Escolha um template de pilar já cadastrado no sistema.</small>
+            </div>
+          }
+
+          <div class="alert alert-secondary alert-sm">
+            <i class="feather icon-layers me-2"></i>
             <small>
-              Este drawer permanecerá aberto para adicionar múltiplos pilares rapidamente.
+              Este drawer permanecerá aberto para adicionar múltiplos pilares.
             </small>
           </div>
         </form>
@@ -123,7 +190,13 @@ export class PilarAddDrawerComponent implements OnInit {
   pilarIdSelecionado: string | null = null;
   loadingPilares = false;
   saving = false;
-  private pilaresCustomizados = new Set<string>();
+  
+  // Novo modo: separar selecionar vs criar
+  // ⭐ MODO PADRÃO = Criar Novo Pilar (mais intuitivo)
+  isCriarNovoMode = true;
+  novoNomePilar = '';
+  novoNomePilarErro = '';
+  
   private pilaresOriginaisIds = new Set<string>();
 
   ngOnInit(): void {
@@ -138,7 +211,6 @@ export class PilarAddDrawerComponent implements OnInit {
     this.loadingPilares = true;
     this.pilaresService.findAll().subscribe({
       next: (pilares) => {
-        // Carregar TODOS os pilares ativos (validação de duplicação será feita ao salvar)
         this.pilaresDisponiveis = pilares.filter(p => p.ativo);
         this.pilaresOriginaisIds = new Set(this.pilaresDisponiveis.map(p => p.id));
         this.loadingPilares = false;
@@ -151,39 +223,81 @@ export class PilarAddDrawerComponent implements OnInit {
     });
   }
 
-  addPilarTag = (nome: string): Pilar | Promise<Pilar> => {
-    if (nome.length > 60) {
-      this.showToast('O nome do pilar deve ter no máximo 60 caracteres', 'error');
-      return Promise.reject('Nome muito longo');
-    }
-
-    if (nome.length < 2) {
-      this.showToast('O nome do pilar deve ter no mínimo 2 caracteres', 'error');
-      return Promise.reject('Nome muito curto');
-    }
-
-    this.pilaresCustomizados.add(nome);
-    
-    const pilarFake: Pilar = {
-      id: nome,
-      nome: nome,
-      descricao: '(novo)',
-      ativo: true,
-       createdAt: formatIsoSaoPaulo(new Date()),
-       updatedAt: formatIsoSaoPaulo(new Date())
-    };
-    
-    this.pilarIdSelecionado = nome;
-    return Promise.resolve(pilarFake);
-  };
-
   onPilarSelected(): void {
-    // Pode ser usada para lógica adicional se necessário
+    // Validação ocorre apenas ao clicar em Salvar
+  }
+
+  validarNomoPilar(): void {
+    this.novoNomePilarErro = '';
+
+    if (!this.novoNomePilar.trim()) {
+      return; // Vazio é OK (campo opcional até clicar em salvar)
+    }
+
+    if (this.novoNomePilar.trim().length < 5) {
+      this.novoNomePilarErro = 'Mínimo 5 caracteres';
+      return;
+    }
+
+    if (this.novoNomePilar.length > 60) {
+      this.novoNomePilarErro = 'Máximo 60 caracteres';
+      return;
+    }
+
+    // Verificar se já existe
+    const existe = this.pilaresDisponiveis.some(
+      p => p.nome.toLowerCase() === this.novoNomePilar.toLowerCase()
+    );
+    
+    if (existe) {
+      this.novoNomePilarErro = 'Pilar com este nome já existe';
+    }
   }
 
   salvar(): void {
-    if (!this.pilarIdSelecionado) {
-      this.showToast('Selecione ou digite o nome de um pilar', 'warning');
+    // Validar modo Selecionar
+    if (!this.isCriarNovoMode) {
+      if (!this.pilarIdSelecionado) {
+        this.showToast('Selecione um pilar', 'warning');
+        return;
+      }
+
+      if (!this.empresaId) {
+        this.showToast('Empresa não identificada', 'error');
+        return;
+      }
+
+      // Verificar duplicação de template
+      if (this.pilaresJaAssociados.includes(this.pilarIdSelecionado)) {
+        const pilarNome = this.pilaresDisponiveis.find(p => p.id === this.pilarIdSelecionado)?.nome || 'Este pilar';
+        this.showToast(`${pilarNome} já está vinculado a esta empresa`, 'warning');
+        return;
+      }
+
+      this.saving = true;
+      this.pilaresEmpresaService.vincularPilares(this.empresaId, [this.pilarIdSelecionado]).subscribe({
+        next: () => {
+          const pilarNome = this.pilaresDisponiveis.find(p => p.id === this.pilarIdSelecionado)?.nome;
+          this.showToast(`Pilar "${pilarNome}" adicionado com sucesso!`, 'success');
+          this.pilarAdicionado.emit();
+          this.saving = false;
+          this.resetForm();
+        },
+        error: (err) => {
+          const errorMsg = err?.error?.message || 'Erro ao adicionar pilar';
+          this.showToast(errorMsg, 'error');
+          this.saving = false;
+        }
+      });
+
+      return;
+    }
+
+    // Validar modo Criar Novo
+    this.validarNomoPilar();
+
+    if (this.novoNomePilarErro || !this.novoNomePilar.trim()) {
+      this.showToast('Preencha um nome válido para o novo pilar', 'warning');
       return;
     }
 
@@ -192,52 +306,28 @@ export class PilarAddDrawerComponent implements OnInit {
       return;
     }
 
-    const isCustomizado = this.pilaresCustomizados.has(this.pilarIdSelecionado) || 
-                          !this.pilaresOriginaisIds.has(this.pilarIdSelecionado);
-
-    // Verificar se o pilar template já está vinculado (antes de salvar)
-    if (!isCustomizado && this.pilaresJaAssociados.includes(this.pilarIdSelecionado)) {
-      const pilarNome = this.pilaresDisponiveis.find(p => p.id === this.pilarIdSelecionado)?.nome || 'Este pilar';
-      this.showToast(`${pilarNome} já está vinculado a esta empresa`, 'warning');
-      return;
-    }
-
     this.saving = true;
+    this.pilaresEmpresaService.criarPilarCustomizado(this.empresaId, { nome: this.novoNomePilar.trim() }).subscribe({
+      next: (pilar) => {
+        this.showToast(`Pilar "${pilar.nome}" criado com sucesso!`, 'success');
+        this.pilarAdicionado.emit();
+        this.saving = false;
+        this.resetForm();
+      },
+      error: (err) => {
+        const errorMsg = err?.error?.message || 'Erro ao criar pilar';
+        this.showToast(errorMsg, 'error');
+        this.saving = false;
+      }
+    });
+  }
 
-    if (isCustomizado) {
-      this.pilaresEmpresaService.criarPilarCustomizado(this.empresaId, { nome: this.pilarIdSelecionado }).subscribe({
-        next: (pilar) => {
-          this.showToast(`Pilar "${pilar.nome}" criado com sucesso!`, 'success');
-          this.pilarAdicionado.emit();
-          this.saving = false;
-          this.pilarIdSelecionado = null;
-          this.form.reset();
-          this.form.markAsUntouched();
-        },
-        error: (err) => {
-          const errorMsg = err?.error?.message || 'Erro ao criar pilar';
-          this.showToast(errorMsg, 'error');
-          this.saving = false;
-        }
-      });
-    } else {
-      this.pilaresEmpresaService.vincularPilares(this.empresaId, [this.pilarIdSelecionado]).subscribe({
-        next: () => {
-          const pilarNome = this.pilaresDisponiveis.find(p => p.id === this.pilarIdSelecionado)?.nome;
-          this.showToast(`Pilar "${pilarNome}" adicionado com sucesso!`, 'success');
-          this.pilarAdicionado.emit();
-          this.saving = false;
-          this.pilarIdSelecionado = null;
-          this.form.reset();
-          this.form.markAsUntouched();
-        },
-        error: (err) => {
-          const errorMsg = err?.error?.message || 'Erro ao adicionar pilar';
-          this.showToast(errorMsg, 'error');
-          this.saving = false;
-        }
-      });
-    }
+  private resetForm(): void {
+    this.pilarIdSelecionado = null;
+    this.novoNomePilar = '';
+    this.novoNomePilarErro = '';
+    this.form.reset();
+    this.form.markAsUntouched();
   }
 
   private showToast(title: string, icon: 'success' | 'error' | 'info' | 'warning', timer: number = 3000): void {

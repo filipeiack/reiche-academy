@@ -68,7 +68,7 @@
           <tr>
             <td class="text-break" style="word-break: break-word; white-space: normal; overflow-wrap: anywhere;">
               {{ acao.indicadorCockpit?.nome || '-' }} <br>
-              <small><small>Referência: </small></small>
+              <small><small>Mês da Análise: </small></small>
               <small>{{ getMesLabel(acao.indicadorMensal) }}</small>
             </td>
             <td class="col-mobile-hide">
@@ -104,7 +104,7 @@
               }
             </td>
             <td class="col-mobile-hide">
-              <span class="badge bg-gray-500 text-black acao-badge" style="text-align: left;"><small><small>Ação:
+              <span class="badge bg-black text-white acao-badge" style="text-align: left;"><small><small>Ação:
                   </small>
                 </small>{{
                 acao.acaoProposta }}</span>
@@ -114,7 +114,8 @@
               <div class="border rounded bg-gray-100 p-1 mb-1 mt-1">
 
                 <div class="small" style="text-align: left;">
-                  <small>Início Previsto: </small>{{ (acao.inicioPrevisto | date:'shortDate':'America/Sao_Paulo') || '-'}}
+                  <small>Início Previsto: </small>{{ (acao.inicioPrevisto | date:'shortDate':'America/Sao_Paulo') ||
+                  '-'}}
                 </div>
 
                 <div class="small" style="text-align: left;">
@@ -125,7 +126,7 @@
               <span class="badge" [class]="getStatusClass(acao) + ' text-black'" style="width: 100%;">
                 {{ getStatusLabel(acao) }}
               </span>
-              
+
               <div class="border rounded bg-gray-100 p-1 mb-1 mt-1">
 
                 <div class="small" style="text-align: left;">
@@ -137,10 +138,10 @@
                 </div>
 
               </div>
-              
+
             </td>
             <td class="text-end">
-              @if (!acao.inicioReal) {
+              <!-- @if (!acao.inicioReal) {
               <button class="btn btn-icon text-primary" (click)="marcarInicioReal(acao)" title="Marcar início real">
                 <i class="feather icon-play"></i>
               </button>
@@ -149,25 +150,23 @@
               <button class="btn btn-icon text-success" (click)="marcarTerminoReal(acao)" title="Marcar término real">
                 <i class="feather icon-check"></i>
               </button>
-              }
-              <div ngbDropdown class="d-inline-block">
+              } -->
+              <!-- <div ngbDropdown class="d-inline-block">
                 <button class="btn btn-icon text-secondary" ngbDropdownToggle [title]="'BUTTONS.MORE' | translate">
                   <i class="feather icon-more-vertical"></i>
                 </button>
                 <div ngbDropdownMenu>
-                  <button ngbDropdownItem data-testid="edit-acao-button" class="d-flex align-items-center gap-1"
-                    (click)="editarAcao(acao)" [title]="'BUTTONS.EDIT' | translate">
-                    <i class="feather icon-edit"></i>
-                    <span>{{ 'BUTTONS.EDIT' | translate }}</span>
-                  </button>
-                  <button ngbDropdownItem data-testid="delete-acao-button"
-                    class="d-flex align-items-center gap-1 text-danger" (click)="deleteAcao(acao)"
-                    [title]="'BUTTONS.DELETE' | translate">
-                    <i class="feather icon-trash-2"></i>
-                    <span>{{ 'BUTTONS.DELETE' | translate }}</span>
-                  </button>
+                  
                 </div>
-              </div>
+              </div> -->
+              <button data-testid="edit-acao-button" class="btn btn-icon text-secondary"
+                (click)="editarAcao(acao)" [title]="'BUTTONS.EDIT' | translate">
+                <i class="feather icon-edit"></i>
+              </button>
+              <button data-testid="delete-acao-button" class="btn btn-icon text-danger"
+                (click)="deleteAcao(acao)" [title]="'BUTTONS.DELETE' | translate">
+                <i class="feather icon-trash-2"></i>
+              </button>
             </td>
           </tr>
           }

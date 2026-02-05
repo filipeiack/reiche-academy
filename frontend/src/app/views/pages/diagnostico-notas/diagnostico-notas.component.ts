@@ -316,6 +316,11 @@ export class DiagnosticoNotasComponent implements OnInit, OnDestroy {
 
     const component = offcanvasRef.componentInstance as PilarAddDrawerComponent;
     component.empresaId = this.selectedEmpresaId;
+    // ✅ Passar os IDs dos pilares templates já vinculados
+    component.pilaresJaAssociados = this.pilares
+      .filter(p => p.pilarTemplateId) // Apenas pilares que têm template vinculado
+      .map(p => p.pilarTemplateId!); // Extrair os IDs
+    
     component.pilarAdicionado.subscribe(() => {
       this.loadDiagnostico(true);
     });

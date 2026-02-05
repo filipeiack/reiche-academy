@@ -446,7 +446,7 @@ export const environment = {
 
 ### Logo não carrega
 **Verificar:**
-1. Logo em `src/assets/images/logo_reiche_academy.png`
+1. Logo em `src/assets/images/logo_reiche_academy.webp`
 2. Background em `src/assets/images/login-bg.jpg` (se customizado)
 3. Permissões do arquivo
 4. Fallback acionado via `onLogoError()`

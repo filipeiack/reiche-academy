@@ -65,11 +65,11 @@ import { TranslatePipe } from "../../../../core/pipes/translate.pipe";
                         autofocus
                       />
                       <button
-                        class="btn btn-sm btn-success"
+                        class="btn btn-sm btn-primary"
                         (click)="salvarNome(pilar)"
                         [disabled]="nomeEditando.trim().length < 2"
                       >
-                        <i class="feather icon-check"></i>
+                        Salvar
                       </button>
                       <button
                         class="btn btn-sm btn-secondary"
@@ -216,8 +216,8 @@ export class PilarEditDrawerComponent implements OnInit {
   salvarNome(pilar: PilarEmpresa): void {
     const nomeNovo = this.nomeEditando.trim();
 
-    if (nomeNovo.length < 2) {
-      this.showToast('O nome deve ter no mínimo 2 caracteres', 'error');
+    if (nomeNovo.length < 5) {
+      this.showToast('O nome deve ter no mínimo 5 caracteres', 'error');
       return;
     }
 

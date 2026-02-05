@@ -37,6 +37,7 @@ coverage/
 
 # Prisma
 prisma/migrations/.*.timestamp
+backend/diagrams
 
 # Storage files
 backend/public/
@@ -60,4 +61,6 @@ deploy-metadata/*.json
 # Templates and test artifacts
 templates/
 frontend/test-results/
+backend/test-results/
+test-results/.last-run.json
 frontend/playwright-report/

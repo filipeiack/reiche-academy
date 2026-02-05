@@ -29,7 +29,7 @@ import { ObjetivosTemplatesModule } from './modules/objetivos-templates/objetivo
   imports: [
     ConfigModule.forRoot({
       isGlobal: true,
-      envFilePath: '.env',
+      envFilePath: '../.env', // Aponta para .env da raiz (monorepo)
     }),
     ScheduleModule.forRoot(),
     // ThrottlerModule.forRoot([
