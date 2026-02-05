@@ -90,7 +90,9 @@
                       </button>
                       <button class="btn btn-icon text-primary"
                         (click)="toggleStatusUsuario(usuario.id, usuario.nome, usuario.ativo)"
-                        [title]="usuario.ativo ? 'Inativar usuário' : 'Ativar usuário'">
+                        [disabled]="isCurrentUser(usuario.id)"
+                        [class.opacity-50]="isCurrentUser(usuario.id)"
+                        [title]="isCurrentUser(usuario.id) ? 'Você não pode inativar sua própria conta' : (usuario.ativo ? 'Inativar usuário' : 'Ativar usuário')">
                         <i class="feather"
                           [ngClass]="{'icon-toggle-right': usuario.ativo, 'icon-toggle-left text-danger': !usuario.ativo}"></i>
                       </button>
@@ -99,7 +101,10 @@
                         <i class="feather icon-edit"></i>
                       </button>
                       <button data-testid="delete-usuario-button" class="btn btn-icon text-danger"
-                        (click)="deleteUsuario(usuario.id, usuario.nome)" title="{{ 'BUTTONS.DELETE' | translate }}">
+                        (click)="deleteUsuario(usuario.id, usuario.nome)"
+                        [disabled]="isCurrentUser(usuario.id)"
+                        [class.opacity-50]="isCurrentUser(usuario.id)"
+                        [title]="isCurrentUser(usuario.id) ? 'Você não pode deletar sua própria conta' : ('BUTTONS.DELETE' | translate)">
                         <i class="feather icon-trash-2"></i>
                       </button>
                     </div>

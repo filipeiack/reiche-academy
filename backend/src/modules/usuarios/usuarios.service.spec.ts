@@ -931,6 +931,74 @@ describe('UsuariosService - Validação Completa de Regras de Negócio', () => {
   });
 
   // ============================================================
+  // RA-004: Proteção Contra Auto-Delete/Auto-Inativação
+  // ============================================================
+
+  describe('RA-004: Segurança - Impedir Auto-Delete', () => {
+    it('deve impedir hardDelete do próprio usuário', async () => {
+      const usuarioAtual = { ...mockAdminUser };
+
+      jest.spyOn(prisma.usuario, 'findUnique').mockResolvedValue(usuarioAtual as any);
+
+      await expect(
+        service.hardDelete('admin-id', mockAdminUser as any)
+      ).rejects.toThrow(ForbiddenException);
+
+      await expect(
+        service.hardDelete('admin-id', mockAdminUser as any)
+      ).rejects.toThrow('Você não pode deletar sua própria conta');
+
+      // Garantir que delete não foi chamado
+      expect(prisma.usuario.delete).not.toHaveBeenCalled();
+    });
+
+    it('deve impedir remove (soft delete) do próprio usuário', async () => {
+      const usuarioAtual = { ...mockGestorEmpresaA };
+
+      jest.spyOn(prisma.usuario, 'findUnique').mockResolvedValue(usuarioAtual as any);
+
+      await expect(
+        service.remove('gestor-a-id', mockGestorEmpresaA as any)
+      ).rejects.toThrow(ForbiddenException);
+
+      await expect(
+        service.remove('gestor-a-id', mockGestorEmpresaA as any)
+      ).rejects.toThrow('Você não pode inativar sua própria conta');
+
+      // Garantir que update não foi chamado
+      expect(prisma.usuario.update).not.toHaveBeenCalled();
+    });
+
+    it('deve permitir delete de OUTRO usuário (caso normal)', async () => {
+      const usuarioAlvo = { ...mockColaboradorEmpresaA };
+
+      jest.spyOn(prisma.usuario, 'findUnique').mockResolvedValue(usuarioAlvo as any);
+      jest.spyOn(prisma.usuario, 'delete').mockResolvedValue(usuarioAlvo as any);
+
+      await service.hardDelete('colab-a-id', mockAdminUser as any);
+
+      expect(prisma.usuario.delete).toHaveBeenCalledWith({
+        where: { id: 'colab-a-id' }
+      });
+    });
+
+    it('deve permitir inativação de OUTRO usuário (caso normal)', async () => {
+      const usuarioAlvo = { ...mockColaboradorEmpresaA };
+      const usuarioInativado = { ...usuarioAlvo, ativo: false };
+
+      jest.spyOn(prisma.usuario, 'findUnique').mockResolvedValue(usuarioAlvo as any);
+      jest.spyOn(prisma.usuario, 'update').mockResolvedValue(usuarioInativado as any);
+
+      await service.remove('colab-a-id', mockAdminUser as any);
+
+      expect(prisma.usuario.update).toHaveBeenCalledWith({
+        where: { id: 'colab-a-id' },
+        data: { ativo: false }
+      });
+    });
+  });
+
+  // ============================================================
   // TESTES ADICIONAIS - Cobertura de Regras Faltantes
   // ============================================================
 
