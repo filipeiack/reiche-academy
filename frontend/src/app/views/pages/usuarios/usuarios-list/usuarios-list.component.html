@@ -10,11 +10,13 @@
     </ol>
   </nav>
 
-  <button data-testid="novo-usuario-button" id="btnNovo" type="button" class="btn btn-primary btn-sm"
-    [routerLink]="['/usuarios/novo']">
-    <i class="bi bi-plus-circle btn-icon-prepend"></i>
-    {{ 'USERS.ADD' | translate }}
-  </button>
+  @if (isAdmin) {
+    <button data-testid="novo-usuario-button" id="btnNovo" type="button" class="btn btn-primary btn-sm"
+      [routerLink]="['/usuarios/novo']">
+      <i class="bi bi-plus-circle btn-icon-prepend"></i>
+      {{ 'USERS.ADD' | translate }}
+    </button>
+  }
 </div>
 
 <div class="row">
@@ -88,25 +90,31 @@
                         [title]="'Detalhes do usuário' | translate">
                         <i class="feather icon-info"></i>
                       </button>
-                      <button class="btn btn-icon text-primary"
-                        (click)="toggleStatusUsuario(usuario.id, usuario.nome, usuario.ativo)"
-                        [disabled]="isCurrentUser(usuario.id)"
-                        [class.opacity-50]="isCurrentUser(usuario.id)"
-                        [title]="isCurrentUser(usuario.id) ? 'Você não pode inativar sua própria conta' : (usuario.ativo ? 'Inativar usuário' : 'Ativar usuário')">
-                        <i class="feather"
-                          [ngClass]="{'icon-toggle-right': usuario.ativo, 'icon-toggle-left text-danger': !usuario.ativo}"></i>
-                      </button>
-                      <button data-testid="edit-usuario-button" class="btn btn-icon text-secondary"
-                        [routerLink]="['/usuarios', usuario.id, 'editar']" title="{{ 'BUTTONS.EDIT' | translate }}">
-                        <i class="feather icon-edit"></i>
-                      </button>
-                      <button data-testid="delete-usuario-button" class="btn btn-icon text-danger"
-                        (click)="deleteUsuario(usuario.id, usuario.nome)"
-                        [disabled]="isCurrentUser(usuario.id)"
-                        [class.opacity-50]="isCurrentUser(usuario.id)"
-                        [title]="isCurrentUser(usuario.id) ? 'Você não pode deletar sua própria conta' : ('BUTTONS.DELETE' | translate)">
-                        <i class="feather icon-trash-2"></i>
-                      </button>
+                      @if (isAdmin) {
+                        <button class="btn btn-icon text-primary"
+                          (click)="toggleStatusUsuario(usuario.id, usuario.nome, usuario.ativo)"
+                          [disabled]="isCurrentUser(usuario.id)"
+                          [class.opacity-50]="isCurrentUser(usuario.id)"
+                          [title]="isCurrentUser(usuario.id) ? 'Você não pode inativar sua própria conta' : (usuario.ativo ? 'Inativar usuário' : 'Ativar usuário')">
+                          <i class="feather"
+                            [ngClass]="{'icon-toggle-right': usuario.ativo, 'icon-toggle-left text-danger': !usuario.ativo}"></i>
+                        </button>
+                      }
+                      @if (isAdmin) {
+                        <button data-testid="edit-usuario-button" class="btn btn-icon text-secondary"
+                          [routerLink]="['/usuarios', usuario.id, 'editar']" title="{{ 'BUTTONS.EDIT' | translate }}">
+                          <i class="feather icon-edit"></i>
+                        </button>
+                      }
+                      @if (isAdmin) {
+                        <button data-testid="delete-usuario-button" class="btn btn-icon text-danger"
+                          (click)="deleteUsuario(usuario.id, usuario.nome)"
+                          [disabled]="isCurrentUser(usuario.id)"
+                          [class.opacity-50]="isCurrentUser(usuario.id)"
+                          [title]="isCurrentUser(usuario.id) ? 'Você não pode deletar sua própria conta' : ('BUTTONS.DELETE' | translate)">
+                          <i class="feather icon-trash-2"></i>
+                        </button>
+                      }
                     </div>
                   </td>
                 </tr>

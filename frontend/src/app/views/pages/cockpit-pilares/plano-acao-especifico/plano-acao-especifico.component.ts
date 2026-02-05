@@ -7,6 +7,7 @@ import {
   AcaoCockpit,
   IndicadorCockpit,
   IndicadorMensal,
+  CockpitPilar,
 } from '@core/interfaces/cockpit-pilares.interface';
 import { OFFCANVAS_SIZE } from '@core/constants/ui.constants';
 import { AcaoFormDrawerComponent } from '@app/views/pages/cockpit-pilares/plano-acao-especifico/acao-form-drawer/acao-form-drawer.component';
@@ -27,6 +28,7 @@ export class PlanoAcaoEspecificoComponent implements OnInit {
   private cockpitService = inject(CockpitPilaresService);
   private offcanvasService = inject(NgbOffcanvas);
 
+  cockpit: CockpitPilar | null = null;
   indicadores: IndicadorCockpit[] = [];
   acoes: AcaoCockpit[] = [];
   resumoStatus: Array<{
@@ -51,6 +53,7 @@ export class PlanoAcaoEspecificoComponent implements OnInit {
 
     this.cockpitService.getCockpitById(this.cockpitId).subscribe({
       next: (cockpit) => {
+        this.cockpit = cockpit;
         this.indicadores = cockpit.indicadores || [];
         this.empresaId = cockpit.pilarEmpresa?.empresaId || null;
         this.loadAcoes();
@@ -274,9 +277,9 @@ export class PlanoAcaoEspecificoComponent implements OnInit {
         label: 'TOTAL GERAL',
         count: total,
         percent: 100,
-        badgeClass: 'bg-primary',
+        badgeClass: 'bg-gray-800',
         icon: 'list',
-        kpiClass: 'kpi-primary',
+        kpiClass: 'kpi-gray',
       },
     ];
   }

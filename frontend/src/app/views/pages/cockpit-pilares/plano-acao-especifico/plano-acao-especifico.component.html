@@ -7,13 +7,14 @@
 
 
 
-<div class="row g-2 mb-3">
-  <div class="plano-acao-header mt-3 px-3">
-    <h5 class="card-title cockpit-tab-title text-uppercase small">
-      <i class="bi bi-clipboard-check me-2"></i>
-      RESUMO DO PLANO DE AÇÃO
-    </h5>
-  </div>
+<div class="kpi-sticky-container">
+  <div class="row p-1 g-1 mb-2">
+    <div class="plano-acao-header mt-2 px-3">
+      <h5 class="card-title cockpit-tab-title text-uppercase small">
+        <i class="bi bi-clipboard-check me-2"></i>
+        RESUMO DO PLANO DE AÇÃO - {{ cockpit?.pilarEmpresa?.nome }}
+      </h5>
+    </div>
   @for (item of resumoStatus; track item.key) {
   <div class="col-6 col-md">
     <div class="card kpi-card" [ngClass]="item.kpiClass">
@@ -24,15 +25,15 @@
           </div>
           <span class="badge" [class]="item.badgeClass + ' text-black'">{{ item.label }}</span>
         </div>
-        <div class="kpi-value">{{ item.count }}</div>
-        <div class="kpi-footer">
-          <span class="kpi-percent">{{ item.percent }}%</span>
-          <span class="text-muted">do total</span>
+        <div class="kpi-value">
+          {{ item.count }} 
+          <span class="kpi-percent-inline">{{ item.percent }}% do total</span>
         </div>
       </div>
     </div>
   </div>
   }
+  </div>
 </div>
 
 <div class="card">
@@ -56,7 +57,7 @@
       <table class="table table-sm align-middle">
         <thead class="table-light small">
           <tr>
-            <th style="width: 20%;">Indicador</th>
+            <th style="width: 15%;">Indicador</th>
             <th style="width: 30%;" class="col-mobile-hide">Análise de Causas</th>
             <th style="width: 35%;" class="text-center col-mobile-hide">Ação Proposta</th>
             <th style="width: 10%;" class="text-center col-mobile-hide">Status</th>
@@ -66,11 +67,12 @@
         <tbody>
           @for (acao of acoes; track acao.id) {
           <tr>
-            <td class="text-break" style="word-break: break-word; white-space: normal; overflow-wrap: anywhere;">
-              {{ acao.indicadorCockpit?.nome || '-' }} <br>
-              <small>Mês da Análise: {{ getMesLabel(acao.indicadorMensal) }}</small>
+            <td class="text-break" 
+            style="word-break: break-word; white-space: normal; overflow-wrap: anywhere;">
+              <span class="badge bg-gray-700 w-100 text-white"> <br><br>{{ acao.indicadorCockpit?.nome || '-' }}<br><br><br></span>
+              <span class="badge bg-gray-100 w-100 text-black" style="font-weight: 400;">Mês da Análise:<br> {{ getMesLabel(acao.indicadorMensal) }}</span>
             </td>
-            <td class="col-mobile-hide">
+            <td class="col-mobile-hide w-100 text-break">
               @if (acao.causa1) {
               <span class="badge bg-gray-100 text-black causa-badge mb-1" style="text-align: left;">Causa
                     1: 
@@ -103,20 +105,19 @@
               }
             </td>
             <td class="col-mobile-hide">
-              <span class="badge bg-black text-white acao-badge" style="text-align: left;">Ação:
-                {{
-                acao.acaoProposta }}</span>
+              <span class="badge bg-gray-700 text-white acao-badge" style="text-align: left;">Ação:
+                 <br><br>{{ acao.acaoProposta }}<br><br><br></span>
               <small>Responsável: {{ acao.responsavel?.nome || '-' }}</small><br>
             </td>
             <td class="text-center">
-              <div class="border rounded bg-gray-100 p-1 mb-1 mt-1">
+              <div>
 
-                <div class="small" style="text-align: left;">
+                <div class="badge bg-gray-100 w-100 text-black" style="font-weight: 400; text-align: left;">
                   <small>Início Previsto: </small>{{ (acao.inicioPrevisto | date:'shortDate':'America/Sao_Paulo') ||
                   '-'}}
                 </div>
-
-                <div class="small" style="text-align: left;">
+<br>
+                <div class="badge bg-gray-100 w-100 text-black" style="font-weight: 400; text-align: left;">
                   <small>Término Previsto: </small>{{ (acao.prazo | date:'shortDate':'America/Sao_Paulo') || '-'}}
                 </div>
 
@@ -125,13 +126,13 @@
                 {{ getStatusLabel(acao) }}
               </span>
 
-              <div class="border rounded bg-gray-100 p-1 mb-1 mt-1">
+              <div>
 
-                <div class="small" style="text-align: left;">
+                <div class="badge bg-gray-100 w-100 text-black" style="font-weight: 400; text-align: left;">
                   <small>Início Real: </small>{{ (acao.inicioReal | date:'shortDate':'America/Sao_Paulo') || '-'}}
                 </div>
-
-                <div class="small" style="text-align: left;">
+<br>
+                <div class="badge bg-gray-100 w-100 text-black" style="font-weight: 400; text-align: left;">
                   <small>Término Real: </small> {{ (acao.dataConclusao | date:'shortDate':'America/Sao_Paulo') || '-'}}
                 </div>
 

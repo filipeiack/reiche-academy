@@ -1,5 +1,28 @@
 @import '../../shared-styles/_sticky-headers';
 
+// Compactar breadcrumb sticky
+.sticky-header-dashboard {
+  padding: 0.4rem 0;
+  margin-bottom: 0.5rem;
+}
+
+.cockpit-header-row {
+  gap: 0.5rem;
+}
+
+.breadcrumb {
+  font-size: 0.875rem;
+  padding: 0.15rem 0;
+  margin: 0;
+}
+
+.breadcrumb-item {
+  padding: 0;
+}
+
+#feedbackSaveCockpit {
+  font-size: 0.8rem;
+}
 
 // Cursor pointer nas tabs
 .nav-tabs .nav-link {

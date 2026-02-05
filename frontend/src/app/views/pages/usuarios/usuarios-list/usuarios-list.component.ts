@@ -59,6 +59,21 @@ export class UsuariosListComponent implements OnInit {
     this.loadUsuarios();
   }
 
+  /**
+   * Verifica se o usuário logado é ADMINISTRADOR
+   * Apenas ADMIN pode criar, inativar e deletar usuários via CRUD
+   */
+  get isAdmin(): boolean {
+    const currentUser = this.authService.getCurrentUser();
+    if (!currentUser?.perfil) return false;
+    
+    const perfilCodigo = typeof currentUser.perfil === 'object' 
+      ? currentUser.perfil.codigo 
+      : currentUser.perfil;
+    
+    return perfilCodigo === 'ADMINISTRADOR';
+  }
+
   private showToast(title: string, icon: 'success' | 'error' | 'info' | 'warning', timer: number = 3000): void {
     Swal.fire({
       toast: true,
@@ -402,7 +417,6 @@ export class UsuariosListComponent implements OnInit {
     }).then((result) => {
       if (!result.isConfirmed) return;
       this.confirmDeleteSelected(idsToDelete);
-    });
     });
   }
 
