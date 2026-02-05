@@ -26,7 +26,7 @@
       } @else if (saveFeedback.lastSaveTime) {
       <div class="text-success small">
         <i class="bi bi-check-circle me-1"></i>
-        {{ saveFeedback.context }} salvo em {{ saveFeedback.lastSaveTime | date: 'HH:mm:ss':'America/Sao_Paulo' }}
+        {{ saveFeedback.context }} Salvo por último às: {{ saveFeedback.lastSaveTime | date: 'HH:mm:ss':'America/Sao_Paulo' }}
       </div>
       }
     </div>
