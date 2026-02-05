@@ -1,350 +1,314 @@
-# Convenções - Git
+# 🌿 Estratégia de Branches - Reiche Academy
 
-**Status**: Documentação baseada em histórico analisado  
-**Última atualização**: 2025-12-23
+## 📋 Visão Geral
+
+O projeto utiliza **GitFlow Simplificado** com 3 branches principais:
+
+```
+develop  → Desenvolvimento local
+   ↓ merge
+staging  → Homologação no VPS
+   ↓ merge
+main     → Produção no VPS
+```
 
 ---
 
-## 1. Branches
+## 🌿 Branches
 
-### Padrão Observado
+### **develop** - Desenvolvimento
+- **Ambiente**: Local (localhost:4200)
+- **Uso**: Desenvolvimento diário
+- **Commits**: Diretos permitidos
+- **Deploy**: Não faz deploy automático
 
-**Branch principal**: `main`
+### **staging** - Homologação
+- **Ambiente**: VPS Staging
+- **URL**: https://staging.reicheacademy.cloud
+- **Uso**: Testes e validação QA
+- **Commits**: Apenas via merge de `develop`
+- **Deploy**: Manual no VPS
+- **Database**: `reiche_academy_staging`
+- **Redis**: db 1
 
-**Estrutura de branches**: Não documentada
-
-**Observação**: O projeto não possui documentação explícita de estratégia de branches. Aparentemente trabalha direto na branch `main`.
-
-**Grau de consistência**: NÃO CONSOLIDADO
+### **main** - Produção
+- **Ambiente**: VPS Produção
+- **URL**: https://app.reicheacademy.cloud
+- **Uso**: Usuários finais
+- **Commits**: Apenas via merge de `staging`
+- **Deploy**: Manual no VPS (com backup obrigatório)
+- **Database**: `reiche_academy_prod`
+- **Redis**: db 0
 
 ---
 
-### Padrão Recomendado (não implementado)
+## 🔄 Workflow Completo
 
-```
-main                    # Branch principal (produção)
-develop                 # Branch de desenvolvimento
-feature/{nome}          # Novas funcionalidades
-fix/{nome}              # Correções de bugs
-hotfix/{nome}           # Correções urgentes em produção
-release/{versao}        # Preparação de releases
-```
-
-**Grau de consistência**: NÃO APLICÁVEL
-
----
-
-## 2. Commits
-
-### Padrão Observado (últimos 50 commits)
-
-**Formato**: Conventional Commits (PARCIALMENTE seguido)
-
-```
-feat:     Nova funcionalidade
-fix:      Correção de bug
-refactor: Refatoração de código
-test:     Adição ou modificação de testes
-docs:     Alteração em documentação
-chore:    Tarefas de manutenção (build, deps, etc.)
-```
-
-**Exemplos reais observados**:
+### **1. Desenvolvimento Local**
 
 ```bash
-# Com prefixo (CORRETO)
-feat(usuarios): implementar R-USU-030
-fix: corrigir atualização de telefone
-refactor: melhorar estrutura de testes
-test: adicionar testes unitários de pilares
-docs: atualizar documentação de API
+# Trabalhar sempre em develop
+git checkout develop
+git pull origin develop
 
-# Sem prefixo (INCONSISTENTE)
-Adicionar validação de email
-Corrigir bug na listagem
-Atualizar dependências
+# Fazer alterações
+# ... código ...
+
+# Commit e push
+git add .
+git commit -m "feat: nova funcionalidade"
+git push origin develop
 ```
 
-**Padrão de escopo**: `(modulo)` quando aplicável
-
-```
-feat(usuarios): descrição
-feat(empresas): descrição
-fix(pilares): descrição
-```
-
-**Grau de consistência**: PARCIAL
-
----
-
-### Estrutura Completa de Commit Message
-
-**Formato padrão**:
-
-```
-<tipo>[(escopo)]: <descrição curta>
-
-[corpo opcional]
-
-[rodapé opcional]
-```
-
-**Exemplos observados**:
+### **2. Deploy para Staging**
 
 ```bash
-# Simples (mais comum)
-feat(usuarios): implementar upload de avatar
+# Local: Merge develop → staging
+git checkout staging
+git pull origin staging
+git merge develop
 
-# Com corpo
-fix(empresas): corrigir validação de CNPJ
+# Resolver conflitos (se houver)
+git push origin staging
 
-O CNPJ estava sendo validado incorretamente quando
-continha apenas números.
-
-# Com referência a issue (não observado, mas recomendado)
-feat(pilares): adicionar endpoint de listagem
-
-Implementa R-PIL-010 conforme especificação.
-
-Refs: #42
+# VPS: Deploy staging
+ssh root@76.13.66.10
+cd /opt/reiche-academy
+bash scripts/deploy-vps.sh staging
 ```
 
-**Grau de consistência**: PARCIAL
+**Ou manualmente:**
+```bash
+ssh root@76.13.66.10
+cd /opt/reiche-academy
 
----
+git fetch origin
+git checkout staging
+git pull origin staging
 
-### Tipos de Commit - Definições
-
-| Tipo | Quando Usar | Exemplo |
-|------|-------------|---------|
-| `feat` | Nova funcionalidade | `feat(usuarios): adicionar campo telefone` |
-| `fix` | Correção de bug | `fix(auth): corrigir validação de token` |
-| `refactor` | Refatoração sem alterar comportamento | `refactor(empresas): simplificar lógica de validação` |
-| `test` | Adição ou alteração de testes | `test(pilares): adicionar testes unitários` |
-| `docs` | Alteração em documentação | `docs: atualizar README com instruções` |
-| `chore` | Tarefas de manutenção | `chore: atualizar dependências` |
-| `style` | Formatação de código | `style: aplicar prettier` |
-| `perf` | Melhorias de performance | `perf(usuarios): otimizar query de listagem` |
-
-**Grau de consistência**: PARCIAL (tipos principais são usados, mas não exclusivamente)
-
----
-
-### Escopos Observados
-
-**Backend**:
-- `usuarios`
-- `empresas`
-- `pilares`
-- `auth`
-- `audit`
-- `diagnosticos`
-
-**Frontend**:
-- Não observado uso consistente de escopo para frontend
-
-**Geral**:
-- Escopo é OPCIONAL
-- Quando presente, usa kebab-case
-- Corresponde ao módulo afetado
-
-**Grau de consistência**: PARCIAL
-
----
-
-## 3. Mensagens de Commit - Boas Práticas
-
-### Observado no Projeto
-
-✅ **BOM**:
-- `feat(usuarios): implementar R-USU-030`
-- `fix: corrigir atualização de telefone`
-- `refactor: melhorar estrutura de testes`
-
-❌ **INCONSISTENTE**:
-- `Adicionar validação de email` (sem prefixo)
-- `Corrigir bug na listagem` (sem prefixo)
-- `Update README.md` (em inglês, sem prefixo)
-
-**Grau de consistência**: PARCIAL
-
----
-
-### Regras Esperadas (baseadas em boas práticas)
-
-1. **Usar prefixo de tipo**: Sempre iniciar com `feat:`, `fix:`, etc.
-2. **Imperative mood**: "adicionar" não "adicionado" ou "adicionando"
-3. **Sem ponto final**: Não terminar a descrição com `.`
-4. **Máximo 72 caracteres**: Para a linha de descrição
-5. **Referências**: Incluir `Refs:` ou `Closes:` quando aplicável
-
-**Grau de consistência**: PARCIAL (regras 1 e 2 não são 100% seguidas)
-
----
-
-## 4. Tags e Versionamento
-
-### Padrão Observado
-
-**Versionamento**: Semantic Versioning (inferido de package.json)
-
-```json
-// backend/package.json
-"version": "1.0.0"
-
-// frontend/package.json
-"version": "1.0.0"
+docker compose -f docker-compose.vps.yml build backend-staging frontend-staging
+docker compose -f docker-compose.vps.yml up -d --no-deps backend-staging frontend-staging
+docker compose -f docker-compose.vps.yml exec backend-staging npm run migration:prod
 ```
 
-**Tags Git**: Não analisadas (sem acesso ao histórico de tags)
+### **3. Testes em Staging**
 
-**CHANGELOG**: Arquivo existe em `docs/history/CHANGELOG.md`
-
-**Grau de consistência**: NÃO CONSOLIDADO
-
----
-
-### Padrão Esperado (Semantic Versioning)
-
-```
-vMAJOR.MINOR.PATCH
-
-v1.0.0    # Release inicial
-v1.0.1    # Correção de bug
-v1.1.0    # Nova funcionalidade (compatível)
-v2.0.0    # Breaking change
+```bash
+# Acessar https://staging.reicheacademy.cloud
+# Executar testes manuais
+# Validar funcionalidades
+# QA sign-off
 ```
 
-**Grau de consistência**: NÃO APLICÁVEL (não implementado)
+### **4. Deploy para Produção**
 
----
+```bash
+# Local: Merge staging → main
+git checkout main
+git pull origin main
+git merge staging
 
-## 5. Pull Requests / Merge Requests
+# Verificar se está tudo OK
+git push origin main
 
-### Padrão Observado
+# VPS: BACKUP primeiro!
+ssh root@76.13.66.10
+cd /opt/reiche-academy
+bash scripts/maintenance-vps.sh backup
 
-**Template de PR**: NÃO OBSERVADO
-
-**Processo de review**: NÃO DOCUMENTADO
-
-**Grau de consistência**: NÃO CONSOLIDADO
-
----
-
-### Padrão Recomendado (não implementado)
-
-```markdown
-## Descrição
-Breve descrição das mudanças implementadas.
-
-## Tipo de Mudança
-- [ ] Feature (feat)
-- [ ] Bug fix (fix)
-- [ ] Breaking change
-- [ ] Documentação (docs)
-
-## Checklist
-- [ ] Código segue as convenções do projeto
-- [ ] Testes foram adicionados/atualizados
-- [ ] Documentação foi atualizada
-- [ ] Build passou sem erros
-
-## Como Testar
-1. Passo 1
-2. Passo 2
-3. Resultado esperado
-
-## Refs
-Closes #123
+# Deploy produção
+bash scripts/deploy-vps.sh prod
 ```
 
-**Grau de consistência**: NÃO APLICÁVEL
+**Ou manualmente:**
+```bash
+ssh root@76.13.66.10
+cd /opt/reiche-academy
+
+# BACKUP OBRIGATÓRIO!
+docker compose -f docker-compose.vps.yml exec postgres \
+  pg_dump -U reiche_admin reiche_academy_prod | gzip > backups/backup_$(date +%Y%m%d_%H%M%S).sql.gz
+
+git fetch origin
+git checkout main
+git pull origin main
+
+docker compose -f docker-compose.vps.yml build backend-prod frontend-prod
+docker compose -f docker-compose.vps.yml up -d --no-deps backend-prod frontend-prod
+docker compose -f docker-compose.vps.yml exec backend-prod npm run migration:prod
+```
 
 ---
 
-## 6. Histórico - Análise dos Últimos 50 Commits
+## 🚨 Hotfix (Correção Urgente)
 
-### Distribuição de Tipos
+Para correções críticas em produção:
 
-Baseado na análise fornecida:
+```bash
+# Criar branch de hotfix a partir de main
+git checkout main
+git pull origin main
+git checkout -b hotfix/descricao-do-problema
 
-| Tipo | Frequência Observada |
-|------|---------------------|
-| `feat:` | Alta |
-| `fix:` | Média |
-| `refactor:` | Média |
-| `test:` | Baixa |
-| `docs:` | Baixa |
-| `chore:` | Baixa |
-| Sem prefixo | Média-Alta (PROBLEMA) |
+# Fazer correção
+# ... código ...
+git add .
+git commit -m "fix: correção urgente"
 
-**Grau de consistência**: PARCIAL
+# Merge de volta para TODAS as branches
+git checkout main
+git merge hotfix/descricao-do-problema
+git push origin main
 
----
+git checkout staging
+git merge hotfix/descricao-do-problema
+git push origin staging
 
-### Padrões de Escopo
+git checkout develop
+git merge hotfix/descricao-do-problema
+git push origin develop
 
-| Escopo | Exemplos |
-|--------|----------|
-| `usuarios` | `feat(usuarios): implementar R-USU-030` |
-| `empresas` | `feat(empresas): adicionar validação` |
-| `pilares` | `test(pilares): adicionar testes` |
-| Sem escopo | `fix: corrigir atualização` |
+# Deletar branch de hotfix
+git branch -d hotfix/descricao-do-problema
 
-**Observação**: Escopo não é usado de forma consistente
-
-**Grau de consistência**: PARCIAL
-
----
-
-### Idioma das Mensagens
-
-**Observado**: Português (predominante)
-
-**Exemplos**:
-- `feat(usuarios): implementar upload de avatar`
-- `fix: corrigir validação de telefone`
-- `refactor: melhorar estrutura de testes`
-
-**Exceções**: Algumas mensagens em inglês (ex: `Update README.md`)
-
-**Grau de consistência**: CONSISTENTE (português, com exceções)
+# Deploy imediato em produção
+ssh root@76.13.66.10
+cd /opt/reiche-academy
+bash scripts/maintenance-vps.sh backup
+bash scripts/deploy-vps.sh prod
+```
 
 ---
 
-## Resumo de Consistência
+## 🎯 Features Branches (Opcional)
 
-| Aspecto | Grau de Consistência | Observação |
-|---------|----------------------|-----------|
-| **Branches** | NÃO CONSOLIDADO | Sem documentação de estratégia |
-| **Conventional Commits** | PARCIAL | Usado, mas não em 100% dos commits |
-| **Prefixo de tipo** | PARCIAL | Muitos commits sem prefixo |
-| **Escopo** | PARCIAL | Usado quando relevante, mas inconsistente |
-| **Idioma** | CONSISTENTE | Português (com raras exceções) |
-| **Versionamento** | NÃO CONSOLIDADO | SemVer esperado, mas não documentado |
-| **Pull Requests** | NÃO CONSOLIDADO | Sem template ou processo documentado |
+Para features grandes ou experimentais:
+
+```bash
+# Criar feature branch a partir de develop
+git checkout develop
+git pull origin develop
+git checkout -b feature/nome-da-feature
+
+# Desenvolver
+# ... código ...
+git add .
+git commit -m "feat: implementação da feature"
+git push origin feature/nome-da-feature
+
+# Quando pronto, merge de volta para develop
+git checkout develop
+git merge feature/nome-da-feature
+git push origin develop
+
+# Deletar feature branch
+git branch -d feature/nome-da-feature
+git push origin --delete feature/nome-da-feature
+```
 
 ---
 
-## Recomendações
+## ⚠️ Regras Importantes
 
-1. **Adotar Conventional Commits obrigatoriamente**
-   - Configurar `commitlint` para validar mensagens
-   - Rejeitar commits sem prefixo adequado
+### **NUNCA faça:**
+- ❌ Commit direto em `staging` ou `main`
+- ❌ `git push --force` em branches principais
+- ❌ Deploy em produção sem testar em staging
+- ❌ Deploy em produção sem backup
+- ❌ Merge de `main` de volta para `develop` (exceto hotfixes)
 
-2. **Definir estratégia de branches**
-   - Documentar fluxo de trabalho (Git Flow, GitHub Flow, etc.)
-   - Criar proteção de branch para `main`
+### **SEMPRE faça:**
+- ✅ Merge sequencial: `develop → staging → main`
+- ✅ Testes em staging antes de produção
+- ✅ Backup antes de deploy em produção
+- ✅ Pull antes de fazer merge
+- ✅ Resolver conflitos com cuidado
 
-3. **Criar template de Pull Request**
-   - Padronizar descrição de mudanças
-   - Incluir checklist de revisão
+---
 
-4. **Automatizar versionamento**
-   - Usar `standard-version` ou `semantic-release`
-   - Gerar CHANGELOG automaticamente
+## 📊 Comandos Úteis
 
-5. **Documentar processo de release**
-   - Como criar tags
-   - Como gerar versões
-   - Como publicar releases
+### **Ver branch atual**
+```bash
+git branch --show-current
+```
+
+### **Ver status**
+```bash
+git status
+```
+
+### **Ver diferenças entre branches**
+```bash
+# Ver o que tem em develop que não está em staging
+git log staging..develop --oneline
+
+# Ver o que tem em staging que não está em main
+git log main..staging --oneline
+```
+
+### **Trocar de branch**
+```bash
+git checkout develop
+git checkout staging
+git checkout main
+```
+
+### **Atualizar branch**
+```bash
+git pull origin develop
+git pull origin staging
+git pull origin main
+```
+
+### **Ver histórico**
+```bash
+git log --oneline --graph --all
+```
+
+---
+
+## 🔍 Troubleshooting
+
+### **Conflitos no merge**
+```bash
+# Ao fazer merge, se houver conflitos:
+git merge develop
+# CONFLICT em arquivo.ts
+
+# Editar arquivo.ts e resolver manualmente
+# Remover marcadores <<<<<<, =======, >>>>>>>
+
+git add arquivo.ts
+git commit -m "Merge develop into staging"
+git push origin staging
+```
+
+### **Abandonar merge com conflitos**
+```bash
+git merge --abort
+```
+
+### **Ver quais arquivos têm conflitos**
+```bash
+git status
+```
+
+### **Resetar branch para estado remoto**
+```bash
+# CUIDADO: perde alterações locais!
+git fetch origin
+git reset --hard origin/develop
+```
+
+---
+
+## 📚 Referências
+
+- [Git Flow](https://nvie.com/posts/a-successful-git-branching-model/)
+- [Atlassian Git Tutorial](https://www.atlassian.com/git/tutorials)
+- [GitHub Flow](https://guides.github.com/introduction/flow/)
+
+---
+
+**Última atualização**: Janeiro 2026
