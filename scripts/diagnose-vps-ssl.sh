@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Script de Diagnóstico SSL/Nginx - VPS Reiche Academy
-# Uso: bash diagnose-vps-ssl.sh
+# Uso: bash scripts/diagnose-vps-ssl.sh
 #
 # Versão: 2.1
 # Última atualização: 2026-02-05

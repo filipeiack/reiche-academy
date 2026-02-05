@@ -1,7 +1,7 @@
 #!/bin/bash
 # =============================================================
 # DIAGNÓSTICO COMPLETO - VPS Reiche Academy
-# Execute este script NO VPS para identificar problemas
+# Uso: bash scripts/diagnose-vps.sh 
 #
 # Versão: 3.0
 # Última atualização: 2026-02-05
