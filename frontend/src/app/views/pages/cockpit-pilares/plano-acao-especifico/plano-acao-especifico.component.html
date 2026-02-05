@@ -23,11 +23,11 @@
           <div class="kpi-icon" [ngClass]="item.kpiClass">
             <i class="feather" [ngClass]="'icon-' + item.icon"></i>
           </div>
-          <span class="badge" [class]="item.badgeClass + ' text-black'">{{ item.label }}</span>
+          <span class="badge" [class]="item.badgeClass">{{ item.label }}</span>
         </div>
         <div class="kpi-value">
           {{ item.count }} 
-          <span class="kpi-percent-inline">{{ item.percent }}% do total</span>
+          <span class="kpi-percent-inline" style="color: black;">{{ item.percent }}% do total</span>
         </div>
       </div>
     </div>
@@ -69,7 +69,7 @@
           <tr class="acao-row">
             <td class="indicador-cell">
               <div class="indicador-nome-box">
-                <span class="indicador-nome">{{ acao.indicadorCockpit?.nome || '-' }}</span>
+                <span class="indicador-nome text-white">{{ acao.indicadorCockpit?.nome || '-' }}</span>
               </div>
               <div class="mes-analise-box">
                 <small>Mês da Análise:</small>
@@ -111,8 +111,8 @@
             <td class="acao-cell col-mobile-hide">
               <div class="acao-spacer"></div>
               <div class="acao-box">
-                <div class="acao-titulo">Ação:</div>
-                <div class="acao-texto">{{ acao.acaoProposta }}</div>
+                <div class="acao-titulo text-white">Ação:</div>
+                <div class="acao-texto text-white">{{ acao.acaoProposta }}</div>
               </div>
               <div class="causa-row small">
                 
@@ -122,12 +122,12 @@
             </td>
             <td class="status-cell col-mobile-hide">
               <div class="status-row">
-                <div class="badge bg-gray-100 w-100 text-black" style="text-align: left;">
+                <div class="badge text-black" style="text-align: left;">
                   <small>Início Previsto:</small> {{ (acao.inicioPrevisto | date:'shortDate':'America/Sao_Paulo') || '-'}}
                 </div>
               </div>
               <div class="status-row">
-                <div class="badge bg-gray-100 w-100 text-black" style="text-align: left;">
+                <div class="badge text-black" style="text-align: left;">
                   <small>Término Previsto:</small> {{ (acao.prazo | date:'shortDate':'America/Sao_Paulo') || '-'}}
                 </div>
               </div>
@@ -137,12 +137,12 @@
                 </span>
               </div>
               <div class="status-row">
-                <div class="badge bg-gray-100 w-100 text-black" style="text-align: left;">
+                <div class="badge text-black" style="text-align: left;">
                   <small>Início Real:</small> {{ (acao.inicioReal | date:'shortDate':'America/Sao_Paulo') || '-'}}
                 </div>
               </div>
               <div class="status-row">
-                <div class="badge bg-gray-100 w-100 text-black" style="text-align: left;">
+                <div class="badge text-black" style="text-align: left;">
                   <small>Término Real:</small> {{ (acao.dataConclusao | date:'shortDate':'America/Sao_Paulo') || '-'}}
                 </div>
               </div>
