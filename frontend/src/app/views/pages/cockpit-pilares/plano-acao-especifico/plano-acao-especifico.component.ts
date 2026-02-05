@@ -259,13 +259,26 @@ export class PlanoAcaoEspecificoComponent implements OnInit {
       },
     ];
 
-    this.resumoStatus = base.map((status) => {
+    const statusCards = base.map((status) => {
       const count = this.acoes.filter(
         (acao) => (acao.statusCalculado || 'A_INICIAR') === status.key,
       ).length;
       const percent = total ? Math.round((count / total) * 100) : 0;
       return { ...status, count, percent };
     });
+
+    this.resumoStatus = [
+      ...statusCards,
+      {
+        key: 'TOTAL',
+        label: 'TOTAL GERAL',
+        count: total,
+        percent: 100,
+        badgeClass: 'bg-primary',
+        icon: 'list',
+        kpiClass: 'kpi-primary',
+      },
+    ];
   }
 
   private getHojeDateInput(): string {

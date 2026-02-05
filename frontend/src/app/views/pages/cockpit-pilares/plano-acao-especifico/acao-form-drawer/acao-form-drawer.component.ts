@@ -272,7 +272,10 @@ export class AcaoFormDrawerComponent implements OnInit {
 
   onIndicadorChange(indicadorId: string | null, keepSelection = false): void {
     const indicador = this.indicadores.find((i) => i.id === indicadorId);
-    this.mesesDisponiveis = indicador?.mesesIndicador || [];
+    this.mesesDisponiveis = (indicador?.mesesIndicador || []).sort((a, b) => {
+      if (a.ano !== b.ano) return a.ano - b.ano;
+      return (a.mes || 0) - (b.mes || 0);
+    });
     if (!keepSelection) {
       this.form.patchValue({ indicadorMensalId: null });
     }

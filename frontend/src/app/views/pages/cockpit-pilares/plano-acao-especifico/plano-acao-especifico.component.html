@@ -15,7 +15,7 @@
     </h5>
   </div>
   @for (item of resumoStatus; track item.key) {
-  <div class="col-6 col-md-3">
+  <div class="col-6 col-md">
     <div class="card kpi-card" [ngClass]="item.kpiClass">
       <div class="card-body">
         <div class="kpi-header">
@@ -68,47 +68,45 @@
           <tr>
             <td class="text-break" style="word-break: break-word; white-space: normal; overflow-wrap: anywhere;">
               {{ acao.indicadorCockpit?.nome || '-' }} <br>
-              <small><small>Mês da Análise: </small></small>
-              <small>{{ getMesLabel(acao.indicadorMensal) }}</small>
+              <small>Mês da Análise: {{ getMesLabel(acao.indicadorMensal) }}</small>
             </td>
             <td class="col-mobile-hide">
               @if (acao.causa1) {
-              <span class="badge bg-gray-100 text-black causa-badge mb-1" style="text-align: left;"><small><small>Causa
-                    1: </small></small>
+              <span class="badge bg-gray-100 text-black causa-badge mb-1" style="text-align: left;">Causa
+                    1: 
                 {{ acao.causa1 }}
               </span>
               }
               @if (acao.causa2) {
-              <span class="badge bg-gray-100 text-black causa-badge mb-1" style="text-align: left;"><small><small>Causa
-                    2: </small></small>
+              <span class="badge bg-gray-100 text-black causa-badge mb-1" style="text-align: left;">Causa
+                    2: 
                 {{ acao.causa2 }}
               </span>
               }
               @if (acao.causa3) {
-              <span class="badge bg-gray-100 text-black causa-badge mb-1" style="text-align: left;"><small><small>Causa
-                    3: </small></small>
+              <span class="badge bg-gray-100 text-black causa-badge mb-1" style="text-align: left;">Causa
+                    3: 
                 {{ acao.causa3 }}
               </span>
               }
               @if (acao.causa4) {
-              <span class="badge bg-gray-100 text-black causa-badge mb-1" style="text-align: left;"><small><small>Causa
-                    4: </small></small>
+              <span class="badge bg-gray-100 text-black causa-badge mb-1" style="text-align: left;">Causa
+                    4: 
                 {{ acao.causa4 }}
               </span>
               }
               @if (acao.causa5) {
-              <span class="badge bg-gray-100 text-black causa-badge mb-1" style="text-align: left;"><small><small>Causa
-                    5: </small></small>
+              <span class="badge bg-gray-100 text-black causa-badge mb-1" style="text-align: left;">Causa
+                    5: 
                 {{ acao.causa5 }}
               </span>
               }
             </td>
             <td class="col-mobile-hide">
-              <span class="badge bg-black text-white acao-badge" style="text-align: left;"><small><small>Ação:
-                  </small>
-                </small>{{
+              <span class="badge bg-black text-white acao-badge" style="text-align: left;">Ação:
+                {{
                 acao.acaoProposta }}</span>
-              <small><small>Responsável: </small>{{ acao.responsavel?.nome || '-' }}</small><br>
+              <small>Responsável: {{ acao.responsavel?.nome || '-' }}</small><br>
             </td>
             <td class="text-center">
               <div class="border rounded bg-gray-100 p-1 mb-1 mt-1">
