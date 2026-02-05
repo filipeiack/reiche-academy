@@ -128,6 +128,10 @@
 		background-color: #131212 !important;
 	}
 
+	.bg-black {
+		background-color: #ffffff !important;
+	}
+
 	.bg-light,
 	.table-light {
 		--bs-table-bg: #1a1a1a;
@@ -144,6 +148,10 @@
 	.text-black,
 	.text-muted {
 		color: #FFFFFF !important;
+	}
+
+	.text-white {
+		color: #000000 !important;
 	}
 
 }

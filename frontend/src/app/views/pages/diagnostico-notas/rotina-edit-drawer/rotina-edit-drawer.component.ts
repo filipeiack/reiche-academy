@@ -73,11 +73,11 @@ import { TranslatePipe } from "../../../../core/pipes/translate.pipe";
                         autofocus
                       ></textarea>
                       <button
-                        class="btn btn-sm btn-success"
+                        class="btn btn-sm btn-primary"
                         (click)="salvarNome(rotina)"
                         [disabled]="nomeEditando.trim().length < 3"
                       >
-                        <i class="feather icon-check"></i>
+                        Salvar
                       </button>
                       <button
                         class="btn btn-sm btn-secondary"
