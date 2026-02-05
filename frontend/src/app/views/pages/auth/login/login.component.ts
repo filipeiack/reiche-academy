@@ -26,7 +26,7 @@ export class LoginComponent implements OnInit {
   loading = false;
   errorMessage = '';
   empresa: Empresa | null = null;
-  logoUrl = 'assets/images/logo_reiche_academy_light.png'; // Logo padrão
+  logoUrl = 'assets/images/logo_reiche_academy_light.webp'; // Logo padrão
   currentTheme = 'light';
   showPassword = false;
   environmentLabel = (environment.environmentName || 'DESCONHECIDO').toUpperCase();
@@ -99,8 +99,8 @@ export class LoginComponent implements OnInit {
     }
 
     this.logoUrl = this.currentTheme === 'dark'
-      ? 'assets/images/logo_reiche_academy_light.png'
-      : 'assets/images/logo_reiche_academy_light.png';
+      ? 'assets/images/logo_reiche_academy_light.webp'
+      : 'assets/images/logo_reiche_academy_light.webp';
   }
 
   /**

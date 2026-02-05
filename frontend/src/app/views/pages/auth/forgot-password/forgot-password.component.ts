@@ -23,7 +23,7 @@ export class ForgotPasswordComponent implements OnInit {
   success = false;
   errorMessage = '';
   currentTheme = 'light';
-  logoUrl = 'assets/images/logo_reiche_academy_light.png';
+  logoUrl = 'assets/images/logo_reiche_academy_light.webp';
 
   form = this.fb.group({
     email: ['', [Validators.required, Validators.email]]
@@ -38,8 +38,8 @@ export class ForgotPasswordComponent implements OnInit {
 
   private updateLogoByTheme(): void {
     this.logoUrl = this.currentTheme === 'dark'
-      ? 'assets/images/logo_reiche_academy_light.png'
-      : 'assets/images/logo_reiche_academy_light.png';
+      ? 'assets/images/logo_reiche_academy_light.webp'
+      : 'assets/images/logo_reiche_academy_light.webp';
   }
 
   onSubmit(): void {

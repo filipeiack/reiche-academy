@@ -6,7 +6,7 @@
   justify-content: center;
 
   --logo-wrapper-filter: opacity(0.5) contrast(1.2);
-  --login-bg-image: url('/assets/images/fundo-login-light.png');
+  --login-bg-image: url('/assets/images/fundo-login-light.webp');
   --login-gradient-start: rgba(241, 241, 241, 0.9);
   --login-gradient-end: rgba(241, 241, 241, 0.4);
 }
@@ -14,7 +14,7 @@
 // Variáveis CSS para tema escuro
 [data-bs-theme="dark"] :host {
   --logo-wrapper-filter: brightness(0.6) contrast(1.2);
-  --login-bg-image: url('/assets/images/fundo-login-dark.png');
+  --login-bg-image: url('/assets/images/fundo-login-dark.webp');
   --login-gradient-start: rgba(0, 0, 0, 0.9);
   --login-gradient-end: rgba(0, 0, 0, 0.1);
 }
