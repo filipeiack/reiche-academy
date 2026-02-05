@@ -512,8 +512,8 @@ export class DiagnosticoNotasComponent implements OnInit, OnDestroy {
     this.diagnosticoService.upsertNotaRotina(item.rotinaEmpresaId, item.data).subscribe({
       next: (response) => {
         this.savingCount--;
-        // Atualizar timestamp do último salvamento
-        this.lastSaveTime = normalizeDateToSaoPaulo(new Date());
+        // Atualizar timestamp do último salvamento (não usar normalizeDateToSaoPaulo - zera horário!)
+        this.lastSaveTime = new Date();
         // Atualizar dados locais com resposta do backend
         this.updateLocalNotaData(item.rotinaEmpresaId, response.nota);
         // Manter cache (não limpar) para preservar valores na tela
