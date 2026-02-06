@@ -104,8 +104,8 @@ reiche-academy/
 
 ## 📚 Documentação
 
+- **[Governança](docs/governance.md)** - Fluxo, autoridade e agentes
 - **[Guias de Configuração](docs/guides/)** - Setup, Docker, Git, Deploy VPS
-- **[Referência Técnica](docs/reference/)** - Contexto do projeto, documentação de funcionalidades
 - **[Regras de Negócio](docs/business-rules/)** - Regras normativas do sistema
 - **[Arquitetura](docs/architecture/)** - Estrutura técnica e diagramas
 - **[Convenções](docs/conventions/)** - Padrões de código
@@ -115,7 +115,7 @@ reiche-academy/
   - [Naming](docs/conventions/naming.md)
   - [Git](docs/conventions/git.md)
 - **[ADRs](docs/adr/)** - Decisões arquiteturais registradas
-- **[FLOW.md](docs/FLOW.md)** - Fluxo oficial de desenvolvimento
+- **[FLOW.md](docs/flow.md)** - Legado (redirect para governança)
 - **[Instruções Copilot](.github/copilot-instructions.md)**
 - **[Planilhas Originais](planilhas/)**
 

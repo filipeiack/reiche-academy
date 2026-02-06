@@ -1,615 +1,139 @@
-# AGENTS.md - Reiche Academy Development Guide
+# AGENTS.md - Reiche Academy Agent Playbook
+**Audience:** AI coding agents for this mono-repo (NestJS backend, Angular frontend).
+**Last Refresh:** 2026-02-06 (target length ~150 lines).
 
-**For**: AI coding agents working in this codebase  
-**Last Updated**: 2026-01-22  
-**Agent System Version**: 2.0 (4 agentes consolidados)
+## 1. Mission & Environment
+- Reiche Academy delivers PDCA workflows with NestJS + Prisma + PostgreSQL backend, Angular 18 standalone frontend, JWT (access + refresh) using Argon2, and RBAC (ADMINISTRADOR, GESTOR, COLABORADOR, LEITURA).
+- Repository root: `reiche-academy/`; follow `/docs/FLOW.md` and `/docs/DOCUMENTATION_AUTHORITY.md` before coding.
+- No Cursor rule files exist; Copilot guardrails live in `.github/copilot-instructions.md` (section 6).
+- TypeScript strict everywhere; backend favors async/await, frontend favors Observables; never invent undocumented rules.
+- Safe failure: stop, explain missing input, cite the document or agent needed.
 
----
-
-## 🎯 Project Overview
-
-Reiche Academy is a PDCA management system with:
-- **Backend**: NestJS + TypeScript + Prisma + PostgreSQL
-- **Frontend**: Angular 18+ standalone components + RxJS
-- **Auth**: JWT (access + refresh tokens), Argon2 password hashing
-- **RBAC**: 4 profiles (ADMINISTRADOR, GESTOR, COLABORADOR, LEITURA)
-
----
-
-## 🛠️ Build, Test & Lint Commands
-
-### Backend (NestJS)
-
+## 2. Build · Lint · Test Commands
+**Backend (NestJS)**
 ```bash
-# Development
 cd backend
-npm run dev                    # Start with watch mode
-npm run start:debug            # Start with debugger
-
-# Build & Production
-npm run build                  # Compile to dist/
-npm run start:prod             # Run production build
-
-# Linting & Formatting
-npm run lint                   # ESLint (auto-fix enabled)
-npm run format                 # Prettier format
-
-# Testing
-npm test                       # Run all unit tests (Jest)
-npm run test:watch             # Run tests in watch mode
-npm run test:cov               # Run with coverage report
-npm run test:debug             # Run tests with debugger
-npm run test:e2e               # Run E2E tests
-
-# Run a single test file
+npm install
+npm run dev                   # watch API (TZ=America/Sao_Paulo)
+npm run start:debug           # debugger
+npm run build && npm run start:prod
+npm run lint                  # ESLint with autofix
+npm run format                # Prettier
+npm test                      # Jest
+npm run test:watch            # Jest watch
+npm run test:cov              # coverage
+npm run test:e2e              # e2e config
 npm test -- usuarios.service.spec.ts
-npm test -- --testPathPattern=usuarios
-
-# Database
-npm run prisma:generate        # Generate Prisma client
-npm run prisma:migrate         # Run migrations (dev)
-npm run migration:dev          # Alias for prisma migrate dev
-npm run migration:prod         # Deploy migrations (prod)
-npm run prisma:studio          # Open Prisma Studio GUI
-npm run seed                   # Run seed script
+npm test -- --testPathPattern=auth
+npm run prisma:generate
+npm run migration:dev         # prisma migrate dev
+npm run migration:prod        # deploy migrations
+npm run prisma:studio
+npm run seed                  # tsx prisma/seed.ts
 ```
-
-### Frontend (Angular)
-
+**Frontend (Angular + Playwright)**
 ```bash
-# Development
 cd frontend
-npm start                      # ng serve (http://localhost:4200)
-ng serve --open                # Serve and open browser
-
-# Build
-npm run build                  # Production build
-ng build --configuration=production
-npm run watch                  # Build in watch mode
-
-# Linting & Testing
-ng test                        # Run Jasmine/Karma tests
-ng test --include='**/usuarios/**/*.spec.ts'  # Run specific tests
-ng test --code-coverage        # With coverage
-
-# E2E Tests (Playwright)
-npm run test:e2e               # Run all E2E tests
-npm run test:e2e:ui            # Run with Playwright UI
-npm run test:e2e:headed        # Run with browser visible
-npm run test:e2e:debug         # Debug mode
-
-# Run specific E2E test
-npx playwright test usuarios.spec.ts
+npm install
+npm start                                  # ng serve via proxy (4200)
+ng serve --open                            # alt dev
+npm run build                              # production build
+npm run watch                              # build watch
+npm test                                   # Karma/Jasmine
+ng test --include='**/usuarios/**/*.spec.ts'
+ng test --code-coverage
+npm run test:e2e                           # Playwright
+npm run test:e2e:ui | npm run test:e2e:headed | npm run test:e2e:debug
+npx playwright test usuarios.spec.ts       # single file
 npx playwright test --grep "criar novo usuário"
+npm run optimize:images && npm run convert:webp  # asset hygiene
 ```
 
----
-
-## 📁 Project Structure
-
-```
-reiche-academy/
-├── backend/
-│   ├── src/
-│   │   ├── modules/          # Business modules (usuarios, empresas, auth, etc.)
-│   │   │   └── {module}/
-│   │   │       ├── {module}.module.ts
-│   │   │       ├── {module}.controller.ts
-│   │   │       ├── {module}.service.ts
-│   │   │       └── dto/
-│   │   ├── common/           # Shared code (guards, decorators, interfaces)
-│   │   └── prisma/           # Prisma service
-│   ├── prisma/
-│   │   ├── schema.prisma     # Database schema
-│   │   └── migrations/       # Versioned migrations
-│   └── test/                 # E2E tests
-├── frontend/
-│   ├── src/app/
-│   │   ├── core/             # Services, guards, models, pipes
-│   │   ├── shared/           # Reusable components, directives
-│   │   └── views/            # Pages (layout, pages, partials)
-│   ├── assets/i18n/          # Translation files (pt-BR.json, en-US.json)
-│   └── e2e/                  # Playwright E2E tests
-└── docs/                     # Project documentation
-```
-
----
-
-## 🎨 Code Style Guidelines
-
-### Naming Conventions
-
-| Type | Pattern | Example |
-|------|---------|---------|
-| **Classes** | PascalCase | `UsuariosService`, `CreateUsuarioDto` |
-| **Files** | kebab-case | `usuarios.service.ts`, `create-usuario.dto.ts` |
-| **Variables/Properties** | camelCase | `selectedUsuarios`, `loadingDetails` |
-| **Constants** | UPPER_SNAKE_CASE | `API_URL`, `TOKEN_KEY` |
-| **Enums** | UPPER_CASE | `ADMINISTRADOR`, `GESTOR` |
-| **Methods** | camelCase + verbs | `findById()`, `loadUsuarios()`, `onSubmit()` |
-| **Interfaces** | PascalCase (no `I` prefix) | `Usuario`, `RequestUser`, `LoginRequest` |
-| **Routes** | kebab-case | `/usuarios`, `/usuarios/:id` |
-
-### Backend Conventions (NestJS)
-
-**Controllers**:
-- Thin controllers, delegate to services
-- Use `@ApiTags()`, `@ApiOperation()`, `@ApiBearerAuth()` for Swagger
-- Apply `@UseGuards(JwtAuthGuard, RolesGuard)` at controller level
-- Use `@Roles()` decorator per endpoint
-- HTTP verbs: GET (findAll/findOne), POST (create), PATCH (update), DELETE (remove)
-
-**Services**:
-- All methods `async/await`
-- Constructor injection with `private readonly`
-- Use Prisma with explicit `.select()` (NEVER return password fields)
-- Throw NestJS exceptions: `NotFoundException`, `ConflictException`, `ForbiddenException`
-- Logger: `private readonly logger = new Logger(ServiceName.name)`
-- Soft delete: `remove()` sets `ativo: false`
-- Hard delete: `hardDelete()` uses `.delete()`
-
-**DTOs**:
-- Use `class-validator` decorators (`@IsEmail()`, `@IsNotEmpty()`, `@MinLength()`)
-- Use `@ApiProperty()` for required, `@ApiPropertyOptional()` for optional
-- Include `example` in Swagger annotations
-- Pattern: `CreateXDto`, `UpdateXDto` (extends `PartialType(CreateXDto)`)
-
-**Error Handling**:
-```typescript
-if (!usuario) {
-  throw new NotFoundException('Usuário não encontrado');
-}
-if (existingEmail) {
-  throw new ConflictException('Email já cadastrado');
-}
-```
-
-**Prisma Queries**:
-```typescript
-return this.prisma.usuario.findMany({
-  select: {
-    id: true,
-    email: true,
-    nome: true,
-    ativo: true,
-    perfil: {
-      select: { id: true, codigo: true, nome: true }
-    }
-  }
-});
-```
-
-### Frontend Conventions (Angular)
-
-**Components**:
-- Standalone: `standalone: true` in `@Component()`
-- Inject dependencies with `inject()` function (not constructor DI)
-- Use modern control flow: `@if`, `@for`, `@else` (not `*ngIf`, `*ngFor`)
-- Selector prefix: `app-`
-
-**Services**:
-- `@Injectable({ providedIn: 'root' })`
-- Return `Observable<T>` (never Promise)
-- Method names: `getAll()`, `getById()`, `create()`, `update()`, `delete()`, `inactivate()`
-- API URL: `environment.apiUrl + '/endpoint'`
-
-**Forms**:
-- Reactive forms with `FormBuilder`
-- Pattern: `form = this.fb.group({ ... })`
-- Validators: `Validators.required`, `Validators.email`, `Validators.minLength()`
-- Edit mode: `isEditMode` flag + `usuarioId`
-- Loading: `loading` boolean flag
-
-**Templates**:
-- Use `{{ 'KEY.SUBKEY' | translate }}` for all text
-- Track by in loops: `@for (item of items; track item.id)`
-- Icons: Feather Icons (`<i class="feather icon-{name}"></i>`)
-- SweetAlert2 for feedback: `Swal.fire({ icon: 'success', ... })`
-
-**Dependency Injection**:
-```typescript
-export class UsuariosFormComponent implements OnInit {
-  private fb = inject(FormBuilder);
-  private router = inject(Router);
-  private usersService = inject(UsersService);
-}
-```
-
-**RxJS Subscriptions**:
-```typescript
-this.usersService.create(data).subscribe({
-  next: (result) => {
-    Swal.fire({ icon: 'success', title: 'Salvo!' });
-    this.router.navigate(['/usuarios']);
-  },
-  error: (err) => {
-    Swal.fire({ icon: 'error', text: err?.error?.message || 'Erro' });
-  }
-});
-```
-
----
-
-## 🔐 Security & Auth
-
-- JWT tokens stored in `localStorage` (remember me) or `sessionStorage`
-- Passwords hashed with **Argon2** (never bcrypt)
-- RBAC with 4 profiles: ADMINISTRADOR > GESTOR > COLABORADOR > LEITURA
-- Multi-tenant: Users belong to `empresaId`, ADMINISTRADOR has global access
-- Profile elevation protection: Users cannot create/edit users with equal/higher profile level
-
----
-
-## 🗄️ Database (Prisma)
-
-- UUIDs for all IDs (`@default(uuid())`)
-- Timestamps: `createdAt`, `updatedAt` (always include)
-- Soft delete: `ativo Boolean @default(true)`
-- Table names: snake_case plural (`@@map("usuarios")`)
-- Enums: UPPER_CASE, no accents (`MEDIO` not `MÉDIO`)
-
-**Migrations**:
-```bash
-npx prisma migrate dev --name add_campo_x
-npx prisma migrate deploy  # Production
-```
-
----
-
-## 📝 Import Order
-
-### Backend (NestJS)
-1. NestJS core (`@nestjs/common`, `@nestjs/core`)
-2. Third-party libraries
-3. Prisma client
-4. Project modules (relative imports)
-5. DTOs, interfaces, types
-
-### Frontend (Angular)
-1. Angular core (`@angular/core`, `@angular/common`)
-2. RxJS
-3. Third-party libraries
-4. Project modules (`@core/`, `@shared/`)
-5. Environment config
-6. Models, interfaces
-
----
-
-## 🧪 Testing Patterns
-
-### Backend (Jest)
-```typescript
-describe('UsuariosService', () => {
-  let service: UsuariosService;
-  let prisma: PrismaService;
-
-  beforeEach(async () => {
-    const module: TestingModule = await Test.createTestingModule({
-      providers: [UsuariosService, PrismaService],
-    }).compile();
-
-    service = module.get<UsuariosService>(UsuariosService);
-    prisma = module.get<PrismaService>(PrismaService);
-  });
-
-  it('should find all usuarios', async () => {
-    const result = await service.findAll();
-    expect(result).toBeDefined();
-  });
-});
-```
-
-### Frontend E2E (Playwright)
-```typescript
-test('criar novo usuário', async ({ page }) => {
-  await page.goto('/usuarios');
-  await page.click('[href="/usuarios/novo"]');
-  await page.fill('#nome', 'Teste User');
-  await page.fill('#email', `teste${Date.now()}@test.com`);
-  await page.click('button[type="submit"]');
-  await expect(page.locator('.swal2-toast')).toBeVisible();
-});
-```
-
----
-
-## ⚠️ Common Pitfalls
-
-1. **Never return password fields** in API responses
-2. **Always use `.select()`** in Prisma queries to avoid leaking data
-3. **Validate multi-tenant access** in services (check `empresaId`)
-4. **Don't use `*ngIf`/`*ngFor`** - use Angular 17+ control flow (`@if`, `@for`)
-5. **No constructor DI** in Angular - use `inject()` function
-6. **Soft delete aware**: Filter `ativo: true` when needed
-7. **Audit logging**: Call `auditService.log()` after CREATE/UPDATE/DELETE
-8. **TypeScript strict**: `strict: true` enabled - handle nulls properly
-
----
-
-## 📚 Workflow & Agent Governance (v2.0)
-
-**IMPORTANT**: This project follows **agent-based governance**. Before making changes:
-
-1. Read `/docs/FLOW.md` - Official development workflow (v2.0)
-2. Check `/docs/DOCUMENTATION_AUTHORITY.md` - Hierarchy of authority
-3. Consult `/.github/agents/` - Specialized agent definitions (4 agents)
-4. Review `/docs/business-rules/` - Source of truth for behavior
-5. Follow `/docs/conventions/` - Code patterns (backend, frontend, naming, testing, git)
-
-**Never**:
-- Invent business rules not in `/docs/business-rules/`
-- Mix responsibilities across agent boundaries
-- Alter production code during validation/QA
-- Improvise or "assume" requirements
-
-**When in doubt**:
-- Stop execution
-- Reference the appropriate documentation
-- Ask for human clarification
-
----
-
-## 🤖 Agent System v2.0 (4 Agentes)
-
-### System Overview
-
-**v2.0 (Current)**: 4 specialized agents with 3 handoffs per feature  
-**v1.0 (Archived)**: 7 agents with 6 handoffs - see `/docs/history/agents-v1/`  
-**ADR**: ADR-008 (consolidation rationale)
-
-### Official Agents
-
-| # | Agent | Activation | Responsibility |
-|---|-------|------------|----------------|
-| **0** | **System Engineer** | `"Atue como System Engineer"` | Meta-governance (3 modes) |
-| **1** | **Business Analyst** | `"Atue como Business Analyst"` | Document + validate business rules |
-| **2** | **Dev Agent Enhanced** | `"Atue como Dev Agent Enhanced"` | Implement + self-validate patterns |
-| **3** | **QA Engineer** | `"Atue como QA Engineer"` | Independent testing (unit + E2E) |
-
-### Typical Workflow
-
-```bash
-# 1. Document business rules
-"Atue como Business Analyst, documente regras de autenticação JWT"
-# Creates: /docs/business-rules/auth-*.md
-# Creates: /docs/handoffs/auth/business-v1.md
-
-# 2. Implement feature
-"Atue como Dev Agent Enhanced, implemente autenticação JWT"
-# Implements code + self-validates patterns
-# Creates: /docs/handoffs/auth/dev-v1.md
-
-# 3. Create tests
-"Atue como QA Engineer, crie testes para autenticação JWT"
-# Creates unit + E2E tests based on RULES
-# Executes tests iteratively
-# Creates: /docs/handoffs/auth/qa-v1.md
-
-# 4. Ready for PR
-# All handoffs created, tests passing
-```
-
-### Agent Responsibilities
-
-#### 0. System Engineer (Meta-Level)
-
-**Modes:**
-1. **Governance**: Create/modify agents, update FLOW.md, ADRs (requires human approval)
-2. **Consultive**: Explain FLOW, recommend agents, pre-flight checks (no execution)
-3. **Documentation**: Create ADRs post-merge, update /docs/architecture (approved decisions only)
-
-**Activation**: `"Atue como System Engineer [modo]"`
-
-**Never**: Acts on production code, defines business rules, validates features
-
----
-
-#### 1. Business Analyst
-
-**Consolidates**: Extractor + Reviewer (v1.0)
-
-**Responsibilities:**
-- Extract rules from existing code (reverse engineering)
-- Document proposed rules formally
-- Validate completeness and risks (RBAC, multi-tenant, LGPD)
-- Identify critical gaps
-
-**Output**: 
-- `/docs/business-rules/*.md` (formal rule documents)
-- `/docs/handoffs/<feature>/business-v1.md`
-
-**Status:** ✅ APPROVED | ⚠️ APPROVED WITH CAVEATS | ❌ BLOCKED
-
-**Activation**: `"Atue como Business Analyst, [extraia regras | documente regra | valide regras]"`
-
-**Never**: Implements code, creates tests, decides alone (exposes risks only)
-
----
-
-#### 2. Dev Agent Enhanced
-
-**Consolidates**: Dev Agent + Pattern Enforcer (v1.0)
-
-**Responsibilities:**
-- Implement code following documented rules
-- **Self-validate patterns** (checklist: naming, structure, DTOs, guards, soft delete)
-- Document technical decisions
-- Create handoff with self-validation results
-
-**Output**: `/docs/handoffs/<feature>/dev-v<N>.md`
-
-**Self-Validation Checklist (Backend):**
-- [ ] Naming conventions (PascalCase, camelCase, kebab-case)
-- [ ] Folder structure correct
-- [ ] DTOs with validators
-- [ ] Prisma with `.select()`
-- [ ] Guards applied
-- [ ] Soft delete respected
-- [ ] Audit logging
-
-**Self-Validation Checklist (Frontend):**
-- [ ] Standalone components
-- [ ] `inject()` function (not constructor DI)
-- [ ] Modern control flow (`@if`, `@for`)
-- [ ] Translations (`| translate`)
-- [ ] ReactiveForms
-- [ ] Error handling (SweetAlert2)
-
-**Activation**: `"Atue como Dev Agent Enhanced, implemente [feature]"`
-
-**Never**: Creates final tests (QA does), validates business rules independently (QA does)
-
-**Important**: Self-validates **patterns** (objective checklist), but QA validates **rules** (adversarial)
-
----
-
-#### 3. QA Engineer
-
-**Consolidates**: QA Unitário + QA E2E (v1.0)
-
-**Responsibilities:**
-- Create unit tests based on **documented RULES** (not code)
-- Create E2E tests (Playwright) validating complete user flows
-- Think adversarially (as attacker)
-- Execute tests iteratively until passing
-- Fix **tests only** (never production code)
-
-**Output**: `/docs/handoffs/<feature>/qa-v<N>.md`
-
-**Principles:**
-1. **Test RULES, not implementation**
-2. **Adversarial thinking** (find edge cases Dev didn't think of)
-3. **Independent validation** (don't trust Dev's tests)
-4. **Test must FAIL when rule fails**
-
-**Test Execution:**
-
-Backend (Jest):
-```bash
-# ❌ DON'T use runTests (rootDir issue)
-# ✅ ALWAYS use bash:
-cd backend && npm test
-```
-
-Frontend E2E (Playwright):
-```bash
-cd frontend && npm run test:e2e
-cd frontend && npm run test:e2e:ui  # Debug mode
-```
-
-**Activation**: `"Atue como QA Engineer, crie testes para [feature]"`
-
-**Never**: Alters production code, trusts Dev's tests, tests undocumented behavior
-
-**Critical**: QA is **independent validator** of business rules - separation from Dev is essential
-
----
-
-### Handoff System
-
-**Structure**: `/docs/handoffs/<feature>/<agent>-v<N>.md`
-
-**Examples:**
-```
-/docs/handoffs/autenticacao-login/business-v1.md
-/docs/handoffs/autenticacao-login/dev-v1.md
-/docs/handoffs/autenticacao-login/qa-v1.md
-```
-
-**Versioning**: Increments when QA detects critical bugs requiring reimplementation
-
-**Complete documentation**: `/docs/handoffs/README.md`
-
----
-
-### Why v2.0? (Consolidation Rationale)
-
-**Problems with v1.0 (7 agents):**
-- 6 handoffs per feature (overhead)
-- 6 different sessions (incompatible with OpenCode's continuous sessions)
-- Unnecessary separations (Extractor+Reviewer, Dev+Pattern, QA Unit+QA E2E)
-
-**v2.0 Benefits:**
-- 50% less handoffs (3 vs 6)
-- Continuous sessions in OpenCode
-- **Dev/QA separation preserved** (critical for quality)
-- Speed without losing quality
-
-**Key preservation**: Dev self-validates **patterns** (checklist), but QA validates **rules** independently (adversarial)
-
----
-
-### Integration with OpenCode Native Agents
-
-OpenCode has internal agents (Plan, Build) accessible via TAB:
-- **Plan**: Task planning
-- **Build**: Code implementation
-
-**Relationship with our custom agents:**
-- **Complementary, not replacement**
-- Our agents have **domain-specific rules + governance**
-- Plan/Build are generic helpers
-- Our agents ensure **traceability + rule compliance**
-
-**Combined usage:**
-```
-User activates: "Atue como Dev Agent Enhanced"
-    ↓
-OpenCode assumes Dev Agent Enhanced role
-    ↓
-Internally, OpenCode may use Plan/Build for subtasks
-    ↓
-But follows restrictions/outputs of Dev Agent Enhanced
-```
-
-**Example:**
-```
-User: "Atue como Dev Agent Enhanced, implemente CRUD de empresas"
-
-OpenCode (as Dev Agent Enhanced):
-1. [Internally uses Plan] - breaks down CRUD into tasks
-2. [Internally uses Build] - implements each file
-3. [Follows Dev Agent rules] - self-validates patterns
-4. [Creates handoff] - dev-v1.md with checklist
-
-Result: Fast implementation (Plan+Build) within governance (Dev Agent Enhanced)
-```
-
-**Key**: OpenCode's Plan/Build are **tools**, our agents are **roles with responsibilities**
-
----
-
-## 📖 Key Documentation
-
-- **[FLOW.md](docs/FLOW.md)**: Development workflow and agent responsibilities
-- **[Backend Conventions](docs/conventions/backend.md)**: NestJS patterns (1162 lines)
-- **[Frontend Conventions](docs/conventions/frontend.md)**: Angular patterns (1570+ lines)
-- **[Naming Conventions](docs/conventions/naming.md)**: Naming standards (1053 lines)
-- **[Copilot Instructions](.github/copilot-instructions.md)**: AI guardrails
-
----
-
-## 🚀 Quick Start for Agents
-
-```bash
-# 1. Start Docker services
-docker-compose up -d
-
-# 2. Backend setup
-cd backend
-npm install
-npm run migration:dev
-npm run dev
-
-# 3. Frontend setup (in new terminal)
-cd frontend
-npm install
-npm start
-```
-
-Backend: http://localhost:3000 (Swagger: /api)  
-Frontend: http://localhost:4200
-
----
-
-**Remember**: Code quality > speed. Follow conventions, write tests, document changes.
+## 3. Code Style & Patterns
+### 3.1 Shared Fundamentals
+- Files use kebab-case; classes/interfaces PascalCase; variables/methods camelCase; consts/enums UPPER_SNAKE; routes kebab-case.
+- Strict TS: no implicit any/returns, strict null checks; include explicit return types and prefer `readonly` injections.
+- Import order (backend): NestJS core → third-party → Prisma → project modules → DTOs/types; frontend: Angular core/common → RxJS → third-party → `@core`/`@shared` → environments → models.
+- Prefer named exports; only default-export Angular route arrays when needed.
+- Formatting enforced by Prettier + ESLint; keep imports sorted, avoid unused symbols.
+- Errors/exceptions in Portuguese; log via Nest `Logger`, show UI errors via SweetAlert2.
+
+### 3.2 Backend (NestJS + Prisma)
+- Controllers stay thin, decorated with `@ApiTags`, `@ApiBearerAuth`, `@UseGuards(JwtAuthGuard, RolesGuard)`, `@Roles`; map HTTP verbs to CRUD semantics.
+- Services inject dependencies as `private readonly`; every Prisma query uses explicit `.select()` to avoid leaking `senha` or metadata.
+- DTOs use `class-validator` + Swagger decorators with `example`; update DTO extends `PartialType(CreateDto)`.
+- Error handling: throw `NotFoundException`, `ConflictException`, `ForbiddenException`; do not return booleans for failure.
+- Call `auditService.log()` after create/update/delete; include user and empresa context.
+- Soft delete: `remove()` toggles `ativo=false`; `hardDelete()` reserved for permanent removal; queries listing entities must filter `ativo: true` when applicable.
+- Enforce multi-tenant boundaries (`empresaId`) on reads/writes; ADMINISTRADOR bypass is explicit.
+- Security: Argon2 hashing, JWT refresh + access, throttling via `@nestjs/throttler` when needed.
+
+### 3.3 Frontend (Angular 18 standalone)
+- Components declare `standalone: true`; use `inject()` rather than constructor DI; rely on Observables/signals per conventions.
+- Templates must use Angular control flow (`@if`, `@for`, `@switch`) with `track` clauses; avoid legacy structural directives.
+- All visible text goes through translations (`assets/i18n`, `translate` pipe) including alerts and placeholders.
+- Forms: reactive `FormBuilder`, validators for required/email/min length; maintain `isEditMode`, `loading`, and entity id fields.
+- Services return `Observable<T>` with methods `getAll`, `getById`, `create`, `update`, `delete`, `inactivate`; base URL `environment.apiUrl + '/path'`.
+- SweetAlert2 handles success/error toasts; show backend message fallback `err?.error?.message || 'Erro'`.
+- SCSS stays modular; use CSS variables defined globally; timeline styles live in `src/styles/components/_timeline.scss`.
+- Manage subscriptions via `takeUntilDestroyed` or RxJS operators; never leave dangling subscriptions.
+- Routes use selectors prefixed `app-`; lazy components declared in `.routes.ts` using `loadComponent`.
+
+### 3.4 Testing Expectations
+- Backend: Jest with `TestingModule`, mocked `PrismaService`; assert asynchronous results and thrown exceptions.
+- Frontend: Karma + Jasmine; configure TestBed for standalone components; assert DOM using translation keys.
+- Playwright: ensure RBAC and flows (e.g., criar usuário) fail when business rule fails; keep specs under `frontend/e2e`.
+
+## 4. Security & Data Rules
+- Passwords hashed with Argon2; never return or log.
+- JWT tokens stored client-side (`localStorage` for remember-me, `sessionStorage` otherwise); refresh token endpoints protected with same guards.
+- RBAC order enforced (ADMINISTRADOR > GESTOR > COLABORADOR > LEITURA); users cannot manage peers of equal/higher profile.
+- Prisma schema: UUID ids, `createdAt`/`updatedAt` timestamps, `ativo Boolean @default(true)`, enums uppercase without accents.
+- Sanitize HTML inputs via `isomorphic-dompurify`; validate `empresaId` on every mutation; throw `ForbiddenException` on mismatch.
+- Return 404 for missing entities, 409 for duplicates, 400 for validation errors; never leak stack traces to clients.
+
+## 5. Workflow & Documentation Order
+1. `/docs/FLOW.md` – mandatory development sequence (Business Analyst → Dev Agent Enhanced → QA Engineer).
+2. `/docs/DOCUMENTATION_AUTHORITY.md` – document precedence matrix.
+3. `/.github/agents/` – agent capabilities and restrictions.
+4. `/docs/business-rules/` – canonical behavior definitions.
+5. `/docs/conventions/` – backend, frontend, naming, testing, git conventions.
+6. `.github/copilot-instructions.md` – guardrails summarized below.
+- Handoffs live under `/docs/handoffs/<feature>/<agent>-vN.md`; increment version when QA blocks release and capture Business→Dev→QA handoffs per feature.
+- Do not mix agent responsibilities; Dev self-validates patterns, QA tests rules, Business Analyst documents before code while Plan/Build remain internal helpers.
+
+## 6. Copilot Guardrails (Summary)
+- AI has no implicit authority; cite normative docs before proposing behavior.
+- Before acting, answer: stage in FLOW? responsible agent? required artifacts available?
+- Missing info → stop, describe the gap, reference document/agent, await guidance.
+- Forbidden: inventing rules, mixing agent scopes, editing production during QA, ignoring `/docs/conventions/`.
+- Agents are activated explicitly (e.g., "Atue como Dev Agent Enhanced"); produce the artifacts each agent owes.
+- Silence or explicit block is preferred over speculative output.
+
+## 7. Agent Roles Snapshot
+- **System Engineer** (`"Atue como System Engineer [modo]"`): governance, consultation, architecture docs; never edits product code.
+- **Business Analyst** (`"Atue como Business Analyst, ..."`): extract and validate rules, assess RBAC/LGPD gaps, issue statuses ✅/⚠️/❌.
+- **Dev Agent Enhanced** (`"Atue como Dev Agent Enhanced, ..."`): implement per rules, complete checklist (naming, structure, DTOs, guards, `.select()`, soft delete, audit logging).
+- **QA Engineer** (`"Atue como QA Engineer, ..."`): craft unit + E2E tests from documented rules, run `cd backend && npm test` or `cd frontend && npm run test:e2e`, fix tests only.
+- Handoffs per feature: `business-vN`, `dev-vN`, `qa-vN`; QA bumps version when defects persist.
+
+## 8. Practical Tips & Pitfalls
+- Always include `.select()` in Prisma queries; missing selects are QA blockers.
+- Filter out soft-deleted data by default (`where: { ativo: true }`).
+- Validate `empresaId` ownership on writes; throw `ForbiddenException` otherwise.
+- In Angular, remove legacy `*ngIf/*ngFor`; migration debt is not accepted in new code.
+- Use `takeUntilDestroyed` or `firstValueFrom` to avoid leaking subscriptions.
+- Feather icons via `<i class="feather icon-{name}"></i>`; keep translation keys synced with assets/i18n.
+- Run `npm run optimize:images` after adding large assets; commit optimized outputs.
+- Centralize SCSS variables in `src/styles`; avoid inline colors or duplicated values.
+- Use `Swal.fire({ icon: 'success', title: 'Salvo!' })` for confirmations; keep consistent error fallback text.
+- Tests must fail when a documented rule fails; do not mock away validations or guards.
+
+## 9. Reporting & Communication
+- Document blockers referencing files and governing docs; propose remediation paths or questions.
+- Always mention tests executed (e.g., `cd backend && npm test usuarios.service.spec.ts`).
+- Reference files in responses with inline code paths (`backend/src/modules/...`).
+- Keep responses concise; point to git diffs instead of dumping huge code blocks.
+- Default to safer behavior (deny elevation, block action) when uncertain.
+
+**Remember:** Ship carefully, respect governance, keep audit trails clear.

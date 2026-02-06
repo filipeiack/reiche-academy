@@ -1,3 +1,12 @@
+# Flow oficial do projeto
+
+Este documento foi substituído por `docs/governance.md`, que reúne o fluxo normativo, a hierarquia documental e os agentes autorizados em um único lugar.
+
+Consulte o novo guia para seguir as regras obrigatórias de desenvolvimento:
+- `docs/governance.md`
+
+---
+
 ## 📘 FLOW.md — Fluxo Oficial e Normativo do Projeto (v2.0)
 
 ---

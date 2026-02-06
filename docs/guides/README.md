@@ -138,17 +138,10 @@ docs/guides/
 ├── DEPLOY_VPS_QUICKSTART.md       ← Deploy rápido (VPS)
 └── VPS_SETUP_GUIDE.md             ← Guia completo (VPS)
 
-docs/reference/
-├── README.md                      ← Índice de referências técnicas
-├── CONTEXT.md                     ← Contexto do projeto
-└── frontend/                      ← Documentação técnica frontend
-    ├── I18N.md
-    ├── LOGIN_CUSTOMIZATION.md
-    ├── MULTI_SELECT_BATCH_DELETE.md
-    ├── ROUTE_PROTECTION.md
-    ├── SORTABLE_DIRECTIVE.md
-    ├── USER_AVATAR.md
-    └── USER_DETAILS_OFFCANVAS.md
+docs/governance.md                 ← Fluxo e autoridade (guia central)
+docs/business-rules/               ← Regras de negócio
+docs/architecture/                 ← Arquitetura
+docs/conventions/                  ← Convenções técnicas
 
 scripts/
 ├── deploy-vps.sh                  ← Deploy automático
