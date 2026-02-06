@@ -471,7 +471,7 @@ null
 
 ### R-PEVOL-005: Listar Histórico de Períodos
 
-**Descrição:** Retorna lista de períodos congelados com snapshots (filtro opcional por ano).
+**Descrição:** Retorna lista de períodos (abertos e congelados) com snapshots (filtro opcional por ano).
 
 **Implementação:**
 - **Endpoint:** `GET /empresas/:id/periodos-avaliacao?ano=2025` (Todos os perfis)
@@ -493,7 +493,6 @@ return prisma.periodoAvaliacao.findMany({
   where: {
     empresaId,
     ano: ano || undefined, // Filtro opcional
-    aberto: false, // Apenas períodos congelados
   },
   include: {
     snapshots: {
@@ -527,6 +526,16 @@ return prisma.periodoAvaliacao.findMany({
         "pilarEmpresa": { "id": "uuid", "nome": "FINANCEIRO" }
       }
     ]
+  },
+  {
+    "id": "uuid",
+    "trimestre": 2,
+    "ano": 2025,
+    "dataReferencia": "2025-06-30",
+    "aberto": true,
+    "dataInicio": "2025-04-10T08:00:00Z",
+    "dataCongelamento": null,
+    "snapshots": []
   }
 ]
 ```

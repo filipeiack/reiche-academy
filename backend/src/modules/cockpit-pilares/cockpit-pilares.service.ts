@@ -25,7 +25,11 @@ import { UpdateFuncaoCargoDto } from './dto/update-funcao-cargo.dto';
 import { CreateAcaoCockpitDto } from './dto/create-acao-cockpit.dto';
 import { UpdateAcaoCockpitDto } from './dto/update-acao-cockpit.dto';
 import { StatusAcao } from '@prisma/client';
-import { nowInSaoPaulo, parseDateInSaoPaulo } from '../../common/utils/timezone';
+import {
+  formatDateInSaoPaulo,
+  nowInSaoPaulo,
+  parseDateInSaoPaulo,
+} from '../../common/utils/timezone';
 
 type AcaoCockpitComCockpit = {
   cockpitPilar: {
@@ -317,15 +321,14 @@ export class CockpitPilaresService {
   }
 
   private normalizeDataReferencia(value: string | Date): Date {
-    const data = value instanceof Date ? new Date(value) : new Date(value);
+    const data = value instanceof Date ? new Date(value) : parseDateInSaoPaulo(value);
 
     if (Number.isNaN(data.getTime())) {
       throw new BadRequestException('Data de referência inválida');
     }
 
-    data.setDate(1);
-    data.setHours(0, 0, 0, 0);
-    return data;
+    const referencia = formatDateInSaoPaulo(data, 'yyyy-MM');
+    return parseDateInSaoPaulo(`${referencia}-01`);
   }
 
   private buildMesesFromReferencia(

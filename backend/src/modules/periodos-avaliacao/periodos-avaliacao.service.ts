@@ -774,6 +774,7 @@ export class PeriodosAvaliacaoService {
     return this.prisma.periodoAvaliacao.findMany({
       where: {
         empresaId,
+        aberto: false,
         ano: ano || undefined,
       },
       include: {
