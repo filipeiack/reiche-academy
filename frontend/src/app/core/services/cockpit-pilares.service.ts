@@ -138,10 +138,13 @@ export class CockpitPilaresService {
   /**
    * Criar novo ciclo de 12 meses para todos os indicadores do cockpit
    */
-  criarNovoCicloMeses(cockpitId: string): Observable<{ sucesso: boolean; indicadores: number; mesesCriados: number }> {
+  criarNovoCicloMeses(
+    cockpitId: string,
+    dataReferencia: string
+  ): Observable<{ sucesso: boolean; indicadores: number; mesesCriados: number }> {
     return this.http.post<{ sucesso: boolean; indicadores: number; mesesCriados: number }>(
       `${this.API}/cockpits/${cockpitId}/meses/ciclo`,
-      {}
+      { dataReferencia }
     );
   }
 

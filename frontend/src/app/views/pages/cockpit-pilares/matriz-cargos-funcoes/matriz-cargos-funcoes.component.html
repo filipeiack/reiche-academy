@@ -40,7 +40,7 @@
               <div class="d-flex flex-wrap align-items-center gap-2">
                 @if (cargo.responsaveis?.length) {
                 @for (responsavel of cargo.responsaveis; track responsavel.id) {
-                <span class="badge bg-light text-dark">
+                <span class="badge bg-light text-black">
                   {{ responsavel.usuario?.nome || '—' }}
                 </span>
                 }
@@ -95,7 +95,7 @@
         <div class="cargo-responsaveis ms-auto d-flex align-items-center gap-3">
           @if (cargo.responsaveis?.length) {
           @for (responsavel of cargo.responsaveis; track responsavel.id) {
-          <span class="badge bg-light text-dark">
+          <span class="badge bg-light text-black">
             {{ responsavel.usuario?.nome || '—' }}
           </span>
           }
@@ -148,8 +148,8 @@
             <td class="col-mobile-hide text-center fs-4 fw-bold">{{ funcao.avaliacaoLideranca ?? '—' }}</td>
             <td class="col-mobile-hide text-center">
               @if (funcao.autoAvaliacao !== null && funcao.avaliacaoLideranca !== null) {
-                <span class="badge fs-5 text-black fw-bold w-100" [ngClass]="getDesvioClass(funcao)">
-                  {{ getDesvio(funcao) }}
+                <span class="badge fs-4 text-black fw-bold w-100" [ngClass]="getDesvioClass(funcao)">
+                  {{ getDesvio(funcao).toFixed(1) }}
                 </span>
               } @else {
                 <span class="text-muted">—</span>
@@ -174,9 +174,9 @@
             <td class="text-center fs-4 fw-bold">{{ getMediaAuto(cargo) ?? '—' }}</td>
             <td class="text-center fs-4 fw-bold">{{ getMediaLideranca(cargo) ?? '—' }}</td>
             <td class="text-center">
-              @if (getMediaAuto(cargo) !== null && getMediaLideranca(cargo) !== null) {
-                <span class="badge fs-5 fw-bold w-100" [ngClass]="getDesvioMediaClass(cargo)">
-                  {{ getDesvioMedia(cargo) }}
+              @if (getDesvioMedia(cargo); as desvioMedia) {
+                <span class="fs-4 fw-bold w-100">
+                  {{ desvioMedia.toFixed(1) }}
                 </span>
               } @else {
                 <span class="text-muted">—</span>

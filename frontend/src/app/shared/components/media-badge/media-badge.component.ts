@@ -21,13 +21,28 @@ import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
     </span>
   `,
   styles: [`
-    // span {
-    //   display: inline-block;
-    //   padding: 0.25rem 0.5rem;
-    //   font-size: 0.8rem;
-    //   font-weight: 600;
-    //   border-radius: 0.25rem;
-    // }
+   /* Classes badges para span */
+span.bg-danger {
+  background-color: var(--bs-danger-bg-subtle) !important;
+  border-color: var(--bs-danger) !important;
+  border: 1px solid;
+  color: var(--bs-body-color);
+}
+
+span.bg-warning {
+  background-color: var(--bs-warning-bg-subtle) !important;
+  border-color: var(--bs-warning) !important;
+  border: 1px solid;
+  color: var(--bs-body-color);
+}
+
+span.bg-success {
+  background-color: var(--bs-success-bg-subtle) !important;
+  border-color: var(--bs-success) !important;
+  border: 1px solid;
+  color: var(--bs-body-color);
+}
+   
   `]
 })
 export class MediaBadgeComponent {
@@ -45,11 +60,11 @@ export class MediaBadgeComponent {
 
   get badgeClass(): string {
     if (this.media >= 8) {
-      return 'badge bg-success text-white';
+      return 'badge bg-success text-black';
     } else if (this.media >= 6) {
-      return 'badge bg-warning text-white';
+      return 'badge bg-warning text-black';
     } else {
-      return 'badge bg-danger text-white';
+      return 'badge bg-danger text-black';
     }
   }
 

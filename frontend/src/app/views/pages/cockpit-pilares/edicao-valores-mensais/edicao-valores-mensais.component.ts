@@ -3,12 +3,18 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Subject } from 'rxjs';
 import { debounceTime, distinctUntilChanged } from 'rxjs/operators';
+import { NgbDateParserFormatter, NgbDateStruct, NgbDatepickerModule } from '@ng-bootstrap/ng-bootstrap';
 import { environment } from '@environments/environment';
 import { CockpitPilaresService } from '@core/services/cockpit-pilares.service';
-import { PeriodosMentoriaService } from '@core/services/periodos-mentoria.service';
 import { SaveFeedbackService } from '@core/services/save-feedback.service';
 import Swal from 'sweetalert2';
-import { normalizeDateToSaoPaulo } from '@core/utils/date-time';
+import {
+  formatDateInputSaoPaulo,
+  formatIsoSaoPaulo,
+  formatMonthYearSaoPaulo,
+  normalizeDateToSaoPaulo,
+  parseDateInputSaoPaulo,
+} from '@core/utils/date-time';
 import {
   CockpitPilar,
   IndicadorCockpit,
@@ -17,18 +23,39 @@ import {
   StatusMedicaoIndicador,
 } from '@core/interfaces/cockpit-pilares.interface';
 
+class MonthYearParserFormatter extends NgbDateParserFormatter {
+  parse(value: string): NgbDateStruct | null {
+    if (!value) return null;
+    const parts = value.split('/');
+    if (parts.length !== 2) return null;
+
+    const month = Number(parts[0]);
+    const year = Number(parts[1]);
+
+    if (!month || !year || month < 1 || month > 12) return null;
+
+    return { year, month, day: 1 };
+  }
+
+  format(date: NgbDateStruct | null): string {
+    if (!date) return '';
+    const month = String(date.month).padStart(2, '0');
+    return `${month}/${date.year}`;
+  }
+}
+
 @Component({
   selector: 'app-edicao-valores-mensais',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, NgbDatepickerModule],
   templateUrl: './edicao-valores-mensais.component.html',
   styleUrl: './edicao-valores-mensais.component.scss',
+  providers: [{ provide: NgbDateParserFormatter, useClass: MonthYearParserFormatter }],
 })
 export class EdicaoValoresMensaisComponent implements OnInit, OnChanges, OnDestroy {
   @Input() cockpitId!: string;
 
   private cockpitService = inject(CockpitPilaresService);
-  private periodosMentoriaService = inject(PeriodosMentoriaService);
   private saveFeedbackService = inject(SaveFeedbackService);
   private autoSaveSubject = new Subject<{
     indicadorMensalId: string;
@@ -44,7 +71,10 @@ export class EdicaoValoresMensaisComponent implements OnInit, OnChanges, OnDestr
   podeCriarNovoCiclo = false;
   mensagemBotaoCiclo = 'Carregando...';
   criandoNovoCiclo = false;
-  private empresaId: string | null = null;
+  dataReferenciaInput: string | null = null;
+  dataReferenciaDefinida: Date | null = null;
+  dataReferenciaPicker: NgbDateStruct | null = null;
+  hasMeses = false;
 
   // Cache de valores em edição
   private valoresCache = new Map<string, { meta?: number; realizado?: number; historico?: number }>();
@@ -85,14 +115,28 @@ export class EdicaoValoresMensaisComponent implements OnInit, OnChanges, OnDestr
 
     this.cockpitService.getCockpitById(this.cockpitId).subscribe({
       next: (cockpit: CockpitPilar) => {
-        this.empresaId = cockpit.pilarEmpresa?.empresa?.id || null;
         this.indicadores = cockpit.indicadores || [];
-        this.loading = false;
-        
-        // Verificar se pode criar novo ciclo
-        if (this.empresaId) {
-          this.verificarPodeCriarNovoCiclo();
+        this.hasMeses = this.indicadores.some(
+          (indicador) => (indicador.mesesIndicador?.length ?? 0) > 0
+        );
+
+        if (cockpit.dataReferencia) {
+          const referencia = normalizeDateToSaoPaulo(new Date(cockpit.dataReferencia));
+          this.dataReferenciaDefinida = referencia;
+          this.dataReferenciaInput = formatDateInputSaoPaulo(referencia).slice(0, 7);
+          this.dataReferenciaPicker = {
+            year: referencia.getFullYear(),
+            month: referencia.getMonth() + 1,
+            day: 1,
+          };
+        } else {
+          this.dataReferenciaDefinida = null;
+          this.dataReferenciaInput = null;
+          this.dataReferenciaPicker = null;
         }
+        this.loading = false;
+
+        this.verificarPodeCriarNovoCiclo();
       },
       error: (err: unknown) => {
         console.error('Erro ao carregar indicadores:', err);
@@ -262,7 +306,14 @@ export class EdicaoValoresMensaisComponent implements OnInit, OnChanges, OnDestr
     const meta = this.getValorAtualizado(mes, 'meta');
     const realizado = this.getValorAtualizado(mes, 'realizado');
     
-    if (!meta || !realizado) return 0;
+    if (meta === null || meta === undefined || realizado === null || realizado === undefined) return 0;
+
+    if (meta === 0) {
+      if (realizado === 0) return 0;
+      return indicador.melhor === DirecaoIndicador.MAIOR
+        ? (realizado - meta) * 100
+        : (meta - realizado) * 100;
+    }
 
     if (indicador.melhor === DirecaoIndicador.MAIOR) {
       return ((realizado - meta) / meta) * 100;
@@ -275,7 +326,7 @@ export class EdicaoValoresMensaisComponent implements OnInit, OnChanges, OnDestr
     const meta = this.getValorAtualizado(mes, 'meta');
     const realizado = this.getValorAtualizado(mes, 'realizado');
     
-    if (!meta || !realizado) return 0;
+    if (meta === null || meta === undefined || realizado === null || realizado === undefined) return 0;
 
     const desvio = indicador.melhor === DirecaoIndicador.MAIOR
       ? realizado - meta
@@ -291,7 +342,15 @@ export class EdicaoValoresMensaisComponent implements OnInit, OnChanges, OnDestr
     const meta = this.getValorAtualizado(mes, 'meta');
     const realizado = this.getValorAtualizado(mes, 'realizado');
     
-    if (!meta || !realizado) return null;
+    if (meta === null || meta === undefined || realizado === null || realizado === undefined) return null;
+
+    if (meta === 0) {
+      if (realizado === 0) return 'success';
+      if (indicador.melhor === DirecaoIndicador.MAIOR) {
+        return realizado > 0 ? 'success' : 'danger';
+      }
+      return realizado < 0 ? 'success' : 'danger';
+    }
 
     const percentual = (realizado / meta) * 100;
 
@@ -336,54 +395,48 @@ export class EdicaoValoresMensaisComponent implements OnInit, OnChanges, OnDestr
     return mesesOrdenados.slice(0, 13).reverse();
   }
 
+  onDataReferenciaChange(): void {
+    if (this.dataReferenciaPicker) {
+      const month = String(this.dataReferenciaPicker.month).padStart(2, '0');
+      this.dataReferenciaInput = `${this.dataReferenciaPicker.year}-${month}`;
+    } else {
+      this.dataReferenciaInput = null;
+    }
+    this.verificarPodeCriarNovoCiclo();
+  }
+
   private verificarPodeCriarNovoCiclo(): void {
-    if (!this.empresaId) {
+    if (this.dataReferenciaDefinida) {
       this.podeCriarNovoCiclo = false;
-      this.mensagemBotaoCiclo = 'Empresa não identificada';
+      this.mensagemBotaoCiclo = `Referência definida em ${formatMonthYearSaoPaulo(
+        this.dataReferenciaDefinida
+      )}`;
       return;
     }
 
-    this.periodosMentoriaService.getPeriodoAtivo(this.empresaId).subscribe({
-      next: (periodo) => {
-        if (!periodo) {
-          this.podeCriarNovoCiclo = false;
-          this.mensagemBotaoCiclo = 'Empresa não possui período de mentoria ativo';
-          return;
-        }
+    if (!this.dataReferenciaInput) {
+      this.podeCriarNovoCiclo = false;
+      this.mensagemBotaoCiclo = 'Selecione um mês/ano de referência';
+      return;
+    }
 
-        // Verificar se mês atual >= último mês do período
-        const agora = normalizeDateToSaoPaulo(new Date());
-        const mesAtual = agora.getMonth() + 1;
-        const anoAtual = agora.getFullYear();
-        const anoMesAtual = anoAtual * 100 + mesAtual;
-
-        const dataFim = normalizeDateToSaoPaulo(periodo.dataFim);
-        const mesFim = dataFim.getMonth() + 1;
-        const anoFim = dataFim.getFullYear();
-        const anoMesFim = anoFim * 100 + mesFim;
-
-        if (anoMesAtual >= anoMesFim) {
-          this.podeCriarNovoCiclo = true;
-          this.mensagemBotaoCiclo = '';
-        } else {
-          this.podeCriarNovoCiclo = false;
-          this.mensagemBotaoCiclo = `Período de mentoria atual ainda não encerrou (término: ${mesFim.toString().padStart(2, '0')}/${anoFim})`;
-        }
-      },
-      error: (err) => {
-        console.error('Erro ao verificar período de mentoria:', err);
-        this.podeCriarNovoCiclo = false;
-        this.mensagemBotaoCiclo = 'Erro ao verificar período de mentoria';
-      },
-    });
+    this.podeCriarNovoCiclo = true;
+    this.mensagemBotaoCiclo = '';
   }
 
   criarNovoCicloMeses(): void {
     if (!this.podeCriarNovoCiclo || this.criandoNovoCiclo) return;
+    if (!this.dataReferenciaInput) return;
+
+    const dataReferencia = parseDateInputSaoPaulo(
+      `${this.dataReferenciaInput}-01`
+    );
+    const dataNormalizada = normalizeDateToSaoPaulo(dataReferencia);
+    const dataReferenciaIso = formatIsoSaoPaulo(dataNormalizada);
 
     Swal.fire({
       title: 'Criar novo ciclo de 12 meses?',
-      text: 'Serão criados 12 novos meses para todos os indicadores do cockpit, a partir do último mês registrado.',
+      text: 'Serão criados 12 meses para todos os indicadores do cockpit a partir da referência informada.',
       showCancelButton: true,
       confirmButtonText: 'Sim, criar',
       cancelButtonText: 'Cancelar',
@@ -391,7 +444,9 @@ export class EdicaoValoresMensaisComponent implements OnInit, OnChanges, OnDestr
       if (result.isConfirmed) {
         this.criandoNovoCiclo = true;
         
-        this.cockpitService.criarNovoCicloMeses(this.cockpitId).subscribe({
+        this.cockpitService
+          .criarNovoCicloMeses(this.cockpitId, dataReferenciaIso)
+          .subscribe({
           next: (response) => {
             this.criandoNovoCiclo = false;
             Swal.fire({

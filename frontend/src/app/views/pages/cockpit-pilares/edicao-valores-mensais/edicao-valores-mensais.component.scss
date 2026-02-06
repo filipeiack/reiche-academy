@@ -1,6 +1,6 @@
 .indicador-header {
   position: sticky;
-  top: calc(var(--navbar-height, 60px) + var(--headerDashboard-height, 40px));
+  top: calc(var(--navbar-height, 59px) + var(--headerDashboard-height, 40px));
   z-index: 5;
   background: var(--bs-card-bg);
 }
@@ -8,7 +8,7 @@
 // Wrapper que contém apenas o header da tabela (fora do table-responsive)
 .table-header-wrapper {
   position: sticky;
-  top: calc(var(--navbar-height, 60px) + var(--headerDashboard-height, 40px) + 50px);
+  top: calc(var(--navbar-height, 60px) + var(--headerDashboard-height, 40px) + 49px);
   z-index: 4;
   margin-bottom: 0;
   margin-top: 0;

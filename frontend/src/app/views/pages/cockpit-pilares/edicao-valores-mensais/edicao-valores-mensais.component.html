@@ -8,20 +8,47 @@
       </h6>
 
       <!-- Botao Novo Ciclo -->
-      @if (!loading && indicadores.length > 0) {
+      @if (!loading) {
+        <div class="d-flex align-items-center gap-2">
+          <label class="form-label small text-muted mb-1">Mês referência:</label>
+          <div class="d-flex flex-column">
+            <div class="input-group input-group-sm">
+              <input
+                type="text"
+                class="form-control form-control-sm"
+                data-testid="input-data-referencia"
+                placeholder="MM/AAAA"
+                ngbDatepicker
+                #picker="ngbDatepicker"
+                [(ngModel)]="dataReferenciaPicker"
+                (ngModelChange)="onDataReferenciaChange()"
+                [disabled]="!!dataReferenciaDefinida || criandoNovoCiclo"
+                autocomplete="off"
+              />
+              <button
+                type="button"
+                class="btn btn-outline-secondary"
+                (click)="picker.toggle()"
+                [disabled]="!!dataReferenciaDefinida || criandoNovoCiclo"
+                aria-label="Abrir calendario"
+              >
+                <i class="bi bi-calendar3"></i>
+              </button>
+            </div>
+          </div>
 
-        <button type="button" data-testid="btn-novo-ciclo-mensal" class="btn btn-primary btn-sm btn-novo-ciclo"
-          [disabled]="!podeCriarNovoCiclo || criandoNovoCiclo" (click)="criarNovoCicloMeses()"
-          [title]="!podeCriarNovoCiclo ? mensagemBotaoCiclo : 'Criar próximos 12 meses para todos os indicadores'">
-          @if (criandoNovoCiclo) {
-          <span class="spinner-border spinner-border-sm me-2" role="status"></span>
-          Criando...
-          } @else {
-          <i class="bi bi-plus-circle me-2"></i>
-          Novo ciclo de 12 meses
-          }
-        </button>
-
+          <button type="button" data-testid="btn-novo-ciclo-mensal" class="btn btn-primary btn-sm btn-novo-ciclo"
+            [disabled]="!podeCriarNovoCiclo || criandoNovoCiclo" (click)="criarNovoCicloMeses()"
+            [title]="!podeCriarNovoCiclo ? mensagemBotaoCiclo : 'Criar próximos 12 meses para todos os indicadores'">
+            @if (criandoNovoCiclo) {
+            <span class="spinner-border spinner-border-sm me-2" role="status"></span>
+            Criando...
+            } @else {
+            <i class="bi bi-plus-circle me-2"></i>
+            Criar ciclo de 12 meses
+            }
+          </button>
+        </div>
       }
     </div>
   </div>
@@ -40,12 +67,7 @@
 
   <!-- Indicadores -->
   @if (!loading) {
-  @if (indicadores.length === 0) {
-  <div class="alert alert-info" data-testid="no-indicators-message">
-    <i class="bi bi-info-circle me-2"></i>
-    Nenhum indicador criado ainda. Adicione indicadores para começar.
-  </div>
-  } @else {
+  @if (hasMeses) {
   @for (indicador of indicadores; track indicador.id) {
   <div class="card mb-1" data-testid="indicador-card">
     <div class="card-body p-3 px-4">
@@ -66,7 +88,7 @@
 
           <div class="badge bg-light gap-1 p-2">
             <label class="form-label small text-muted mb-2">Status</label>
-            <div class="fw-bold text-dark">
+            <div class="fw-bold text-black">
               @switch (indicador.statusMedicao) {
               @case ('MEDIDO_CONFIAVEL') {
               <span class="badge bg-success w-100">Medido e confiável</span>
@@ -83,14 +105,14 @@
 
           <div class="badge bg-light gap-1 p-2">
             <label class="form-label small text-muted mb-2">Responsável</label>
-            <div class="fw-bold text-dark">
+            <div class="fw-bold text-black">
                <span data-testid="indicador-responsavel">{{ indicador.responsavelMedicao?.nome || 'Não definido' }}</span>
             </div>
           </div>
 
           <div class="badge bg-light gap-1 p-2 ">
             <label class="form-label small text-muted mb-2">Melhor</label>
-            <div class="fw-bold text-dark">
+            <div class="fw-bold text-black">
               @if (indicador.melhor === 'MAIOR') {
               <i class="bi bi-arrow-up text-black"></i>
               } @else {
@@ -101,7 +123,7 @@
 
           <div class="badge bg-light gap-1 p-2">
             <label class="form-label small text-muted mb-2">Tipo</label>
-            <div class="fw-bold text-dark">
+            <div class="fw-bold text-black">
               ({{ getLabelTipoMedida(indicador.tipoMedida) }})
             </div>
           </div>
@@ -177,7 +199,7 @@
                   (input)="onValorChange(mes, 'realizado', $event)" step="1" data-testid="input-realizado" />
               </td>
               <td class="text-center bg-gray-100">
-                @if (mes.meta && mes.realizado) {
+                @if (mes.meta !== null && mes.meta !== undefined && mes.realizado !== null && mes.realizado !== undefined) {
                 <span [class]="'badge badge-desvio w-100 d-inline-block py-2 bg-' + calcularStatus(indicador, mes)">
                   {{ calcularDesvioAbsoluto(indicador, mes) | number: '1.0-0' }}
                 </span>
@@ -186,7 +208,7 @@
                 }
               </td>
               <td class="text-center bg-gray-100">
-                @if (mes.meta && mes.realizado) {
+                @if (mes.meta !== null && mes.meta !== undefined && mes.realizado !== null && mes.realizado !== undefined) {
 
                 <span [class]="'badge badge-desvio w-100 d-inline-block py-2 bg-' + calcularStatus(indicador, mes)">
                   {{ calcularDesvio(indicador, mes) | number: '1.1-1' }}%

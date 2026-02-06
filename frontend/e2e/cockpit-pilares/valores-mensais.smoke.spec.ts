@@ -91,8 +91,9 @@ test.describe('@cockpit smoke - valores mensais', () => {
 
     await abrirTabIndicadores(page);
 
-    const valoresSection = page.locator('[data-testid="valores-mensais-section"]').first();
+    const valoresSection = page.locator('[data-testid="valores-section"]').first();
     await expect(valoresSection).toBeVisible({ timeout: 10000 });
+    await expect(page.locator('[data-testid="input-data-referencia"]').first()).toBeVisible({ timeout: 10000 });
   });
 
   test('permite preencher histórico, meta e realizado quando disponível', async ({ page }) => {

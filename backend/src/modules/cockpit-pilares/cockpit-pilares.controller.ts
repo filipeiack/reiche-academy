@@ -24,6 +24,7 @@ import { UpdateCockpitPilarDto } from './dto/update-cockpit-pilar.dto';
 import { CreateIndicadorCockpitDto } from './dto/create-indicador-cockpit.dto';
 import { UpdateIndicadorCockpitDto } from './dto/update-indicador-cockpit.dto';
 import { UpdateValoresMensaisDto } from './dto/update-valores-mensais.dto';
+import { CreateCicloMesesDto } from './dto/create-ciclo-meses.dto';
 import { UpdateProcessoPrioritarioDto } from './dto/update-processo-prioritario.dto';
 import { CreateProcessoFluxogramaDto } from './dto/create-processo-fluxograma.dto';
 import { UpdateProcessoFluxogramaDto } from './dto/update-processo-fluxograma.dto';
@@ -168,11 +169,11 @@ export class CockpitPilaresController {
   @Post('cockpits/:cockpitId/indicadores')
   @Roles('ADMINISTRADOR', 'GESTOR', 'COLABORADOR')
   @ApiOperation({
-    summary: 'Criar indicador (auto-cria 12 meses consecutivos)',
+    summary: 'Criar indicador (cria meses apenas se houver data de referência)',
   })
   @ApiResponse({
     status: 201,
-    description: 'Indicador criado com 12 meses vazios',
+    description: 'Indicador criado com meses condicionais por referência',
   })
   @ApiResponse({ status: 403, description: 'Acesso negado (multi-tenant)' })
   @ApiResponse({ status: 404, description: 'Cockpit não encontrado' })
@@ -275,21 +276,26 @@ export class CockpitPilaresController {
   @Post('cockpits/:cockpitId/meses/ciclo')
   @Roles('ADMINISTRADOR', 'GESTOR')
   @ApiOperation({ 
-    summary: 'Criar novo ciclo de 12 meses para todos os indicadores do cockpit',
-    description: 'Validação: só pode criar se mês atual >= último mês do período de mentoria ativo'
+    summary: 'Definir data de referência e criar ciclo de 12 meses do cockpit',
+    description: 'Cria 12 meses a partir da data de referência e bloqueia novas criações'
   })
   @ApiResponse({
     status: 201,
     description: 'Novo ciclo criado com sucesso',
   })
-  @ApiResponse({ status: 400, description: 'Período de mentoria ainda não encerrou ou não existe' })
+  @ApiResponse({ status: 400, description: 'Data de referência inválida ou já definida' })
   @ApiResponse({ status: 403, description: 'Acesso negado (multi-tenant)' })
   @ApiResponse({ status: 404, description: 'Cockpit não encontrado' })
   criarNovoCicloMeses(
     @Param('cockpitId') cockpitId: string,
+    @Body() dto: CreateCicloMesesDto,
     @Request() req: ExpressRequest & { user: any },
   ) {
-    return this.cockpitPilaresService.criarNovoCicloMeses(cockpitId, req.user);
+    return this.cockpitPilaresService.criarNovoCicloMeses(
+      cockpitId,
+      dto,
+      req.user,
+    );
   }
 
   // ==================== PROCESSOS PRIORITÁRIOS ====================

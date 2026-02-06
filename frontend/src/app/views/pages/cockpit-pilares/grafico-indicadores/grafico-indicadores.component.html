@@ -56,7 +56,7 @@
 
         <div class="badge bg-light gap-1 p-2 flex-fill">
           <label class="form-label small text-muted mb-2">Status</label>
-          <div class="fw-bold text-dark">
+          <div class="fw-bold text-black">
             @switch (indicador.statusMedicao) {
             @case ('MEDIDO_CONFIAVEL') {
             <span class="badge bg-success">Medido e confiável</span>
@@ -73,7 +73,7 @@
 
         <div class="badge bg-light gap-1 p-2 flex-fill">
           <label class="form-label small text-muted mb-2">Responsável</label>
-          <div class="fw-bold text-dark">
+          <div class="fw-bold text-black">
             {{ indicador.responsavelMedicao?.nome || 'Não definido' }}
           </div>
         </div>
@@ -91,7 +91,7 @@
 
         <div class="badge bg-light gap-1 p-2">
           <label class="form-label small text-muted mb-2">Tipo</label>
-          <div class="fw-bold text-dark">
+          <div class="fw-bold text-black">
             {{ getLabelTipoMedida(indicador.tipoMedida) }}
           </div>
         </div>

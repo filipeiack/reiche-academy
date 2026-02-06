@@ -448,9 +448,10 @@ describe('CockpitPilaresService', () => {
   // =================================================================
 
   describe('[INDICADORES] createIndicador', () => {
-    it('deve criar indicador com 12 meses mensais', async () => {
+    it('deve criar meses quando cockpit possui dataReferencia', async () => {
       const cockpit = {
         id: 'cockpit-1',
+        dataReferencia: '2026-02-01T00:00:00-03:00',
         pilarEmpresa: {
           empresa: { id: 'empresa-a' },
         },
@@ -464,7 +465,7 @@ describe('CockpitPilaresService', () => {
         nome: 'Faturamento Total',
         ordem: 1,
       } as any);
-      jest.spyOn(prisma.indicadorMensal, 'createMany').mockResolvedValue({ count: 13 } as any);
+      jest.spyOn(prisma.indicadorMensal, 'createMany').mockResolvedValue({ count: 12 } as any);
       jest.spyOn(prisma.indicadorCockpit, 'findUnique').mockResolvedValue({
         id: 'ind-1',
         mesesIndicador: [],
@@ -481,18 +482,50 @@ describe('CockpitPilaresService', () => {
         mockGestorEmpresaA,
       );
 
-      // Verificar criação de 12 meses
-      const createManyCall = (prisma.indicadorMensal.createMany as jest.Mock).mock.calls[0][0];
-      expect(createManyCall.data).toHaveLength(12);
-
-      // Verificar meses 1-12
-      expect(createManyCall.data).toEqual(
-        expect.arrayContaining([
-          expect.objectContaining({ mes: 1, ano: expect.any(Number) }),
-          expect.objectContaining({ mes: 6, ano: expect.any(Number) }),
-          expect.objectContaining({ mes: 12, ano: expect.any(Number) }),
-        ]),
+      expect(prisma.indicadorMensal.createMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.arrayContaining([
+            expect.objectContaining({ mes: 2, ano: 2026 }),
+            expect.objectContaining({ mes: 1, ano: 2027 }),
+          ]),
+        }),
       );
+    });
+
+    it('não deve criar meses quando cockpit não possui dataReferencia', async () => {
+      const cockpit = {
+        id: 'cockpit-1',
+        dataReferencia: null,
+        pilarEmpresa: {
+          empresa: { id: 'empresa-a' },
+        },
+      };
+
+      jest.spyOn(service as any, 'validateCockpitAccess').mockResolvedValue(cockpit);
+      jest.spyOn(prisma.indicadorCockpit, 'findFirst').mockResolvedValue(null); // Nome único
+      jest.spyOn(prisma.indicadorCockpit, 'findFirst').mockResolvedValueOnce(null); // Ordem vazia
+      jest.spyOn(prisma.indicadorCockpit, 'create').mockResolvedValue({
+        id: 'ind-1',
+        nome: 'Faturamento Total',
+        ordem: 1,
+      } as any);
+      jest.spyOn(prisma.indicadorCockpit, 'findUnique').mockResolvedValue({
+        id: 'ind-1',
+        mesesIndicador: [],
+      } as any);
+
+      await service.createIndicador(
+        'cockpit-1',
+        {
+          nome: 'Faturamento Total',
+          tipoMedida: 'REAL' as any,
+          statusMedicao: 'NAO_MEDIDO' as any,
+          melhor: 'MAIOR' as any,
+        },
+        mockGestorEmpresaA,
+      );
+
+      expect(prisma.indicadorMensal.createMany).not.toHaveBeenCalled();
     });
 
     it('deve calcular ordem automaticamente como maxOrdem + 1', async () => {
@@ -652,7 +685,6 @@ describe('CockpitPilaresService', () => {
       jest.spyOn(prisma.indicadorCockpit, 'findFirst').mockResolvedValueOnce(null);
       jest.spyOn(prisma.usuario, 'findUnique').mockResolvedValue(responsavel as any);
       jest.spyOn(prisma.indicadorCockpit, 'create').mockResolvedValue({ id: 'ind-1' } as any);
-      jest.spyOn(prisma.indicadorMensal, 'createMany').mockResolvedValue({ count: 13 } as any);
       jest.spyOn(prisma.indicadorCockpit, 'findUnique').mockResolvedValue({ id: 'ind-1' } as any);
 
       // Admin pode atribuir responsável de qualquer empresa
@@ -865,13 +897,15 @@ describe('CockpitPilaresService', () => {
 
       jest.spyOn(prisma.indicadorCockpit, 'findUnique').mockResolvedValue(indicador as any);
       jest.spyOn(service as any, 'validateCockpitAccess').mockResolvedValue({});
-      jest.spyOn(prisma.indicadorMensal, 'findFirst').mockResolvedValue(mesExistente as any);
+      jest
+        .spyOn(prisma.indicadorMensal, 'findMany')
+        .mockResolvedValueOnce([mesExistente] as any)
+        .mockResolvedValueOnce([] as any);
       jest.spyOn(prisma.indicadorMensal, 'update').mockResolvedValue({
         ...mesExistente,
         meta: 1500,
         realizado: 1350,
       } as any);
-      jest.spyOn(prisma.indicadorMensal, 'findMany').mockResolvedValue([]);
 
       await service.updateValoresMensais(
         'ind-1',
@@ -893,7 +927,7 @@ describe('CockpitPilaresService', () => {
       });
     });
 
-    it('deve criar novo mês via CREATE se não existe (upsert)', async () => {
+    it('deve rejeitar atualização quando mês não existe', async () => {
       const indicador = {
         id: 'ind-1',
         cockpitPilarId: 'cockpit-1',
@@ -901,34 +935,19 @@ describe('CockpitPilaresService', () => {
 
       jest.spyOn(prisma.indicadorCockpit, 'findUnique').mockResolvedValue(indicador as any);
       jest.spyOn(service as any, 'validateCockpitAccess').mockResolvedValue({});
-      jest.spyOn(prisma.indicadorMensal, 'findFirst').mockResolvedValue(null); // Não existe
-      jest.spyOn(prisma.indicadorMensal, 'create').mockResolvedValue({
-        id: 'mes-novo',
-        ano: 2027,
-        mes: 5,
-        meta: 2000,
-      } as any);
-      jest.spyOn(prisma.indicadorMensal, 'findMany').mockResolvedValue([]);
+      jest.spyOn(prisma.indicadorMensal, 'findMany').mockResolvedValue([] as any);
 
-      await service.updateValoresMensais(
-        'ind-1',
-        {
-          valores: [
-            { ano: 2027, mes: 5, meta: 2000 },
-          ],
-        },
-        mockGestorEmpresaA,
-      );
-
-      expect(prisma.indicadorMensal.create).toHaveBeenCalledWith({
-        data: expect.objectContaining({
-          indicadorCockpitId: 'ind-1',
-          ano: 2027,
-          mes: 5,
-          meta: 2000,
-          createdBy: 'gestor-a-id',
-        }),
-      });
+      await expect(
+        service.updateValoresMensais(
+          'ind-1',
+          {
+            valores: [
+              { ano: 2027, mes: 5, meta: 2000 },
+            ],
+          },
+          mockGestorEmpresaA,
+        ),
+      ).rejects.toThrow('Mês não encontrado para este indicador');
     });
 
     it('deve processar múltiplos valores em batch', async () => {
@@ -939,13 +958,11 @@ describe('CockpitPilaresService', () => {
 
       jest.spyOn(prisma.indicadorCockpit, 'findUnique').mockResolvedValue(indicador as any);
       jest.spyOn(service as any, 'validateCockpitAccess').mockResolvedValue({});
-      jest.spyOn(prisma.indicadorMensal, 'findFirst')
-        .mockResolvedValueOnce(mes1 as any)
-        .mockResolvedValueOnce(mes2 as any)
-        .mockResolvedValueOnce(null); // Terceiro não existe
+      jest
+        .spyOn(prisma.indicadorMensal, 'findMany')
+        .mockResolvedValueOnce([mes1, mes2] as any)
+        .mockResolvedValueOnce([] as any);
       jest.spyOn(prisma.indicadorMensal, 'update').mockResolvedValue({} as any);
-      jest.spyOn(prisma.indicadorMensal, 'create').mockResolvedValue({} as any);
-      jest.spyOn(prisma.indicadorMensal, 'findMany').mockResolvedValue([]);
 
       await service.updateValoresMensais(
         'ind-1',
@@ -953,14 +970,12 @@ describe('CockpitPilaresService', () => {
           valores: [
             { ano: 2026, mes: 1, meta: 1500 },
             { ano: 2026, mes: 2, meta: 1600 },
-            { ano: 2026, mes: 3, meta: 1700 }, // Novo
           ],
         },
         mockGestorEmpresaA,
       );
 
       expect(prisma.indicadorMensal.update).toHaveBeenCalledTimes(2);
-      expect(prisma.indicadorMensal.create).toHaveBeenCalledTimes(1);
       expect(audit.log).toHaveBeenCalled();
     });
 
@@ -974,6 +989,99 @@ describe('CockpitPilaresService', () => {
           mockGestorEmpresaA,
         ),
       ).rejects.toThrow(NotFoundException);
+    });
+  });
+
+  describe('[CICLO] criarNovoCicloMeses', () => {
+    it('deve salvar dataReferencia e criar meses para todos os indicadores', async () => {
+      const cockpit = {
+        id: 'cockpit-1',
+        dataReferencia: null,
+        pilarEmpresa: { empresa: { id: 'empresa-a' } },
+      };
+
+      const txMock = {
+        cockpitPilar: {
+          update: jest.fn().mockResolvedValue({ id: 'cockpit-1' }),
+        },
+        indicadorMensal: {
+          createMany: jest.fn().mockResolvedValue({ count: 24 }),
+        },
+      };
+
+      jest.spyOn(service as any, 'validateCockpitAccess').mockResolvedValue(cockpit);
+      jest.spyOn(prisma.indicadorCockpit, 'findMany').mockResolvedValue([
+        { id: 'ind-1' },
+        { id: 'ind-2' },
+      ] as any);
+      jest.spyOn(prisma, '$transaction').mockImplementation(async (callback: any) => {
+        await callback(txMock as any);
+      });
+
+      await service.criarNovoCicloMeses(
+        'cockpit-1',
+        { dataReferencia: '2026-02-15T00:00:00-03:00' },
+        mockGestorEmpresaA,
+      );
+
+      expect(txMock.cockpitPilar.update).toHaveBeenCalled();
+      const updateCall = (txMock.cockpitPilar.update as jest.Mock).mock.calls[0][0];
+      const referencia = updateCall.data.dataReferencia as Date;
+      expect(referencia.getDate()).toBe(1);
+
+      expect(txMock.indicadorMensal.createMany).toHaveBeenCalled();
+    });
+
+    it('deve permitir salvar dataReferencia mesmo sem indicadores', async () => {
+      const cockpit = {
+        id: 'cockpit-1',
+        dataReferencia: null,
+        pilarEmpresa: { empresa: { id: 'empresa-a' } },
+      };
+
+      const txMock = {
+        cockpitPilar: {
+          update: jest.fn().mockResolvedValue({ id: 'cockpit-1' }),
+        },
+        indicadorMensal: {
+          createMany: jest.fn(),
+        },
+      };
+
+      jest.spyOn(service as any, 'validateCockpitAccess').mockResolvedValue(cockpit);
+      jest.spyOn(prisma.indicadorCockpit, 'findMany').mockResolvedValue([] as any);
+      jest.spyOn(prisma, '$transaction').mockImplementation(async (callback: any) => {
+        await callback(txMock as any);
+      });
+
+      const result = await service.criarNovoCicloMeses(
+        'cockpit-1',
+        { dataReferencia: '2026-02-01T00:00:00-03:00' },
+        mockGestorEmpresaA,
+      );
+
+      expect(txMock.cockpitPilar.update).toHaveBeenCalled();
+      expect(txMock.indicadorMensal.createMany).not.toHaveBeenCalled();
+      expect(result.mesesCriados).toBe(0);
+      expect(result.indicadores).toBe(0);
+    });
+
+    it('deve rejeitar quando dataReferencia já existe', async () => {
+      const cockpit = {
+        id: 'cockpit-1',
+        dataReferencia: '2026-02-01T00:00:00-03:00',
+        pilarEmpresa: { empresa: { id: 'empresa-a' } },
+      };
+
+      jest.spyOn(service as any, 'validateCockpitAccess').mockResolvedValue(cockpit);
+
+      await expect(
+        service.criarNovoCicloMeses(
+          'cockpit-1',
+          { dataReferencia: '2026-03-01T00:00:00-03:00' },
+          mockGestorEmpresaA,
+        ),
+      ).rejects.toThrow(ConflictException);
     });
   });
 

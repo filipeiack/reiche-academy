@@ -30,7 +30,7 @@
 
             <!-- Badge indicador de períodos de avaliação -->
             @if (primeiraData) {
-            <div class="badge bg-light text-dark small d-flex flex-column align-items-start px-3 py-1 m-1"
+            <div class="badge bg-light text-black small d-flex flex-column align-items-start px-3 py-1 m-1"
                 data-testid="periodo-badge">
                 <div class="d-flex align-items-center gap-2 mb-1">
                     <i class="feather icon-calendar icon-sm"></i>
@@ -100,14 +100,14 @@
 
                 <div class="ms-auto d-flex align-items-center gap-3">
 
-                    <span class="badge bg-light text-dark small d-inline-flex align-items-center">
+                    <span class="badge bg-light text-black small d-inline-flex align-items-center">
                         {{ pilar.rotinasEmpresa.length }}
                         {{ pilar.rotinasEmpresa.length === 1 ? 'rotina' : 'rotinas' }}
                     </span>
 
                     @if (pilar.rotinasEmpresa.length > 0) {
 
-                    <span class="badge bg-light text-dark small d-inline-flex align-items-center"
+                    <span class="badge bg-light text-black small d-inline-flex align-items-center"
                         [title]="'Taxa de respostas para o ' + ('PILARES.PILAR' | translate) + ' ' + pilar.nome">
                         Tx respostas:
                         {{ getPilarProgress(pilar) | number:'1.0-0' }} %

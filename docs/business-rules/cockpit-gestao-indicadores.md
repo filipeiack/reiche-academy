@@ -20,7 +20,7 @@ Aplicada quando usuário:
 
 ## Comportamento Implementado
 
-### 1. Criação de Indicador + Auto-criação de 13 Meses
+### 1. Criação de Indicador + Meses Condicionais por Referência
 
 **Arquivo:** `backend/src/modules/cockpit-pilares/cockpit-pilares.service.ts`
 
@@ -30,10 +30,10 @@ Aplicada quando usuário:
 - Validação de nome único por cockpit (case-sensitive)
 - Se nome já existe (ativo): lança `ConflictException` "Já existe um indicador com este nome neste cockpit"
 - Cálculo automático de ordem: `maxOrdem + 1` (ou 1 se primeiro)
-- **Auto-criação de 13 registros `IndicadorMensal`:**
-  - 12 meses (jan-dez) com `mes = 1..12`
-  - 1 resumo anual com `mes = null`
-  - Ano atual (`new Date().getFullYear()`)
+- **Criação condicional de `IndicadorMensal`:**
+  - Se o `CockpitPilar` já tiver `dataReferencia` definida, criar 12 meses consecutivos a partir do mês/ano da referência
+  - Se não houver referência definida, **não** criar meses automaticamente
+  - Sem criação de resumo anual (`mes = null`)
   - Valores vazios: `meta`, `realizado`, `historico` = null
 - Retorna indicador completo com `mesesIndicador[]` incluídos
 
@@ -89,28 +89,35 @@ async createIndicador(
     },
   });
 
-  // Auto-criar 13 meses (jan-dez + anual)
-  const anoAtual = new Date().getFullYear();
-  const meses = [
-    ...Array.from({ length: 12 }, (_, i) => ({
-      indicadorCockpitId: indicador.id,
-      mes: i + 1,
-      ano: anoAtual,
-      createdBy: user.id,
-      updatedBy: user.id,
-    })),
-    {
-      indicadorCockpitId: indicador.id,
-      mes: null, // Resumo anual
-      ano: anoAtual,
-      createdBy: user.id,
-      updatedBy: user.id,
-    },
-  ];
+  // Criar meses apenas se houver referencia definida no cockpit
+  if (cockpit?.dataReferencia) {
+    const dataReferencia = new Date(cockpit.dataReferencia);
+    const mesReferencia = dataReferencia.getMonth() + 1;
+    const anoReferencia = dataReferencia.getFullYear();
+    const meses = [];
 
-  await this.prisma.indicadorMensal.createMany({
-    data: meses,
-  });
+    for (let i = 0; i < 12; i++) {
+      let mes = mesReferencia + i;
+      let ano = anoReferencia;
+
+      if (mes > 12) {
+        mes = mes - 12;
+        ano++;
+      }
+
+      meses.push({
+        indicadorCockpitId: indicador.id,
+        mes,
+        ano,
+        createdBy: user.id,
+        updatedBy: user.id,
+      });
+    }
+
+    await this.prisma.indicadorMensal.createMany({
+      data: meses,
+    });
+  }
 
   // Retornar indicador com meses
   return this.prisma.indicadorCockpit.findUnique({
@@ -404,7 +411,7 @@ addUsuarioTag = (nome: string): Usuario | Promise<Usuario> => {
 
 1. **Nome único:** Por cockpit, case-sensitive
 2. **Ordem automática:** Calculada sequencialmente
-3. **13 meses criados:** Sempre jan-dez + anual, mesmo que vazios
+3. **Meses condicionais:** Somente cria meses quando `dataReferencia` estiver definida no cockpit
 4. **Soft delete:** Indicadores desativados, não removidos fisicamente
 5. **Auto-save:** Debounce 1s, valida campos obrigatórios antes de persistir
 6. **Novo usuário:** Requer nome + sobrenome, perfil COLABORADOR fixo
@@ -429,7 +436,8 @@ addUsuarioTag = (nome: string): Usuario | Promise<Usuario> => {
 
 ## Observações
 
--  **Regra extraída por engenharia reversa**
+-  **Regra extraída por engenharia reversa** (exceto seção 1, atualizada como proposta)
+- Seção 1 depende de nova referência em `CockpitPilar` e aguarda implementação
 - Validações no backend garantem integridade
 - Criação de usuário on-the-fly facilita fluxo sem interrupções
 - Ordem mantida automaticamente via drag-and-drop

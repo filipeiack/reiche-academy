@@ -4,57 +4,60 @@
 O módulo Cockpit de Pilares alimenta a grade de indicadores mensais exibida em duas telas principais: o dashboard de diagnóstico (`frontend/src/app/views/pages/diagnostico-notas/diagnostico-notas.component.ts`) e o editor de valores mensais (`frontend/src/app/views/pages/cockpit-pilares/edicao-valores-mensais/edicao-valores-mensais.component.ts`). O backend centraliza o contrato em `backend/src/modules/cockpit-pilares/cockpit-pilares.service.ts` (métodos `createCockpit`, `createIndicador`, `updateValoresMensais` e `getCockpitById`). O modelo relacional atual (`backend/prisma/schema.prisma` > `IndicadorMensal`) precisa ser ajustado para suportar ciclos atrelados exclusivamente ao indicador e não ao período de mentoria.
 
 ## Descrição
-A criação de registros na tabela `IndicadorMensal` deve ser disparada exclusivamente por dois fluxos controlados, garantindo visibilidade dos últimos 13 meses na tela e evitando duplicidades automáticas ao renovar uma mentoria. Em vez de vincular os meses a um `PeriodoMentoria`, cada registro deve refletir o mês/ano em que foi criado e o backend deve manter um histórico sequencial por indicador.
+A criação de registros na tabela `IndicadorMensal` deve ser disparada exclusivamente pelo botão "Novo ciclo de 12 meses" no editor de valores mensais, usando uma **data de referência única** definida pelo usuário. Esse clique deve persistir a referência no `CockpitPilar` e criar 12 meses para **todos** os indicadores do cockpit a partir dessa referência (mes/ano da data). Nenhum outro fluxo (criação de cockpit, criação de indicador, atualização de valores mensais ou criação/renovação de período de mentoria) pode criar `IndicadorMensal` automaticamente. Em vez de vincular os meses a um `PeriodoMentoria`, cada registro deve refletir o mês/ano em que foi criado e o backend deve manter um histórico sequencial por indicador.
 
 ## Condição
 Aplicar-se quando:
-- Um novo indicador é adicionado na tela de edição de valores mensais (formulário do editor).
-- O usuário dispara o novo botão "Novo ciclo de 12 meses" dentro do editor de valores mensais.
+- O usuário seleciona uma data de referência e dispara o botão "Novo ciclo de 12 meses" no editor de valores mensais.
+- Um novo indicador é criado **depois** que a referência já foi definida no cockpit.
 - Dados exibidos no editor são renderizados (todos os indicadores carregados em `CockpitPilaresService.getCockpitById`).
 
 ## Comportamento Esperado
-### 1. Criação inicial de meses pelo botão de diagnóstico
-- Cada indicador recebe meses sequenciais a partir do mês corrente (`Date_NOW`), preenchendo `mes`/`ano` e deixando `meta`, `realizado` e `historico` em `null`.
-- Não há mais criação automática de mês anual (sem `mes`); o resumo anual passa a ser responsabilidade do frontend (já existente em `gestao-indicadores.component.ts`).
-- O backend não deve criar registros adicionais ao renovar o período de mentoria (`PeriodosMentoriaService.renovar`). A criação de novos meses fica a cargo do botão do editor.
+### 1. Definicao de referencia + criacao inicial (unico gatilho de criacao)
+- A tela de edicao exibira um campo de data referencia (mes/ano) e o botao "Novo ciclo de 12 meses".
+- Ao clicar, o backend deve:
+  - Persistir a referencia (data unica) no `CockpitPilar`, **normalizada para dia 1**.
+  - Criar 12 meses consecutivos a partir do mes/ano informado para **todos** os indicadores ativos do cockpit.
+  - Preencher `meta`, `realizado` e `historico` como `null`.
+- Se nao houver indicadores ativos, o backend **ainda** deve salvar a referencia.
+- O botao nao fica mais disponivel para clique apos a referencia ser definida (regra de uma unica definicao).
 
-### 2. Novo indicador via edição de valores mensais
-- Ao cadastrar um indicador em `frontend/src/app/views/pages/cockpit-pilares/edicao-valores-mensais/edicao-valores-mensais.component.ts`, o backend (`createIndicador`) deve produzir 12 meses em vez de 13, começando pelo mês atual e avançando mês a mês (ano deve avançar automaticamente ao cruzar dezembro).
-- Cada registro deve usar `indicadorCockpitId`, `ano` e `mes` como chave natural; valores vazios mantêm `null`.
-- O backend não deve criar nada relacionado a `periodoMentoriaId` durante esta operação.
+### 2. Criacao tardia de indicador
+- Se um indicador for criado **depois** da referencia estar definida no cockpit, o backend deve criar automaticamente os 12 meses a partir da referencia.
+- Se nao houver referencia definida, nenhum `IndicadorMensal` deve ser criado na criacao do indicador.
 
-### 3. Botão "Novo ciclo de 12 meses" no editor
-- A tela de edição exibirá um botão adicional "Novo ciclo de 12 meses" (texto a confirmar com UX) que dispara um endpoint do backend para criar os próximos 12 meses de cada indicador do cockpit.
-- Antes de habilitar o botão, o frontend consulta `PeriodosMentoriaService.getPeriodoAtivo` para verificar se há mentoria ativa e se o mês atual (`anoAtual * 100 + mesAtual`) é **maior ou igual** ao mês final do período (`dataFim`). Enquanto a condição não for satisfeita, o botão fica desabilitado e exibe tooltip/alerta explicando o bloqueio.
-- O backend valida a mesma condição: se não houver mentoria ativa ou se o mês vigente for anterior ao último mês do período (`periodo.dataFim`), retorna `BadRequestException` com mensagem amigável.
-- Quando a validação passa, o backend calcula o `ano`/`mes` do último registro existente para cada indicador (`MAX(ano, mes)` ordenado por `ano`, `mes`). A partir do mês seguinte, insere 12 novos registros consecutivos com `meta`, `realizado` e `historico` nulificados.
-- A criação respeita a sequência de meses (dezembro → janeiro do próximo ano) e repete o processo para todos os indicadores ativos do cockpit.
+### 3. Nenhuma criacao automatica fora do botao
+- `createCockpit`, `createIndicador` (sem referencia), `updateValoresMensais`, `PeriodosMentoriaService.create` e `PeriodosMentoriaService.renovar` nao devem criar `IndicadorMensal`.
+- `updateValoresMensais` deve apenas atualizar registros existentes; se o mes nao existir, o backend deve rejeitar a operacao.
 
-### 4. Exibição no editor de valores mensais
-- O endpoint `CockpitPilaresService.getCockpitById` não filtra mais `mesesIndicador` por `periodoMentoriaId`; todos os `IndicadorMensal` registrados na tabela são retornados para cada indicador.
-- O componente `edicao-valores-mensais` deve ordenar os registros por `(ano DESC, mes DESC)` e apresentar somente os **últimos 13 meses** criados. Exemplo: se há dados de Jan/24 a Dez/26, a tabela mostra Dez/24 a Dez/26 (13 meses). Se houver menos de 13 registros, apresenta todos.
-- A coluna de visualização deixa de depender de `periodoMentoria`; qualquer dados fora do último ciclo permanecem visíveis, mas apenas os 13 mais recentes entram na renderização.
+### 4. Exibicao no editor de valores mensais
+- Antes de existir qualquer mes, a tela deve exibir apenas o header com o botao e o campo de referencia; a tabela nao deve aparecer.
+- O endpoint `CockpitPilaresService.getCockpitById` deve retornar `mesesIndicador` completos (sem filtro por `periodoMentoriaId`) e a referencia registrada no `CockpitPilar`.
+- Quando houver meses, o componente `edicao-valores-mensais` deve ordenar os registros por `(ano DESC, mes DESC)` e apresentar somente os **ultimos 13 meses** criados. Se houver menos de 13 registros, apresenta todos.
 
 ## Cenários
 ### Happy Path
-1. Usuário cria cockpit via diagnóstico; backend gera 12 meses fechando o ciclo mais recente.
-2. Usuário abre o editor, cadastra novo indicador; backend cria 12 meses iniciando no mês atual. O editor lista os últimos 13 meses daquele indicador.
-3. Depois que o período de mentoria atual alcança o último mês (`dataFim`), o botão "Novo ciclo de 12 meses" fica habilitado, o backend insere mais 12 meses e o editor passa a mostrar os 13 registros finais da nova sequência.
+1. Usuario seleciona mes/ano e aciona "Novo ciclo de 12 meses"; backend grava a referencia e cria 12 meses consecutivos a partir dela.
+2. O editor passa a listar os ultimos 13 meses daquele indicador.
+3. Um novo indicador criado depois herda os 12 meses baseados na referencia.
 
 ### Casos de Erro
-- Botão de novo ciclo ativado antes da mentoria atingir o mês final: o backend responde com `BadRequestException` e o frontend exibe alerta explicando que a mentoria ainda não encerrou o ciclo.
-- Empresa sem mentoria ativa tenta criar ciclo adicional: backend rejeita e o botão permanece desabilitado enquanto `PeriodosMentoriaService.getPeriodoAtivo` retornar `null`.
-- Ao criar novo indicador, se já existirem 12+ meses consecutivos, deve-se continuar a sequência a partir do último (`ano`, `mes`). O backend não deve inserir duplicatas.
+- Botao clicado sem data valida: backend rejeita com erro de validacao.
+- Botao clicado quando a referencia ja esta definida: backend rejeita e frontend mantem o botao desabilitado.
+- Ao criar novo indicador, se nao houver referencia definida, nenhum mes e criado.
+- Ao atualizar valores de um mes inexistente, o backend deve rejeitar a operacao.
 
 ## Restrições
 - Não há mais dependência direta em `periodoMentoriaId` dentro de `IndicadorMensal`; a tabela só precisa de `indicadorCockpitId`, `ano`, `mes`, `meta`, `realizado` e `historico`.
-- Auditorias (via `AuditService`) continuam sendo registradas para `createIndicador`, `updateValoresMensais` e os novos endpoints criados.
+- Auditorias (via `AuditService`) continuam sendo registradas para o endpoint de criacao de ciclo, `createIndicador` (quando cria meses) e `updateValoresMensais`.
 - Mensagens de validação são exibidas ao usuário usando o mesmo padrão de `BadRequestException`/SweetAlert2 já adotado.
 
 ## Impacto Técnico Estimado
-- Atualizar `CockpitPilaresService.createCockpit` e `createIndicador` para gerar 12 meses a partir do `Date` atual sem criar resumo anual.
-- Introduzir novo endpoint (ex: `POST /cockpits/:cockpitId/meses/ciclo`) que consome `PeriodoMentoriaService.getPeriodoAtivo`, valida datas e insere 12 novos meses por indicador.
-- Simplificar `updateValoresMensais` para operar sem filtro por `periodoMentoriaId`, removendo a validação `R-MENT-008` e passando a buscar/atualizar registros únicos por `(ipo, ano, mes)`.
+- Atualizar `CockpitPilaresService.createCockpit` para **nao** criar meses automaticamente.
+- Atualizar `CockpitPilaresService.createIndicador` para criar meses **apenas** se existir referencia no cockpit.
+- Garantir que `updateValoresMensais` nao crie registros inexistentes.
+- Consolidar a criacao de meses no endpoint do botao (ex: `POST /cockpits/:cockpitId/meses/ciclo`).
+- Persistir a referencia no `CockpitPilar` como **data unica** (ex: `dataReferencia`) normalizada para dia 1 e expor via `getCockpitById`.
 - Ajustar `getCockpitById` para ordenar `mesesIndicador` e retornar todos; o frontend trata o recorte dos últimos 13 meses.
 - Remodelar `IndicadorMensal` em `backend/prisma/schema.prisma`:
   - Remover `periodoMentoriaId` e relação com `PeriodoMentoria`.

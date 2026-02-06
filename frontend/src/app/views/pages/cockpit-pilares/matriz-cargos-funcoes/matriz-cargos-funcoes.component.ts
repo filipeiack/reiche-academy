@@ -281,7 +281,7 @@ export class MatrizCargosFuncoesComponent implements OnInit {
       case Criticidade.ALTA:
         return 'bg-danger';
       case Criticidade.MEDIA:
-        return 'bg-warning text-dark';
+        return 'bg-warning text-black';
       case Criticidade.BAIXA:
         return 'bg-success';
       default:
@@ -289,24 +289,24 @@ export class MatrizCargosFuncoesComponent implements OnInit {
     }
   }
 
-  getMediaAuto(cargo: CargoCockpit): number | null {
+  getMediaAuto(cargo: CargoCockpit): string | null {
     const notas = (cargo.funcoes || [])
       .map((f) => f.autoAvaliacao)
       .filter((n): n is number => n !== null && n !== undefined);
 
     if (!notas.length) return null;
     const total = notas.reduce((acc, n) => acc + n, 0);
-    return Number((total / notas.length).toFixed(2));
+    return (total / notas.length).toFixed(1);
   }
 
-  getMediaLideranca(cargo: CargoCockpit): number | null {
+  getMediaLideranca(cargo: CargoCockpit): string | null {
     const notas = (cargo.funcoes || [])
       .map((f) => f.avaliacaoLideranca)
       .filter((n): n is number => n !== null && n !== undefined);
 
     if (!notas.length) return null;
     const total = notas.reduce((acc, n) => acc + n, 0);
-    return Number((total / notas.length).toFixed(2));
+    return (total / notas.length).toFixed(1);
   }
 
   getDesvio(funcao: FuncaoCargo): number {
@@ -325,36 +325,44 @@ export class MatrizCargosFuncoesComponent implements OnInit {
     const desvio = this.getDesvio(funcao);
     
     if (desvio === 0) {
-      return 'bg-success text-dark'; // Verde
+      return 'bg-success text-black'; // Verde
     } else if (desvio === 1) {
-      return 'bg-warning text-dark'; // Amarelo
+      return 'bg-warning text-black'; // Amarelo
     } else {
-      return 'bg-danger text-dark'; // Vermelho (2 ou mais)
+      return 'bg-danger text-black'; // Vermelho (2 ou mais)
     }
   }
 
-  getDesvioMedia(cargo: CargoCockpit): number {
-    const mediaAuto = this.getMediaAuto(cargo);
-    const mediaLideranca = this.getMediaLideranca(cargo);
-    
-    if (mediaAuto === null || mediaLideranca === null) {
-      return 0;
-    }
-    
-    return Number(Math.abs(mediaAuto - mediaLideranca).toFixed(2));
+  getDesvioMedia(cargo: CargoCockpit): number | null {
+    const desvios = (cargo.funcoes || [])
+      .filter(
+        (funcao) =>
+          funcao.autoAvaliacao !== null &&
+          funcao.autoAvaliacao !== undefined &&
+          funcao.avaliacaoLideranca !== null &&
+          funcao.avaliacaoLideranca !== undefined
+      )
+      .map((funcao) => this.getDesvio(funcao));
+
+    if (!desvios.length) return null;
+    const total = desvios.reduce((acc, n) => acc + n, 0);
+    return Number(total.toFixed(1));
   }
 
   getDesvioMediaClass(cargo: CargoCockpit): string {
     const desvio = this.getDesvioMedia(cargo);
-    
+    if (desvio === null) {
+      return 'bg-secondary text-black';
+    }
+
     if (desvio === 0) {
-      return 'bg-success text-dark'; // Verde
+      return 'bg-success text-black'; // Verde
     } else if (desvio < 1) {
-      return 'bg-warning text-dark'; // Amarelo para desvios menores que 1
+      return 'bg-warning text-black'; // Amarelo para desvios menores que 1
     } else if (desvio < 2) {
-      return 'bg-warning text-dark'; // Amarelo para desvios entre 1 e 2
+      return 'bg-warning text-black'; // Amarelo para desvios entre 1 e 2
     } else {
-      return 'bg-danger text-dark'; // Vermelho (2 ou mais)
+      return 'bg-danger text-black'; // Vermelho (2 ou mais)
     }
   }
 

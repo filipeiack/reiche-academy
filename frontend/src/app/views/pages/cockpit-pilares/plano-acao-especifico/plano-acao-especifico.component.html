@@ -31,11 +31,11 @@
           <div class="kpi-icon" [ngClass]="item.kpiClass">
             <i class="feather" [ngClass]="'icon-' + item.icon"></i>
           </div>
-          <span class="badge" [class]="item.badgeClass">{{ item.label }}</span>
+          <span class="small fw-bold text-dark">{{ item.label }}</span>
         </div>
-        <div class="kpi-value px-1">
+        <div class="kpi-value px-1 ">
           {{ item.count }} 
-          <span class="kpi-percent-inline" style="color: black;">{{ item.percent }}% do total</span>
+          <span class="kpi-percent-inline text-dark">{{ item.percent }}% do total</span>
         </div>
       </div>
     </div>
@@ -84,7 +84,7 @@
         </select>
       </div>
       <div class="col-md-4 d-flex align-items-end gap-2">
-        <button type="button" class="btn btn-outline-secondary btn-sm" (click)="limparFiltros()">
+        <button type="button" class="btn btn-secondary btn-sm" (click)="limparFiltros()">
           <i class="feather icon-x me-1"></i>
           {{ 'BUTTONS.CLEAR_FILTERS' | translate }}
         </button>

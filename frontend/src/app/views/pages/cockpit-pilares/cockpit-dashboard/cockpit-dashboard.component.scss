@@ -1,6 +1,9 @@
 
 // Compactar breadcrumb sticky
 .sticky-header-dashboard {
+  position: sticky;
+  top: var(--navbar-height, 60px);
+  z-index: 101;
   padding: 0.4rem 0;
   margin-bottom: 0.5rem;
   background: var(--bs-app-bg);

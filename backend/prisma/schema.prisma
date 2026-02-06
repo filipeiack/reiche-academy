@@ -509,6 +509,8 @@ model CockpitPilar {
   saidas   String?
   missao   String?
 
+  dataReferencia DateTime?
+
   ativo Boolean @default(true)
 
   createdAt DateTime @default(now())

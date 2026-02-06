@@ -44,6 +44,7 @@ export interface CockpitPilar {
   entradas?: string;
   saidas?: string;
   missao?: string;
+  dataReferencia?: string | null;
   ativo: boolean;
   createdAt: string;
   updatedAt: string;

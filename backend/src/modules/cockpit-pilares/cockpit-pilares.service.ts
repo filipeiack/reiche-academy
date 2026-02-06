@@ -13,6 +13,7 @@ import { UpdateCockpitPilarDto } from './dto/update-cockpit-pilar.dto';
 import { CreateIndicadorCockpitDto } from './dto/create-indicador-cockpit.dto';
 import { UpdateIndicadorCockpitDto } from './dto/update-indicador-cockpit.dto';
 import { UpdateValoresMensaisDto } from './dto/update-valores-mensais.dto';
+import { CreateCicloMesesDto } from './dto/create-ciclo-meses.dto';
 import { UpdateProcessoPrioritarioDto } from './dto/update-processo-prioritario.dto';
 import { CreateProcessoFluxogramaDto } from './dto/create-processo-fluxograma.dto';
 import { UpdateProcessoFluxogramaDto } from './dto/update-processo-fluxograma.dto';
@@ -315,6 +316,54 @@ export class CockpitPilaresService {
       .replace(/'/g, '&#39;');
   }
 
+  private normalizeDataReferencia(value: string | Date): Date {
+    const data = value instanceof Date ? new Date(value) : new Date(value);
+
+    if (Number.isNaN(data.getTime())) {
+      throw new BadRequestException('Data de referência inválida');
+    }
+
+    data.setDate(1);
+    data.setHours(0, 0, 0, 0);
+    return data;
+  }
+
+  private buildMesesFromReferencia(
+    indicadorId: string,
+    referencia: Date,
+    userId: string,
+  ) {
+    const mesReferencia = referencia.getMonth() + 1;
+    const anoReferencia = referencia.getFullYear();
+    const meses = [] as Array<{
+      indicadorCockpitId: string;
+      mes: number;
+      ano: number;
+      createdBy: string;
+      updatedBy: string;
+    }>;
+
+    for (let i = 0; i < 12; i++) {
+      let mes = mesReferencia + i;
+      let ano = anoReferencia;
+
+      if (mes > 12) {
+        mes = mes - 12;
+        ano++;
+      }
+
+      meses.push({
+        indicadorCockpitId: indicadorId,
+        mes,
+        ano,
+        createdBy: userId,
+        updatedBy: userId,
+      });
+    }
+
+    return meses;
+  }
+
   /**
    * Criar cockpit para um pilar
    * Auto-vincula rotinas ativas do pilar como processos prioritários
@@ -389,25 +438,6 @@ export class CockpitPilaresService {
       });
 
       if (templates.length > 0) {
-        // Buscar período de mentoria ativo para determinar os meses corretos
-        let periodoAtivo: { id: string; dataInicio: Date; dataFim: Date } | null = null;
-        if (
-          (this.prisma as any).periodoMentoria &&
-          typeof (this.prisma as any).periodoMentoria.findFirst === 'function'
-        ) {
-          periodoAtivo = await (this.prisma as any).periodoMentoria.findFirst({
-            where: {
-              empresaId: pilarEmpresa.empresaId,
-              ativo: true,
-            },
-            select: {
-              id: true,
-              dataInicio: true,
-              dataFim: true,
-            },
-          });
-        }
-
         await this.prisma.$transaction(async (tx) => {
           for (const template of templates) {
             const indicador = await tx.indicadorCockpit.create({
@@ -422,48 +452,6 @@ export class CockpitPilaresService {
                 createdBy: user.id,
                 updatedBy: user.id,
               },
-            });
-
-            // Criar ciclo de 12 meses baseado no período de mentoria (se existir)
-            const meses = [];
-            if (periodoAtivo) {
-              // Criar 12 meses a partir do início do período de mentoria
-              const dataInicio = new Date(periodoAtivo.dataInicio);
-              let mesAtual = dataInicio.getMonth() + 1; // 1-12
-              let anoAtual = dataInicio.getFullYear();
-              
-              for (let i = 0; i < 12; i++) {
-                meses.push({
-                  indicadorCockpitId: indicador.id,
-                  mes: mesAtual,
-                  ano: anoAtual,
-                  periodoMentoriaId: periodoAtivo.id,
-                  createdBy: user.id,
-                  updatedBy: user.id,
-                });
-                
-                mesAtual++;
-                if (mesAtual > 12) {
-                  mesAtual = 1;
-                  anoAtual++;
-                }
-              }
-            } else {
-              // Fallback: criar 12 meses do ano atual (comportamento anterior)
-              const anoAtual = new Date().getFullYear();
-              for (let i = 1; i <= 12; i++) {
-                meses.push({
-                  indicadorCockpitId: indicador.id,
-                  mes: i,
-                  ano: anoAtual,
-                  createdBy: user.id,
-                  updatedBy: user.id,
-                });
-              }
-            }
-
-            await tx.indicadorMensal.createMany({
-              data: meses,
             });
 
             indicadoresCriados.push({ id: indicador.id, nome: indicador.nome });
@@ -718,7 +706,7 @@ export class CockpitPilaresService {
   // ==================== INDICADORES ====================
 
   /**
-   * Criar indicador com auto-criação de 12 meses consecutivos
+   * Criar indicador e criar meses apenas quando houver data de referência
    */
   async createIndicador(
     cockpitId: string,
@@ -790,34 +778,14 @@ export class CockpitPilaresService {
       },
     });
 
-    // Auto-criar 12 meses consecutivos a partir do mês atual
-    const agora = new Date();
-    const mesAtual = agora.getMonth() + 1; // 1-12
-    const anoAtual = agora.getFullYear();
-    const meses = [];
+    if (cockpit.dataReferencia) {
+      const referencia = this.normalizeDataReferencia(cockpit.dataReferencia);
+      const meses = this.buildMesesFromReferencia(indicador.id, referencia, user.id);
 
-    for (let i = 0; i < 12; i++) {
-      let mes = mesAtual + i;
-      let ano = anoAtual;
-      
-      // Ajustar ano se ultrapassar dezembro
-      if (mes > 12) {
-        mes = mes - 12;
-        ano++;
-      }
-      
-      meses.push({
-        indicadorCockpitId: indicador.id,
-        mes,
-        ano,
-        createdBy: user.id,
-        updatedBy: user.id,
+      await this.prisma.indicadorMensal.createMany({
+        data: meses,
       });
     }
-
-    await this.prisma.indicadorMensal.createMany({
-      data: meses,
-    });
 
     // Auditoria
     await this.audit.log({
@@ -999,43 +967,40 @@ export class CockpitPilaresService {
 
     await this.validateCockpitAccess(indicador.cockpitPilarId, user);
 
-    // Atualizar cada valor mensal
-    const updates = dto.valores.map(async (valor) => {
-      // Buscar ou criar mês
-      const mes = await this.prisma.indicadorMensal.findFirst({
-        where: {
-          indicadorCockpitId: indicadorId,
-          ano: valor.ano,
-          mes: valor.mes,
+    const chaves = dto.valores.map((valor) => ({
+      ano: valor.ano,
+      mes: valor.mes,
+    }));
+
+    const mesesExistentes = await this.prisma.indicadorMensal.findMany({
+      where: {
+        indicadorCockpitId: indicadorId,
+        OR: chaves,
+      },
+      select: { id: true, ano: true, mes: true },
+    });
+
+    const mesesMap = new Map(
+      mesesExistentes.map((mes) => [`${mes.ano}-${mes.mes ?? 'null'}`, mes.id]),
+    );
+
+    const updates = dto.valores.map((valor) => {
+      const key = `${valor.ano}-${valor.mes ?? 'null'}`;
+      const mesId = mesesMap.get(key);
+
+      if (!mesId) {
+        throw new BadRequestException('Mês não encontrado para este indicador');
+      }
+
+      return this.prisma.indicadorMensal.update({
+        where: { id: mesId },
+        data: {
+          meta: valor.meta,
+          realizado: valor.realizado,
+          historico: valor.historico,
+          updatedBy: user.id,
         },
       });
-
-      if (mes) {
-        // Atualizar existente
-        return this.prisma.indicadorMensal.update({
-          where: { id: mes.id },
-          data: {
-            meta: valor.meta,
-            realizado: valor.realizado,
-            historico: valor.historico,
-            updatedBy: user.id,
-          },
-        });
-      } else {
-        // Criar novo
-        return this.prisma.indicadorMensal.create({
-          data: {
-            indicadorCockpitId: indicadorId,
-            ano: valor.ano,
-            mes: valor.mes,
-            meta: valor.meta,
-            realizado: valor.realizado,
-            historico: valor.historico,
-            createdBy: user.id,
-            updatedBy: user.id,
-          },
-        });
-      }
     });
 
     await Promise.all(updates);
@@ -1091,106 +1056,50 @@ export class CockpitPilaresService {
   }
 
   /**
-   * Criar novo ciclo de 12 meses para todos os indicadores do cockpit
-   * Cria 12 meses consecutivos a partir do último mês existente em cada indicador
+   * Definir data de referência e criar 12 meses para todos os indicadores
    */
-  async criarNovoCicloMeses(cockpitId: string, user: RequestUser) {
+  async criarNovoCicloMeses(
+    cockpitId: string,
+    dto: CreateCicloMesesDto,
+    user: RequestUser,
+  ) {
     const cockpit = await this.validateCockpitAccess(cockpitId, user);
 
-    // Buscar período de mentoria ativo (opcional, para vincular os meses)
-    let periodoAtivo: { id: string } | null = null;
-    if (
-      (this.prisma as any).periodoMentoria &&
-      typeof (this.prisma as any).periodoMentoria.findFirst === 'function'
-    ) {
-      periodoAtivo = await (this.prisma as any).periodoMentoria.findFirst({
-        where: {
-          empresaId: cockpit.pilarEmpresa.empresaId,
-          ativo: true,
-        },
-        select: {
-          id: true,
-        },
-      });
+    if (cockpit.dataReferencia) {
+      throw new ConflictException('Data de referência já definida para este cockpit');
     }
 
-    // Buscar todos os indicadores ativos do cockpit
+    const dataReferencia = this.normalizeDataReferencia(dto.dataReferencia);
+
     const indicadores = await this.prisma.indicadorCockpit.findMany({
       where: {
         cockpitPilarId: cockpitId,
         ativo: true,
       },
-      include: {
-        mesesIndicador: {
-          orderBy: [{ ano: 'desc' }, { mes: 'desc' }],
-          take: 1,
-        },
-      },
+      select: { id: true },
     });
 
-    if (indicadores.length === 0) {
-      throw new BadRequestException('Cockpit não possui indicadores ativos');
-    }
+    const mesesParaCriar = indicadores.flatMap((indicador) =>
+      this.buildMesesFromReferencia(indicador.id, dataReferencia, user.id),
+    );
 
-    // Para cada indicador, calcular próximos 12 meses a partir do último registrado
-    const mesesParaCriar = [];
-    const agora = new Date();
-    const mesAtual = agora.getMonth() + 1; // 1-12
-    const anoAtual = agora.getFullYear();
-    
-    for (const indicador of indicadores) {
-      let mesInicial: number;
-      let anoInicial: number;
-
-      if (indicador.mesesIndicador.length > 0) {
-        const ultimoMes = indicador.mesesIndicador[0];
-        mesInicial = (ultimoMes.mes ?? 12) + 1;
-        anoInicial = ultimoMes.ano;
-        
-        if (mesInicial > 12) {
-          mesInicial = 1;
-          anoInicial++;
-        }
-      } else {
-        // Se não há meses, começar do mês atual
-        mesInicial = mesAtual;
-        anoInicial = anoAtual;
-      }
-
-      // Criar 12 meses consecutivos
-      for (let i = 0; i < 12; i++) {
-        let mes = mesInicial + i;
-        let ano = anoInicial;
-        
-        if (mes > 12) {
-          mes = mes - 12;
-          ano++;
-        }
-
-        const mesData: any = {
-          indicadorCockpitId: indicador.id,
-          mes,
-          ano,
-          createdBy: user.id,
+    await this.prisma.$transaction(async (tx) => {
+      await tx.cockpitPilar.update({
+        where: { id: cockpitId },
+        data: {
+          dataReferencia,
           updatedBy: user.id,
-        };
+        },
+      });
 
-        // Vincular ao período de mentoria se existir
-        if (periodoAtivo) {
-          mesData.periodoMentoriaId = periodoAtivo.id;
-        }
-
-        mesesParaCriar.push(mesData);
+      if (mesesParaCriar.length > 0) {
+        await tx.indicadorMensal.createMany({
+          data: mesesParaCriar,
+          skipDuplicates: true,
+        });
       }
-    }
-
-    // Inserir em lote
-    await this.prisma.indicadorMensal.createMany({
-      data: mesesParaCriar,
-      skipDuplicates: true, // Ignora se já existir (unique constraint)
     });
 
-    // Auditoria
     await this.audit.log({
       usuarioId: user.id,
       usuarioNome: user.nome,
@@ -1198,8 +1107,9 @@ export class CockpitPilaresService {
       entidade: 'CockpitPilar',
       entidadeId: cockpitId,
       acao: 'CREATE',
-      dadosDepois: { 
-        acao: 'criar_novo_ciclo_meses',
+      dadosDepois: {
+        acao: 'definir_data_referencia',
+        dataReferencia,
         indicadores: indicadores.length,
         mesesCriados: mesesParaCriar.length,
       },
