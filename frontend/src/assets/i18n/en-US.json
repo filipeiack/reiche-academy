@@ -165,6 +165,10 @@
     "UPDATED_AT": "Updated at",
     "SELECT": "Select"
   },
+  "LABELS": {
+    "INDICADOR": "Indicator",
+    "TODOS": "All"
+  },
   "BUTTONS": {
     "PRINT": "Print",
     "DOWNLOAD_REPORT": "Download Report",
@@ -179,7 +183,9 @@
     "CREATE": "Create",
     "UPDATE": "Update",
     "CONFIRM": "Confirm",
-    "UPLOAD": "Upload"
+    "UPLOAD": "Upload",
+    "CLEAR_FILTERS": "Clear Filters",
+    "MORE": "More options"
   },
   "USERS": {
     "AVATAR": "Avatar",

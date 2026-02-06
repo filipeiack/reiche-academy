@@ -18,7 +18,7 @@ import { Chart, registerables } from 'chart.js';
 import annotationPlugin from 'chartjs-plugin-annotation';
 import { MediaBadgeComponent } from '../../../shared/components/media-badge/media-badge.component';
 import { SortableDirective, SortEvent } from '../../../shared/directives/sortable.directive';
-import { formatDateInputSaoPaulo, formatDateTimeDisplaySaoPaulo, normalizeDateToSaoPaulo } from '../../../core/utils/date-time';
+import { formatDateDisplaySaoPaulo, formatDateInputSaoPaulo, formatDateTimeDisplaySaoPaulo, normalizeDateToSaoPaulo } from '../../../core/utils/date-time';
 
 Chart.register(...registerables, annotationPlugin);
 
@@ -58,6 +58,14 @@ export class DiagnosticoEvolucaoComponent implements OnInit, OnDestroy {
   barChart: Chart<'bar', any[], any> | null = null;
   periodoAtual: PeriodoAvaliacao | null = null;
   periodoCongelado: PeriodoAvaliacao | null = null; // Último período congelado (para recongelamento)
+  
+  // Janela temporal
+  primeiraData: Date | null = null;
+  periodoAtualTexto = '';
+  proximosPeriodosTexto = '';
+  showPrimeiraDataModal = false;
+  dataReferenciaPrimeira = '';
+  
   private readonly FILTRO_ULTIMOS_12_MESES = 'ultimos-12-meses';
   private readonly ANO_CORRENTE = normalizeDateToSaoPaulo(new Date()).getFullYear().toString();
   anoFiltro: string = this.ANO_CORRENTE;
@@ -183,6 +191,8 @@ export class DiagnosticoEvolucaoComponent implements OnInit, OnDestroy {
       this.anoFiltro = this.ANO_CORRENTE;
       // Carregar período atual
       this.loadPeriodoAtual();
+      // Carregar badge de períodos
+      this.loadPrimeiraDataEPeriodos();
       // Carregar histórico com filtro de ano
       this.loadAllHistorico();
     }).catch((err: any) => {
@@ -192,89 +202,140 @@ export class DiagnosticoEvolucaoComponent implements OnInit, OnDestroy {
     });
   }
 
-  congelarMedias(): void {
+  async congelarMedias(): Promise<void> {
     if (!this.selectedEmpresaId || !this.canCongelar) return;
 
-    // Verificar se há período aberto ou congelado
-    const periodo = this.periodoAtual || this.periodoCongelado;
-    if (!periodo) {
-      this.showToast('Não há período de avaliação. Inicie um período primeiro.', 'warning', 4000);
+    // 1. Verificar se empresa tem primeira data
+    try {
+      const response = await firstValueFrom(
+        this.periodosService.getPrimeiraData(this.selectedEmpresaId)
+      );
+
+      if (!response.primeiraData) {
+        // Sem primeira data: abrir modal (GAP A - opção 1: criar período + snapshots imediatamente)
+        this.abrirModalPrimeiraData();
+        return;
+      }
+
+      // 2. Empresa tem primeira data: congelar automaticamente
+      this.congelarAutomatico();
+    } catch (err: any) {
+      this.showToast(
+        err?.error?.message || 'Erro ao verificar primeira data',
+        'error'
+      );
+    }
+  }
+
+  /**
+   * Abre modal para configurar primeira data de referência
+   */
+  private abrirModalPrimeiraData(): void {
+    const hoje = normalizeDateToSaoPaulo(new Date());
+    this.dataReferenciaPrimeira = formatDateInputSaoPaulo(hoje);
+    this.showPrimeiraDataModal = true;
+  }
+
+  /**
+   * Fecha modal de primeira data
+   */
+  fecharModalPrimeiraData(): void {
+    this.showPrimeiraDataModal = false;
+    this.dataReferenciaPrimeira = '';
+  }
+
+  /**
+   * Confirma criação da primeira data de referência
+   */
+  async confirmarPrimeiraData(): Promise<void> {
+    if (!this.selectedEmpresaId || !this.dataReferenciaPrimeira) {
+      this.showToast('Data de referência é obrigatória', 'error');
       return;
     }
+
+    this.loading = true;
+
+    // Chama endpoint que cria período + snapshots imediatamente (GAP A - opção 1)
+    this.periodosService.criarPrimeiraData(this.selectedEmpresaId, this.dataReferenciaPrimeira).subscribe({
+      next: (response) => {
+        const dataRef = formatDateInputSaoPaulo(normalizeDateToSaoPaulo(new Date(response.periodo.dataReferencia)));
+        const [ano, mes] = dataRef.split('-');
+        
+        this.showToast(
+          `Primeira data configurada e período ${mes}/${ano} criado com sucesso! ${response.snapshots.length} snapshots criados.`,
+          'success',
+          5000
+        );
+        
+        this.primeiraData = new Date(response.periodo.dataReferencia);
+        this.calcularPeriodos();
+        this.fecharModalPrimeiraData();
+        this.loading = false;
+        
+        // Recarregar histórico
+        this.loadAllHistorico();
+      },
+      error: (err) => {
+        this.loading = false;
+        this.showToast(
+          err?.error?.message || 'Erro ao criar primeira data',
+          'error',
+          5000
+        );
+      }
+    });
+  }
+
+  /**
+   * Congelar/atualizar período automaticamente (sistema calcula janela temporal)
+   */
+  private congelarAutomatico(): void {
+    if (!this.selectedEmpresaId) return;
 
     if (this.medias.length === 0) {
       this.showToast('Não há médias para congelar', 'warning');
       return;
     }
 
-    // Determinar se é congelamento ou recongelamento
-    const isRecongelamento = !periodo.aberto;
-    const titulo = isRecongelamento ? 'Recongelar Médias do Período' : 'Congelar Médias do Período';
-    const textoAcao = isRecongelamento 
-      ? `Deseja atualizar os snapshots do período ${this.getPeriodoMesAno()} com as médias atuais de ${this.medias.length} pilar(es)? Os snapshots anteriores serão substituídos.`
-      : `Deseja congelar as médias de ${this.medias.length} pilar(es) e encerrar o período ${this.getPeriodoMesAno()}?`;
-    const botaoTexto = isRecongelamento ? 'Sim, recongelar' : 'Sim, congelar';
-
     Swal.fire({
-      title: titulo,
-      text: textoAcao,
+      title: 'Adicionar Avaliação Trimestral',
+      text: `Deseja congelar/atualizar médias de ${this.medias.length} pilar(es)? `,
       showCancelButton: true,
-      confirmButtonText: botaoTexto,
+      confirmButtonText: 'Sim, adicionar',
       cancelButtonText: 'Cancelar',
       confirmButtonColor: '#3085d6'
     }).then((result) => {
-      if (result.isConfirmed && periodo) {
+      if (result.isConfirmed) {
         this.loading = true;
         
-        // Chamar endpoint apropriado
-        if (isRecongelamento) {
-          this.periodosService.recongelar(periodo.id).subscribe({
-            next: (response) => {
-              const dataRef = formatDateInputSaoPaulo(normalizeDateToSaoPaulo(response.periodo.dataReferencia));
-              const [ano, mes] = dataRef.split('-');
-              this.showToast(
-                `Período ${mes}/${ano} recongelado com sucesso! ${response.resumo.totalSnapshots} snapshots atualizados.`,
-                'success',
-                4000
-              );
-              this.loading = false;
-              // Recarregar histórico
-              this.loadAllHistorico();
-            },
-            error: (err: any) => {
-              this.loading = false;
-              this.showToast(
-                err?.error?.message || 'Erro ao recongelar médias',
-                'error',
-                4000
-              );
+        this.periodosService.congelarAutomatico(this.selectedEmpresaId!).subscribe({
+          next: (response) => {
+            const dataRef = formatDateInputSaoPaulo(normalizeDateToSaoPaulo(new Date(response.periodo.dataReferencia)));
+            const [ano, mes] = dataRef.split('-');
+            
+            this.showToast(
+              `Período ${mes}/${ano} congelado/atualizado com sucesso! ${response.snapshots.length} snapshots criados/atualizados.`,
+              'success',
+              4000
+            );
+            
+            this.loading = false;
+            if (!this.primeiraData) {
+              this.primeiraData = new Date(response.periodo.dataReferencia);
             }
-          });
-        } else {
-          this.periodosService.congelar(periodo.id).subscribe({
-            next: (response) => {
-              const dataRef = formatDateInputSaoPaulo(normalizeDateToSaoPaulo(response.periodo.dataReferencia));
-              const [ano, mes] = dataRef.split('-');
-              this.showToast(
-                `Período ${mes}/${ano} congelado com sucesso! ${response.snapshots.length} snapshots criados.`,
-                'success',
-                4000
-              );
-              this.periodoAtual = null;
-              this.loading = false;
-              // Recarregar histórico
-              this.loadAllHistorico();
-            },
-            error: (err: any) => {
-              this.loading = false;
-              this.showToast(
-                err?.error?.message || 'Erro ao congelar médias',
-                'error',
-                4000
-              );
-            }
-          });
-        }
+            this.calcularPeriodos();
+            // Recarregar histórico
+            this.loadAllHistorico();
+          },
+          error: (err: any) => {
+            this.loading = false;
+            this.showToast(
+              err?.error?.message || 'Erro ao congelar médias automaticamente',
+              'error',
+              5000
+            );
+          }
+        });
       }
     });
   }
@@ -620,6 +681,58 @@ renderBarChart(): void {
   }
 
   // ====================================================
+  // Métodos de Período de Avaliação (badge de períodos)
+  // ====================================================
+
+  private loadPrimeiraDataEPeriodos(): void {
+    if (!this.selectedEmpresaId) return;
+
+    this.periodosService.getPrimeiraData(this.selectedEmpresaId).subscribe({
+      next: (response) => {
+        if (response.primeiraData) {
+          this.primeiraData = new Date(response.primeiraData);
+          this.calcularPeriodos();
+        } else {
+          this.primeiraData = null;
+          this.periodoAtualTexto = '';
+          this.proximosPeriodosTexto = '';
+        }
+      },
+      error: (err) => {
+        console.error('Erro ao carregar primeira data:', err);
+        this.primeiraData = null;
+        this.periodoAtualTexto = '';
+        this.proximosPeriodosTexto = '';
+      }
+    });
+  }
+
+  private calcularPeriodos(): void {
+    if (!this.primeiraData) return;
+
+    const hoje = new Date();
+    const diasDesdePrimeiro = Math.floor((hoje.getTime() - this.primeiraData.getTime()) / (1000 * 60 * 60 * 24));
+    const numeroPeriodo = Math.floor(diasDesdePrimeiro / 90) + 1;
+
+    const dataAtual = this.addDays(this.primeiraData, 90 * (numeroPeriodo - 1));
+    this.periodoAtualTexto = formatDateDisplaySaoPaulo(dataAtual);
+
+    const proximos: string[] = [];
+    for (let i = 1; i <= 3; i++) {
+      const dataProximo = this.addDays(this.primeiraData, 90 * (numeroPeriodo - 1 + i));
+      proximos.push(formatDateDisplaySaoPaulo(dataProximo));
+    }
+
+    this.proximosPeriodosTexto = proximos.join(', ');
+  }
+
+  private addDays(date: Date, days: number): Date {
+    const result = new Date(date);
+    result.setDate(result.getDate() + days);
+    return result;
+  }
+
+  // ====================================================
   // Métodos de Período de Avaliação
   // ====================================================
 
@@ -697,22 +810,20 @@ renderBarChart(): void {
   }
 
   private filtrarPeriodos(periodos: PeriodoComSnapshots[]): PeriodoComSnapshots[] {
-    const periodosFechados = periodos.filter(p => !p.aberto);
-
     if (this.anoFiltro === this.FILTRO_ULTIMOS_12_MESES) {
       const limite = normalizeDateToSaoPaulo(new Date());
       limite.setMonth(limite.getMonth() - 12);
-      return periodosFechados.filter(p => normalizeDateToSaoPaulo(p.dataReferencia) >= limite);
+      return periodos.filter(p => normalizeDateToSaoPaulo(p.dataReferencia) >= limite);
     }
 
     if (this.anoFiltro) {
       const ano = Number(this.anoFiltro);
       if (!Number.isNaN(ano)) {
-        return periodosFechados.filter(p => p.ano === ano);
+        return periodos.filter(p => p.ano === ano);
       }
     }
 
-    return periodosFechados;
+    return periodos;
   }
 
   /**

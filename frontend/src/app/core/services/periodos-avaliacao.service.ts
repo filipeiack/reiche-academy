@@ -76,4 +76,54 @@ export class PeriodosAvaliacaoService {
       options
     );
   }
+
+  /**
+   * Busca a primeira data de referência da empresa
+   * @param empresaId ID da empresa
+   * @returns Data da primeira avaliação ou null se não existe
+   */
+  getPrimeiraData(empresaId: string): Observable<{ primeiraData: string | null }> {
+    return this.http.get<{ primeiraData: string | null }>(
+      `${this.baseUrl}/empresas/${empresaId}/periodos-avaliacao/primeira`
+    );
+  }
+
+  /**
+   * Criar primeira data de referência + primeiro período com snapshots
+   * @param empresaId ID da empresa
+   * @param dataReferencia Data de referência inicial
+   */
+  criarPrimeiraData(empresaId: string, dataReferencia: string): Observable<{
+    message: string;
+    periodo: PeriodoAvaliacao;
+    snapshots: any[];
+  }> {
+    return this.http.post<{
+      message: string;
+      periodo: PeriodoAvaliacao;
+      snapshots: any[];
+    }>(
+      `${this.baseUrl}/empresas/${empresaId}/periodos-avaliacao/primeira-data`,
+      { dataReferencia }
+    );
+  }
+
+  /**
+   * Congelar/atualizar período automaticamente baseado em janela temporal
+   * @param empresaId ID da empresa
+   */
+  congelarAutomatico(empresaId: string): Observable<{
+    message: string;
+    periodo: PeriodoAvaliacao;
+    snapshots: any[];
+  }> {
+    return this.http.post<{
+      message: string;
+      periodo: PeriodoAvaliacao;
+      snapshots: any[];
+    }>(
+      `${this.baseUrl}/empresas/${empresaId}/periodos-avaliacao/congelar-auto`,
+      {}
+    );
+  }
 }

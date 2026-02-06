@@ -1,5 +1,6 @@
-import { Component, Input, OnInit, inject } from '@angular/core';
+import { Component, ElementRef, Input, OnInit, ViewChild, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { FormsModule } from '@angular/forms';
 import Swal from 'sweetalert2';
 import { NgbDropdownModule, NgbOffcanvas } from '@ng-bootstrap/ng-bootstrap';
 import { CockpitPilaresService } from '@core/services/cockpit-pilares.service';
@@ -17,13 +18,14 @@ import { formatDateInputSaoPaulo } from '@core/utils/date-time';
 @Component({
   selector: 'app-plano-acao-especifico',
   standalone: true,
-  imports: [CommonModule, TranslatePipe, NgbDropdownModule],
+  imports: [CommonModule, FormsModule, TranslatePipe, NgbDropdownModule],
   templateUrl: './plano-acao-especifico.component.html',
   styleUrl: './plano-acao-especifico.component.scss',
 })
 
 export class PlanoAcaoEspecificoComponent implements OnInit {
   @Input() cockpitId!: string;
+  @ViewChild('listaAcoes') listaAcoesRef?: ElementRef<HTMLElement>;
 
   private cockpitService = inject(CockpitPilaresService);
   private offcanvasService = inject(NgbOffcanvas);
@@ -31,6 +33,7 @@ export class PlanoAcaoEspecificoComponent implements OnInit {
   cockpit: CockpitPilar | null = null;
   indicadores: IndicadorCockpit[] = [];
   acoes: AcaoCockpit[] = [];
+  acoesFiltered: AcaoCockpit[] = [];
   resumoStatus: Array<{
     key: string;
     label: string;
@@ -42,6 +45,10 @@ export class PlanoAcaoEspecificoComponent implements OnInit {
   }> = [];
   empresaId: string | null = null;
   loading = false;
+
+  // Filtros
+  filtroIndicador: string = '';
+  filtroStatus: string = '';
 
   ngOnInit(): void {
     this.loadCockpit();
@@ -69,15 +76,83 @@ export class PlanoAcaoEspecificoComponent implements OnInit {
   private loadAcoes(): void {
     this.cockpitService.getAcoesCockpit(this.cockpitId).subscribe({
       next: (acoes) => {
-        this.acoes = acoes;
+        this.acoes = this.ordenarAcoes(acoes);
+        this.aplicarFiltros();
         this.atualizarResumoStatus();
       },
       error: (err) => {
         console.error('Erro ao carregar ações:', err);
         this.acoes = [];
+        this.acoesFiltered = [];
         this.atualizarResumoStatus();
       },
     });
+  }
+
+  private ordenarAcoes(acoes: AcaoCockpit[]): AcaoCockpit[] {
+    return acoes.sort((a, b) => {
+      // Ordenar por mês/ano da análise (descendente - mais recente primeiro)
+      const anoA = a.indicadorMensal?.ano || 0;
+      const anoB = b.indicadorMensal?.ano || 0;
+      const mesA = a.indicadorMensal?.mes || 0;
+      const mesB = b.indicadorMensal?.mes || 0;
+
+      if (anoA !== anoB) {
+        return anoB - anoA; // Ano mais recente primeiro
+      }
+
+      if (mesA !== mesB) {
+        return mesB - mesA; // Mês mais recente primeiro
+      }
+
+      // Se mês/ano são iguais, ordenar por indicador (ascendente)
+      const nomeA = a.indicadorCockpit?.nome || '';
+      const nomeB = b.indicadorCockpit?.nome || '';
+      return nomeA.localeCompare(nomeB);
+    });
+  }
+
+  aplicarFiltros(): void {
+    let resultado = [...this.acoes];
+
+    // Filtro por indicador
+    if (this.filtroIndicador) {
+      resultado = resultado.filter(
+        (acao) => acao.indicadorCockpit?.id === this.filtroIndicador
+      );
+    }
+
+    // Filtro por status
+    if (this.filtroStatus) {
+      resultado = resultado.filter(
+        (acao) => (acao.statusCalculado || 'A_INICIAR') === this.filtroStatus
+      );
+    }
+
+    this.acoesFiltered = resultado;
+  }
+
+  limparFiltros(): void {
+    this.filtroIndicador = '';
+    this.filtroStatus = '';
+    this.aplicarFiltros();
+  }
+
+  aplicarFiltroStatus(kpiKey: string): void {
+    this.filtroStatus = kpiKey === 'TOTAL' ? '' : kpiKey;
+    this.aplicarFiltros();
+    this.scrollToListaAcoes();
+  }
+
+  private scrollToListaAcoes(): void {
+    if (!this.listaAcoesRef?.nativeElement) return;
+
+    setTimeout(() => {
+      this.listaAcoesRef?.nativeElement.scrollIntoView({
+        behavior: 'smooth',
+        block: 'start',
+      });
+    }, 0);
   }
 
   abrirDrawerNovaAcao(): void {
@@ -98,6 +173,8 @@ export class PlanoAcaoEspecificoComponent implements OnInit {
     component.indicadores = this.indicadores;
     component.acaoSalva.subscribe((acao: AcaoCockpit) => {
       this.acoes.unshift(acao);
+      this.acoes = this.ordenarAcoes(this.acoes);
+      this.aplicarFiltros();
       this.atualizarResumoStatus();
     });
   }
@@ -123,6 +200,8 @@ export class PlanoAcaoEspecificoComponent implements OnInit {
       const index = this.acoes.findIndex((a) => a.id === acaoAtualizada.id);
       if (index >= 0) {
         this.acoes[index] = acaoAtualizada;
+        this.acoes = this.ordenarAcoes(this.acoes);
+        this.aplicarFiltros();
       }
       this.atualizarResumoStatus();
     });
@@ -144,6 +223,7 @@ export class PlanoAcaoEspecificoComponent implements OnInit {
     this.cockpitService.deleteAcaoCockpit(acao.id).subscribe({
       next: () => {
         this.acoes = this.acoes.filter((a) => a.id !== acao.id);
+        this.aplicarFiltros();
         this.atualizarResumoStatus();
         this.showToast('Ação removida com sucesso', 'success');
       },
@@ -218,6 +298,7 @@ export class PlanoAcaoEspecificoComponent implements OnInit {
         const index = this.acoes.findIndex((a) => a.id === acaoAtualizada.id);
         if (index >= 0) {
           this.acoes[index] = acaoAtualizada;
+          this.aplicarFiltros();
         }
         this.atualizarResumoStatus();
         this.showToast('Datas atualizadas com sucesso', 'success');
@@ -235,7 +316,7 @@ export class PlanoAcaoEspecificoComponent implements OnInit {
       {
         key: 'A_INICIAR',
         label: 'A INICIAR',
-        badgeClass: 'bg-secondary',
+        badgeClass: 'bg-secondary text-black',
         icon: 'clock',
         kpiClass: 'kpi-neutral',
       },
@@ -277,7 +358,7 @@ export class PlanoAcaoEspecificoComponent implements OnInit {
         label: 'TOTAL GERAL',
         count: total,
         percent: 100,
-        badgeClass: 'bg-gray-800',
+        badgeClass: 'bg-gray-700 ',
         icon: 'list',
         kpiClass: 'kpi-gray',
       },

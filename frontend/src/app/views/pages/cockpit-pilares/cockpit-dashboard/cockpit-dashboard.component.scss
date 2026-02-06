@@ -1,9 +1,9 @@
-@import '../../shared-styles/_sticky-headers';
 
 // Compactar breadcrumb sticky
 .sticky-header-dashboard {
   padding: 0.4rem 0;
   margin-bottom: 0.5rem;
+  background: var(--bs-app-bg);
 }
 
 .cockpit-header-row {

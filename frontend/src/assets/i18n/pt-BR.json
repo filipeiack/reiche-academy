@@ -163,6 +163,10 @@
 
     "SELECT": "Selecione"
   },
+  "LABELS": {
+    "INDICADOR": "Indicador",
+    "TODOS": "Todos"
+  },
   "BUTTONS": {
     "PRINT": "Imprimir",
     "DOWNLOAD_REPORT": "Baixar Relatório",
@@ -177,7 +181,10 @@
     "CREATE": "Criar",
     "UPDATE": "Atualizar",
     "CONFIRM": "Confirmar",
-    "UPLOAD": "Fazer Upload"
+    "UPLOAD": "Fazer Upload",
+    "CLEAR_FILTERS": "Limpar Filtros",
+    "MORE": "Mais opções",
+    "ADD_ACTION": "Adicionar Ação"
   },
   "COMPANIES": {
     "NAME": "Nome da Empresa",

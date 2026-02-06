@@ -107,6 +107,21 @@ async function main() {
 
   console.log(`✅ 2 empresas criadas: ${empresaA.nome}, ${empresaB.nome}`);
 
+  // Limpar periodos da Empresa B para garantir fluxo de primeira data nos testes
+  await prisma.pilarEvolucao.deleteMany({
+    where: {
+      periodoAvaliacao: {
+        empresaId: empresaB.id,
+      },
+    },
+  });
+
+  await prisma.periodoAvaliacao.deleteMany({
+    where: {
+      empresaId: empresaB.id,
+    },
+  });
+
   // ========================================
   // 2.1. PERÍODOS DE MENTORIA (retroativo)
   // ========================================
@@ -1221,6 +1236,69 @@ async function main() {
 
   console.log(`✅ ${notasCriadas} diagnósticos criados para Empresa A (todos os pilares)`);
 
+  // Criar diagnosticos iniciais para Empresa B (necessario para modal de primeira data)
+  const todasRotinasEmpresaB = await prisma.rotinaEmpresa.findMany({
+    where: {
+      pilarEmpresa: {
+        empresaId: empresaB.id,
+      },
+    },
+    include: {
+      pilarEmpresa: true,
+    },
+  });
+
+  let notasCriadasEmpresaB = 0;
+
+  for (const rotinaEmp of todasRotinasEmpresaB) {
+    const existingNota = await prisma.notaRotina.findFirst({
+      where: { rotinaEmpresaId: rotinaEmp.id },
+    });
+
+    if (!existingNota) {
+      let notaBase = 5;
+
+      if (rotinaEmp.pilarEmpresa.nome === 'ESTRATÉGICO') {
+        notaBase = 6;
+      } else if (rotinaEmp.pilarEmpresa.nome === 'VENDAS') {
+        notaBase = 7;
+      } else if (rotinaEmp.pilarEmpresa.nome === 'MARKETING') {
+        notaBase = 4;
+      } else if (rotinaEmp.pilarEmpresa.nome === 'FINANCEIRO') {
+        notaBase = 5;
+      } else if (rotinaEmp.pilarEmpresa.nome === 'PESSOAS') {
+        notaBase = 5;
+      } else if (rotinaEmp.pilarEmpresa.nome === 'COMPRAS') {
+        notaBase = 4;
+      } else if (rotinaEmp.pilarEmpresa.nome === 'GESTÃO DO ESTOQUE') {
+        notaBase = 4;
+      }
+
+      const variacao = Math.floor(Math.random() * 5) - 2;
+      const notaFinal = Math.max(0, Math.min(10, notaBase + variacao));
+
+      let criticidade: Criticidade;
+      if (notaFinal >= 7) {
+        criticidade = 'BAIXA';
+      } else if (notaFinal >= 4) {
+        criticidade = 'MEDIA';
+      } else {
+        criticidade = 'ALTA';
+      }
+
+      await prisma.notaRotina.create({
+        data: {
+          rotinaEmpresaId: rotinaEmp.id,
+          nota: notaFinal,
+          criticidade,
+        },
+      });
+      notasCriadasEmpresaB++;
+    }
+  }
+
+  console.log(`✅ ${notasCriadasEmpresaB} diagnósticos criados para Empresa B (todos os pilares)`);
+
   // ========================================
   // 9. CRIAR EVOLUÇÃO DOS PILARES (4 TRIMESTRES)
   // ========================================
@@ -1249,27 +1327,28 @@ async function main() {
     })
   );
 
-  // Criar registros de evolução para 4 datas diferentes (trimestres)
+  // Criar registros de evolução com intervalos regulares de 90 dias
   const hoje = nowInSaoPaulo();
-  const baseTrimestre = dateFromParts(hoje.getFullYear(), hoje.getMonth(), 1);
-  const trimestres = [
-    addMonths(baseTrimestre, -9), // 3 trimestres atrás
-    addMonths(baseTrimestre, -6), // 2 trimestres atrás
-    addMonths(baseTrimestre, -3), // 1 trimestre atrás
-    baseTrimestre, // trimestre atual
+  const primeiraData = dateFromParts(hoje.getFullYear() - 1, 1, 15); // 15/01 do ano anterior
+  
+  const periodos = [
+    primeiraData,                           // Período 1: primeira data
+    addDays(primeiraData, 90),              // Período 2: primeira + 90 dias
+    addDays(primeiraData, 180),             // Período 3: primeira + 180 dias
+    addDays(primeiraData, 270),             // Período 4: primeira + 270 dias
   ];
 
-  // Criar períodos de avaliação para Empresa Teste A (um por trimestre)
+  // Criar períodos de avaliação para Empresa Teste A
   // Os 3 primeiros períodos são congelados (histórico), o último permanece aberto
   const periodosMap = new Map<string, string>();
 
-  for (let i = 0; i < trimestres.length; i++) {
-    const dataRef = trimestres[i];
-    const trimestreNum = Math.floor(dataRef.getMonth() / 3) + 1; // 1-4
+  for (let i = 0; i < periodos.length; i++) {
+    const dataRef = periodos[i];
+    const trimestreNum = Math.floor(dataRef.getMonth() / 3) + 1; // 1-4 (para compatibilidade)
     const ano = dataRef.getFullYear();
 
     // Apenas o último período (atual) permanece aberto
-    const isAberto = i === trimestres.length - 1;
+    const isAberto = i === periodos.length - 1;
     const dataCongelamento = isAberto
       ? null
       : addMonths(dateFromParts(dataRef.getFullYear(), dataRef.getMonth(), 15, 10, 0, 0), 3); // 15 dias após o fim do trimestre
@@ -1300,13 +1379,13 @@ async function main() {
     periodosMap.set(`${trimestreNum}-${ano}`, periodo.id);
   }
 
-  console.log(`✅ ${trimestres.length} períodos de avaliação criados para ${empresaA.nome} (${trimestres.length - 1} congelados, 1 aberto)`);
+  console.log(`✅ ${periodos.length} períodos de avaliação criados para ${empresaA.nome} com intervalos de 90 dias (${periodos.length - 1} congelados, 1 aberto)`);
 
   let evoluçõesCriadas = 0;
 
   for (const pilarComMedia of pilaresComMedia) {
-    for (let i = 0; i < trimestres.length; i++) {
-      const dataRegistro = trimestres[i];
+    for (let i = 0; i < periodos.length; i++) {
+      const dataRegistro = periodos[i];
       const trimestreNum = Math.floor(dataRegistro.getMonth() / 3) + 1;
       const periodoKey = `${trimestreNum}-${dataRegistro.getFullYear()}`;
       const periodoId = periodosMap.get(periodoKey);
@@ -1318,7 +1397,7 @@ async function main() {
       // Simular evolução gradual: começar com nota mais baixa e evoluir até a média atual
       // Por exemplo: se média atual é 7, começar em 4 e evoluir gradualmente
       const mediaFinal = pilarComMedia.mediaAtual;
-      const evolucaoFactor = (i + 1) / trimestres.length; // 0.25, 0.5, 0.75, 1.0
+      const evolucaoFactor = (i + 1) / periodos.length; // 0.25, 0.5, 0.75, 1.0
 
       // Começar com 60% da nota final no primeiro trimestre e evoluir até 100%
       const mediaBase = mediaFinal * 0.6;
@@ -1352,7 +1431,7 @@ async function main() {
     }
   }
 
-  console.log(`✅ ${evoluçõesCriadas} registros de evolução criados (${trimestres.length} trimestres para ${pilaresComMedia.length} pilares)`);
+  console.log(`✅ ${evoluçõesCriadas} registros de evolução criados (${periodos.length} períodos para ${pilaresComMedia.length} pilares)`);
 
   // ========================================
   // 10. COCKPIT DE MARKETING + INDICADORES
@@ -1880,7 +1959,7 @@ async function main() {
   console.log(`   - ${pilaresEmpresaA.length + pilaresEmpresaB.length} pilares vinculados às empresas`);
   console.log(`   - ${rotinasEmpresaCriadas} rotinas vinculadas às empresas`);
   console.log(`   - ${notasCriadas} diagnósticos criados`);
-  console.log(`   - ${trimestres.length} períodos de avaliação`);
+  console.log(`   - ${periodos.length} períodos de avaliação`);
   console.log(`   - ${evoluçõesCriadas} registros de evolução`);
   console.log(`   - 1 cockpit de Marketing`);
   console.log(`   - ${indicadoresCriados.length} indicadores de Marketing (com responsáveis vinculados)`);

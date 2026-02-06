@@ -1,6 +1,6 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
-
+import { ThrottlerModule } from '@nestjs/throttler';
 import { ScheduleModule } from '@nestjs/schedule';
 import { APP_INTERCEPTOR, APP_PIPE } from '@nestjs/core';
 import { PrismaModule } from './common/prisma/prisma.module';
@@ -32,12 +32,12 @@ import { ObjetivosTemplatesModule } from './modules/objetivos-templates/objetivo
       envFilePath: '../.env', // Aponta para .env da raiz (monorepo)
     }),
     ScheduleModule.forRoot(),
-    // ThrottlerModule.forRoot([
-    //   {
-    //     ttl: 60000, // 1 minuto
-    //     limit: 1000, // DEV: 1000 requisições/minuto (E2E tests)
-    //   },
-    // ]),
+    ThrottlerModule.forRoot([
+      {
+        ttl: 60000, // 1 minuto
+        limit: 1000, // DEV: 1000 requisições/minuto (E2E tests)
+      },
+    ]),
     PrismaModule,
     AuthModule,
     UsuariosModule,

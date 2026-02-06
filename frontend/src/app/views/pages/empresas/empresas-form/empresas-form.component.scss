@@ -1,4 +1,10 @@
-@import '../../shared-styles/_sticky-headers';
+.sticky-header {
+  top: 0;
+  position: sticky;
+  z-index: 100;
+  background: var(--bs-app-bg);
+  //box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
 
 .sticky-header-card {
   top: calc(var(--navbar-height, 60px) + var(--headerDashboard-height, 40px));

@@ -1,12 +1,13 @@
-import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { Router, ActivatedRoute } from '@angular/router';
-import { of } from 'rxjs';
+import { of, delay } from 'rxjs';
 import { DiagnosticoNotasComponent } from './diagnostico-notas.component';
 import { DiagnosticoNotasService, PilarEmpresa } from '@core/services/diagnostico-notas.service';
 import { EmpresasService } from '@core/services/empresas.service';
 import { AuthService } from '@core/services/auth.service';
 import { EmpresaContextService } from '@core/services/empresa-context.service';
 import { PeriodosAvaliacaoService } from '@core/services/periodos-avaliacao.service';
+import { TranslateService } from '@core/services/translate.service';
 import { NgbOffcanvas } from '@ng-bootstrap/ng-bootstrap';
 
 describe('DiagnosticoNotasComponent - Security: Empresa Sync', () => {
@@ -35,8 +36,7 @@ describe('DiagnosticoNotasComponent - Security: Empresa Sync', () => {
 
   beforeEach(async () => {
     const diagnosticoServiceSpy = jasmine.createSpyObj('DiagnosticoNotasService', [
-      'getDiagnosticoByEmpresa',
-      'getPeriodoAvaliacaoAtual'
+      'getDiagnosticoByEmpresa'
     ]);
     const empresasServiceSpy = jasmine.createSpyObj('EmpresasService', ['getEmpresas']);
     const authServiceSpy = jasmine.createSpyObj('AuthService', ['getCurrentUser']);
@@ -45,11 +45,12 @@ describe('DiagnosticoNotasComponent - Security: Empresa Sync', () => {
       'getEmpresaId',
       'selectedEmpresaId$'
     ]);
-    const periodosServiceSpy = jasmine.createSpyObj('PeriodosAvaliacaoService', ['getPeriodoAtual']);
+    const periodosServiceSpy = jasmine.createSpyObj('PeriodosAvaliacaoService', ['getPrimeiraData']);
     const offcanvasServiceSpy = jasmine.createSpyObj('NgbOffcanvas', ['open', 'close']);
     const routerSpy = jasmine.createSpyObj('Router', ['navigate']);
 
     empresaContextServiceSpy.selectedEmpresaId$ = of('empresa-A');
+    periodosServiceSpy.getPrimeiraData.and.returnValue(of({ primeiraData: null }));
 
     await TestBed.configureTestingModule({
       imports: [DiagnosticoNotasComponent],
@@ -59,6 +60,7 @@ describe('DiagnosticoNotasComponent - Security: Empresa Sync', () => {
         { provide: AuthService, useValue: authServiceSpy },
         { provide: EmpresaContextService, useValue: empresaContextServiceSpy },
         { provide: PeriodosAvaliacaoService, useValue: periodosServiceSpy },
+        { provide: TranslateService, useValue: { instant: (key: string) => key } },
         { provide: NgbOffcanvas, useValue: offcanvasServiceSpy },
         { provide: Router, useValue: routerSpy },
         { provide: ActivatedRoute, useValue: { params: of({}) } }
@@ -75,6 +77,7 @@ describe('DiagnosticoNotasComponent - Security: Empresa Sync', () => {
 
     fixture = TestBed.createComponent(DiagnosticoNotasComponent);
     component = fixture.componentInstance;
+    component.selectedEmpresaId = 'empresa-A';
   });
 
   describe('Security: syncEmpresaFromResource called on diagnostico load', () => {
@@ -281,18 +284,16 @@ describe('DiagnosticoNotasComponent - Security: Empresa Sync', () => {
   });
 
   describe('Security: Loading state prevents race conditions', () => {
-    it('deve ter loading true durante carregamento', (done) => {
+    it('deve ter loading true durante carregamento', fakeAsync(() => {
       const pilares = [mockPilarEmpresa];
-      diagnosticoService.getDiagnosticoByEmpresa.and.returnValue(of(pilares));
+      diagnosticoService.getDiagnosticoByEmpresa.and.returnValue(of(pilares).pipe(delay(10)));
 
       (component as any).loadDiagnostico();
       expect(component.loading).toBe(true);
 
-      setTimeout(() => {
-        expect(component.loading).toBe(false);
-        done();
-      }, 100);
-    });
+      tick(10);
+      expect(component.loading).toBe(false);
+    }));
 
     it('deve limpar erro anterior ao carregar', (done) => {
       component.error = 'Erro anterior';

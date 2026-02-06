@@ -17,7 +17,15 @@
     </div>
   @for (item of resumoStatus; track item.key) {
   <div class="col-6 col-md">
-    <div class="card kpi-card" [ngClass]="item.kpiClass">
+    <div
+      class="card kpi-card"
+      [ngClass]="item.kpiClass"
+      role="button"
+      tabindex="0"
+      style="cursor: pointer;"
+      (click)="aplicarFiltroStatus(item.key)"
+      (keyup.enter)="aplicarFiltroStatus(item.key)"
+    >
       <div class="card-body">
         <div class="kpi-header">
           <div class="kpi-icon" [ngClass]="item.kpiClass">
@@ -36,22 +44,61 @@
   </div>
 </div>
 
-<div class="card">
+<div class="card" #listaAcoes>
   <div class="card-body">
 
-    <div class="cockpit-tab-header d-flex align-items-center justify-content-between flex-wrap plano-acao-header mb-3">
+    <div class="cockpit-tab-header d-flex align-items-center justify-content-between flex-wrap plano-acao-header mb-0">
       <h5 class="card-title cockpit-tab-title">
         <i class="bi bi-clipboard-check me-2"></i>
         LISTA PLANO DE AÇÃO ESPECÍFICO
       </h5>
-      <button type="button" class="btn btn-primary btn-sm btn-add-acao" (click)="abrirDrawerNovaAcao()">
+    </div>
+
+    <!-- Filtros -->
+    <div class="row mb-2">
+      <div class="col-md-4">
+        <label for="filtroIndicador" class="form-label small">{{ 'LABELS.INDICADOR' | translate }}</label>
+        <select 
+          id="filtroIndicador" 
+          class="form-select form-select-sm" 
+          [(ngModel)]="filtroIndicador" 
+          (ngModelChange)="aplicarFiltros()">
+          <option value="">{{ 'LABELS.TODOS' | translate }}</option>
+          @for (indicador of indicadores; track indicador.id) {
+            <option [value]="indicador.id">{{ indicador.nome }}</option>
+          }
+        </select>
+      </div>
+      <div class="col-md-4">
+        <label for="filtroStatus" class="form-label small">Status</label>
+        <select 
+          id="filtroStatus" 
+          class="form-select form-select-sm" 
+          [(ngModel)]="filtroStatus" 
+          (ngModelChange)="aplicarFiltros()">
+          <option value="">{{ 'LABELS.TODOS' | translate }}</option>
+          <option value="A_INICIAR">A INICIAR</option>
+          <option value="EM_ANDAMENTO">EM ANDAMENTO</option>
+          <option value="ATRASADA">ATRASADA</option>
+          <option value="CONCLUIDA">CONCLUÍDA</option>
+        </select>
+      </div>
+      <div class="col-md-4 d-flex align-items-end gap-2">
+        <button type="button" class="btn btn-outline-secondary btn-sm" (click)="limparFiltros()">
+          <i class="feather icon-x me-1"></i>
+          {{ 'BUTTONS.CLEAR_FILTERS' | translate }}
+        </button>
+        <button type="button" class="btn btn-primary btn-sm btn-add-acao" (click)="abrirDrawerNovaAcao()">
         <i class="bi bi-plus-circle me-1"></i>
-        Adicionar Ação
+        {{ 'BUTTONS.ADD_ACTION' | translate }}
       </button>
+      </div>
     </div>
 
     @if (acoes.length === 0) {
     <div class="text-muted">Nenhuma ação encontrada.</div>
+    } @else if (acoesFiltered.length === 0) {
+    <div class="text-muted">Nenhuma ação encontrada com os filtros aplicados.</div>
     } @else {
     <div class="table-responsive">
       <table class="table table-sm align-middle">
@@ -65,7 +112,7 @@
           </tr>
         </thead>
         <tbody>
-          @for (acao of acoes; track acao.id) {
+          @for (acao of acoesFiltered; track acao.id) {
           <tr class="acao-row">
             <td class="indicador-cell">
               <div class="indicador-nome-box">

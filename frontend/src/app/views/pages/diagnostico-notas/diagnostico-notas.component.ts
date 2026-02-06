@@ -24,7 +24,7 @@ import { RotinaAddDrawerComponent } from './rotina-add-drawer/rotina-add-drawer.
 import { RotinaEditDrawerComponent } from './rotina-edit-drawer/rotina-edit-drawer.component';
 import { CriarCockpitDrawerComponent } from './criar-cockpit-drawer/criar-cockpit-drawer.component';
 import { OFFCANVAS_SIZE } from '@core/constants/ui.constants';
-import { formatDateInputSaoPaulo, formatTimeDisplaySaoPaulo, normalizeDateToSaoPaulo } from '../../../core/utils/date-time';
+import { formatDateDisplaySaoPaulo, formatDateInputSaoPaulo, formatTimeDisplaySaoPaulo, normalizeDateToSaoPaulo } from '../../../core/utils/date-time';
 
 interface AutoSaveQueueItem {
   rotinaEmpresaId: string;
@@ -62,9 +62,11 @@ export class DiagnosticoNotasComponent implements OnInit, OnDestroy {
   isAdmin = false;
   loading = false;
   error = '';
-  periodoAtual: PeriodoAvaliacao | null = null;
-  showIniciarPeriodoModal = false;
-  dataReferenciaPeriodo: string = '';
+  
+  // Janela temporal de períodos
+  primeiraData: Date | null = null;
+  periodoAtualTexto = '';
+  proximosPeriodosTexto = '';
   
   private empresaContextSubscription?: Subscription;
   private savedScrollPosition: number = 0;
@@ -251,8 +253,8 @@ export class DiagnosticoNotasComponent implements OnInit, OnDestroy {
         
         this.loading = false;
         
-        // Carregar período atual após carregar pilares
-        this.loadPeriodoAtual();
+        // Carregar primeira data e calcular períodos após carregar pilares
+        this.loadPrimeiraDataEPeriodos();
         
         // Restaurar posição de scroll se foi salva
         if (preserveScroll && this.savedScrollPosition > 0) {
@@ -765,73 +767,73 @@ export class DiagnosticoNotasComponent implements OnInit, OnDestroy {
   /**
    * Carrega o período de avaliação atual (aberto) da empresa
    */
-  private loadPeriodoAtual(): void {
+  /**
+   * Carrega primeira data de referência e calcula períodos
+   */
+  private loadPrimeiraDataEPeriodos(): void {
     if (!this.selectedEmpresaId) return;
 
-    this.periodosService.getAtual(this.selectedEmpresaId).subscribe({
-      next: (periodo) => {
-        this.periodoAtual = periodo;
+    this.periodosService.getPrimeiraData(this.selectedEmpresaId).subscribe({
+      next: (response) => {
+        if (response.primeiraData) {
+          this.primeiraData = new Date(response.primeiraData);
+          this.calcularPeriodos();
+        } else {
+          // Sem primeira data, badge ficará oculto (GAP C - opção 1)
+          this.primeiraData = null;
+          this.periodoAtualTexto = '';
+          this.proximosPeriodosTexto = '';
+        }
       },
       error: (err) => {
-        console.error('Erro ao carregar período atual:', err);
-        this.periodoAtual = null;
+        console.error('Erro ao carregar primeira data:', err);
+        this.primeiraData = null;
+        this.periodoAtualTexto = '';
+        this.proximosPeriodosTexto = '';
       }
     });
   }
 
   /**
-   * Abre modal para iniciar novo período de avaliação
+   * Calcula período atual e próximos 3 períodos baseado em janela temporal
    */
-  abrirModalIniciarPeriodo(): void {
-    // Sugerir data atual como referência
-    const hoje = normalizeDateToSaoPaulo(new Date());
-    
-    // Formatar como YYYY-MM-DD para input type="date"
-    this.dataReferenciaPeriodo = formatDateInputSaoPaulo(hoje);
-    this.showIniciarPeriodoModal = true;
-  }
+  private calcularPeriodos(): void {
+    if (!this.primeiraData) return;
 
-  /**
-   * Fecha modal de iniciar período
-   */
-  fecharModalIniciarPeriodo(): void {
-    this.showIniciarPeriodoModal = false;
-    this.dataReferenciaPeriodo = '';
-  }
+    const hoje = new Date();
+    const diasDesdePrimeiro = Math.floor((hoje.getTime() - this.primeiraData.getTime()) / (1000 * 60 * 60 * 24));
+    const numeroPeriodo = Math.floor(diasDesdePrimeiro / 90) + 1;
 
-  /**
-   * Confirma criação do novo período de avaliação
-   */
-  confirmarIniciarPeriodo(): void {
-    if (!this.selectedEmpresaId || !this.dataReferenciaPeriodo) {
-      this.showToast('Data de referência é obrigatória', 'error');
-      return;
+    // Calcular período atual
+    const dataAtual = this.addDays(this.primeiraData, 90 * (numeroPeriodo - 1));
+    this.periodoAtualTexto = formatDateDisplaySaoPaulo(dataAtual);
+
+    // Calcular próximos 3 períodos
+    const proximos: string[] = [];
+    for (let i = 1; i <= 3; i++) {
+      const dataProximo = this.addDays(this.primeiraData, 90 * (numeroPeriodo - 1 + i));
+      proximos.push(formatDateDisplaySaoPaulo(dataProximo));
     }
 
-    // Backend calculará trimestre e ano baseado na dataReferencia
-    this.periodosService.iniciar(this.selectedEmpresaId, this.dataReferenciaPeriodo).subscribe({
-      next: (periodo) => {
-        this.periodoAtual = periodo;
-        this.fecharModalIniciarPeriodo();
-        const dataRef = formatDateInputSaoPaulo(normalizeDateToSaoPaulo(periodo.dataReferencia));
-        const [ano, mes] = dataRef.split('-');
-        this.showToast(`Período ${mes}/${ano} iniciado com sucesso!`, 'success');
-      },
-      error: (err) => {
-        const mensagem = err?.error?.message || 'Erro ao iniciar período de avaliação';
-        this.showToast(mensagem, 'error', 5000);
-      }
-    });
+    this.proximosPeriodosTexto = proximos.join(', ');
   }
 
   /**
-   * Retorna texto formatado do período atual para exibição no badge
+   * Adiciona dias a uma data
    */
-  getPeriodoAtualTexto(): string {
-    if (!this.periodoAtual) return '';
-    const dataRef = formatDateInputSaoPaulo(normalizeDateToSaoPaulo(this.periodoAtual.dataReferencia));
-    const [ano, mes] = dataRef.split('-');
-    return `Avaliação ${mes}/${ano} em andamento`;
+  private addDays(date: Date, days: number): Date {
+    const result = new Date(date);
+    result.setDate(result.getDate() + days);
+    return result;
+  }
+
+  /**
+   * Formata data como MM/AAAA
+   */
+  private formatarMesAno(date: Date): string {
+    const mes = String(date.getMonth() + 1).padStart(2, '0');
+    const ano = date.getFullYear();
+    return `${mes}/${ano}`;
   }
 
   /**

@@ -10,6 +10,18 @@
                 </li>
             </ol>
         </nav>
+
+        <!-- Badge indicador de períodos de avaliação -->
+        @if (primeiraData) {
+        <div class="badge bg-light text-dark small d-flex flex-column align-items-start px-3 py-2"
+            data-testid="periodo-badge">
+            <div class="d-flex align-items-center gap-2 mb-1">
+                <i class="feather icon-calendar icon-sm"></i>
+                <strong>Início do Trimestre: {{ periodoAtualTexto }}</strong>
+            </div>
+            <small class="text-muted">Próximas avaliações: {{ proximosPeriodosTexto }}</small>
+        </div>
+        }
     </div>
 </div>
 
@@ -66,7 +78,7 @@
             </div>
 
             <div class="d-flex align-items-center gap-2">
-                
+
                 <!-- Filtro de Ano -->
                 <ng-select [(ngModel)]="anoFiltro" (ngModelChange)="onAnoChange()" [items]="anosDisponiveis"
                     bindLabel="label" bindValue="value" [clearable]="false" [searchable]="false"
@@ -75,16 +87,16 @@
                 </ng-select>
 
                 <!-- Botão Congelar/Recongelar -->
-        @if (canCongelar) {
-        <button type="button"
-            [class]="periodoAtual ? 'btn btn-primary btn-sm' : 'btn btn-outline-primary btn-sm'"
-            (click)="congelarMedias()" [disabled]="!periodoAtual && medias.length === 0"
-            data-testid="btn-congelar-medias">
-            <i class="bi bi-arrow-bar-down"></i>
-            <span class="ms-1">Adicionar Avaliação Trimestral</span>
-        </button>
-        }
-                </div>
+                @if (canCongelar) {
+                <button type="button"
+                    [class]="periodoAtual ? 'btn btn-primary btn-sm' : 'btn btn-outline-primary btn-sm'"
+                    (click)="congelarMedias()" [disabled]="!periodoAtual && medias.length === 0"
+                    data-testid="btn-congelar-medias">
+                    <i class="bi bi-arrow-bar-down"></i>
+                    <span class="ms-1">Adicionar Avaliação Trimestral</span>
+                </button>
+                }
+            </div>
 
 
         </div>
@@ -147,5 +159,52 @@
 <div class="alert alert-danger" role="alert" data-testid="select-empresa-message">
     <i data-feather="alert-triangle" class="me-2"></i>
     {{ 'EVOLUCAO.SELECT_EMPRESA_PLACEHOLDER' | translate }}
+</div>
+}
+
+<!-- Modal de Primeira Data -->
+@if (showPrimeiraDataModal) {
+<div class="modal fade show d-block" tabindex="-1" role="dialog" style="background: rgba(0,0,0,0.5);"
+    data-testid="primeira-data-modal">
+    <div class="modal-dialog modal-dialog-centered" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="feather icon-calendar me-2"></i>
+                    Configurar Primeira Avaliação
+                </h5>
+                <button type="button" class="btn-close" (click)="fecharModalPrimeiraData()"></button>
+            </div>
+            <div class="modal-body">
+                <p class="text-muted mb-3">
+                    Esta é a primeira avaliação da empresa. Escolha a data de referência inicial:
+                </p>
+
+                <div class="mb-3">
+                    <label for="dataReferenciaPrimeira" class="form-label">Data de Referência *</label>
+                    <input type="date" class="form-control" id="dataReferenciaPrimeira"
+                        [(ngModel)]="dataReferenciaPrimeira" required data-testid="primeira-data-input">
+                </div>
+
+                <div class="alert alert-info mb-0">
+                    <i class="feather icon-info me-2"></i>
+                    <small>
+                        Os próximos períodos serão calculados automaticamente a cada <strong>90 dias</strong>
+                        a partir desta data.
+                    </small>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" (click)="fecharModalPrimeiraData()">
+                    Cancelar
+                </button>
+                <button type="button" class="btn btn-primary" (click)="confirmarPrimeiraData()"
+                    [disabled]="!dataReferenciaPrimeira" data-testid="primeira-data-confirm">
+                    <i class="feather icon-check me-2"></i>
+                    Confirmar e Criar Período
+                </button>
+            </div>
+        </div>
+    </div>
 </div>
 }

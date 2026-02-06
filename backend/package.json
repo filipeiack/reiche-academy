@@ -27,7 +27,7 @@
     "migration:dev": "prisma migrate dev",
     "migration:prod": "prisma migrate deploy",
     "seed": "tsx prisma/seed.ts",
-    "seed:pilares-rotinas": "tsx scripts/seed-pilares-rotinas.ts"
+    "seed:test": "tsx prisma/seed.test.ts"
   },
   "dependencies": {
     "@nestjs/common": "^10.4.20",
