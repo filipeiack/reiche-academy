@@ -49,79 +49,140 @@
             </div>
           </div>
           } @else {
-          <div class="table-responsive">
-            <table class="table table-hover table-sm mb-2">
-              <thead class="table-light">
-                <tr>
-                  <!-- <th>
-                    <input class="form-check-input" type="checkbox" [(ngModel)]="headerCheckboxChecked" (change)="toggleHeaderCheckbox()">
-                  </th> -->
-                  <th scope="col" sortable="nome" (sort)="onSort($event)" class="w-100">{{ 'COMPANIES.NAME' | translate }}</th>
-                  <th scope="col">{{ 'COMPANIES.USUARIOS_COUNT' | translate }}</th>
-                  <th scope="col">Mentoria</th>
-                  <th>{{ 'COMMON.STATUS' | translate }}</th>
-                  <th>{{ 'COMMON.ACTIONS' | translate }}</th>
-                </tr>
-              </thead>
-              <tbody>
-                @for (empresa of paginatedEmpresas; track empresa.id) {
-                <tr>
-                  <!-- <td>
-                    <input class="form-check-input" type="checkbox" [checked]="isSelected(empresa.id)" (change)="toggleSelection(empresa.id)">
-                  </td> -->
-                  <td style="max-width: 600px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
-                    <div >{{ empresa.nome.toUpperCase() }}</div>
+          <div class="desktop-table">
+            <div class="table-responsive">
+              <table class="table table-hover table-sm mb-2">
+                <thead class="table-light">
+                  <tr>
+                    <!-- <th>
+                      <input class="form-check-input" type="checkbox" [(ngModel)]="headerCheckboxChecked" (change)="toggleHeaderCheckbox()">
+                    </th> -->
+                    <th scope="col" sortable="nome" (sort)="onSort($event)" class="w-100">{{ 'COMPANIES.NAME' | translate }}</th>
+                    <th scope="col">{{ 'COMPANIES.USUARIOS_COUNT' | translate }}</th>
+                    <th scope="col">{{ 'COMPANIES.MENTORIA' | translate }}</th>
+                    <th>{{ 'COMMON.STATUS' | translate }}</th>
+                    <th>{{ 'COMMON.ACTIONS' | translate }}</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  @for (empresa of paginatedEmpresas; track empresa.id) {
+                  <tr>
+                    <!-- <td>
+                      <input class="form-check-input" type="checkbox" [checked]="isSelected(empresa.id)" (change)="toggleSelection(empresa.id)">
+                    </td> -->
+                    <td style="max-width: 600px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
+                      <div>{{ empresa.nome.toUpperCase() }}</div>
+                      <small class="text-muted">{{ empresa.cnpj | cnpj }} {{ empresa.estado }}</small>
+                    </td>
+                    <td class="text-muted">{{ empresa._count?.usuarios ?? 0 }}</td>
+                    <td>
+                      @if (empresa.periodoMentoriaAtivo) {
+                      <span class="badge bg-success">
+                        <i class="feather icon-check-circle me-1"></i>
+                        {{ 'COMPANIES.PERIODO' | translate }} {{ empresa.periodoMentoriaAtivo.numero }}
+                        <small class="d-block mt-1">{{ formatarPeriodo(empresa.periodoMentoriaAtivo) }}</small>
+                      </span>
+                      } @else {
+                      <span class="badge bg-secondary">
+                        <i class="feather icon-x-circle me-1"></i>
+                        {{ 'COMPANIES.MENTORIA_NONE' | translate }}
+                      </span>
+                      }
+                    </td>
+                    <td class="text-muted">
+                      {{ empresa.ativo ? ('COMMON.ACTIVE' | translate) : ('COMMON.INACTIVE' | translate) }}
+                    </td>
+                    <td class="text-nowrap">
+                      <div class="btn-group btn-group-sm" role="group">
+                        <button class="btn btn-icon text-primary" (click)="openDetailsOffcanvas(empresa.id, detailsOffcanvas)" [title]="'COMPANIES.DETAILS' | translate">
+                          <i class="feather icon-info"></i>
+                        </button>
+                        <button class="btn btn-icon text-secondary" [routerLink]="['/empresas', empresa.id, 'editar']" title="{{ 'BUTTONS.EDIT' | translate }}">
+                          <i class="feather icon-edit"></i>
+                        </button>
+                        <button class="btn btn-icon text-danger" (click)="deleteEmpresa(empresa.id, empresa.nome)" title="{{ 'BUTTONS.DELETE' | translate }}">
+                          <i class="feather icon-trash-2"></i>
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                  } @empty {
+                  <tr>
+                    <td colspan="6" class="border-bottom text-center text-muted py-4">
+                      {{ 'COMMON.NO_DATA' | translate }}
+                    </td>
+                  </tr>
+                  }
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <div class="mobile-cards">
+            @for (empresa of paginatedEmpresas; track empresa.id) {
+            <div class="card empresa-card">
+              <div class="card-body">
+                <div class="d-flex justify-content-between align-items-start gap-2 mb-2">
+                  <div class="empresa-title">
+                    <div class="fw-semibold text-truncate">{{ empresa.nome.toUpperCase() }}</div>
                     <small class="text-muted">{{ empresa.cnpj | cnpj }} {{ empresa.estado }}</small>
-                  </td>
-                  <td class="text-muted">{{ empresa._count?.usuarios ?? 0 }}</td>
-                  <td>
-                    @if (empresa.periodoMentoriaAtivo) {
-                    <span class="badge bg-success">
-                      <i class="feather icon-check-circle me-1"></i>
-                      Período {{ empresa.periodoMentoriaAtivo.numero }}
-                      <small class="d-block mt-1">{{ formatarPeriodo(empresa.periodoMentoriaAtivo) }}</small>
-                    </span>
-                    } @else {
-                    <span class="badge bg-secondary">
-                      <i class="feather icon-x-circle me-1"></i>
-                      Sem mentoria
-                    </span>
-                    }
-                  </td>
-                  <td class="text-muted">
+                  </div>
+                  <span class="badge" [ngClass]="{ 'bg-success': empresa.ativo, 'bg-danger': !empresa.ativo }">
                     {{ empresa.ativo ? ('COMMON.ACTIVE' | translate) : ('COMMON.INACTIVE' | translate) }}
-                  </td>
-                  <td class="text-nowrap">
-                    <div class="btn-group btn-group-sm" role="group">
-                      <button class="btn btn-icon text-primary" (click)="openDetailsOffcanvas(empresa.id, detailsOffcanvas)" [title]="'Detalhes da empresa' | translate">
-                        <i class="feather icon-info"></i>
-                      </button>
-                      <button class="btn btn-icon text-secondary" [routerLink]="['/empresas', empresa.id, 'editar']" title="{{ 'BUTTONS.EDIT' | translate }}">
-                        <i class="feather icon-edit"></i>
-                      </button>
-                      <button class="btn btn-icon text-danger" (click)="deleteEmpresa(empresa.id, empresa.nome)" title="{{ 'BUTTONS.DELETE' | translate }}">
-                        <i class="feather icon-trash-2"></i>
-                      </button>
-                    </div>
-                  </td>
-                </tr>
-                } @empty {
-                <tr>
-                  <td colspan="6" class="border-bottom text-center text-muted py-4">
-                    {{ 'COMMON.NO_DATA' | translate }}
-                  </td>
-                </tr>
-                }
-              </tbody>
-            </table>
+                  </span>
+                </div>
+
+                <div class="empresa-meta">
+                  <div class="meta-row">
+                    <span class="meta-label">{{ 'COMPANIES.USUARIOS_COUNT' | translate }}</span>
+                    <span class="meta-value">{{ empresa._count?.usuarios ?? 0 }}</span>
+                  </div>
+                  <div class="meta-row">
+                    <span class="meta-label">{{ 'COMPANIES.MENTORIA' | translate }}</span>
+                    <span class="meta-value">
+                      @if (empresa.periodoMentoriaAtivo) {
+                      <span class="badge bg-success">
+                        <i class="feather icon-check-circle me-1"></i>
+                        {{ 'COMPANIES.PERIODO' | translate }} {{ empresa.periodoMentoriaAtivo.numero }}
+                        <small class="d-block mt-1">{{ formatarPeriodo(empresa.periodoMentoriaAtivo) }}</small>
+                      </span>
+                      } @else {
+                      <span class="badge bg-secondary">
+                        <i class="feather icon-x-circle me-1"></i>
+                        {{ 'COMPANIES.MENTORIA_NONE' | translate }}
+                      </span>
+                      }
+                    </span>
+                  </div>
+                </div>
+
+                <div class="d-flex gap-2 mt-3">
+                  <button class="btn btn-outline-primary btn-sm" (click)="openDetailsOffcanvas(empresa.id, detailsOffcanvas)" [title]="'COMPANIES.DETAILS' | translate">
+                    <i class="feather icon-info"></i>
+                  </button>
+                  <button class="btn btn-outline-secondary btn-sm" [routerLink]="['/empresas', empresa.id, 'editar']" title="{{ 'BUTTONS.EDIT' | translate }}">
+                    <i class="feather icon-edit"></i>
+                  </button>
+                  <button class="btn btn-outline-danger btn-sm" (click)="deleteEmpresa(empresa.id, empresa.nome)" title="{{ 'BUTTONS.DELETE' | translate }}">
+                    <i class="feather icon-trash-2"></i>
+                  </button>
+                </div>
+              </div>
+            </div>
+            } @empty {
+            <div class="text-center text-muted py-4">
+              {{ 'COMMON.NO_DATA' | translate }}
+            </div>
+            }
           </div>
 
           <div class="d-flex justify-content-between p-2">
             <span class="text-muted fs-12">
-              Mostrando {{ getStartIndex() + 1 }}-{{ getEndIndex() }} de {{ filteredEmpresas.length }} {{ 'COMMON.ITEMS' | translate }}
+              {{ 'COMMON.SHOWING' | translate }} {{ getStartIndex() + 1 }}-{{ getEndIndex() }} {{ 'COMMON.OF' | translate }} {{ filteredEmpresas.length }} {{ 'COMMON.ITEMS' | translate }}
             </span>
             @if (totalPages > 1) {
-            <ngb-pagination [collectionSize]="filteredEmpresas.length" [(page)]="currentPage" size="sm" [pageSize]="pageSize"></ngb-pagination>
+            <ngb-pagination [collectionSize]="filteredEmpresas.length" [(page)]="currentPage" size="sm" 
+            [pageSize]="pageSize" [maxSize]="3" [boundaryLinks]="false"></ngb-pagination>
             }
           </div>
           }
@@ -149,14 +210,14 @@
     <!-- Logo da Empresa -->
     @if (selectedEmpresa.logoUrl) {
     <div class="mb-3 text-center">
-      <img [src]="selectedEmpresa.logoUrl" alt="Logo de {{ selectedEmpresa.nome }}" class="img-fluid rounded" style="max-height: 120px">
+      <img [src]="selectedEmpresa.logoUrl" alt="{{ 'COMPANIES.FORM.LOGO_ALT' | translate }} {{ selectedEmpresa.nome }}" class="img-fluid rounded" style="max-height: 120px">
     </div>
     }
 
     <div class="mb-4">
       <h4 class="mb-1">{{ selectedEmpresa.nome }}</h4>
       <p class="text-muted mb-1">{{ selectedEmpresa.cidade }}, {{ selectedEmpresa.estado }}</p>
-      <p class="text-muted">CNPJ: {{ selectedEmpresa.cnpj | cnpj }}</p>
+      <p class="text-muted">{{ 'COMPANIES.CNPJ' | translate }}: {{ selectedEmpresa.cnpj | cnpj }}</p>
       <span class="badge" [ngClass]="{ 'bg-success': selectedEmpresa.ativo, 'bg-danger': !selectedEmpresa.ativo }">
         {{ selectedEmpresa.ativo ? ('COMMON.ACTIVE' | translate) : ('COMMON.INACTIVE' | translate) }}
       </span>
@@ -166,8 +227,8 @@
       <div class="card-body">
         <h6 class="card-title mb-3">{{ 'COMMON.BASIC_INFO' | translate }}</h6>
         <div class="mb-2"><span class="text-muted small">{{ 'COMPANIES.TIPO_NEGOCIO' | translate }}</span> <div>{{ selectedEmpresa.tipoNegocio || '-' }}</div></div>
-        <div class="mb-2"><span class="text-muted small">Logo URL</span> <div>{{ selectedEmpresa.logoUrl || '-' }}</div></div>
-        <div class="mb-0"><span class="text-muted small">Login URL</span> <div>{{ selectedEmpresa.loginUrl || '-' }}</div></div>
+        <div class="mb-2"><span class="text-muted small">{{ 'COMPANIES.LOGO_URL_LABEL' | translate }}</span> <div>{{ selectedEmpresa.logoUrl || '-' }}</div></div>
+        <div class="mb-0"><span class="text-muted small">{{ 'COMPANIES.LOGIN_URL' | translate }}</span> <div>{{ selectedEmpresa.loginUrl || '-' }}</div></div>
       </div>
     </div>
 

@@ -71,7 +71,6 @@ export class RotinasService {
   async findAll(pilarId?: string) {
     return this.prisma.rotina.findMany({
       where: {
-        ativo: true,
         ...(pilarId && { pilarId }),
       },
       include: {

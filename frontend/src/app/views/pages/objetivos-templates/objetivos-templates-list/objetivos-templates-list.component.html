@@ -47,63 +47,110 @@
         </div>
         } @else {
         @if (totalObjetivos > 0) {
-        <div class="table-responsive">
-          <table class="table table-hover table-sm mb-2">
-            <thead class="table-light small">
-              <tr>
-                <th>{{ 'OBJETIVOS_TEMPLATES.FIELDS.PILAR' | translate }}</th>
-                <th>
-                  {{ 'OBJETIVOS_TEMPLATES.FIELDS.ENTRADAS' | translate }} /
-                  {{ 'OBJETIVOS_TEMPLATES.FIELDS.SAIDAS' | translate }} /
-                  {{ 'OBJETIVOS_TEMPLATES.FIELDS.MISSAO' | translate }}
-                </th>
-                <th style="width: 100px;">{{ 'COMMON.ACTIONS' | translate }}</th>
-              </tr>
-            </thead>
-            <tbody>
-              @for (objetivo of paginatedObjetivos; track objetivo.id) {
-              <tr>
-                <td>
-                  {{ objetivo.pilar?.nome || '—' }}
-                </td>
-                <td style="white-space: normal;">
-                  <span [ngbTooltip]="objetivo.entradas">{{ objetivo.entradas }}</span><br>
-                  <span [ngbTooltip]="objetivo.saidas">{{ objetivo.saidas }}</span><br>
-                  <span [ngbTooltip]="objetivo.missao">{{ objetivo.missao }}</span>
-                </td>
-                <td class="text-nowrap">
-                  <div class="btn-group btn-group-sm" role="group">
-                    <button class="btn btn-icon text-primary"
-                      (click)="openDetailsOffcanvas(objetivo.id, detailsOffcanvas)"
-                      [title]="'OBJETIVOS_TEMPLATES.DETAILS' | translate">
-                      <i class="feather icon-info"></i>
-                    </button>
+        <div class="desktop-table">
+          <div class="table-responsive">
+            <table class="table table-hover table-sm mb-2">
+              <thead class="table-light small">
+                <tr>
+                  <th>{{ 'OBJETIVOS_TEMPLATES.FIELDS.PILAR' | translate }}</th>
+                  <th>
+                    {{ 'OBJETIVOS_TEMPLATES.FIELDS.ENTRADAS' | translate }} /
+                    {{ 'OBJETIVOS_TEMPLATES.FIELDS.SAIDAS' | translate }} /
+                    {{ 'OBJETIVOS_TEMPLATES.FIELDS.MISSAO' | translate }}
+                  </th>
+                  <th style="width: 100px;">{{ 'COMMON.ACTIONS' | translate }}</th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (objetivo of paginatedObjetivos; track objetivo.id) {
+                <tr>
+                  <td>
+                    {{ objetivo.pilar?.nome || '—' }}
+                  </td>
+                  <td style="white-space: normal;">
+                    <span [ngbTooltip]="objetivo.entradas">{{ objetivo.entradas }}</span><br>
+                    <span [ngbTooltip]="objetivo.saidas">{{ objetivo.saidas }}</span><br>
+                    <span [ngbTooltip]="objetivo.missao">{{ objetivo.missao }}</span>
+                  </td>
+                  <td class="text-nowrap">
+                    <div class="btn-group btn-group-sm" role="group">
+                      <button class="btn btn-icon text-primary"
+                        (click)="openDetailsOffcanvas(objetivo.id, detailsOffcanvas)"
+                        [title]="'OBJETIVOS_TEMPLATES.DETAILS' | translate">
+                        <i class="feather icon-info"></i>
+                      </button>
 
-                    <button class="btn btn-icon text-secondary"
-                      [routerLink]="['/objetivos-templates/editar', objetivo.id]" [title]="'BUTTONS.EDIT' | translate">
-                      <i class="feather icon-edit"></i>
-                    </button>
+                      <button class="btn btn-icon text-secondary"
+                        [routerLink]="['/objetivos-templates/editar', objetivo.id]" [title]="'BUTTONS.EDIT' | translate">
+                        <i class="feather icon-edit"></i>
+                      </button>
 
-                    <button class="btn btn-icon text-danger" (click)="confirmarExclusao(objetivo)"
-                      [title]="'BUTTONS.DELETE' | translate">
-                      <i class="feather icon-trash-2"></i>
-                    </button>
-                  </div>
-                </td>
-              </tr>
-              }
-            </tbody>
-          </table>
+                      <button class="btn btn-icon text-danger" (click)="confirmarExclusao(objetivo)"
+                        [title]="'BUTTONS.DELETE' | translate">
+                        <i class="feather icon-trash-2"></i>
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <div class="mobile-cards">
+          @for (objetivo of paginatedObjetivos; track objetivo.id) {
+          <div class="card objetivo-card">
+            <div class="card-body">
+              <div class="d-flex justify-content-between align-items-start gap-2 mb-2">
+                <div class="objetivo-title">
+                  <div class="fw-semibold text-truncate">{{ objetivo.pilar?.nome || '—' }}</div>
+                </div>
+              </div>
+
+              <div class="objetivo-meta">
+                <div class="meta-row">
+                  <span class="meta-label">{{ 'OBJETIVOS_TEMPLATES.FIELDS.ENTRADAS' | translate }}</span>
+                  <span class="meta-value">{{ objetivo.entradas }}</span>
+                </div>
+                <div class="meta-row">
+                  <span class="meta-label">{{ 'OBJETIVOS_TEMPLATES.FIELDS.SAIDAS' | translate }}</span>
+                  <span class="meta-value">{{ objetivo.saidas }}</span>
+                </div>
+                <div class="meta-row">
+                  <span class="meta-label">{{ 'OBJETIVOS_TEMPLATES.FIELDS.MISSAO' | translate }}</span>
+                  <span class="meta-value">{{ objetivo.missao }}</span>
+                </div>
+              </div>
+
+              <div class="d-flex gap-2 mt-3">
+                <button class="btn btn-outline-primary btn-sm"
+                  (click)="openDetailsOffcanvas(objetivo.id, detailsOffcanvas)"
+                  [title]="'OBJETIVOS_TEMPLATES.DETAILS' | translate">
+                  <i class="feather icon-info"></i>
+                </button>
+                <button class="btn btn-outline-secondary btn-sm"
+                  [routerLink]="['/objetivos-templates/editar', objetivo.id]" [title]="'BUTTONS.EDIT' | translate">
+                  <i class="feather icon-edit"></i>
+                </button>
+                <button class="btn btn-outline-danger btn-sm" (click)="confirmarExclusao(objetivo)"
+                  [title]="'BUTTONS.DELETE' | translate">
+                  <i class="feather icon-trash-2"></i>
+                </button>
+              </div>
+            </div>
+          </div>
+          }
         </div>
         }
 
         <div class="d-flex justify-content-between p-2">
           <span class="text-muted fs-12">
-            Mostrando {{ getStartIndex() + 1 }}-{{ getEndIndex() }} de {{ totalObjetivos }}
-            {{ 'COMMON.ITEMS' | translate }}
+            {{ 'COMMON.SHOWING' | translate }} {{ getStartIndex() + 1 }}-{{ getEndIndex() }} {{ 'COMMON.OF' | translate }} {{
+            totalObjetivos }} {{ 'COMMON.ITEMS' | translate }}
           </span>
           <ngb-pagination [(page)]="page" [pageSize]="pageSize" [collectionSize]="totalObjetivos" size="sm"
-            [rotate]="true" [boundaryLinks]="true">
+            [rotate]="true" [maxSize]="3" [boundaryLinks]="false">
           </ngb-pagination>
         </div>
         }

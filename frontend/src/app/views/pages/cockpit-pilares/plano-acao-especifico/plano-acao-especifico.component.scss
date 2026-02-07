@@ -441,3 +441,46 @@ span.bg-gray-700 {
   border: 1px solid;
 }
 
+// Responsive: Desktop Table / Mobile Cards
+.desktop-table {
+  display: block;
+}
+
+.mobile-cards {
+  display: none;
+}
+
+@media (max-width: 768px) {
+  .desktop-table {
+    display: none;
+  }
+
+  .mobile-cards {
+    display: block;
+  }
+
+  .acao-card {
+    border: 1px solid var(--bs-border-color);
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+
+    .meta-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 0.4rem 0;
+      border-bottom: 1px solid var(--bs-border-color-translucent);
+
+      &:last-child {
+        border-bottom: none;
+      }
+    }
+
+    .causa-row {
+      background: var(--bs-gray-100);
+      border-radius: 0.25rem;
+      padding: 0.4rem 0.5rem;
+      margin-bottom: 0.25rem;
+    }
+  }
+}
+

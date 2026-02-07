@@ -13,7 +13,7 @@
                 } @else if (!isEditMode && wizardStep === 1) {
                 {{ 'COMPANIES.CREATE' | translate }}
                 } @else if (wizardStep === 2) {
-                Configuração de Usuários e Pilares
+                {{ 'COMPANIES.WIZARD.CONFIG_USERS_PILARS' | translate }}
                 }
             </li>
         </ol>
@@ -36,7 +36,7 @@
             {{ 'BUTTONS.UPDATE' | translate }}
             } @else {
             <i class="feather icon-arrow-right me-1"></i>
-            Próximo: Usuários e Pilares
+            {{ 'COMPANIES.WIZARD.NEXT_USERS_PILARS' | translate }}
             }
         </button>
 
@@ -45,7 +45,7 @@
 
         <button type="button" (click)="concluirCadastro()" class="btn btn-success">
             <i class="feather icon-check me-1"></i>
-            Concluir Cadastro
+            {{ 'COMPANIES.WIZARD.FINISH' | translate }}
         </button>
         }
 
@@ -68,7 +68,7 @@
                     <span>1</span>
                     }
                 </div>
-                <span class="ms-2 me-3" [class.fw-bold]="wizardStep === 1">Dados Básicos</span>
+                <span class="ms-2 me-3" [class.fw-bold]="wizardStep === 1">{{ 'COMPANIES.WIZARD.STEP_BASIC' | translate }}</span>
             </div>
 
             <div class="border-top mx-3" style="width: 80px;"></div>
@@ -80,8 +80,8 @@
                     style="width: 32px; height: 32px;">
                     <span>2</span>
                 </div>
-                <span class="ms-2" [class.fw-bold]="wizardStep === 2" [class.text-muted]="wizardStep === 1">Usuários e
-                    Pilares</span>
+                <span class="ms-2" [class.fw-bold]="wizardStep === 2" [class.text-muted]="wizardStep === 1">{{
+                    'COMPANIES.WIZARD.STEP_USERS_PILARS' | translate }}</span>
             </div>
         </div>
     </div>
@@ -171,7 +171,7 @@
                                     <label class="form-label" for="tipoNegocio">{{ 'COMPANIES.TIPO_NEGOCIO' |
                                         translate }}</label>
                                     <ng-select [items]="tiposNegocioList" [addTag]="true" [searchable]="true"
-                                        [clearable]="true" placeholder="Digite para buscar ou criar novo..."
+                                        [clearable]="true" placeholder="{{ 'COMPANIES.FORM.BUSINESS_TYPE_PLACEHOLDER' | translate }}"
                                         formControlName="tipoNegocio"
                                         [class.is-invalid]="isFieldInvalid('tipoNegocio')">
                                     </ng-select>
@@ -190,7 +190,7 @@
                                         }}</label>
                                     <input type="text" class="form-control"
                                         [class.is-invalid]="isFieldInvalid('loginUrl')" id="loginUrl"
-                                        formControlName="loginUrl" placeholder="ex: minha-empresa" />
+                                        formControlName="loginUrl" placeholder="{{ 'COMPANIES.FORM.LOGIN_URL_PLACEHOLDER' | translate }}" />
                                     @if (isFieldInvalid('loginUrl')) {
                                     <div class="invalid-feedback d-block">
                                         {{ getFieldError('loginUrl') }}
@@ -212,12 +212,12 @@
                             <div class="card-body text-center">
                                 <div class="mb-3 d-flex justify-content-center">
                                     @if (previewUrl || logoUrl) {
-                                    <img [src]="previewUrl || logoUrl" alt="Logo da empresa" class="img-fluid rounded"
+                                    <img [src]="previewUrl || logoUrl" alt="{{ 'COMPANIES.FORM.LOGO_ALT' | translate }}" class="img-fluid rounded"
                                         style="max-height: 140px">
                                     } @else {
                                     <div class="d-flex align-items-center justify-content-center bg-light rounded text-muted w-100"
                                         style="height: 115px;">
-                                        <span>Logotipo 300 x 115</span>
+                                        <span>{{ 'COMPANIES.FORM.LOGO_DIMENSIONS' | translate }}</span>
                                     </div>
                                     }
                                 </div>
@@ -245,7 +245,7 @@
                                 }
 
                                 <p class="text-muted text-sm mt-3 mb-0">
-                                    Formatos aceitos: JPG, PNG, WebP (máx 5MB)
+                                    {{ 'COMPANIES.FORM.LOGO_FORMATS' | translate }}
                                 </p>
                             </div>
                         </div>
@@ -265,32 +265,32 @@
             <div>
                 <h3 class="card-title mb-1">
                     <i class="feather icon-calendar me-2"></i>
-                    Período de Mentoria
+                    {{ 'COMPANIES.MENTORIA.TITLE' | translate }}
                 </h3>
-                <small class="text-muted">Gerencie o ciclo atual e acompanhe o histórico da empresa</small>
+                <small class="text-muted">{{ 'COMPANIES.MENTORIA.SUBTITLE' | translate }}</small>
             </div>
             <div class="d-flex flex-wrap gap-2 align-items-center">
                 @if (!isPerfilCliente) {
                 @if (!periodoAtivo) {
                 <button type="button" class="btn btn-sm btn-primary" (click)="abrirModalCriarPeriodo()" [disabled]="!isEditMode">
                     <i class="feather icon-plus me-1"></i>
-                    Criar Período
+                    {{ 'COMPANIES.MENTORIA.CREATE_PERIOD' | translate }}
                 </button>
                 }
                 @if (periodoAtivo) {
                 <button type="button" class="btn btn-sm btn-outline-primary" (click)="renovarPeriodo()" [disabled]="!isEditMode">
                     <i class="feather icon-refresh-cw me-1"></i>
-                    Renovar Mentoria
+                    {{ 'COMPANIES.MENTORIA.RENEW' | translate }}
                 </button>
                 <button type="button" class="btn btn-sm btn-outline-danger" (click)="encerrarPeriodo()">
                     <i class="feather icon-x-circle me-1"></i>
-                    Encerrar
+                    {{ 'COMPANIES.MENTORIA.CLOSE' | translate }}
                 </button>
                 }
                 } @else {
                 <span class="badge bg-info">
                     <i class="feather icon-info me-1"></i>
-                    Somente Visualização
+                    {{ 'COMPANIES.VIEW_ONLY' | translate }}
                 </span>
                 }
             </div>
@@ -302,19 +302,19 @@
                         <i class="feather" [class.icon-check-circle]="periodoAtivo" [class.icon-alert-circle]="!periodoAtivo"></i>
                     </div>
                     <div>
-                        <span class="mentoria-status-title">Status</span>
+                        <span class="mentoria-status-title">{{ 'COMMON.STATUS' | translate }}</span>
                         @if (periodoAtivo) {
-                        <h5 class="mb-1">Período {{ periodoAtivo.numero }} ativo</h5>
+                        <h5 class="mb-1">{{ 'COMPANIES.PERIODO' | translate }} {{ periodoAtivo.numero }} {{ 'COMPANIES.MENTORIA.ACTIVE' | translate }}</h5>
                         <span class="text-muted">{{ formatarDataPeriodo(periodoAtivo.dataInicio) }} - {{ formatarDataPeriodo(periodoAtivo.dataFim) }}</span>
                         } @else {
-                        <h5 class="mb-1">Sem mentoria ativa</h5>
-                        <p class="mb-0 text-muted">Crie ou renove para iniciar um novo ciclo.</p>
+                        <h5 class="mb-1">{{ 'COMPANIES.MENTORIA.NO_ACTIVE' | translate }}</h5>
+                        <p class="mb-0 text-muted">{{ 'COMPANIES.MENTORIA.NO_ACTIVE_HELP' | translate }}</p>
                         }
                     </div>
                 </div>
                 <div class="mentoria-info">
                     <div class="mentoria-info-item">
-                        <span>Início Mentoria</span>
+                        <span>{{ 'COMPANIES.MENTORIA.START' | translate }}</span>
                         <strong>
                             @if (periodoAtivo) {
                             {{ formatarDataCompletaPeriodo(periodoAtivo.dataInicio) }}
@@ -324,7 +324,7 @@
                         </strong>
                     </div>
                     <div class="mentoria-info-item">
-                        <span>Término Previsto</span>
+                        <span>{{ 'COMPANIES.MENTORIA.END_PLANNED' | translate }}</span>
                         <strong>
                             @if (periodoAtivo) {
                             {{ formatarDataCompletaPeriodo(periodoAtivo.dataFim) }}
@@ -334,7 +334,7 @@
                         </strong>
                     </div>
                     <div class="mentoria-info-item">
-                        <span>Encerramento real</span>
+                        <span>{{ 'COMPANIES.MENTORIA.END_ACTUAL' | translate }}</span>
                         <strong>
                             @if (periodoAtivo?.dataEncerramento) {
                             {{ periodoAtivo.dataEncerramento | date:'dd/MM/yyyy HH:mm':'America/Sao_Paulo' }}
@@ -350,43 +350,85 @@
             @if (periodosMentoriaEncerrados.length > 0) {
             <div class="mt-4">
                 <div class="d-flex align-items-center justify-content-between mb-2">
-                    <h6 class="mb-0">Histórico de Períodos</h6>
-                    <!-- <span class="badge bg-light text-muted">{{ periodosMentoria.length }} registros</span> -->
+                    <h6 class="mb-0">{{ 'COMPANIES.MENTORIA.HISTORY_TITLE' | translate }}</h6>
                 </div>
-                <div class="table-responsive mentoria-table">
-                    <table class="table table-sm table-hover align-middle">
-                        <thead class="table-light">
-                            <tr>
-                                <th style="width: 10%;">Período</th>
-                                <th style="width: 20%;">Início</th>
-                                <th style="width: 20%;">Fim</th>
-                                <th style="width: 25%;">Contratação</th>
-                                <th style="width: 25%;">Encerramento</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            @for (periodo of periodosMentoriaEncerrados; track periodo.id) {
-                            <tr [class.table-success]="periodo.ativo">
-                                <td class="text-center">
-                                    <span class="badge" [class.bg-success]="periodo.ativo"
+                
+                <div class="desktop-table">
+                    <div class="table-responsive mentoria-table">
+                        <table class="table table-sm table-hover align-middle">
+                            <thead class="table-light">
+                                <tr>
+                                    <th style="width: 10%;">{{ 'COMPANIES.MENTORIA.TABLE.PERIOD' | translate }}</th>
+                                    <th style="width: 20%;">{{ 'COMPANIES.MENTORIA.TABLE.START' | translate }}</th>
+                                    <th style="width: 20%;">{{ 'COMPANIES.MENTORIA.TABLE.END' | translate }}</th>
+                                    <th style="width: 25%;">{{ 'COMPANIES.MENTORIA.TABLE.CONTRACT' | translate }}</th>
+                                    <th style="width: 25%;">{{ 'COMPANIES.MENTORIA.TABLE.CLOSE' | translate }}</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @for (periodo of periodosMentoriaEncerrados; track periodo.id) {
+                                <tr [class.table-success]="periodo.ativo">
+                                    <td class="text-center">
+                                        <span class="badge" [class.bg-success]="periodo.ativo"
+                                            [class.bg-secondary]="!periodo.ativo">
+                                            {{ periodo.numero }}
+                                        </span>
+                                    </td>
+                                    <td>{{ formatarDataCompletaPeriodo(periodo.dataInicio) }}</td>
+                                    <td>{{ formatarDataCompletaPeriodo(periodo.dataFim) }}</td>
+                                    <td>{{ periodo.dataContratacao | date:'dd/MM/yyyy HH:mm':'America/Sao_Paulo' }}</td>
+                                    <td>
+                                        @if (periodo.dataEncerramento) {
+                                        {{ periodo.dataEncerramento | date:'dd/MM/yyyy HH:mm':'America/Sao_Paulo' }}
+                                        } @else {
+                                        <span class="text-muted">—</span>
+                                        }
+                                    </td>
+                                </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <div class="mobile-cards">
+                    @for (periodo of periodosMentoriaEncerrados; track periodo.id) {
+                    <div class="card periodo-card mb-2">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between align-items-start mb-2">
+                                <div class="fw-semibold">
+                                    <span class="badge me-2" [class.bg-success]="periodo.ativo"
                                         [class.bg-secondary]="!periodo.ativo">
                                         {{ periodo.numero }}
                                     </span>
-                                </td>
-                                <td>{{ formatarDataCompletaPeriodo(periodo.dataInicio) }}</td>
-                                <td>{{ formatarDataCompletaPeriodo(periodo.dataFim) }}</td>
-                                <td>{{ periodo.dataContratacao | date:'dd/MM/yyyy HH:mm':'America/Sao_Paulo' }}</td>
-                                <td>
+                                    {{ 'COMPANIES.MENTORIA.TABLE.PERIOD' | translate }}
+                                </div>
+                            </div>
+                            <div class="meta-row">
+                                <small class="text-muted">{{ 'COMPANIES.MENTORIA.TABLE.START' | translate }}:</small>
+                                <small>{{ formatarDataCompletaPeriodo(periodo.dataInicio) }}</small>
+                            </div>
+                            <div class="meta-row">
+                                <small class="text-muted">{{ 'COMPANIES.MENTORIA.TABLE.END' | translate }}:</small>
+                                <small>{{ formatarDataCompletaPeriodo(periodo.dataFim) }}</small>
+                            </div>
+                            <div class="meta-row">
+                                <small class="text-muted">{{ 'COMPANIES.MENTORIA.TABLE.CONTRACT' | translate }}:</small>
+                                <small>{{ periodo.dataContratacao | date:'dd/MM/yyyy HH:mm':'America/Sao_Paulo' }}</small>
+                            </div>
+                            <div class="meta-row">
+                                <small class="text-muted">{{ 'COMPANIES.MENTORIA.TABLE.CLOSE' | translate }}:</small>
+                                <small>
                                     @if (periodo.dataEncerramento) {
                                     {{ periodo.dataEncerramento | date:'dd/MM/yyyy HH:mm':'America/Sao_Paulo' }}
                                     } @else {
                                     <span class="text-muted">—</span>
                                     }
-                                </td>
-                            </tr>
-                            }
-                        </tbody>
-                    </table>
+                                </small>
+                            </div>
+                        </div>
+                    </div>
+                    }
                 </div>
             </div>
             }
@@ -398,17 +440,17 @@
         <div class="card-header d-flex justify-content-between align-items-center">
             <h3 class="card-title mb-0">
                 <i class="feather icon-users me-2"></i>
-                Usuários Associados
+                {{ 'COMPANIES.USERS_SECTION.TITLE' | translate }}
             </h3>
             @if (!isPerfilCliente) {
             <button type="button" class="btn btn-sm btn-primary" (click)="abrirModalNovoUsuario()">
                 <i class="feather icon-user-plus me-1"></i>
-                Criar Novo Usuário
+                {{ 'COMPANIES.USERS_SECTION.CREATE' | translate }}
             </button>
             } @else {
             <span class="badge bg-info">
                 <i class="feather icon-info me-1"></i>
-                Somente Visualização
+                {{ 'COMPANIES.VIEW_ONLY' | translate }}
             </span>
             }
         </div>
@@ -417,10 +459,10 @@
             @if (!isPerfilCliente) {
             <div class="mb-4">
                 <label class="form-label">
-                    Selecione ou adicione usuários à empresa
+                    {{ 'COMPANIES.USERS_SECTION.SELECT_HELP' | translate }}
                 </label>
                 <ng-select [items]="usuariosDisponiveis" bindLabel="nome" [searchable]="true"
-                    [clearable]="true" placeholder="Digite o nome" (change)="associarUsuario($event)">
+                    [clearable]="true" placeholder="{{ 'COMPANIES.USERS_SECTION.SEARCH_PLACEHOLDER' | translate }}" (change)="associarUsuario($event)">
                     <ng-template ng-option-tmp let-item="item">
                         <div class="d-flex align-items-center">
                             <app-user-avatar [nome]="item.nome" [fotoUrl]="item.fotoUrl" [size]="'small'"
@@ -433,52 +475,90 @@
                     </ng-template>
                 </ng-select>
                 <small class="text-muted">
-                    Selecione um usuário existente ou crie um novo usuário escrevendo o nome completo dele.
+                    {{ 'COMPANIES.USERS_SECTION.SELECT_TIP' | translate }}
                 </small>
             </div>
             }
 
             <!-- Lista de usuários associados -->
             @if (usuariosAssociados.length > 0) {
-            <div class="table-responsive">
-                <table class="table table-hover table-sm">
-                    <thead class="table-light">
-                        <tr>
-                            <th>Usuário</th>
-                            <th>Cargo</th>
-                            <th>Telefone</th>
-                            <th>Perfil</th>
-                            <th class="text-end">Ações</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        @for (usuario of usuariosAssociados; track usuario.id) {
-                        <tr>
-                            <td class="text-muted small">{{ usuario.nome }}</td>
-                            <td class="text-muted small">{{ usuario.cargo }}</td>
-                            <td class="text-muted small">{{ usuario.telefone }}</td>
-                            <td>
+            <div class="desktop-table">
+                <div class="table-responsive">
+                    <table class="table table-hover table-sm">
+                        <thead class="table-light">
+                            <tr>
+                                <th>{{ 'COMPANIES.USERS_TABLE.USER' | translate }}</th>
+                                <th>{{ 'COMPANIES.USERS_TABLE.CARGO' | translate }}</th>
+                                <th>{{ 'COMPANIES.USERS_TABLE.PHONE' | translate }}</th>
+                                <th>{{ 'COMPANIES.USERS_TABLE.ROLE' | translate }}</th>
+                                <th class="text-end">{{ 'COMMON.ACTIONS' | translate }}</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @for (usuario of usuariosAssociados; track usuario.id) {
+                            <tr>
+                                <td class="text-muted small">{{ usuario.nome }}</td>
+                                <td class="text-muted small">{{ usuario.cargo }}</td>
+                                <td class="text-muted small">{{ usuario.telefone }}</td>
+                                <td>
+                                    @if (isPerfilObject(usuario.perfil)) {
+                                    <span class="badge bg-info small">{{ usuario.perfil.nome }}</span>
+                                    }
+                                </td>
+                                <td class="text-muted text-end small">
+                                    @if (!isPerfilCliente) {
+                                    <button type="button" class="btn btn-icon text-danger"
+                                        (click)="desassociarUsuario(usuario)" title="{{ 'COMPANIES.USERS_SECTION.UNLINK' | translate }}">
+                                        <i class="feather icon-trash-2"></i>
+                                    </button>
+                                    }
+                                </td>
+                            </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div class="mobile-cards">
+                @for (usuario of usuariosAssociados; track usuario.id) {
+                <div class="card usuario-card mb-2">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-start mb-2">
+                            <div class="fw-semibold">{{ usuario.nome }}</div>
+                        </div>
+                        <div class="meta-row">
+                            <small class="text-muted">{{ 'COMPANIES.USERS_TABLE.CARGO' | translate }}:</small>
+                            <small>{{ usuario.cargo }}</small>
+                        </div>
+                        <div class="meta-row">
+                            <small class="text-muted">{{ 'COMPANIES.USERS_TABLE.PHONE' | translate }}:</small>
+                            <small>{{ usuario.telefone }}</small>
+                        </div>
+                        <div class="meta-row">
+                            <small class="text-muted">{{ 'COMPANIES.USERS_TABLE.ROLE' | translate }}:</small>
+                            <small>
                                 @if (isPerfilObject(usuario.perfil)) {
                                 <span class="badge bg-info small">{{ usuario.perfil.nome }}</span>
                                 }
-                            </td>
-                            <td class="text-muted text-end small">
-                                @if (!isPerfilCliente) {
-                                <button type="button" class="btn btn-icon text-danger"
-                                    (click)="desassociarUsuario(usuario)" title="Desassociar usuário">
-                                    <i class="feather icon-trash-2"></i>
-                                </button>
-                                }
-                            </td>
-                        </tr>
+                            </small>
+                        </div>
+                        @if (!isPerfilCliente) {
+                        <div class="d-flex gap-2 mt-3">
+                            <button type="button" class="btn btn-outline-danger btn-sm"
+                                (click)="desassociarUsuario(usuario)" title="{{ 'COMPANIES.USERS_SECTION.UNLINK' | translate }}">
+                                <i class="feather icon-trash-2"></i> {{ 'COMPANIES.USERS_SECTION.UNLINK' | translate }}
+                            </button>
+                        </div>
                         }
-                    </tbody>
-                </table>
+                    </div>
+                </div>
+                }
             </div>
             } @else {
             <div class="alert alert-info mb-0">
                 <i class="feather icon-info me-2"></i>
-                Nenhum usuário associado a esta empresa ainda.
+                {{ 'COMPANIES.USERS_SECTION.EMPTY' | translate }}
             </div>
             }
         </div>
@@ -489,17 +569,17 @@
         <div class="card-header d-flex justify-content-between align-items-center">
             <h3 class="card-title mb-0">
                 <i class="feather icon-layers me-2"></i>
-                Pilares Associados
+                {{ 'COMPANIES.PILARS_SECTION.TITLE' | translate }}
             </h3>
             @if (isPerfilCliente) {
             <span class="badge bg-info">
                 <i class="feather icon-info me-1"></i>
-                Somente Visualização
+                {{ 'COMPANIES.VIEW_ONLY' | translate }}
             </span>
             } @else {
             <button type="button" class="btn btn-sm btn-primary" (click)="abrirModalNovoPilar()">
                 <i class="feather icon-plus me-1"></i>
-                Criar Novo Pilar
+                {{ 'COMPANIES.PILARS_SECTION.CREATE' | translate }}
             </button>
             }
         </div>
@@ -526,7 +606,7 @@
                     </ng-template>
                 </ng-select> -->
                 <small class="text-muted">
-                    Arraste os pilares para reordenar ou remova os existentes.
+                    {{ 'COMPANIES.PILARS_SECTION.REORDER_HELP' | translate }}
                 </small>
             </div>
             }
@@ -538,11 +618,13 @@
                 <div class="pilar-item card mb-2" cdkDrag>
                     <div class="card-body p-2">
                         <div class="d-flex align-items-center gap-2" cdkDragHandle>
-                            <i class="bi bi-grip-vertical drag-handle" ngbTooltip="Arrastar para reordenar"></i>
+                            <span title="{{ 'COMPANIES.PILARS_SECTION.REORDER_TOOLTIP' | translate }}">
+                                <i class="bi bi-grip-vertical drag-handle"></i>
+                            </span>
                             <span class="badge bg-secondary small">{{ pilarEmpresa.ordem }}</span>
                             <span class="flex-grow-1 small">{{ pilarEmpresa.nome }}</span>
                             <button type="button" class="btn btn-icon text-danger"
-                                (click)="removePillarAssociation(pilarEmpresa)" title="Remover pilar">
+                                (click)="removePillarAssociation(pilarEmpresa)" title="{{ 'COMPANIES.PILARS_SECTION.REMOVE' | translate }}">
                                 <i class="feather icon-trash-2"></i>
                             </button>
                         </div>
@@ -553,7 +635,7 @@
             } @else {
             <div class="alert alert-info mb-0">
                 <i class="feather icon-info me-2"></i>
-                Nenhum pilar associado a esta empresa ainda.
+                {{ 'COMPANIES.PILARS_SECTION.EMPTY' | translate }}
             </div>
             }
         </div>
@@ -565,7 +647,7 @@
         <div class="card-body">
             <small class="text-muted d-block mt-2">
                 <i class="feather icon-info me-1"></i>
-                Usuários e pilares são salvos automaticamente conforme você os adiciona.
+                {{ 'COMPANIES.PILARS_SECTION.AUTO_SAVE' | translate }}
             </small>
         </div>
     </div>

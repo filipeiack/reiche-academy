@@ -31,8 +31,59 @@
   min-width: 720px;
 }
 
+// Desktop/Mobile toggle pattern
+.desktop-table {
+  display: block;
+}
+
+.mobile-cards {
+  display: none;
+}
+
+// Mobile cards styling
+.mes-card {
+  border-left: 4px solid var(--bs-primary);
+  
+  .card-body {
+    padding: 1rem;
+  }
+
+  .form-label {
+    font-weight: 500;
+  }
+
+  .resultados-card {
+    border: 1px solid var(--bs-border-color);
+  }
+
+  .meta-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.25rem 0;
+  }
+}
+
+.totais-card {
+  .meta-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.25rem 0;
+  }
+}
+
 // Ajustes responsivos para o header do indicador em mobile
 @media (max-width: 768px) {
+  // Toggle desktop/mobile
+  .desktop-table {
+    display: none !important;
+  }
+
+  .mobile-cards {
+    display: block !important;
+  }
+
   .valores-header {
     flex-direction: column;
     align-items: stretch !important;

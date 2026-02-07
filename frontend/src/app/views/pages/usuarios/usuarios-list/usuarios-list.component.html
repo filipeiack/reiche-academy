@@ -46,89 +46,151 @@
           </div> -->
         </div>
 
-        <div class="table-responsive">
-
-          @if (loading) {
+        @if (loading) {
           <div class="text-center py-5">
             <div class="spinner-border text-primary" role="status">
               <span class="visually-hidden">{{ 'COMMON.LOADING' | translate }}...</span>
             </div>
           </div>
           } @else {
-          <div class="table-responsive">
-            <table class="table table-hover table-sm mb-2">
-              <thead class="table-light">
-                <tr>
-                  <!-- <th><input class="form-check-input" type="checkbox" [(ngModel)]="headerCheckboxChecked"
-                      (change)="toggleHeaderCheckbox()"></th> -->
-                  <th scope="col" sortable="name" (sort)="onSort($event)">{{ 'USERS.NAME' | translate }}</th>
-                  <th scope="col" sortable="email" (sort)="onSort($event)">{{ 'USERS.EMAIL' | translate }}</th>
-                  <th>{{ 'USERS.ROLE' | translate }}</th>
-                  <th>{{ 'USERS.STATUS' | translate }}</th>
-                  <th>{{ 'COMMON.ACTIONS' | translate }}</th>
-                </tr>
-              </thead>
-              <tbody>
-                @for (usuario of paginatedUsuarios; track usuario.id) {
-                <tr>
-                  <!-- <td>
-                    <input class="form-check-input" type="checkbox" [checked]="isUsuarioSelected(usuario.id)"
-                      (change)="toggleUsuarioSelection(usuario.id)">
-                  </td> -->
-                  <td>{{ usuario.nome }}</td>
-                  <td class="text-muted">{{ usuario.email }}</td>
-                  <td>{{ getPerfilLabel(usuario.perfil) }}</td>
-                  <td class="text-muted">
-                    <!-- <span class="badge" [ngClass]="{'bg-success': usuario.ativo, 'bg-danger': !usuario.ativo}"> -->
-                    {{ usuario.ativo ? ('COMMON.ACTIVE' | translate) : ('COMMON.INACTIVE' | translate) }}
-                    <!-- </span> -->
-                  </td>
-                  <td class="text-nowrap">
-                    <div class="btn-group btn-group-sm" role="group">
-                      <button class="btn btn-icon text-primary"
-                        (click)="openDetailsOffcanvas(usuario.id, detailsOffcanvas)"
-                        [title]="'Detalhes do usuário' | translate">
-                        <i class="feather icon-info"></i>
-                      </button>
-                      @if (isAdmin) {
+          <div class="desktop-table">
+            <div class="table-responsive">
+              <table class="table table-hover table-sm mb-2">
+                <thead class="table-light">
+                  <tr>
+                    <!-- <th><input class="form-check-input" type="checkbox" [(ngModel)]="headerCheckboxChecked"
+                        (change)="toggleHeaderCheckbox()"></th> -->
+                    <th scope="col" sortable="name" (sort)="onSort($event)">{{ 'USERS.NAME' | translate }}</th>
+                    <th scope="col" sortable="email" (sort)="onSort($event)">{{ 'USERS.EMAIL' | translate }}</th>
+                    <th>{{ 'USERS.ROLE' | translate }}</th>
+                    <th>{{ 'USERS.STATUS' | translate }}</th>
+                    <th>{{ 'COMMON.ACTIONS' | translate }}</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  @for (usuario of paginatedUsuarios; track usuario.id) {
+                  <tr>
+                    <!-- <td>
+                      <input class="form-check-input" type="checkbox" [checked]="isUsuarioSelected(usuario.id)"
+                        (change)="toggleUsuarioSelection(usuario.id)">
+                    </td> -->
+                    <td>{{ usuario.nome }}</td>
+                    <td class="text-muted">{{ usuario.email }}</td>
+                    <td>{{ getPerfilLabel(usuario.perfil) }}</td>
+                    <td class="text-muted">
+                      <!-- <span class="badge" [ngClass]="{'bg-success': usuario.ativo, 'bg-danger': !usuario.ativo}"> -->
+                      {{ usuario.ativo ? ('COMMON.ACTIVE' | translate) : ('COMMON.INACTIVE' | translate) }}
+                      <!-- </span> -->
+                    </td>
+                    <td class="text-nowrap">
+                      <div class="btn-group btn-group-sm" role="group">
                         <button class="btn btn-icon text-primary"
-                          (click)="toggleStatusUsuario(usuario.id, usuario.nome, usuario.ativo)"
-                          [disabled]="isCurrentUser(usuario.id)"
-                          [class.opacity-50]="isCurrentUser(usuario.id)"
-                          [title]="isCurrentUser(usuario.id) ? 'Você não pode inativar sua própria conta' : (usuario.ativo ? 'Inativar usuário' : 'Ativar usuário')">
-                          <i class="feather"
-                            [ngClass]="{'icon-toggle-right': usuario.ativo, 'icon-toggle-left text-danger': !usuario.ativo}"></i>
+                          (click)="openDetailsOffcanvas(usuario.id, detailsOffcanvas)"
+                          [title]="'Detalhes do usuário' | translate">
+                          <i class="feather icon-info"></i>
                         </button>
-                      }
-                      @if (isAdmin) {
-                        <button data-testid="edit-usuario-button" class="btn btn-icon text-secondary"
-                          [routerLink]="['/usuarios', usuario.id, 'editar']" title="{{ 'BUTTONS.EDIT' | translate }}">
-                          <i class="feather icon-edit"></i>
-                        </button>
-                      }
-                      @if (isAdmin) {
-                        <button data-testid="delete-usuario-button" class="btn btn-icon text-danger"
-                          (click)="deleteUsuario(usuario.id, usuario.nome)"
-                          [disabled]="isCurrentUser(usuario.id)"
-                          [class.opacity-50]="isCurrentUser(usuario.id)"
-                          [title]="isCurrentUser(usuario.id) ? 'Você não pode deletar sua própria conta' : ('BUTTONS.DELETE' | translate)">
-                          <i class="feather icon-trash-2"></i>
-                        </button>
-                      }
-                    </div>
-                  </td>
-                </tr>
+                        @if (isAdmin) {
+                          <button class="btn btn-icon text-primary"
+                            (click)="toggleStatusUsuario(usuario.id, usuario.nome, usuario.ativo)"
+                            [disabled]="isCurrentUser(usuario.id)"
+                            [class.opacity-50]="isCurrentUser(usuario.id)"
+                            [title]="isCurrentUser(usuario.id) ? 'Você não pode inativar sua própria conta' : (usuario.ativo ? 'Inativar usuário' : 'Ativar usuário')">
+                            <i class="feather"
+                              [ngClass]="{'icon-toggle-right': usuario.ativo, 'icon-toggle-left text-danger': !usuario.ativo}"></i>
+                          </button>
+                        }
+                        @if (isAdmin) {
+                          <button data-testid="edit-usuario-button" class="btn btn-icon text-secondary"
+                            [routerLink]="['/usuarios', usuario.id, 'editar']" title="{{ 'BUTTONS.EDIT' | translate }}">
+                            <i class="feather icon-edit"></i>
+                          </button>
+                        }
+                        @if (isAdmin) {
+                          <button data-testid="delete-usuario-button" class="btn btn-icon text-danger"
+                            (click)="deleteUsuario(usuario.id, usuario.nome)"
+                            [disabled]="isCurrentUser(usuario.id)"
+                            [class.opacity-50]="isCurrentUser(usuario.id)"
+                            [title]="isCurrentUser(usuario.id) ? 'Você não pode deletar sua própria conta' : ('BUTTONS.DELETE' | translate)">
+                            <i class="feather icon-trash-2"></i>
+                          </button>
+                        }
+                      </div>
+                    </td>
+                  </tr>
 
-                } @empty {
-                <tr>
-                  <td colspan="7" class="border-bottom text-center text-muted py-4">
-                    {{ 'COMMON.NO_DATA' | translate }}
-                  </td>
-                </tr>
-                }
+                  } @empty {
+                  <tr>
+                    <td colspan="7" class="border-bottom text-center text-muted py-4">
+                      {{ 'COMMON.NO_DATA' | translate }}
+                    </td>
+                  </tr>
+                  }
 
-              </tbody>
-            </table>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <div class="mobile-cards">
+            @for (usuario of paginatedUsuarios; track usuario.id) {
+            <div class="card usuario-card">
+              <div class="card-body">
+                <div class="d-flex justify-content-between align-items-start gap-2 mb-2">
+                  <div class="usuario-title">
+                    <div class="fw-semibold text-truncate">{{ usuario.nome }}</div>
+                    <small class="text-muted">{{ usuario.email }}</small>
+                  </div>
+                  <span class="badge" [ngClass]="{ 'bg-success': usuario.ativo, 'bg-danger': !usuario.ativo }">
+                    {{ usuario.ativo ? ('COMMON.ACTIVE' | translate) : ('COMMON.INACTIVE' | translate) }}
+                  </span>
+                </div>
+
+                <div class="usuario-meta">
+                  <div class="meta-row">
+                    <span class="meta-label">{{ 'USERS.ROLE' | translate }}</span>
+                    <span class="meta-value">{{ getPerfilLabel(usuario.perfil) }}</span>
+                  </div>
+                </div>
+
+                <div class="d-flex gap-2 mt-3">
+                  <button class="btn btn-outline-primary btn-sm"
+                    (click)="openDetailsOffcanvas(usuario.id, detailsOffcanvas)"
+                    [title]="'Detalhes do usuário' | translate">
+                    <i class="feather icon-info"></i>
+                  </button>
+                  @if (isAdmin) {
+                    <button class="btn btn-outline-primary btn-sm"
+                      (click)="toggleStatusUsuario(usuario.id, usuario.nome, usuario.ativo)"
+                      [disabled]="isCurrentUser(usuario.id)"
+                      [class.opacity-50]="isCurrentUser(usuario.id)"
+                      [title]="isCurrentUser(usuario.id) ? 'Você não pode inativar sua própria conta' : (usuario.ativo ? 'Inativar usuário' : 'Ativar usuário')">
+                      <i class="feather"
+                        [ngClass]="{'icon-toggle-right': usuario.ativo, 'icon-toggle-left text-danger': !usuario.ativo}"></i>
+                    </button>
+                  }
+                  @if (isAdmin) {
+                    <button data-testid="edit-usuario-button" class="btn btn-outline-secondary btn-sm"
+                      [routerLink]="['/usuarios', usuario.id, 'editar']" title="{{ 'BUTTONS.EDIT' | translate }}">
+                      <i class="feather icon-edit"></i>
+                    </button>
+                  }
+                  @if (isAdmin) {
+                    <button data-testid="delete-usuario-button" class="btn btn-outline-danger btn-sm"
+                      (click)="deleteUsuario(usuario.id, usuario.nome)"
+                      [disabled]="isCurrentUser(usuario.id)"
+                      [class.opacity-50]="isCurrentUser(usuario.id)"
+                      [title]="isCurrentUser(usuario.id) ? 'Você não pode deletar sua própria conta' : ('BUTTONS.DELETE' | translate)">
+                      <i class="feather icon-trash-2"></i>
+                    </button>
+                  }
+                </div>
+              </div>
+            </div>
+            } @empty {
+            <div class="text-center text-muted py-4">
+              {{ 'COMMON.NO_DATA' | translate }}
+            </div>
+            }
           </div>
 
           <!-- Paginacao -->
@@ -140,18 +202,17 @@
             </select> -->
 
             <span class="text-muted fs-12">
-              Mostrando {{ getStartIndex() + 1 }}-{{ getEndIndex() }} de {{ filteredUsuarios.length }} {{ 'COMMON.ITEMS'
-              | translate }}
+              {{ 'COMMON.SHOWING' | translate }} {{ getStartIndex() + 1 }}-{{ getEndIndex() }} {{ 'COMMON.OF' | translate }} {{
+              filteredUsuarios.length }} {{ 'COMMON.ITEMS' | translate }}
             </span>
 
             @if (totalPages > 1) {
             <ngb-pagination [collectionSize]="filteredUsuarios.length" [(page)]="currentPage" size="sm"
-              [pageSize]="pageSize" (pageChange)="paginatedUsuarios">
+              [pageSize]="pageSize" (pageChange)="paginatedUsuarios"  [maxSize]="3" [boundaryLinks]="false">
             </ngb-pagination>
             }
           </div>
           }
-        </div>
       </div>
     </div>
   </div>

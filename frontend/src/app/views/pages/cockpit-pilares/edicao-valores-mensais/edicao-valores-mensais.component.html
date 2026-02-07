@@ -133,92 +133,140 @@
       </div>
 
       <!-- Tabela Mensal -->
-      <!-- Header fixo fora do table-responsive para permitir sticky correto -->
-      <div class="table-header-wrapper">
-        <table class="table table-hover table-sm mb-0" style="table-layout: fixed; width: 100%;">
-          <colgroup>
-            <col style="width: 80px;">
-            <col style="width: 120px;">
-            <col style="width: 120px;">
-            <col style="width: 120px;">
-            <col style="width: 100px;">
-            <col style="width: 100px;">
-            <col style="width: 80px;">
-          </colgroup>
-          <thead class="table-light small">
-            <tr>
-              <th>Mês</th>
-              <th>Histórico</th>
-              <th>Meta</th>
-              <th>Realizado</th>
-              <th class="text-center">Desvio ABS</th>
-              <th class="text-center">Desvio %</th>
-              <th class="text-center">Status</th>
-            </tr>
-          </thead>
-        </table>
+      <!-- Desktop: Tabela com header fixo -->
+      <div class="desktop-table">
+        <div class="table-header-wrapper">
+          <table class="table table-hover table-sm mb-0" style="table-layout: fixed; width: 100%;">
+            <colgroup>
+              <col style="width: 80px;">
+              <col style="width: 120px;">
+              <col style="width: 120px;">
+              <col style="width: 120px;">
+              <col style="width: 100px;">
+              <col style="width: 100px;">
+              <col style="width: 80px;">
+            </colgroup>
+            <thead class="table-light small">
+              <tr>
+                <th>Mês</th>
+                <th>Histórico</th>
+                <th>Meta</th>
+                <th>Realizado</th>
+                <th class="text-center">Desvio ABS</th>
+                <th class="text-center">Desvio %</th>
+                <th class="text-center">Status</th>
+              </tr>
+            </thead>
+          </table>
+        </div>
+
+        <!-- Corpo da tabela com scroll -->
+        <div class="table-responsive">
+          <table class="table table-hover table-sm" style="table-layout: fixed; width: 100%;" data-testid="valores-table">
+            <colgroup>
+              <col style="width: 80px;">
+              <col style="width: 120px;">
+              <col style="width: 120px;">
+              <col style="width: 120px;">
+              <col style="width: 100px;">
+              <col style="width: 100px;">
+              <col style="width: 80px;">
+            </colgroup>
+            <thead class="table-light small mobile-table-header">
+              <tr>
+                <th>Mês</th>
+                <th>Histórico</th>
+                <th>Meta</th>
+                <th>Realizado</th>
+                <th class="text-center">Desvio ABS</th>
+                <th class="text-center">Desvio %</th>
+                <th class="text-center">Status</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (mes of getMesesOrdenados(indicador); track mes.id) {
+              <tr>
+                <td class="fw-bold">{{ getNomeMes(mes.mes!, mes.ano) }}</td>
+                <td>
+                  <input type="number" class="form-control form-control-sm" [value]="mes.historico"
+                    (input)="onValorChange(mes, 'historico', $event)" step="1" data-testid="input-historico" />
+                </td>
+                <td>
+                  <input type="number" class="form-control form-control-sm" [value]="mes.meta"
+                    (input)="onValorChange(mes, 'meta', $event)" step="1" data-testid="input-meta" />
+                </td>
+                <td>
+                  <input type="number" class="form-control form-control-sm" [value]="mes.realizado"
+                    (input)="onValorChange(mes, 'realizado', $event)" step="1" data-testid="input-realizado" />
+                </td>
+                <td class="text-center bg-gray-100">
+                  @if (mes.meta !== null && mes.meta !== undefined && mes.realizado !== null && mes.realizado !== undefined) {
+                  <span [class]="'badge badge-desvio w-100 d-inline-block py-2 bg-' + calcularStatus(indicador, mes)">
+                    {{ calcularDesvioAbsoluto(indicador, mes) | number: '1.0-0' }}
+                  </span>
+                  } @else {
+                  <span class="text-muted">-</span>
+                  }
+                </td>
+                <td class="text-center bg-gray-100">
+                  @if (mes.meta !== null && mes.meta !== undefined && mes.realizado !== null && mes.realizado !== undefined) {
+
+                  <span [class]="'badge badge-desvio w-100 d-inline-block py-2 bg-' + calcularStatus(indicador, mes)">
+                    {{ calcularDesvio(indicador, mes) | number: '1.1-1' }}%
+                  </span>
+
+                  } @else {
+                  <span class="text-muted">-</span>
+                  }
+                </td>
+                <td class="text-center bg-gray-100" style="font-size: 1.5rem;">
+                  @if (calcularStatus(indicador, mes); as status) {
+                  @switch (status) {
+                  @case ('success') {
+                  <i class="bi bi-circle-fill text-success"></i>
+                  }
+                  @case ('warning') {
+                  <i class="bi bi-exclamation-triangle-fill text-warning"></i>
+                  }
+                  @case ('danger') {
+                  <i class="bi bi-circle-fill text-danger"></i>
+                  }
+                  }
+                  } @else {
+                  <span class="text-muted">-</span>
+                  }
+                </td>
+              </tr>
+              }
+            </tbody>
+            <tfoot class="table-light fw-bold">
+              <tr>
+                <td>Total</td>
+                <td class="text-center">{{ calcularTotalHistorico(indicador) | number: '1.0-0' }}</td>
+                <td class="text-center">{{ calcularTotalMeta(indicador) | number: '1.0-0' }}</td>
+                <td class="text-center">{{ calcularTotalRealizado(indicador) | number: '1.0-0' }}</td>
+                <td colspan="3"></td>
+              </tr>
+              <tr>
+                <td>Média</td>
+                <td class="text-center">{{ calcularMediaHistorico(indicador) | number: '1.2-2' }}</td>
+                <td class="text-center">{{ calcularMediaMeta(indicador) | number: '1.2-2' }}</td>
+                <td class="text-center">{{ calcularMediaRealizado(indicador) | number: '1.2-2' }}</td>
+                <td colspan="3"></td>
+              </tr>
+            </tfoot>
+          </table>
+        </div>
       </div>
 
-      <!-- Corpo da tabela com scroll -->
-      <div class="table-responsive">
-        <table class="table table-hover table-sm" style="table-layout: fixed; width: 100%;" data-testid="valores-table">
-          <colgroup>
-            <col style="width: 80px;">
-            <col style="width: 120px;">
-            <col style="width: 120px;">
-            <col style="width: 120px;">
-            <col style="width: 100px;">
-            <col style="width: 100px;">
-            <col style="width: 80px;">
-          </colgroup>
-          <thead class="table-light small mobile-table-header">
-            <tr>
-              <th>Mês</th>
-              <th>Histórico</th>
-              <th>Meta</th>
-              <th>Realizado</th>
-              <th class="text-center">Desvio ABS</th>
-              <th class="text-center">Desvio %</th>
-              <th class="text-center">Status</th>
-            </tr>
-          </thead>
-          <tbody>
-            @for (mes of getMesesOrdenados(indicador); track mes.id) {
-            <tr>
-              <td class="fw-bold">{{ getNomeMes(mes.mes!, mes.ano) }}</td>
-              <td>
-                <input type="number" class="form-control form-control-sm" [value]="mes.historico"
-                  (input)="onValorChange(mes, 'historico', $event)" step="1" data-testid="input-historico" />
-              </td>
-              <td>
-                <input type="number" class="form-control form-control-sm" [value]="mes.meta"
-                  (input)="onValorChange(mes, 'meta', $event)" step="1" data-testid="input-meta" />
-              </td>
-              <td>
-                <input type="number" class="form-control form-control-sm" [value]="mes.realizado"
-                  (input)="onValorChange(mes, 'realizado', $event)" step="1" data-testid="input-realizado" />
-              </td>
-              <td class="text-center bg-gray-100">
-                @if (mes.meta !== null && mes.meta !== undefined && mes.realizado !== null && mes.realizado !== undefined) {
-                <span [class]="'badge badge-desvio w-100 d-inline-block py-2 bg-' + calcularStatus(indicador, mes)">
-                  {{ calcularDesvioAbsoluto(indicador, mes) | number: '1.0-0' }}
-                </span>
-                } @else {
-                <span class="text-muted">-</span>
-                }
-              </td>
-              <td class="text-center bg-gray-100">
-                @if (mes.meta !== null && mes.meta !== undefined && mes.realizado !== null && mes.realizado !== undefined) {
-
-                <span [class]="'badge badge-desvio w-100 d-inline-block py-2 bg-' + calcularStatus(indicador, mes)">
-                  {{ calcularDesvio(indicador, mes) | number: '1.1-1' }}%
-                </span>
-
-                } @else {
-                <span class="text-muted">-</span>
-                }
-              </td>
-              <td class="text-center bg-gray-100" style="font-size: 1.5rem;">
+      <!-- Mobile: Cards por mês -->
+      <div class="mobile-cards">
+        @for (mes of getMesesOrdenados(indicador); track mes.id) {
+        <div class="card mes-card mb-2">
+          <div class="card-body">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+              <h6 class="fw-bold mb-0">{{ getNomeMes(mes.mes!, mes.ano) }}</h6>
+              <div class="status-icon" style="font-size: 1.5rem;">
                 @if (calcularStatus(indicador, mes); as status) {
                 @switch (status) {
                 @case ('success') {
@@ -234,27 +282,85 @@
                 } @else {
                 <span class="text-muted">-</span>
                 }
-              </td>
-            </tr>
+              </div>
+            </div>
+
+            <div class="mb-2">
+              <label class="form-label small text-muted mb-1">Histórico</label>
+              <input type="number" class="form-control form-control-sm" [value]="mes.historico"
+                (input)="onValorChange(mes, 'historico', $event)" step="1" placeholder="Digite o histórico" />
+            </div>
+
+            <div class="mb-2">
+              <label class="form-label small text-muted mb-1">Meta</label>
+              <input type="number" class="form-control form-control-sm" [value]="mes.meta"
+                (input)="onValorChange(mes, 'meta', $event)" step="1" placeholder="Digite a meta" />
+            </div>
+
+            <div class="mb-2">
+              <label class="form-label small text-muted mb-1">Realizado</label>
+              <input type="number" class="form-control form-control-sm" [value]="mes.realizado"
+                (input)="onValorChange(mes, 'realizado', $event)" step="1" placeholder="Digite o realizado" />
+            </div>
+
+            @if (mes.meta !== null && mes.meta !== undefined && mes.realizado !== null && mes.realizado !== undefined) {
+            <div class="resultados-card mt-3 p-2 bg-light rounded">
+              <div class="meta-row">
+                <small class="text-muted">Desvio Absoluto:</small>
+                <span [class]="'badge bg-' + calcularStatus(indicador, mes)">
+                  {{ calcularDesvioAbsoluto(indicador, mes) | number: '1.0-0' }}
+                </span>
+              </div>
+              <div class="meta-row">
+                <small class="text-muted">Desvio %:</small>
+                <span [class]="'badge bg-' + calcularStatus(indicador, mes)">
+                  {{ calcularDesvio(indicador, mes) | number: '1.1-1' }}%
+                </span>
+              </div>
+            </div>
             }
-          </tbody>
-          <tfoot class="table-light fw-bold">
-            <tr>
-              <td>Total</td>
-              <td class="text-center">{{ calcularTotalHistorico(indicador) | number: '1.0-0' }}</td>
-              <td class="text-center">{{ calcularTotalMeta(indicador) | number: '1.0-0' }}</td>
-              <td class="text-center">{{ calcularTotalRealizado(indicador) | number: '1.0-0' }}</td>
-              <td colspan="3"></td>
-            </tr>
-            <tr>
-              <td>Média</td>
-              <td class="text-center">{{ calcularMediaHistorico(indicador) | number: '1.2-2' }}</td>
-              <td class="text-center">{{ calcularMediaMeta(indicador) | number: '1.2-2' }}</td>
-              <td class="text-center">{{ calcularMediaRealizado(indicador) | number: '1.2-2' }}</td>
-              <td colspan="3"></td>
-            </tr>
-          </tfoot>
-        </table>
+          </div>
+        </div>
+        }
+
+        <!-- Totais e Médias -->
+        <div class="card totais-card bg-light">
+          <div class="card-body">
+            <h6 class="fw-bold mb-3">Resumo</h6>
+            
+            <div class="mb-3">
+              <div class="fw-semibold mb-2">Totais</div>
+              <div class="meta-row">
+                <small class="text-muted">Histórico:</small>
+                <small class="fw-bold">{{ calcularTotalHistorico(indicador) | number: '1.0-0' }}</small>
+              </div>
+              <div class="meta-row">
+                <small class="text-muted">Meta:</small>
+                <small class="fw-bold">{{ calcularTotalMeta(indicador) | number: '1.0-0' }}</small>
+              </div>
+              <div class="meta-row">
+                <small class="text-muted">Realizado:</small>
+                <small class="fw-bold">{{ calcularTotalRealizado(indicador) | number: '1.0-0' }}</small>
+              </div>
+            </div>
+
+            <div>
+              <div class="fw-semibold mb-2">Médias</div>
+              <div class="meta-row">
+                <small class="text-muted">Histórico:</small>
+                <small class="fw-bold">{{ calcularMediaHistorico(indicador) | number: '1.2-2' }}</small>
+              </div>
+              <div class="meta-row">
+                <small class="text-muted">Meta:</small>
+                <small class="fw-bold">{{ calcularMediaMeta(indicador) | number: '1.2-2' }}</small>
+              </div>
+              <div class="meta-row">
+                <small class="text-muted">Realizado:</small>
+                <small class="fw-bold">{{ calcularMediaRealizado(indicador) | number: '1.2-2' }}</small>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   </div>

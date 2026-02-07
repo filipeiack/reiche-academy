@@ -100,132 +100,209 @@
     } @else if (acoesFiltered.length === 0) {
     <div class="text-muted">Nenhuma ação encontrada com os filtros aplicados.</div>
     } @else {
-    <div class="table-responsive">
-      <table class="table table-sm align-middle">
-        <thead class="table-light small">
-          <tr>
-            <th style="width: 15%;">Indicador</th>
-            <th style="width: 35%;" class="col-mobile-hide">Análise de Causas</th>
-            <th style="width: 25%;" class="col-mobile-hide">Ação Proposta</th>
-            <th style="width: 20%;" class="col-mobile-hide">Status</th>
-            <th class="text-center" style="width: 5%;"></th>
-          </tr>
-        </thead>
-        <tbody>
-          @for (acao of acoesFiltered; track acao.id) {
-          <tr class="acao-row">
-            <td class="indicador-cell">
-              <div class="indicador-nome-box">
-                <span class="indicador-nome text-white">{{ acao.indicadorCockpit?.nome || '-' }}</span>
-              </div>
-              <div class="mes-analise-box">
-                <small>Mês da Análise:</small>
-                <span>{{ getMesLabel(acao.indicadorMensal) }}</span>
-              </div>
-            </td>
-            <td class="causas-cell col-mobile-hide">
-              <div class="causa-row" [class.empty]="!acao.causa1">
-                @if (acao.causa1) {
-                  <!-- <span class="causa-label">Causa 1:</span> -->
-                  <span class="causa-texto">Causa 1: {{ acao.causa1 }}</span>
-                }
-              </div>
-              <div class="causa-row" [class.empty]="!acao.causa2">
-                @if (acao.causa2) {
-                  <!-- <span class="causa-label">Causa 2:</span> -->
-                  <span class="causa-texto">Causa 2: {{ acao.causa2 }}</span>
-                }
-              </div>
-              <div class="causa-row" [class.empty]="!acao.causa3">
-                @if (acao.causa3) {
-                  <!-- <span class="causa-label">Causa 3:</span> -->
-                  <span class="causa-texto">Causa 3: {{ acao.causa3 }}</span>
-                }
-              </div>
-              <div class="causa-row" [class.empty]="!acao.causa4">
-                @if (acao.causa4) {
-                  <!-- <span class="causa-label">Causa 4:</span> -->
-                  <span class="causa-texto">Causa 4: {{ acao.causa4 }}</span>
-                }
-              </div>
-              <div class="causa-row" [class.empty]="!acao.causa5">
-                @if (acao.causa5) {
-                  <!-- <span class="causa-label">Causa 5:</span> -->
-                  <span class="causa-texto">Causa 5: {{ acao.causa5 }}</span>
-                }
-              </div>
-            </td>
-            <td class="acao-cell col-mobile-hide">
-              <div class="acao-spacer"></div>
-              <div class="acao-box">
-                <div class="acao-titulo text-white">Ação:</div>
-                <div class="acao-texto text-white">{{ acao.acaoProposta }}</div>
-              </div>
-              <div class="causa-row small">
-                
-                <span>Responsável: {{ acao.responsavel?.nome || '-' }}</span>
-                
-              </div>
-            </td>
-            <td class="status-cell col-mobile-hide">
-              <div class="status-row">
-                <div class="badge text-black" style="text-align: left;">
-                  <small>Início Previsto:</small> {{ (acao.inicioPrevisto | date:'shortDate':'America/Sao_Paulo') || '-'}}
+    
+    <div class="desktop-table">
+      <div class="table-responsive">
+        <table class="table table-sm align-middle">
+          <thead class="table-light small">
+            <tr>
+              <th style="width: 15%;">Indicador</th>
+              <th style="width: 35%;" class="col-mobile-hide">Análise de Causas</th>
+              <th style="width: 25%;" class="col-mobile-hide">Ação Proposta</th>
+              <th style="width: 20%;" class="col-mobile-hide">Status</th>
+              <th class="text-center" style="width: 5%;"></th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (acao of acoesFiltered; track acao.id) {
+            <tr class="acao-row">
+              <td class="indicador-cell">
+                <div class="indicador-nome-box">
+                  <span class="indicador-nome text-white">{{ acao.indicadorCockpit?.nome || '-' }}</span>
                 </div>
-              </div>
-              <div class="status-row">
-                <div class="badge text-black" style="text-align: left;">
-                  <small>Término Previsto:</small> {{ (acao.prazo | date:'shortDate':'America/Sao_Paulo') || '-'}}
+                <div class="mes-analise-box">
+                  <small>Mês da Análise:</small>
+                  <span>{{ getMesLabel(acao.indicadorMensal) }}</span>
                 </div>
-              </div>
-              <div class="status-row">
-                <span class="badge w-100" [class]="getStatusClass(acao) + ' text-black'">
-                  {{ getStatusLabel(acao) }}
-                </span>
-              </div>
-              <div class="status-row">
-                <div class="badge text-black" style="text-align: left;">
-                  <small>Início Real:</small> {{ (acao.inicioReal | date:'shortDate':'America/Sao_Paulo') || '-'}}
+              </td>
+              <td class="causas-cell col-mobile-hide">
+                <div class="causa-row" [class.empty]="!acao.causa1">
+                  @if (acao.causa1) {
+                    <span class="causa-texto">Causa 1: {{ acao.causa1 }}</span>
+                  }
                 </div>
-              </div>
-              <div class="status-row">
-                <div class="badge text-black" style="text-align: left;">
-                  <small>Término Real:</small> {{ (acao.dataConclusao | date:'shortDate':'America/Sao_Paulo') || '-'}}
+                <div class="causa-row" [class.empty]="!acao.causa2">
+                  @if (acao.causa2) {
+                    <span class="causa-texto">Causa 2: {{ acao.causa2 }}</span>
+                  }
                 </div>
-              </div>
-            </td>
-            <td class="text-end">
-              <!-- @if (!acao.inicioReal) {
-              <button class="btn btn-icon text-primary" (click)="marcarInicioReal(acao)" title="Marcar início real">
-                <i class="feather icon-play"></i>
-              </button>
-              }
-              @if (acao.inicioReal && !acao.dataConclusao) {
-              <button class="btn btn-icon text-success" (click)="marcarTerminoReal(acao)" title="Marcar término real">
-                <i class="feather icon-check"></i>
-              </button>
-              } -->
-              <!-- <div ngbDropdown class="d-inline-block">
-                <button class="btn btn-icon text-secondary" ngbDropdownToggle [title]="'BUTTONS.MORE' | translate">
-                  <i class="feather icon-more-vertical"></i>
+                <div class="causa-row" [class.empty]="!acao.causa3">
+                  @if (acao.causa3) {
+                    <span class="causa-texto">Causa 3: {{ acao.causa3 }}</span>
+                  }
+                </div>
+                <div class="causa-row" [class.empty]="!acao.causa4">
+                  @if (acao.causa4) {
+                    <span class="causa-texto">Causa 4: {{ acao.causa4 }}</span>
+                  }
+                </div>
+                <div class="causa-row" [class.empty]="!acao.causa5">
+                  @if (acao.causa5) {
+                    <span class="causa-texto">Causa 5: {{ acao.causa5 }}</span>
+                  }
+                </div>
+              </td>
+              <td class="acao-cell col-mobile-hide">
+                <div class="acao-spacer"></div>
+                <div class="acao-box">
+                  <div class="acao-titulo text-white">Ação:</div>
+                  <div class="acao-texto text-white">{{ acao.acaoProposta }}</div>
+                </div>
+                <div class="causa-row small">
+                  <span>Responsável: {{ acao.responsavel?.nome || '-' }}</span>
+                </div>
+              </td>
+              <td class="status-cell col-mobile-hide">
+                <div class="status-row">
+                  <div class="badge text-black" style="text-align: left;">
+                    <small>Início Previsto:</small> {{ (acao.inicioPrevisto | date:'shortDate':'America/Sao_Paulo') || '-'}}
+                  </div>
+                </div>
+                <div class="status-row">
+                  <div class="badge text-black" style="text-align: left;">
+                    <small>Término Previsto:</small> {{ (acao.prazo | date:'shortDate':'America/Sao_Paulo') || '-'}}
+                  </div>
+                </div>
+                <div class="status-row">
+                  <span class="badge w-100" [class]="getStatusClass(acao) + ' text-black'">
+                    {{ getStatusLabel(acao) }}
+                  </span>
+                </div>
+                <div class="status-row">
+                  <div class="badge text-black" style="text-align: left;">
+                    <small>Início Real:</small> {{ (acao.inicioReal | date:'shortDate':'America/Sao_Paulo') || '-'}}
+                  </div>
+                </div>
+                <div class="status-row">
+                  <div class="badge text-black" style="text-align: left;">
+                    <small>Término Real:</small> {{ (acao.dataConclusao | date:'shortDate':'America/Sao_Paulo') || '-'}}
+                  </div>
+                </div>
+              </td>
+              <td class="text-end">
+                <button data-testid="edit-acao-button" class="btn btn-icon text-secondary"
+                  (click)="editarAcao(acao)" [title]="'BUTTONS.EDIT' | translate">
+                  <i class="feather icon-edit"></i>
                 </button>
-                <div ngbDropdownMenu>
-                  
-                </div>
-              </div> -->
-              <button data-testid="edit-acao-button" class="btn btn-icon text-secondary"
-                (click)="editarAcao(acao)" [title]="'BUTTONS.EDIT' | translate">
-                <i class="feather icon-edit"></i>
-              </button>
-              <button data-testid="delete-acao-button" class="btn btn-icon text-danger"
-                (click)="deleteAcao(acao)" [title]="'BUTTONS.DELETE' | translate">
-                <i class="feather icon-trash-2"></i>
-              </button>
-            </td>
-          </tr>
-          }
-        </tbody>
-      </table>
+                <button data-testid="delete-acao-button" class="btn btn-icon text-danger"
+                  (click)="deleteAcao(acao)" [title]="'BUTTONS.DELETE' | translate">
+                  <i class="feather icon-trash-2"></i>
+                </button>
+              </td>
+            </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="mobile-cards">
+      @for (acao of acoesFiltered; track acao.id) {
+      <div class="card acao-card mb-3">
+        <div class="card-body">
+          <!-- Indicador -->
+          <div class="mb-3">
+            <div class="indicador-nome-box">
+              <span class="indicador-nome text-white">{{ acao.indicadorCockpit?.nome || '-' }}</span>
+            </div>
+            <div class="mes-analise-box mt-2">
+              <small>Mês da Análise:</small>
+              <span>{{ getMesLabel(acao.indicadorMensal) }}</span>
+            </div>
+          </div>
+
+          <!-- Análise de Causas -->
+          <div class="mb-3">
+            <div class="fw-semibold mb-2">Análise de Causas:</div>
+            @if (acao.causa1) {
+            <div class="causa-row mb-1">
+              <small class="causa-texto">Causa 1: {{ acao.causa1 }}</small>
+            </div>
+            }
+            @if (acao.causa2) {
+            <div class="causa-row mb-1">
+              <small class="causa-texto">Causa 2: {{ acao.causa2 }}</small>
+            </div>
+            }
+            @if (acao.causa3) {
+            <div class="causa-row mb-1">
+              <small class="causa-texto">Causa 3: {{ acao.causa3 }}</small>
+            </div>
+            }
+            @if (acao.causa4) {
+            <div class="causa-row mb-1">
+              <small class="causa-texto">Causa 4: {{ acao.causa4 }}</small>
+            </div>
+            }
+            @if (acao.causa5) {
+            <div class="causa-row mb-1">
+              <small class="causa-texto">Causa 5: {{ acao.causa5 }}</small>
+            </div>
+            }
+          </div>
+
+          <!-- Ação Proposta -->
+          <div class="mb-3">
+            <div class="acao-box">
+              <div class="acao-titulo text-white">Ação:</div>
+              <div class="acao-texto text-white">{{ acao.acaoProposta }}</div>
+            </div>
+            <div class="mt-2">
+              <small><strong>Responsável:</strong> {{ acao.responsavel?.nome || '-' }}</small>
+            </div>
+          </div>
+
+          <!-- Status -->
+          <div class="mb-3">
+            <div class="fw-semibold mb-2">Status:</div>
+            <div class="meta-row">
+              <small class="text-muted">Início Previsto:</small>
+              <small>{{ (acao.inicioPrevisto | date:'shortDate':'America/Sao_Paulo') || '-'}}</small>
+            </div>
+            <div class="meta-row">
+              <small class="text-muted">Término Previsto:</small>
+              <small>{{ (acao.prazo | date:'shortDate':'America/Sao_Paulo') || '-'}}</small>
+            </div>
+            <div class="meta-row">
+              <small class="text-muted">Status Atual:</small>
+              <span class="badge" [class]="getStatusClass(acao) + ' text-black'">
+                {{ getStatusLabel(acao) }}
+              </span>
+            </div>
+            <div class="meta-row">
+              <small class="text-muted">Início Real:</small>
+              <small>{{ (acao.inicioReal | date:'shortDate':'America/Sao_Paulo') || '-'}}</small>
+            </div>
+            <div class="meta-row">
+              <small class="text-muted">Término Real:</small>
+              <small>{{ (acao.dataConclusao | date:'shortDate':'America/Sao_Paulo') || '-'}}</small>
+            </div>
+          </div>
+
+          <!-- Ações -->
+          <div class="d-flex gap-2">
+            <button data-testid="edit-acao-button" class="btn btn-outline-secondary btn-sm"
+              (click)="editarAcao(acao)" [title]="'BUTTONS.EDIT' | translate">
+              <i class="feather icon-edit"></i>
+            </button>
+            <button data-testid="delete-acao-button" class="btn btn-outline-danger btn-sm"
+              (click)="deleteAcao(acao)" [title]="'BUTTONS.DELETE' | translate">
+              <i class="feather icon-trash-2"></i>
+            </button>
+          </div>
+        </div>
+      </div>
+      }
     </div>
     }
   </div>

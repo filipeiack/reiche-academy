@@ -48,94 +48,142 @@
           </div>
         </div>
         } @else {
-        <div class="table-responsive">
-          <table class="table table-hover table-sm mb-2" data-testid="pilares-table">
-            <thead class="table-light">
-              <tr>
-                <th scope="col" class="w-100">{{ 'PILARES.FIELDS.NAME' | translate }}</th>
-                <th scope="col" class="text-center">{{ 'PILARES.FIELDS.ROTINAS' | translate }}</th>
-                <th scope="col">{{ 'COMMON.STATUS' | translate }}</th>
-                <th scope="col">{{ 'COMMON.ACTIONS' | translate }}</th>
-              </tr>
-            </thead>
-            <tbody cdkDropList (cdkDropListDropped)="onDropPilares($event)">
-              @for (pilar of paginatedPilares; track pilar.id) {
-              <tr cdkDrag data-testid="pilar-list-item">
-                <!-- Nome -->
-                <td cdkDragHandle>
-                  <i class="bi bi-grip-vertical me-2" style="cursor: move;"></i>
-                  <span class="badge bg-secondary small me-2" [ngbTooltip]="'PILARES.FIELDS.ORDER' | translate">{{
-                    pilar.ordem }}</span>
-                  {{ pilar.nome }}
-                </td>
+        <div class="desktop-table">
+          <div class="table-responsive">
+            <table class="table table-hover table-sm mb-2" data-testid="pilares-table">
+              <thead class="table-light">
+                <tr>
+                  <th scope="col" class="w-100">{{ 'PILARES.FIELDS.NAME' | translate }}</th>
+                  <th scope="col" class="text-center">{{ 'PILARES.FIELDS.ROTINAS' | translate }}</th>
+                  <th scope="col">{{ 'COMMON.STATUS' | translate }}</th>
+                  <th scope="col">{{ 'COMMON.ACTIONS' | translate }}</th>
+                </tr>
+              </thead>
+              <tbody cdkDropList (cdkDropListDropped)="onDropPilares($event)">
+                @for (pilar of paginatedPilares; track pilar.id) {
+                <tr cdkDrag data-testid="pilar-list-item">
+                  <!-- Nome -->
+                  <td cdkDragHandle>
+                    <i class="bi bi-grip-vertical me-2" style="cursor: move;"></i>
+                    <span class="badge bg-secondary small me-2" [ngbTooltip]="'PILARES.FIELDS.ORDER' | translate">{{
+                      pilar.ordem }}</span>
+                    {{ pilar.nome }}
+                  </td>
 
-                <!-- UI-PIL-003: Contadores -->
-                <td class="text-muted text-center">
-                  <span
-                    [ngbTooltip]="pilar.nome + '\n├─ ' + (pilar._count?.rotinas || 0) + ' ' + ('PILARES.ROTINAS_LINKED' | translate) + '\n└─ ' + (pilar._count?.empresas || 0) + ' ' + ('PILARES.EMPRESAS_USING' | translate)"
-                    placement="top">
-                    {{ pilar._count?.rotinas || 0 }}
-                  </span>
-                </td>
+                  <!-- UI-PIL-003: Contadores -->
+                  <td class="text-muted text-center">
+                    <span
+                      [ngbTooltip]="pilar.nome + '\n├─ ' + (pilar._count?.rotinas || 0) + ' ' + ('PILARES.ROTINAS_LINKED' | translate) + '\n└─ ' + (pilar._count?.empresas || 0) + ' ' + ('PILARES.EMPRESAS_USING' | translate)"
+                      placement="top">
+                      {{ pilar._count?.rotinas || 0 }}
+                    </span>
+                  </td>
 
-                <!-- Status -->
-                <td class="text-muted">
-                  <span>
-                    {{ pilar.ativo ? ('COMMON.ACTIVE' | translate) : ('COMMON.INACTIVE' | translate) }}
-                  </span>
-                </td>
+                  <!-- Status -->
+                  <td class="text-muted">
+                    <span>
+                      {{ pilar.ativo ? ('COMMON.ACTIVE' | translate) : ('COMMON.INACTIVE' | translate) }}
+                    </span>
+                  </td>
 
-                <!-- UI-PIL-009: Ações por linha -->
-                <td class="text-nowrap">
-                  <div class="btn-group btn-group-sm" role="group">
-                    <!-- Detalhes -->
-                    <button class="btn btn-icon text-primary" (click)="openDetailsOffcanvas(pilar.id, detailsOffcanvas)"
-                      [title]="'PILARES.DETAILS_TOOLTIP' | translate">
-                      <i class="feather icon-info"></i>
-                    </button>
+                  <!-- UI-PIL-009: Ações por linha -->
+                  <td class="text-nowrap">
+                    <div class="btn-group btn-group-sm" role="group">
+                      <!-- Detalhes -->
+                      <button class="btn btn-icon text-primary" (click)="openDetailsOffcanvas(pilar.id, detailsOffcanvas)"
+                        [title]="'PILARES.DETAILS_TOOLTIP' | translate">
+                        <i class="feather icon-info"></i>
+                      </button>
 
-                    <!-- Toggle Ativar/Inativar -->
-                    <button class="btn btn-icon text-primary" (click)="toggleStatus(pilar.id, pilar.nome, pilar.ativo)"
-                      [title]="pilar.ativo ? 'Inativar pilar' : 'Ativar pilar'">
-                      <i class="feather"
-                        [ngClass]="{'icon-toggle-right': pilar.ativo, 'icon-toggle-left text-danger': !pilar.ativo}"></i>
-                    </button>
+                      <!-- Toggle Ativar/Inativar -->
+                      <button class="btn btn-icon text-primary" (click)="toggleStatus(pilar.id, pilar.nome, pilar.ativo)"
+                        [title]="pilar.ativo ? 'Inativar pilar' : 'Ativar pilar'">
+                        <i class="feather"
+                          [ngClass]="{'icon-toggle-right': pilar.ativo, 'icon-toggle-left text-danger': !pilar.ativo}"></i>
+                      </button>
 
-                    <!-- Editar (sempre visível) -->
-                    <button class="btn btn-icon text-secondary" [routerLink]="['/pilares', pilar.id, 'editar']"
-                      [title]="'PILARES.EDIT_TOOLTIP' | translate">
-                      <i class="feather icon-edit"></i>
-                    </button>
+                      <!-- Editar (sempre visível) -->
+                      <button class="btn btn-icon text-secondary" [routerLink]="['/pilares', pilar.id, 'editar']"
+                        [title]="'PILARES.EDIT_TOOLTIP' | translate">
+                        <i class="feather icon-edit"></i>
+                      </button>
 
-                    <!-- Excluir (visível se ativo) -->
+                      <!-- Excluir (visível se ativo) -->
 
-                    <button class="btn btn-icon text-danger" (click)="confirmarExclusao(pilar)"
-                      [title]="'PILARES.DELETE_TOOLTIP' | translate">
-                      <i class="feather icon-trash-2"></i>
-                    </button>
+                      <button class="btn btn-icon text-danger" (click)="confirmarExclusao(pilar)"
+                        [title]="'PILARES.DELETE_TOOLTIP' | translate">
+                        <i class="feather icon-trash-2"></i>
+                      </button>
 
+                    </div>
+                  </td>
+                </tr>
+                } @empty {
+                <tr>
+                  <td colspan="7" class="border-bottom text-center text-muted py-4">
+                    {{ 'PILARES.NO_PILARES_FOUND' | translate }}
+                  </td>
+                </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <div class="mobile-cards">
+          @for (pilar of paginatedPilares; track pilar.id) {
+          <div class="card pilar-card">
+            <div class="card-body">
+              <div class="d-flex justify-content-between align-items-start gap-2 mb-2">
+                <div class="pilar-title">
+                  <div class="fw-semibold text-truncate">
+                    <span class="badge bg-secondary small me-2">{{ pilar.ordem }}</span>
+                    {{ pilar.nome }}
                   </div>
-                </td>
-              </tr>
-              } @empty {
-              <tr>
-                <td colspan="7" class="border-bottom text-center text-muted py-4">
-                  {{ 'PILARES.NO_PILARES_FOUND' | translate }}
-                </td>
-              </tr>
-              }
-            </tbody>
-          </table>
+                  <small class="text-muted">{{ 'PILARES.FIELDS.ROTINAS' | translate }}: {{ pilar._count?.rotinas || 0 }}</small>
+                </div>
+                <span class="badge" [ngClass]="{ 'bg-success': pilar.ativo, 'bg-danger': !pilar.ativo }">
+                  {{ pilar.ativo ? ('COMMON.ACTIVE' | translate) : ('COMMON.INACTIVE' | translate) }}
+                </span>
+              </div>
+
+              <div class="d-flex gap-2 mt-3">
+                <button class="btn btn-outline-primary btn-sm" (click)="openDetailsOffcanvas(pilar.id, detailsOffcanvas)"
+                  [title]="'PILARES.DETAILS_TOOLTIP' | translate">
+                  <i class="feather icon-info"></i>
+                </button>
+                <button class="btn btn-outline-primary btn-sm" (click)="toggleStatus(pilar.id, pilar.nome, pilar.ativo)"
+                  [title]="pilar.ativo ? 'Inativar pilar' : 'Ativar pilar'">
+                  <i class="feather"
+                    [ngClass]="{'icon-toggle-right': pilar.ativo, 'icon-toggle-left text-danger': !pilar.ativo}"></i>
+                </button>
+                <button class="btn btn-outline-secondary btn-sm" [routerLink]="['/pilares', pilar.id, 'editar']"
+                  [title]="'PILARES.EDIT_TOOLTIP' | translate">
+                  <i class="feather icon-edit"></i>
+                </button>
+                <button class="btn btn-outline-danger btn-sm" (click)="confirmarExclusao(pilar)"
+                  [title]="'PILARES.DELETE_TOOLTIP' | translate">
+                  <i class="feather icon-trash-2"></i>
+                </button>
+              </div>
+            </div>
+          </div>
+          } @empty {
+          <div class="text-center text-muted py-4">
+            {{ 'PILARES.NO_PILARES_FOUND' | translate }}
+          </div>
+          }
         </div>
 
         <div class="d-flex justify-content-between p-2">
           <span class="text-muted fs-12">
-            Mostrando {{ getStartIndex() + 1 }}-{{ getEndIndex() }} de {{ filteredPilares.length }} {{ 'COMMON.ITEMS' | translate }}
+            {{ 'COMMON.SHOWING' | translate }} {{ getStartIndex() + 1 }}-{{ getEndIndex() }} {{ 'COMMON.OF' | translate }} {{
+            filteredPilares.length }} {{ 'COMMON.ITEMS' | translate }}
           </span>
 
           @if (totalPages > 1) {
           <ngb-pagination [collectionSize]="filteredPilares.length" [(page)]="currentPage" size="sm"
-            [pageSize]="pageSize">
+            [pageSize]="pageSize"  [maxSize]="3" [boundaryLinks]="false">
           </ngb-pagination>
           }
         </div>

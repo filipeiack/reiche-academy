@@ -16,100 +16,181 @@
   </div>
 
   <!-- Desktop: Tabela de visualização -->
-  <div class="table-responsive">
-     @if (loading) {
-     <div class="text-center py-4" data-testid="loading-indicator">
-       <div class="spinner-border text-primary" role="status">
-         <span class="visually-hidden">Carregando...</span>
-       </div>
-     </div>
-     } @else {
-    <table class="table table-hover table-sm" data-testid="indicadores-table">
-      <thead class="table-light small">
-        <tr>
-          <th>Nome</th>
-          <th class="col-mobile-hide" style="max-width: 80px;">Medida</th>
-          <th class="col-mobile-hide" style="max-width: 90px;">Status</th>
-          <th class="col-mobile-hide">Responsável</th>
-          <th class="text-center col-mobile-hide" style="width: 60px;">Melhor</th>
-          <th class="text-center" style="width: 100px;">Ações</th>
-        </tr>
-      </thead>
-      <tbody cdkDropList (cdkDropListDropped)="onDrop($event)">
-        @for (indicador of indicadores; track indicador.id) {
-        <tr cdkDrag>
-          <!-- Drag Handle + Nome -->
-          <td cdkDragHandle style="overflow-wrap: break-word; overflow: hidden; text-overflow: ellipsis; white-space: normal; cursor: move;">
-            <i class="bi bi-grip-vertical text-muted"></i>
+  <div class="desktop-table">
+    <div class="table-responsive">
+      @if (loading) {
+      <div class="text-center py-4" data-testid="loading-indicator">
+        <div class="spinner-border text-primary" role="status">
+          <span class="visually-hidden">Carregando...</span>
+        </div>
+      </div>
+      } @else {
+      <table class="table table-hover table-sm" data-testid="indicadores-table">
+        <thead class="table-light small">
+          <tr>
+            <th>Nome</th>
+            <th class="col-mobile-hide" style="max-width: 80px;">Medida</th>
+            <th class="col-mobile-hide" style="max-width: 90px;">Status</th>
+            <th class="col-mobile-hide">Responsável</th>
+            <th class="text-center col-mobile-hide" style="width: 60px;">Melhor</th>
+            <th class="text-center" style="width: 100px;">Ações</th>
+          </tr>
+        </thead>
+        <tbody cdkDropList (cdkDropListDropped)="onDrop($event)">
+          @for (indicador of indicadores; track indicador.id) {
+          <tr cdkDrag>
+            <!-- Drag Handle + Nome -->
+            <td cdkDragHandle style="overflow-wrap: break-word; overflow: hidden; text-overflow: ellipsis; white-space: normal; cursor: move;">
+              <i class="bi bi-grip-vertical text-muted"></i>
+              <strong class="text-break">{{ indicador.nome.toUpperCase() }}</strong>
+              @if (indicador.descricao) {
+              <br>
+              <small class="text-muted fs-7 text-break">{{ indicador.descricao }}</small>
+              }
+            </td>
+
+            <!-- Tipo de Medida -->
+            <td class="small col-mobile-hide">
+              {{ getTipoMedidaLabel(indicador.tipoMedida) }}
+            </td>
+
+            <!-- Status de Medição -->
+            <td class="small col-mobile-hide">
+              @if (indicador.statusMedicao) {
+              <span 
+                class="badge w-100" 
+                [ngClass]="getStatusMedicaoBadge(indicador.statusMedicao).class">
+                {{ getStatusMedicaoBadge(indicador.statusMedicao).label }}
+              </span>
+              }
+            </td>
+
+            <!-- Responsável -->
+            <td class="small col-mobile-hide">
+              {{ getResponsavelNome(indicador.responsavelMedicaoId) }}
+            </td>
+
+            <!-- Melhor (Direção) -->
+            <td class="text-center col-mobile-hide">
+              @if (indicador.melhor === 'MAIOR') {
+              <i class="bi bi-arrow-up text-black" style="font-size: 1.25rem;" title="Maior é melhor"></i>
+              } @else {
+              <i class="bi bi-arrow-down text-black" style="font-size: 1.25rem;" title="Menor é melhor"></i>
+              }
+            </td>
+
+            <!-- Ações -->
+            <td>
+              <div class="d-flex gap-1">
+                <button 
+                  data-testid="edit-indicador-button" 
+                  class="btn btn-icon text-secondary"
+                  (click)="editarIndicador(indicador)" 
+                  [title]="'BUTTONS.EDIT' | translate">
+                  <i class="feather icon-edit"></i>
+                </button>
+                <button 
+                  data-testid="delete-indicador-button" 
+                  class="btn btn-icon text-danger"
+                  (click)="deleteIndicador(indicador)" 
+                  [title]="'BUTTONS.DELETE' | translate">
+                  <i class="feather icon-trash-2"></i>
+                </button>
+              </div>
+            </td>
+          </tr>
+          }
+
+          @if (indicadores.length === 0) {
+          <tr>
+            <td colspan="7" class="text-center text-muted py-4" data-testid="no-indicators-message">
+              <i class="bi bi-inbox me-2"></i>
+              Nenhum indicador criado. Clique em "Novo Indicador" para começar.
+            </td>
+          </tr>
+          }
+        </tbody>
+      </table>
+      }
+    </div>
+  </div>
+
+  <!-- Mobile: Cards -->
+  <div class="mobile-cards">
+    @if (loading) {
+    <div class="text-center py-4" data-testid="loading-indicator">
+      <div class="spinner-border text-primary" role="status">
+        <span class="visually-hidden">Carregando...</span>
+      </div>
+    </div>
+    } @else if (indicadores.length === 0) {
+    <div class="text-center text-muted py-4" data-testid="no-indicators-message">
+      <i class="bi bi-inbox me-2"></i>
+      Nenhum indicador criado. Clique em "Novo Indicador" para começar.
+    </div>
+    } @else {
+    @for (indicador of indicadores; track indicador.id) {
+    <div class="card indicador-card mb-2">
+      <div class="card-body">
+        <div class="d-flex justify-content-between align-items-start mb-2">
+          <div class="fw-semibold">
+            <i class="bi bi-grip-vertical text-muted me-2"></i>
             <strong class="text-break">{{ indicador.nome.toUpperCase() }}</strong>
             @if (indicador.descricao) {
             <br>
             <small class="text-muted fs-7 text-break">{{ indicador.descricao }}</small>
             }
-          </td>
-
-          <!-- Tipo de Medida -->
-          <td class="small col-mobile-hide">
-            {{ getTipoMedidaLabel(indicador.tipoMedida) }}
-          </td>
-
-          <!-- Status de Medição -->
-          <td class="small col-mobile-hide">
+          </div>
+        </div>
+        <div class="meta-row">
+          <small class="text-muted">Medida:</small>
+          <small>{{ getTipoMedidaLabel(indicador.tipoMedida) }}</small>
+        </div>
+        <div class="meta-row">
+          <small class="text-muted">Status:</small>
+          <small>
             @if (indicador.statusMedicao) {
             <span 
-              class="badge w-100" 
+              class="badge" 
               [ngClass]="getStatusMedicaoBadge(indicador.statusMedicao).class">
               {{ getStatusMedicaoBadge(indicador.statusMedicao).label }}
             </span>
             }
-          </td>
-
-          <!-- Responsável -->
-          <td class="small col-mobile-hide">
-            {{ getResponsavelNome(indicador.responsavelMedicaoId) }}
-          </td>
-
-          <!-- Melhor (Direção) -->
-          <td class="text-center col-mobile-hide">
+          </small>
+        </div>
+        <div class="meta-row">
+          <small class="text-muted">Responsável:</small>
+          <small>{{ getResponsavelNome(indicador.responsavelMedicaoId) }}</small>
+        </div>
+        <div class="meta-row">
+          <small class="text-muted">Melhor:</small>
+          <small>
             @if (indicador.melhor === 'MAIOR') {
-            <i class="bi bi-arrow-up text-black" style="font-size: 1.25rem;" title="Maior é melhor"></i>
+            <i class="bi bi-arrow-up text-black" style="font-size: 1.25rem;" title="Maior é melhor"></i> Maior
             } @else {
-            <i class="bi bi-arrow-down text-black" style="font-size: 1.25rem;" title="Menor é melhor"></i>
+            <i class="bi bi-arrow-down text-black" style="font-size: 1.25rem;" title="Menor é melhor"></i> Menor
             }
-          </td>
-
-          <!-- Ações -->
-          <td>
-            <div class="d-flex gap-1">
-              <button 
-                data-testid="edit-indicador-button" 
-                class="btn btn-icon text-secondary"
-                (click)="editarIndicador(indicador)" 
-                [title]="'BUTTONS.EDIT' | translate">
-                <i class="feather icon-edit"></i>
-              </button>
-              <button 
-                data-testid="delete-indicador-button" 
-                class="btn btn-icon text-danger"
-                (click)="deleteIndicador(indicador)" 
-                [title]="'BUTTONS.DELETE' | translate">
-                <i class="feather icon-trash-2"></i>
-              </button>
-            </div>
-          </td>
-        </tr>
-        }
-
-        @if (indicadores.length === 0) {
-         <tr>
-           <td colspan="7" class="text-center text-muted py-4" data-testid="no-indicators-message">
-             <i class="bi bi-inbox me-2"></i>
-             Nenhum indicador criado. Clique em "Novo Indicador" para começar.
-           </td>
-         </tr>
-        }
-      </tbody>
-    </table>
+          </small>
+        </div>
+        <div class="d-flex gap-2 mt-3">
+          <button 
+            data-testid="edit-indicador-button" 
+            class="btn btn-outline-secondary btn-sm"
+            (click)="editarIndicador(indicador)" 
+            [title]="'BUTTONS.EDIT' | translate">
+            <i class="feather icon-edit"></i>
+          </button>
+          <button 
+            data-testid="delete-indicador-button" 
+            class="btn btn-outline-danger btn-sm"
+            (click)="deleteIndicador(indicador)" 
+            [title]="'BUTTONS.DELETE' | translate">
+            <i class="feather icon-trash-2"></i>
+          </button>
+        </div>
+      </div>
+    </div>
+    }
     }
   </div>
 </div>

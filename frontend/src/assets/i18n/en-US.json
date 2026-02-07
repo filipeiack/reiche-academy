@@ -147,6 +147,7 @@
     "SEARCH": "Search",
     "SEARCH_PLACEHOLDER": "Search here...",
     "LOADING": "Loading...",
+    "SHOWING": "Showing",
     "ITEMS": "items",
     "ACTIONS": "Actions",
     "INSTRUCTIONS": "Instructions",
@@ -253,10 +254,74 @@
     "CIDADE": "City",
     "ESTADO": "State",
     "USUARIOS_COUNT": "Users",
+    "MENTORIA": "Mentoring",
+    "MENTORIA_NONE": "No mentoring",
+    "PERIODO": "Period",
     "CREATE": "Create Company",
     "EDIT": "Edit Company",
     "ADD": "Add Company",
     "DETAILS": "Company Details",
+    "LOGO_URL_LABEL": "Logo URL",
+    "VIEW_ONLY": "View Only",
+    "WIZARD": {
+      "CONFIG_USERS_PILARS": "Users and Pillars Configuration",
+      "NEXT_USERS_PILARS": "Next: Users and Pillars",
+      "FINISH": "Complete Registration",
+      "STEP_BASIC": "Basic Data",
+      "STEP_USERS_PILARS": "Users and Pillars"
+    },
+    "FORM": {
+      "BUSINESS_TYPE_PLACEHOLDER": "Type to search or create new...",
+      "LOGIN_URL_PLACEHOLDER": "ex: my-company",
+      "LOGO_ALT": "Company logo",
+      "LOGO_DIMENSIONS": "Logo 300 x 115",
+      "LOGO_FORMATS": "Accepted formats: JPG, PNG, WebP (max 5MB)"
+    },
+    "MENTORIA": {
+      "TITLE": "Mentoring Period",
+      "SUBTITLE": "Manage the current cycle and track the company's history",
+      "CREATE_PERIOD": "Create Period",
+      "RENEW": "Renew Mentoring",
+      "CLOSE": "Close",
+      "ACTIVE": "active",
+      "NO_ACTIVE": "No active mentoring",
+      "NO_ACTIVE_HELP": "Create or renew to start a new cycle.",
+      "START": "Mentoring Start",
+      "END_PLANNED": "Planned End",
+      "END_ACTUAL": "Actual End",
+      "HISTORY_TITLE": "Period History",
+      "TABLE": {
+        "PERIOD": "Period",
+        "START": "Start",
+        "END": "End",
+        "CONTRACT": "Contract",
+        "CLOSE": "End"
+      }
+    },
+    "USERS_SECTION": {
+      "TITLE": "Associated Users",
+      "CREATE": "Create New User",
+      "SELECT_HELP": "Select or add users to the company",
+      "SEARCH_PLACEHOLDER": "Type the name",
+      "SELECT_TIP": "Select an existing user or create a new user by typing their full name.",
+      "UNLINK": "Unlink user",
+      "EMPTY": "No users associated with this company yet."
+    },
+    "USERS_TABLE": {
+      "USER": "User",
+      "CARGO": "Role",
+      "PHONE": "Phone",
+      "ROLE": "Profile"
+    },
+    "PILARS_SECTION": {
+      "TITLE": "Associated Pillars",
+      "CREATE": "Create New Pillar",
+      "REORDER_HELP": "Drag pillars to reorder or remove existing ones.",
+      "REORDER_TOOLTIP": "Drag to reorder",
+      "REMOVE": "Remove pillar",
+      "EMPTY": "No pillars associated with this company yet.",
+      "AUTO_SAVE": "Users and pillars are saved automatically as you add them."
+    },
     "INFO": {
       "CREATE": "Fill in all required fields (marked with *) to create a new company.",
       "EDIT": "Edit company information and click 'Update' to save changes.",

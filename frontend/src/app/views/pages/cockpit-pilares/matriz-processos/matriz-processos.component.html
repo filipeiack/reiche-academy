@@ -12,35 +12,107 @@
       Nenhum processo prioritário definido ainda.
     </div>
     } @else {
-    <div class="table-responsive">
-      <table class="table table-hover table-sm" style="table-layout: fixed; width: 100%;" data-testid="processos-table">
-        <thead class="table-light small">
-          <tr>
-            <th class="text-center" style="width: 5%;">{{ 'PROCESSOS_FLUXOGRAMA.ICON_HEADER' | translate }}</th>
-            <th style="width: 44%;">Rotina</th>
-            <th class="text-center" style="width: 10%;">Criticidade</th>
-            <th class="text-center" style="width: 5%;">Nota</th>
-            <th class="text-center" style="width: 18%;" title="STATUS DO MAPEAMENTO">Status Mapeamento</th>
-            <th class="text-center" style="width: 18%;" title="STATUS DO TREINAMENTO/EXECUÇÃO">Status Treinamento</th>
-          </tr>
-        </thead>
-        <tbody>
-          @for (processo of processos; track processo.id) {
-          <tr>
-            <td class="text-center bg-gray-100">
-              <button type="button" class="btn btn-link p-0 fluxograma-toggle" (click)="abrirFluxograma(processo)"
-                [ngbTooltip]="'PROCESSOS_FLUXOGRAMA.TOOLTIP' | translate">
-                <i class="bi"
-                  [ngClass]="(processo._count?.fluxogramaAcoes || 0) > 0 ? 'bi-star-fill text-primary' : 'bi-star text-muted'"></i>
-              </button>
-            </td>
+    <div class="desktop-table">
+      <div class="table-responsive">
+        <table class="table table-hover table-sm" style="table-layout: fixed; width: 100%;" data-testid="processos-table">
+          <thead class="table-light small">
+            <tr>
+              <th class="text-center" style="width: 5%;">{{ 'PROCESSOS_FLUXOGRAMA.ICON_HEADER' | translate }}</th>
+              <th style="width: 44%;">Rotina</th>
+              <th class="text-center" style="width: 10%;">Criticidade</th>
+              <th class="text-center" style="width: 5%;">Nota</th>
+              <th class="text-center" style="width: 18%;" title="STATUS DO MAPEAMENTO">Status Mapeamento</th>
+              <th class="text-center" style="width: 18%;" title="STATUS DO TREINAMENTO/EXECUÇÃO">Status Treinamento</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (processo of processos; track processo.id) {
+            <tr>
+              <td class="text-center bg-gray-100">
+                <button type="button" class="btn btn-link p-0 fluxograma-toggle" (click)="abrirFluxograma(processo)"
+                  [ngbTooltip]="'PROCESSOS_FLUXOGRAMA.TOOLTIP' | translate">
+                  <i class="bi"
+                    [ngClass]="(processo._count?.fluxogramaAcoes || 0) > 0 ? 'bi-star-fill text-primary' : 'bi-star text-muted'"></i>
+                </button>
+              </td>
 
-            <td class="bg-gray-100" style="white-space: normal; overflow-wrap: break-word;">
-              <span class="badge bg-secondary">{{ processo.rotinaEmpresa?.ordem }}</span>
+              <td class="bg-gray-100" style="white-space: normal; overflow-wrap: break-word;">
+                <span class="badge bg-secondary">{{ processo.rotinaEmpresa?.ordem }}</span>
+                {{ processo.rotinaEmpresa?.nome || 'Processo' }}
+              </td>
+
+              <td class="text-center bg-gray-100">
+                @if (processo.rotinaEmpresa?.notas && processo.rotinaEmpresa.notas.length > 0) {
+                @switch (processo.rotinaEmpresa.notas[0].criticidade) {
+                @case ('ALTA') {
+                <span class="badge bg-danger badge-altura-input">ALTA</span>
+                }
+                @case ('MEDIA') {
+                <span class="badge bg-warning badge-altura-input">MÉDIA</span>
+                }
+                @case ('BAIXA') {
+                <span class="badge bg-success badge-altura-input">BAIXA</span>
+                }
+                @default {
+                <span class="text-muted">-</span>
+                }
+                }
+                } @else {
+                <span class="text-muted">-</span>
+                }
+              </td>
+              <td class="text-center bg-gray-100">
+                @if (processo.rotinaEmpresa?.notas && processo.rotinaEmpresa.notas.length > 0) {
+                <span class="badge badge-altura-input" [class]="getNotaClass(processo.rotinaEmpresa.notas[0].nota)">
+                  {{ processo.rotinaEmpresa.notas[0].nota?.toLocaleString('pt-BR', { minimumFractionDigits: 0,
+                  maximumFractionDigits: 0 }) || '-' }}
+                </span>
+                } @else {
+                <span class="text-muted">-</span>
+                }
+              </td>
+
+              <td>
+                <ng-select [(ngModel)]="processo.statusMapeamento"
+                  (ngModelChange)="onStatusMapeamentoChange(processo.id, $event)" [items]="statusOptions"
+                  bindLabel="label" bindValue="value" [clearable]="true" [searchable]="false"
+                  [ngClass]="processo.statusMapeamento ? getStatusBadgeClass(processo.statusMapeamento) : ''"
+                  [id]="'statusMapeamento-' + processo.id">
+                </ng-select>
+              </td>
+              <td>
+                <ng-select [(ngModel)]="processo.statusTreinamento"
+                  (ngModelChange)="onStatusTreinamentoChange(processo.id, $event)" [items]="statusOptions"
+                  bindLabel="label" bindValue="value" [clearable]="true" [searchable]="false"
+                  [ngClass]="processo.statusTreinamento ? getStatusBadgeClass(processo.statusTreinamento) : ''"
+                  [id]="'statusTreinamento-' + processo.id">
+                </ng-select>
+              </td>
+            </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="mobile-cards">
+      @for (processo of processos; track processo.id) {
+      <div class="card processo-card mb-2">
+        <div class="card-body">
+          <div class="d-flex justify-content-between align-items-start mb-2">
+            <div class="fw-semibold">
+              <span class="badge bg-secondary me-2">{{ processo.rotinaEmpresa?.ordem }}</span>
               {{ processo.rotinaEmpresa?.nome || 'Processo' }}
-            </td>
-
-            <td class="text-center bg-gray-100">
+            </div>
+            <button type="button" class="btn btn-link p-0" (click)="abrirFluxograma(processo)"
+              [ngbTooltip]="'PROCESSOS_FLUXOGRAMA.TOOLTIP' | translate">
+              <i class="bi"
+                [ngClass]="(processo._count?.fluxogramaAcoes || 0) > 0 ? 'bi-star-fill text-primary' : 'bi-star text-muted'"></i>
+            </button>
+          </div>
+          <div class="meta-row">
+            <small class="text-muted">Criticidade:</small>
+            <small>
               @if (processo.rotinaEmpresa?.notas && processo.rotinaEmpresa.notas.length > 0) {
               @switch (processo.rotinaEmpresa.notas[0].criticidade) {
               @case ('ALTA') {
@@ -59,8 +131,11 @@
               } @else {
               <span class="text-muted">-</span>
               }
-            </td>
-            <td class="text-center bg-gray-100">
+            </small>
+          </div>
+          <div class="meta-row">
+            <small class="text-muted">Nota:</small>
+            <small>
               @if (processo.rotinaEmpresa?.notas && processo.rotinaEmpresa.notas.length > 0) {
               <span class="badge badge-altura-input" [class]="getNotaClass(processo.rotinaEmpresa.notas[0].nota)">
                 {{ processo.rotinaEmpresa.notas[0].nota?.toLocaleString('pt-BR', { minimumFractionDigits: 0,
@@ -69,28 +144,29 @@
               } @else {
               <span class="text-muted">-</span>
               }
-            </td>
-
-            <td>
-              <ng-select [(ngModel)]="processo.statusMapeamento"
-                (ngModelChange)="onStatusMapeamentoChange(processo.id, $event)" [items]="statusOptions"
-                bindLabel="label" bindValue="value" [clearable]="true" [searchable]="false"
-                [ngClass]="processo.statusMapeamento ? getStatusBadgeClass(processo.statusMapeamento) : ''"
-                [id]="'statusMapeamento-' + processo.id">
-              </ng-select>
-            </td>
-            <td>
-              <ng-select [(ngModel)]="processo.statusTreinamento"
-                (ngModelChange)="onStatusTreinamentoChange(processo.id, $event)" [items]="statusOptions"
-                bindLabel="label" bindValue="value" [clearable]="true" [searchable]="false"
-                [ngClass]="processo.statusTreinamento ? getStatusBadgeClass(processo.statusTreinamento) : ''"
-                [id]="'statusTreinamento-' + processo.id">
-              </ng-select>
-            </td>
-          </tr>
-          }
-        </tbody>
-      </table>
+            </small>
+          </div>
+          <div class="meta-row">
+            <small class="text-muted">Status Mapeamento:</small>
+            <ng-select [(ngModel)]="processo.statusMapeamento"
+              (ngModelChange)="onStatusMapeamentoChange(processo.id, $event)" [items]="statusOptions"
+              bindLabel="label" bindValue="value" [clearable]="true" [searchable]="false"
+              [ngClass]="processo.statusMapeamento ? getStatusBadgeClass(processo.statusMapeamento) : ''"
+              [id]="'statusMapeamento-mobile-' + processo.id">
+            </ng-select>
+          </div>
+          <div class="meta-row">
+            <small class="text-muted">Status Treinamento:</small>
+            <ng-select [(ngModel)]="processo.statusTreinamento"
+              (ngModelChange)="onStatusTreinamentoChange(processo.id, $event)" [items]="statusOptions"
+              bindLabel="label" bindValue="value" [clearable]="true" [searchable]="false"
+              [ngClass]="processo.statusTreinamento ? getStatusBadgeClass(processo.statusTreinamento) : ''"
+              [id]="'statusTreinamento-mobile-' + processo.id">
+            </ng-select>
+          </div>
+        </div>
+      </div>
+      }
     </div>
     }
   </div>

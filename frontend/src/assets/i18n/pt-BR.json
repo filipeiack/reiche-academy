@@ -144,6 +144,7 @@
     "SEARCH": "Procurar",
     "SEARCH_PLACEHOLDER": "Procurar aqui...",
     "LOADING": "Carregando...",
+    "SHOWING": "Mostrando",
     "ITEMS": "itens",
     "ACTIONS": "Ações",
     "INSTRUCTIONS": "Instruções",
@@ -194,11 +195,75 @@
     "CIDADE": "Cidade",
     "ESTADO": "Estado",
     "USUARIOS_COUNT": "Usuários",
+    "MENTORIA": "Mentoria",
+    "MENTORIA_NONE": "Sem mentoria",
+    "PERIODO": "Período",
     "PILARES_COUNT": "Pilares",
     "CREATE": "Criar Empresa",
     "EDIT": "Editar Empresa",
     "ADD": "Adicionar Empresa",
     "DETAILS": "Detalhes da Empresa",
+    "LOGO_URL_LABEL": "Logo URL",
+    "VIEW_ONLY": "Somente Visualização",
+    "WIZARD": {
+      "CONFIG_USERS_PILARS": "Configuração de Usuários e Pilares",
+      "NEXT_USERS_PILARS": "Próximo: Usuários e Pilares",
+      "FINISH": "Concluir Cadastro",
+      "STEP_BASIC": "Dados Básicos",
+      "STEP_USERS_PILARS": "Usuários e Pilares"
+    },
+    "FORM": {
+      "BUSINESS_TYPE_PLACEHOLDER": "Digite para buscar ou criar novo...",
+      "LOGIN_URL_PLACEHOLDER": "ex: minha-empresa",
+      "LOGO_ALT": "Logo da empresa",
+      "LOGO_DIMENSIONS": "Logotipo 300 x 115",
+      "LOGO_FORMATS": "Formatos aceitos: JPG, PNG, WebP (máx 5MB)"
+    },
+    "MENTORIA": {
+      "TITLE": "Período de Mentoria",
+      "SUBTITLE": "Gerencie o ciclo atual e acompanhe o histórico da empresa",
+      "CREATE_PERIOD": "Criar Período",
+      "RENEW": "Renovar Mentoria",
+      "CLOSE": "Encerrar",
+      "ACTIVE": "ativo",
+      "NO_ACTIVE": "Sem mentoria ativa",
+      "NO_ACTIVE_HELP": "Crie ou renove para iniciar um novo ciclo.",
+      "START": "Início Mentoria",
+      "END_PLANNED": "Término Previsto",
+      "END_ACTUAL": "Encerramento real",
+      "HISTORY_TITLE": "Histórico de Períodos",
+      "TABLE": {
+        "PERIOD": "Período",
+        "START": "Início",
+        "END": "Fim",
+        "CONTRACT": "Contratação",
+        "CLOSE": "Encerramento"
+      }
+    },
+    "USERS_SECTION": {
+      "TITLE": "Usuários Associados",
+      "CREATE": "Criar Novo Usuário",
+      "SELECT_HELP": "Selecione ou adicione usuários à empresa",
+      "SEARCH_PLACEHOLDER": "Digite o nome",
+      "SELECT_TIP": "Selecione um usuário existente ou crie um novo usuário escrevendo o nome completo dele.",
+      "UNLINK": "Desassociar usuário",
+      "EMPTY": "Nenhum usuário associado a esta empresa ainda."
+    },
+    "USERS_TABLE": {
+      "USER": "Usuário",
+      "CARGO": "Cargo",
+      "PHONE": "Telefone",
+      "ROLE": "Perfil"
+    },
+    "PILARS_SECTION": {
+      "TITLE": "Pilares Associados",
+      "CREATE": "Criar Novo Pilar",
+      "REORDER_HELP": "Arraste os pilares para reordenar ou remova os existentes.",
+      "REORDER_TOOLTIP": "Arrastar para reordenar",
+      "REMOVE": "Remover pilar",
+      "EMPTY": "Nenhum pilar associado a esta empresa ainda.",
+      "AUTO_SAVE": "Usuários e pilares são salvos automaticamente conforme você os adiciona."
+    },
     "INFO": {
       "CREATE": "Preencha todos os campos obrigatórios (marcados com *) para criar uma nova empresa.",
       "EDIT": "Edite as informações da empresa e clique em 'Atualizar' para salvar as mudanças.",

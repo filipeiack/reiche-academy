@@ -6,6 +6,61 @@
   font-weight: 600;
 }
 
+.desktop-table {
+  display: block;
+}
+
+.mobile-cards {
+  display: none;
+}
+
+.usuario-card {
+  margin-bottom: 0.75rem;
+  border: 1px solid var(--bs-border-color);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+}
+
+.usuario-title {
+  min-width: 0;
+}
+
+.usuario-meta {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.meta-row {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.meta-label {
+  font-size: 0.75rem;
+  color: var(--bs-secondary-color);
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+}
+
+.meta-value {
+  text-align: right;
+}
+
+.btn-group .btn:focus,
+.btn-group .btn:focus-visible,
+.mobile-cards .btn:focus,
+.mobile-cards .btn:focus-visible,
+.btn-group .btn:disabled,
+.btn-group .btn[disabled],
+.mobile-cards .btn:disabled,
+.mobile-cards .btn[disabled] {
+  outline: none;
+  box-shadow: none;
+  border-color: transparent;
+}
+
 /* ========== RESPONSIVIDADE MOBILE ========== */
 
 @media (max-width: 991px) {
@@ -34,6 +89,14 @@
 }
 
 @media (max-width: 768px) {
+  .desktop-table {
+    display: none;
+  }
+
+  .mobile-cards {
+    display: block;
+  }
+
   // Tabela responsiva - ocultar colunas menos importantes
   .table {
     font-size: 0.85rem;

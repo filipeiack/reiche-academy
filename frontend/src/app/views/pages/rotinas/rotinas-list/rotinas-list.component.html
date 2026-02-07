@@ -54,75 +54,119 @@
         <!-- Table -->
 
         <!-- Table with Drag and Drop -->
-        <div class="table-responsive" *ngIf="totalRotinas > 0">
-          <table class="table table-hover table-sm mb-2">
-            <thead class="table-light">
-              <tr>
-                <th *ngIf="canReorder" style="width: 40px;"></th>
-                <th>{{ 'ROTINAS.FIELDS.ROTINA' | translate }}</th>
-                <th>{{ 'ROTINAS.FIELDS.PILAR' | translate }}</th>
-                <th style="width: 120px;">{{ 'COMMON.ACTIONS' | translate }}</th>
-              </tr>
-            </thead>
-            <tbody cdkDropList [cdkDropListDisabled]="!canReorder" (cdkDropListDropped)="onDrop($event)">
-              <tr *ngFor="let rotina of paginatedRotinas" cdkDrag [cdkDragDisabled]="!canReorder"
-                data-testid="rotina-list-item">
-                <td *ngIf="canReorder" class="text-center">
-                  <i class="bi bi-grip-vertical me-2"></i>
-                </td>
-                <td style="max-width: 500px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
-                  <span class="badge bg-secondary small" [ngbTooltip]="'ROTINAS.FIELDS.ORDER' | translate">{{
-                    rotina.ordem }}</span>
-                  <span [ngbTooltip]="rotina.nome"> {{ rotina.nome }} </span>
-                </td>
-                <td style="max-width: 300px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
-                  {{ rotina.pilar?.nome || '—' }}
-                </td>
-                <td class="text-nowrap">
-                  <div class="btn-group btn-group-sm" role="group">
-                    <!-- Detalhes -->
-                    <button class="btn btn-icon text-primary"
-                      (click)="openDetailsOffcanvas(rotina.id, detailsOffcanvas)"
-                      [title]="'ROTINAS.DETAILS_TOOLTIP' | translate">
-                      <i class="feather icon-info"></i>
-                    </button>
+        @if (totalRotinas > 0) {
+        <div class="desktop-table">
+          <div class="table-responsive">
+            <table class="table table-hover table-sm mb-2">
+              <thead class="table-light">
+                <tr>
+                  <th *ngIf="canReorder" style="width: 40px;"></th>
+                  <th>{{ 'ROTINAS.FIELDS.ROTINA' | translate }}</th>
+                  <th>{{ 'ROTINAS.FIELDS.PILAR' | translate }}</th>
+                  <th style="width: 120px;">{{ 'COMMON.ACTIONS' | translate }}</th>
+                </tr>
+              </thead>
+              <tbody cdkDropList [cdkDropListDisabled]="!canReorder" (cdkDropListDropped)="onDrop($event)">
+                <tr *ngFor="let rotina of paginatedRotinas" cdkDrag [cdkDragDisabled]="!canReorder"
+                  data-testid="rotina-list-item">
+                  <td *ngIf="canReorder" class="text-center">
+                    <i class="bi bi-grip-vertical me-2"></i>
+                  </td>
+                  <td style="max-width: 500px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
+                    <span class="badge bg-secondary small" [ngbTooltip]="'ROTINAS.FIELDS.ORDER' | translate">{{
+                      rotina.ordem }}</span>
+                    <span [ngbTooltip]="rotina.nome"> {{ rotina.nome }} </span>
+                  </td>
+                  <td style="max-width: 300px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
+                    {{ rotina.pilar?.nome || '—' }}
+                  </td>
+                  <td class="text-nowrap">
+                    <div class="btn-group btn-group-sm" role="group">
+                      <!-- Detalhes -->
+                      <button class="btn btn-icon text-primary"
+                        (click)="openDetailsOffcanvas(rotina.id, detailsOffcanvas)"
+                        [title]="'ROTINAS.DETAILS_TOOLTIP' | translate">
+                        <i class="feather icon-info"></i>
+                      </button>
 
-                    <!-- Toggle Ativar/Inativar -->
-                    <button class="btn btn-icon text-primary"
-                      (click)="toggleStatus(rotina.id, rotina.nome, rotina.ativo)"
-                      [title]="rotina.ativo ? 'Inativar rotina' : 'Ativar rotina'">
-                      <i class="feather"
-                        [ngClass]="{'icon-toggle-right': rotina.ativo, 'icon-toggle-left': !rotina.ativo}"></i>
-                    </button>
+                      <!-- Toggle Ativar/Inativar -->
+                      <button class="btn btn-icon text-primary"
+                        (click)="toggleStatus(rotina.id, rotina.nome, rotina.ativo)"
+                        [title]="rotina.ativo ? 'Inativar rotina' : 'Ativar rotina'">
+                        <i class="feather"
+                          [ngClass]="{'icon-toggle-right': rotina.ativo, 'icon-toggle-left': !rotina.ativo}"></i>
+                      </button>
 
-                    <!-- Editar (sempre visível) -->
-                    <button class="btn btn-icon text-secondary" [routerLink]="['/rotinas/editar', rotina.id]"
-                      [title]="'ROTINAS.EDIT_TOOLTIP' | translate">
-                      <i class="feather icon-edit"></i>
-                    </button>
+                      <!-- Editar (sempre visível) -->
+                      <button class="btn btn-icon text-secondary" [routerLink]="['/rotinas/editar', rotina.id]"
+                        [title]="'ROTINAS.EDIT_TOOLTIP' | translate">
+                        <i class="feather icon-edit"></i>
+                      </button>
 
-                    <!-- Excluir (visível se ativo) -->
-                    @if (rotina.ativo) {
-                    <button class="btn btn-icon text-danger" (click)="confirmarExclusao(rotina)"
-                      [title]="'ROTINAS.DELETE_TOOLTIP' | translate">
-                      <i class="feather icon-trash-2"></i>
-                    </button>
-                    }
-                  </div>
-                </td>
-              </tr>
-            </tbody>
-          </table>
+                      <!-- Excluir (visível se ativo) -->
+                      @if (rotina.ativo) {
+                      <button class="btn btn-icon text-danger" (click)="confirmarExclusao(rotina)"
+                        [title]="'ROTINAS.DELETE_TOOLTIP' | translate">
+                        <i class="feather icon-trash-2"></i>
+                      </button>
+                      }
+                    </div>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
         </div>
+
+        <div class="mobile-cards">
+          <div class="card rotina-card" *ngFor="let rotina of paginatedRotinas">
+            <div class="card-body">
+              <div class="d-flex justify-content-between align-items-start gap-2 mb-2">
+                <div class="rotina-title">
+                  <div class="fw-semibold text-truncate">
+                    <span class="badge bg-secondary small me-2">{{ rotina.ordem }}</span>
+                    {{ rotina.nome }}
+                  </div>
+                  <small class="text-muted">{{ rotina.pilar?.nome || '—' }}</small>
+                </div>
+              </div>
+
+              <div class="d-flex gap-2 mt-3">
+                <button class="btn btn-outline-primary btn-sm"
+                  (click)="openDetailsOffcanvas(rotina.id, detailsOffcanvas)"
+                  [title]="'ROTINAS.DETAILS_TOOLTIP' | translate">
+                  <i class="feather icon-info"></i>
+                </button>
+                <button class="btn btn-outline-primary btn-sm"
+                  (click)="toggleStatus(rotina.id, rotina.nome, rotina.ativo)"
+                  [title]="rotina.ativo ? 'Inativar rotina' : 'Ativar rotina'">
+                  <i class="feather"
+                    [ngClass]="{'icon-toggle-right': rotina.ativo, 'icon-toggle-left': !rotina.ativo}"></i>
+                </button>
+                <button class="btn btn-outline-secondary btn-sm" [routerLink]="['/rotinas/editar', rotina.id]"
+                  [title]="'ROTINAS.EDIT_TOOLTIP' | translate">
+                  <i class="feather icon-edit"></i>
+                </button>
+                @if (rotina.ativo) {
+                <button class="btn btn-outline-danger btn-sm" (click)="confirmarExclusao(rotina)"
+                  [title]="'ROTINAS.DELETE_TOOLTIP' | translate">
+                  <i class="feather icon-trash-2"></i>
+                </button>
+                }
+              </div>
+            </div>
+          </div>
+        </div>
+        }
 
         <!-- Pagination -->
         <div class="d-flex justify-content-between p-2">
           <span class="text-muted fs-12">
-            Mostrando {{ getStartIndex() + 1 }}-{{ getEndIndex() }} de {{ totalRotinas }} {{ 'COMMON.ITEMS' | translate
-            }}
+            {{ 'COMMON.SHOWING' | translate }} {{ getStartIndex() + 1 }}-{{ getEndIndex() }} {{ 'COMMON.OF' | translate }} {{
+            totalRotinas }} {{ 'COMMON.ITEMS' | translate }}
           </span>
-          <ngb-pagination [(page)]="page" [pageSize]="pageSize" [collectionSize]="totalRotinas" size="sm"
-            [rotate]="true" [boundaryLinks]="true">
+          <ngb-pagination [(page)]="page" [pageSize]="pageSize" [maxSize]="3" [collectionSize]="totalRotinas" size="sm"
+            [rotate]="true"  [maxSize]="3" [boundaryLinks]="false">
           </ngb-pagination>
         </div>
 
