@@ -16,11 +16,13 @@
 
 ### Backend
 - `backend/src/modules/periodos-avaliacao/periodos-avaliacao.service.ts` - historico inclui periodos abertos.
+- `backend/src/modules/periodos-avaliacao/periodos-avaliacao.controller.ts` - resumo do endpoint alinhado ao historico com periodos abertos.
 - `backend/src/modules/cockpit-pilares/cockpit-pilares.service.ts` - normalizacao de data com timezone SP.
 
 ## 3 Decisoes Tecnicas
 
 - `findAll` permanece sem filtro `aberto` para alinhar com R-PEVOL-005 atualizada.
+- Resumo do endpoint foi ajustado para refletir historico com periodos abertos.
 - `normalizeDataReferencia` usa `formatDateInSaoPaulo` + `parseDateInSaoPaulo` para evitar mes/ano deslocados por UTC.
 
 ## 4 Auto-Validacao de Padroes

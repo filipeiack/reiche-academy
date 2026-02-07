@@ -85,7 +85,9 @@ export class PeriodosAvaliacaoController {
   }
 
   @Get('empresas/:empresaId/periodos-avaliacao')
-  @ApiOperation({ summary: 'Listar histórico de períodos congelados' })
+  @ApiOperation({
+    summary: 'Listar histórico de períodos (abertos e congelados)',
+  })
   async findAll(
     @Param('empresaId') empresaId: string,
     @Query('ano') ano?: string,
