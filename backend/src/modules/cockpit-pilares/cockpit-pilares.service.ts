@@ -1068,10 +1068,6 @@ export class CockpitPilaresService {
   ) {
     const cockpit = await this.validateCockpitAccess(cockpitId, user);
 
-    if (cockpit.dataReferencia) {
-      throw new ConflictException('Data de referência já definida para este cockpit');
-    }
-
     const dataReferencia = this.normalizeDataReferencia(dto.dataReferencia);
 
     const indicadores = await this.prisma.indicadorCockpit.findMany({
@@ -1087,13 +1083,19 @@ export class CockpitPilaresService {
     );
 
     await this.prisma.$transaction(async (tx) => {
-      await tx.cockpitPilar.update({
-        where: { id: cockpitId },
+      const updated = await tx.cockpitPilar.updateMany({
+        where: { id: cockpitId, dataReferencia: null },
         data: {
           dataReferencia,
           updatedBy: user.id,
         },
       });
+
+      if (updated.count === 0) {
+        throw new ConflictException(
+          'Data de referência já definida para este cockpit',
+        );
+      }
 
       if (mesesParaCriar.length > 0) {
         await tx.indicadorMensal.createMany({
@@ -2170,3 +2172,4 @@ export class CockpitPilaresService {
     };
   }
 }
+
